@@ -1,0 +1,334 @@
+{
+  "clips": [
+    {
+      "type": "Image",
+      "src": "https://cdn.subgen.co/upload/WhatsApp%20Image%202025-11-27%20at%2010.47.14%20AM.jpeg",
+      "display": {
+        "from": 0,
+        "to": 5000000
+      },
+      "playbackRate": 1,
+      "duration": 5000000,
+      "left": 437.275,
+      "top": 0,
+      "width": 405.45,
+      "height": 720,
+      "angle": 0,
+      "zIndex": 0,
+      "opacity": 1,
+      "flip": null
+    },
+    {
+      "type": "Video",
+      "src": "https://cdn.subgen.co/podcast-video.mp4",
+      "display": {
+        "from": 0,
+        "to": 25123990.929705214
+      },
+      "playbackRate": 1,
+      "duration": 25123990.929705214,
+      "left": 437.5,
+      "top": 0,
+      "width": 405,
+      "height": 720,
+      "angle": 0,
+      "zIndex": 0,
+      "opacity": 1,
+      "flip": null,
+      "audio": true
+    },
+    {
+      "type": "Caption",
+      "src": "",
+      "display": {
+        "from": 0,
+        "to": 1000000
+      },
+      "playbackRate": 1,
+      "duration": 1000000,
+      "left": 366,
+      "top": 617,
+      "width": 548,
+      "height": 73,
+      "angle": 0,
+      "zIndex": 0,
+      "opacity": 1,
+      "flip": null,
+      "text": "hello world this is a test",
+      "style": {
+        "fontSize": 32,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/montserrat/v18/JTURjIg1_i6t8kCHKm45_c5H7g7J_950vCo.ttf",
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#17e64e",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 3.999624199206202,
+          "offsetY": 0.0548294184188299
+        }
+      },
+      "caption": {
+        "words": [
+          {
+            "text": "HELLO",
+            "from": 0,
+            "to": 200,
+            "isKeyWord": true
+          },
+          {
+            "text": "WORLD",
+            "from": 200,
+            "to": 400,
+            "isKeyWord": false
+          },
+          {
+            "text": "THIS",
+            "from": 400,
+            "to": 600,
+            "isKeyWord": false
+          },
+          {
+            "text": "IS",
+            "from": 600,
+            "to": 750,
+            "isKeyWord": false
+          },
+          {
+            "text": "A",
+            "from": 750,
+            "to": 850,
+            "isKeyWord": false
+          },
+          {
+            "text": "TEST",
+            "from": 850,
+            "to": 1000,
+            "isKeyWord": true
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1280,
+          "videoHeight": 720
+        }
+      }
+    },
+    {
+      "type": "Caption",
+      "src": "",
+      "display": {
+        "from": 1000000,
+        "to": 2000000
+      },
+      "playbackRate": 1,
+      "duration": 1000000,
+      "left": 401,
+      "top": 617,
+      "width": 478,
+      "height": 73,
+      "angle": 0,
+      "zIndex": 0,
+      "opacity": 1,
+      "flip": null,
+      "text": "coding with pixi is fun",
+      "style": {
+        "fontSize": 32,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/montserrat/v18/JTURjIg1_i6t8kCHKm45_c5H7g7J_950vCo.ttf",
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#17e64e",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 3.999624199206202,
+          "offsetY": 0.0548294184188299
+        }
+      },
+      "caption": {
+        "words": [
+          {
+            "text": "CODING",
+            "from": 0,
+            "to": 200,
+            "isKeyWord": true
+          },
+          {
+            "text": "WITH",
+            "from": 200,
+            "to": 400,
+            "isKeyWord": false
+          },
+          {
+            "text": "PIXI",
+            "from": 400,
+            "to": 600,
+            "isKeyWord": true
+          },
+          {
+            "text": "IS",
+            "from": 600,
+            "to": 750,
+            "isKeyWord": false
+          },
+          {
+            "text": "FUN",
+            "from": 750,
+            "to": 1000,
+            "isKeyWord": true
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1280,
+          "videoHeight": 720
+        }
+      }
+    },
+    {
+      "type": "Caption",
+      "src": "",
+      "display": {
+        "from": 2000000,
+        "to": 3400000
+      },
+      "playbackRate": 1,
+      "duration": 1400000,
+      "left": 316,
+      "top": 617,
+      "width": 648,
+      "height": 73,
+      "angle": 0,
+      "zIndex": 0,
+      "opacity": 1,
+      "flip": null,
+      "text": "life is beautiful when we code",
+      "style": {
+        "fontSize": 32,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/montserrat/v18/JTURjIg1_i6t8kCHKm45_c5H7g7J_950vCo.ttf",
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#17e64e",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 3.999624199206202,
+          "offsetY": 0.0548294184188299
+        }
+      },
+      "caption": {
+        "words": [
+          {
+            "text": "LIFE",
+            "from": 0,
+            "to": 200,
+            "isKeyWord": true
+          },
+          {
+            "text": "IS",
+            "from": 200,
+            "to": 400,
+            "isKeyWord": false
+          },
+          {
+            "text": "BEAUTIFUL",
+            "from": 400,
+            "to": 700,
+            "isKeyWord": true
+          },
+          {
+            "text": "WHEN",
+            "from": 700,
+            "to": 900,
+            "isKeyWord": false
+          },
+          {
+            "text": "WE",
+            "from": 900,
+            "to": 1100,
+            "isKeyWord": false
+          },
+          {
+            "text": "CODE",
+            "from": 1100,
+            "to": 1400,
+            "isKeyWord": true
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1280,
+          "videoHeight": 720
+        }
+      }
+    },
+    {
+      "type": "Audio",
+      "src": "https://cdn.designcombo.dev/preset76.mp3",
+      "display": {
+        "from": 0,
+        "to": 3562666.666666667
+      },
+      "playbackRate": 1,
+      "duration": 3562666.666666667,
+      "left": 0,
+      "top": 0,
+      "width": 0,
+      "height": 0,
+      "angle": 0,
+      "zIndex": 0,
+      "opacity": 1,
+      "flip": null,
+      "loop": false,
+      "volume": 1
+    }
+  ],
+  "settings": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "bgColor": "#000000"
+  }
+}

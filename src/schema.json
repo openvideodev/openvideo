@@ -1,0 +1,221 @@
+{
+  "schema": {
+    "aspectRatio": "9:16",
+    "caption": {
+      "id": "caption-1",
+      "name": "Modern",
+      "position": "bottom",
+      "size": "medium"
+    },
+    "description": "Exploring the path to success through challenges and perseverance.",
+    "id": "Q1N3yFAluOk-WuOVXs0Ha",
+    "preview": {
+      "refId": "previewId",
+      "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/PREVIEW/j2zrep7zqib.png"
+    },
+    "promptPreview": "A cinematic representation of the journey towards success, featuring a lone figure overcoming obstacles in a dramatic landscape.",
+    "prompt_preview": "A cinematic representation of the journey towards success, featuring a lone figure overcoming obstacles in a dramatic landscape.",
+    "segments": [
+      {
+        "clips": [
+          {
+            "display": {
+              "from": 0,
+              "to": 3108.5625
+            },
+            "duration": 3108.5625,
+            "previewSrc": "https://images.pexels.com/videos/35046207/pexels-photo-35046207.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1200",
+            "refId": "clipId",
+            "src": [
+              "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_m03w4gu/VIDEOS/k38iogwboqn.mp4"
+            ],
+            "type": "video"
+          }
+        ],
+        "continuity": "new_scene",
+        "description": "An opening statement establishing the theme of success as an ongoing process.",
+        "duration": 3108.5625,
+        "id": "seg_1765040426722_m03w4gu",
+        "prompts": {
+          "image": "A solitary figure walking a winding path through a lush forest, sunlight breaking through the trees, conveying determination and hope.",
+          "video": "A slow-motion shot of the figure walking along the path, with a focus on their determined expression, soft light filtering through leaves, creating an uplifting mood."
+        },
+        "speechToText": {
+          "refId": "speechToTextId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_m03w4gu/CAPTION/on47347g9p.json"
+        },
+        "tags": ["success", "journey", "destination", "concept"],
+        "text": "Success isn’t just a destination; it’s a journey.",
+        "textToSpeech": {
+          "duration": 3108.5625,
+          "refId": "textToSpeechId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_m03w4gu/AUDIO/y1eqlbirmwk.mp3"
+        },
+        "title": "Success is a Journey"
+      },
+      {
+        "clips": [
+          {
+            "display": {
+              "from": 3108.5625,
+              "to": 5616.3125
+            },
+            "duration": 2507.75,
+            "previewSrc": "https://images.pexels.com/videos/6412357/4k-video-6412357.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1200",
+            "refId": "clipId",
+            "src": [
+              "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_uca74yn/VIDEOS/0tk8fvp5bl49.mp4"
+            ],
+            "type": "video"
+          }
+        ],
+        "continuity": "new_scene",
+        "description": "Highlighting the idea that failures can lead to future successes.",
+        "duration": 2507.75,
+        "id": "seg_1765040426722_uca74yn",
+        "prompts": {
+          "image": "A close-up of a hand reaching up from the ground, symbolizing resilience, with a blurred background of a challenging landscape.",
+          "video": "A dynamic shot of the hand rising, with an upward camera movement to capture the surrounding obstacles, accompanied by an inspiring score."
+        },
+        "speechToText": {
+          "refId": "speechToTextId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_uca74yn/CAPTION/1tpsbm07mut.json"
+        },
+        "tags": ["setback", "comeback", "growth", "motivation"],
+        "text": "Every setback is a setup for a comeback.",
+        "textToSpeech": {
+          "duration": 2507.75,
+          "refId": "textToSpeechId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_uca74yn/AUDIO/wztepaqul3m.mp3"
+        },
+        "title": "Setbacks and Comebacks"
+      },
+      {
+        "clips": [
+          {
+            "display": {
+              "from": 5616.3125,
+              "to": 8724.875
+            },
+            "duration": 3108.5625,
+            "previewSrc": "https://images.pexels.com/videos/8376557/asleep-sleep-sleep-mask-sleeping-8376557.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1200",
+            "refId": "clipId",
+            "src": [
+              "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_tq2mvj3/VIDEOS/etdpq644h8o.mp4"
+            ],
+            "type": "video"
+          }
+        ],
+        "continuity": "new_scene",
+        "description": "Reminding viewers that struggles are universal among successful individuals.",
+        "duration": 3108.5625,
+        "id": "seg_1765040426722_tq2mvj3",
+        "prompts": {
+          "image": "A montage of famous historical figures looking determined, each in their unique environments, with a warm color palette.",
+          "video": "A series of quick cuts between these figures facing challenges, with dramatic music building intensity, emphasizing their resilience."
+        },
+        "speechToText": {
+          "refId": "speechToTextId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_tq2mvj3/CAPTION/a2oy2i6fcdd.json"
+        },
+        "tags": ["achievers", "struggles", "universal", "inspiration"],
+        "text": "Think about it—every great achiever faced struggles.",
+        "textToSpeech": {
+          "duration": 3108.5625,
+          "refId": "textToSpeechId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_tq2mvj3/AUDIO/z1xnwmla2va.mp3"
+        },
+        "title": "Facing Struggles"
+      },
+      {
+        "clips": [
+          {
+            "display": {
+              "from": 8724.875,
+              "to": 10893
+            },
+            "duration": 2168.125,
+            "previewSrc": "https://images.pexels.com/videos/4172636/pexels-photo-4172636.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1200",
+            "refId": "clipId",
+            "src": [
+              "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_rttdqfm/VIDEOS/fwn1yqgef54.mp4"
+            ],
+            "type": "video"
+          }
+        ],
+        "continuity": "new_scene",
+        "description": "Emphasizing the importance of perseverance in the face of adversity.",
+        "duration": 2168.125,
+        "id": "seg_1765040426722_rttdqfm",
+        "prompts": {
+          "image": "A runner sprinting towards the finish line, sweat on their brow, with a blurred crowd cheering in the background.",
+          "video": "A high-energy shot of the runner in slow motion, capturing every muscle movement and expression of determination, with uplifting music."
+        },
+        "speechToText": {
+          "refId": "speechToTextId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_rttdqfm/CAPTION/og353fe51ys.json"
+        },
+        "tags": ["perseverance", "determination", "action", "motivation"],
+        "text": "They didn’t stop; they pushed through.",
+        "textToSpeech": {
+          "duration": 2168.125,
+          "refId": "textToSpeechId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_rttdqfm/AUDIO/f716g8pnch4.mp3"
+        },
+        "title": "Pushing Through"
+      },
+      {
+        "clips": [
+          {
+            "display": {
+              "from": 10893,
+              "to": 12329.75
+            },
+            "duration": 1436.75,
+            "previewSrc": "https://images.pexels.com/videos/28839084/pexels-photo-28839084.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=1200",
+            "refId": "clipId",
+            "src": [
+              "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_svo738q/VIDEOS/i7q2ofsmyk.mp4"
+            ],
+            "type": "video"
+          }
+        ],
+        "continuity": "new_scene",
+        "description": "An empowering call to action for the audience to welcome their own difficulties.",
+        "duration": 1436.75,
+        "id": "seg_1765040426722_svo738q",
+        "prompts": {
+          "image": "A person standing on a mountain peak, arms raised in triumph, against a stunning sunset, reflecting achievement and resilience.",
+          "video": "A sweeping drone shot from behind the person on the peak, capturing the vast landscape, with inspiring music swelling in the background."
+        },
+        "speechToText": {
+          "refId": "speechToTextId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_svo738q/CAPTION/e4etg2oxsvq.json"
+        },
+        "tags": ["embrace", "challenges", "empowerment", "call to action"],
+        "text": "Embrace your challenges.",
+        "textToSpeech": {
+          "duration": 1436.75,
+          "refId": "textToSpeechId",
+          "src": "https://cdn.scenify.io/VIDEOS/Q1N3yFAluOk-WuOVXs0Ha/seg_1765040426722_svo738q/AUDIO/nvgx2c6sfq.mp3"
+        },
+        "title": "Embrace Challenges"
+      }
+    ],
+    "tags": ["success", "journey", "challenges", "perseverance"],
+    "title": "The Journey of Success",
+    "visuals": {
+      "style": "cinematic",
+      "type": "STOCK_VIDEOS"
+    },
+    "voice": {
+      "accent": "American",
+      "gender": "male",
+      "id": "CwhRBWXzGAHq8TQ4Fs17",
+      "language": "en",
+      "name": "Will",
+      "previewUrl": "https://cdn.designcombo.dev/voices/CwhRBWXzGAHq8TQ4Fs17.mp3"
+    }
+  },
+  "totalCost": 0.1768987815
+}
