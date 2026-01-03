@@ -54,6 +54,56 @@ import { NumberInput } from '@/components/ui/number-input';
 
 const GROUPED_FONTS = getGroupedFonts();
 
+const FontPicker = React.memo(
+  ({
+    currentFamily,
+    handleFontChange,
+  }: {
+    currentFamily: any;
+    handleFontChange: (postScriptName: string) => void;
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const fontItems = useMemo(() => {
+      if (!isOpen) return null;
+      return GROUPED_FONTS.map((family) => (
+        <SelectItem key={family.family} value={family.family}>
+          <div className="flex items-center py-1">
+            <img
+              src={family.mainFont.preview}
+              alt={family.family}
+              className="h-6 invert object-contain"
+              loading="lazy"
+            />
+          </div>
+        </SelectItem>
+      ));
+    }, [isOpen]);
+
+    return (
+      <Select
+        value={currentFamily.family}
+        onValueChange={(v) => {
+          const family = GROUPED_FONTS.find((f) => f.family === v);
+          if (family) {
+            handleFontChange(family.mainFont.postScriptName);
+          }
+        }}
+        onOpenChange={setIsOpen}
+      >
+        <SelectTrigger className="w-full h-12">
+          <SelectValue placeholder="Select font">
+            <div className="flex items-center h-full">
+              {currentFamily.family}
+            </div>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="max-h-[300px]">{fontItems}</SelectContent>
+      </Select>
+    );
+  }
+);
+
 interface TextPropertiesProps {
   clip: IClip;
 }
@@ -277,36 +327,10 @@ export function TextProperties({ clip }: TextPropertiesProps) {
           Font
         </label>
 
-        <Select
-          value={currentFamily.family}
-          onValueChange={(v) => {
-            const family = GROUPED_FONTS.find((f) => f.family === v);
-            if (family) {
-              handleFontChange(family.mainFont.postScriptName);
-            }
-          }}
-        >
-          <SelectTrigger className="w-full h-12">
-            <SelectValue placeholder="Select font">
-              <div className="flex items-center h-full">
-                {currentFamily.family}
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            {GROUPED_FONTS.map((family) => (
-              <SelectItem key={family.family} value={family.family}>
-                <div className="flex items-center py-1">
-                  <img
-                    src={family.mainFont.preview}
-                    alt={family.family}
-                    className="h-6 invert object-contain"
-                  />
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FontPicker
+          currentFamily={currentFamily}
+          handleFontChange={handleFontChange}
+        />
 
         <div className="grid grid-cols-2 gap-2">
           <Select

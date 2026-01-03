@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useStudioStore } from '@/stores/studio-store';
 import { TextProperties } from './text-properties';
 import { ImageProperties } from './image-properties';
 import { VideoProperties } from './video-properties';
 import { AudioProperties } from './audio-properties';
 import { CaptionProperties } from './caption-properties';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { IClip } from '@designcombo/video';
 
-export function PropertiesPanel() {
-  const { selectedClips } = useStudioStore();
+export function PropertiesPanel({ selectedClips }: { selectedClips: IClip[] }) {
   const [, setTick] = useState(0);
 
   useEffect(() => {

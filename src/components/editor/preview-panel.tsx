@@ -63,16 +63,6 @@ export function PreviewPanel({ onReady }: PreviewPanelProps) {
 
     init();
 
-    previewRef.current.on('selection:created', (data) => {
-      setSelectedClips(data.selected);
-    });
-    previewRef.current.on('selection:updated', (data) => {
-      setSelectedClips(data.selected);
-    });
-    previewRef.current.on('selection:cleared', () => {
-      setSelectedClips([]);
-    });
-
     // Set store
     setStudio(previewRef.current);
 
