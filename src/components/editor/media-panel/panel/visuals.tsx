@@ -24,6 +24,12 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
+import { VisualsChatPanel } from '../visuals-chat-panel';
 
 interface VisualAsset {
   id: string;
@@ -140,9 +146,9 @@ export function PanelVisuals() {
   });
 
   return (
-    <div className="flex flex-col h-full w-full bg-panel">
+    <div className="flex flex-col h-full w-full">
       {/* Header / Toolbar */}
-      <div className="flex items-center gap-2 p-4 border-b border-border/50">
+      <div className="flex items-center bg-panel gap-2 p-4 border-b border-border/50">
         <Button
           variant="outline"
           onClick={() => fileInputRef.current?.click()}
@@ -203,14 +209,14 @@ export function PanelVisuals() {
       </div>
 
       {/* Grid Content */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 h-full">
         {filteredAssets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
             <ImageIcon size={32} className="opacity-50" />
             <span className="text-sm">No assets found</span>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
             {filteredAssets.map((asset) => (
               <div
                 key={asset.id}
@@ -247,6 +253,10 @@ export function PanelVisuals() {
           </div>
         )}
       </ScrollArea>
+      <div className="h-2 bg-background"></div>
+      <div className="h-48">
+        <VisualsChatPanel />
+      </div>
     </div>
   );
 }

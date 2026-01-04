@@ -1,19 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Compositor, Log, fontManager } from '@designcombo/video';
+import { Compositor, Log } from '@designcombo/video';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Loader2, Video, Music, Clock, ChevronDown } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useStudioStore } from '@/stores/studio-store';
 
 interface ExportModalProps {

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { MediaPanel } from '@/components/editor/media-panel';
 import { PreviewPanel } from '@/components/editor/preview-panel';
 import { Timeline } from '@/components/editor/timeline';
@@ -12,16 +12,10 @@ import { usePanelStore } from '@/stores/panel-store';
 import { Assistant } from '@/components/assistant';
 import Header from '@/components/editor/header';
 import { Loading } from '@/components/editor/loading';
-import { ChatPanel } from '@/components/editor/media-panel/chat-panel';
-import { VisualsChatPanel } from '@/components/editor/media-panel/visuals-chat-panel';
-import { MusicChatPanel } from '@/components/editor/media-panel/music-chat-panel';
-import { SfxChatPanel } from '@/components/editor/media-panel/sfx-chat-panel';
-import { VoiceoverChatPanel } from '@/components/editor/media-panel/voiceover-chat-panel';
 import {
   useMediaPanelStore,
   type Tab,
 } from '@/components/editor/media-panel/store';
-import { useStudioStore } from '@/stores/studio-store';
 
 export default function Editor() {
   const {
@@ -35,26 +29,9 @@ export default function Editor() {
     setPropertiesPanel,
   } = usePanelStore();
 
-  const { activeTab, showProperties, setShowProperties } = useMediaPanelStore();
-  const { selectedClips } = useStudioStore();
+  const { activeTab } = useMediaPanelStore();
 
   const [isReady, setIsReady] = useState(false);
-
-  // When clips are selected, show properties panel.
-  // This is handled here instead of MediaPanel to avoid circular dependency/remount issues
-  // where switching to chat layout (hiding properties) causes MediaPanel remount
-  // which re-triggers the effect and shows properties again.
-  useEffect(() => {
-    if (selectedClips.length > 0) {
-      setShowProperties(true);
-    } else {
-      setShowProperties(false);
-    }
-  }, [selectedClips.length, setShowProperties]);
-
-  // Tabs that should show the chat panel
-  const tabsWithChat: Tab[] = ['visuals', 'music', 'sfx', 'voiceovers'];
-  const shouldShowChat = tabsWithChat.includes(activeTab) && !showProperties;
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
@@ -75,24 +52,9 @@ export default function Editor() {
             minSize={15}
             maxSize={40}
             onResize={setToolsPanel}
-            className="min-w-0 rounded-sm"
+            className="min-w-96 rounded-sm"
           >
-            {shouldShowChat ? (
-              <ResizablePanelGroup direction="vertical" className="gap-1">
-                <ResizablePanel defaultSize={75} minSize={30}>
-                  <MediaPanel />
-                </ResizablePanel>
-                <ResizableHandle className="h-[1px] bg-white/5 hover:bg-white/10 transition-colors" />
-                <ResizablePanel defaultSize={25} minSize={20}>
-                  {activeTab === 'visuals' && <VisualsChatPanel />}
-                  {activeTab === 'music' && <MusicChatPanel />}
-                  {activeTab === 'sfx' && <SfxChatPanel />}
-                  {activeTab === 'voiceovers' && <VoiceoverChatPanel />}
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            ) : (
-              <MediaPanel />
-            )}
+            <MediaPanel />
           </ResizablePanel>
 
           <ResizableHandle />

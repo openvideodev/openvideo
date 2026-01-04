@@ -16,6 +16,7 @@ import { PropertiesPanel } from '../properties-panel';
 import { IClip } from '@designcombo/video';
 import { useEffect, useState } from 'react';
 import { useStudioStore } from '@/stores/studio-store';
+
 const viewMap: Record<Tab, React.ReactNode> = {
   visuals: <PanelVisuals />,
   music: <PanelMusic />,
@@ -27,16 +28,18 @@ const viewMap: Record<Tab, React.ReactNode> = {
   effects: <PanelEffect />,
   elements: <PanelElements />,
 };
+
 export function MediaPanel() {
-  const { activeTab, showProperties } = useMediaPanelStore();
+  const { activeTab } = useMediaPanelStore();
   const [selectedClips, setSelectedClips] = useState<IClip[]>([]);
-  const { studio } = useStudioStore();
+  const { studio, setSelectedClips: setStudioSelectedClips } = useStudioStore();
 
   useEffect(() => {
     if (!studio) return;
 
     const handleSelection = (data: any) => {
       setSelectedClips(data.selected);
+      setStudioSelectedClips(data.selected);
     };
 
     const handleClear = () => {
@@ -61,7 +64,7 @@ export function MediaPanel() {
       </div>
       <Separator orientation="horizontal" />
       <div className="flex-1 overflow-hidden" id="panel-content">
-        {selectedClips.length > 0 && showProperties ? (
+        {selectedClips.length > 0 ? (
           <PropertiesPanel selectedClips={selectedClips} />
         ) : (
           <div className="h-full overflow-y-auto">{viewMap[activeTab]}</div>

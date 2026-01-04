@@ -33,8 +33,8 @@ importers:
         specifier: ^4.11.2
         version: 4.11.3
       '@designcombo/video':
-        specifier: 0.1.6
-        version: 0.1.6(@types/react@19.2.7)(react@19.2.0)(yoga-layout@3.2.1)
+        specifier: 0.1.9
+        version: 0.1.9(@types/react@19.2.7)(react@19.2.0)(yoga-layout@3.2.1)
       '@radix-ui/react-avatar':
         specifier: ^1.1.11
         version: 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -505,8 +505,8 @@ packages:
     resolution: {integrity: sha512-7NujHlAX6ciBeYAkxkhE7LCZWy0JK3nvFsV2VwVZIUiFR40ykhep5fxYd7ZovM+PbNyCoM8GKNMHu9MeQ5/wTQ==}
     engines: {node: '>=18.0.0'}
 
-  '@designcombo/video@0.1.6':
-    resolution: {integrity: sha512-qD3HkNCXt397nClL2HHJipvP1hnYnwT1c713KksuQjrL33Z9WS17YonDjh5VJdbsF6etPUAbThSnPrYCuniu6g==}
+  '@designcombo/video@0.1.9':
+    resolution: {integrity: sha512-LH7XT8xAHmSV/0v/99aVB14+ryvua4IgF461Vz26OLxqRN9uUbwN2hI0eIfr8gN/2HAaUwy4F97bHcesuiZMAQ==}
 
   '@emnapi/runtime@1.7.1':
     resolution: {integrity: sha512-PVtJr5CmLwYAU9PZDMITZoR5iAOShYREoR45EyyLrbntV50mdePTgUn4AmOw90Ifcj+x2kRjdzr1HP3RrNiHGA==}
@@ -3855,7 +3855,7 @@ snapshots:
       - encoding
       - utf-8-validate
 
-  '@designcombo/video@0.1.6(@types/react@19.2.7)(react@19.2.0)(yoga-layout@3.2.1)':
+  '@designcombo/video@0.1.9(@types/react@19.2.7)(react@19.2.0)(yoga-layout@3.2.1)':
     dependencies:
       '@pixi/layout': 3.2.0(@types/react@19.2.7)(pixi.js@8.14.3)(react@19.2.0)(yoga-layout@3.2.1)
       gl-transitions: 1.43.0
