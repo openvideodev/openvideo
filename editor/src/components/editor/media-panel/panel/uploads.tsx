@@ -118,14 +118,14 @@ export default function PanelUploads() {
   });
 
   return (
-    <div className="px-4 h-full flex flex-col">
-      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+    <div className="h-full flex flex-col">
+      <div className="text-text-primary px-4 flex h-12 flex-none items-center text-sm font-medium">
         Uploads
       </div>
 
-      <div className="flex items-center bg-panel gap-2 p-4 border-b border-border/50">
+      <div className="flex items-center w-full px-4">
         <Button
-          variant="outline"
+          className="w-full"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
           size={'sm'}
@@ -142,21 +142,6 @@ export default function PanelUploads() {
           accept="image/*,video/*"
           onChange={handleFileUpload}
         />
-
-        <div className="flex-1">
-          <InputGroup className="h-8">
-            <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
-              <Search size={14} />
-            </InputGroupAddon>
-
-            <InputGroupInput
-              placeholder="Search uploads..."
-              className="bg-secondary/30 border-0 h-full text-xs box-border pl-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </InputGroup>
-        </div>
       </div>
 
       <ScrollArea className="flex-1 p-4">

@@ -93,13 +93,13 @@ export default function PanelImages() {
   };
 
   return (
-    <div className="px-4 h-full flex flex-col">
-      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+    <div className="h-full flex flex-col">
+      <div className="text-text-primary px-4 flex h-12 flex-none items-center text-sm font-medium">
         Images
       </div>
 
-      <div className="flex items-center bg-panel gap-2 p-4 border-b border-border/50">
-        <div className="flex-1">
+      <div className="flex items-center px-4">
+        <div className="flex-1 pb-4">
           <InputGroup className="h-8">
             <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
               <Search size={14} />
