@@ -1,4 +1,4 @@
-import type { MP4Info, MP4Sample } from '../mp4box';
+import type { MP4Info, MP4Sample } from 'wrapbox';
 import { file, tmpfile, write } from 'opfs-tools';
 import { Log } from '../utils/log';
 import {
