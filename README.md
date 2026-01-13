@@ -1,6 +1,23 @@
-# @designcombo/video
+<p align="center">
+  <a href="https://github.com/designcombo/react-video-editor">
+    <img width="150px" height="150px" src="https://cdn.designcombo.dev/combo-logo-black.png"/>
+  </a>
+</p>
+<h1 align="center">Combo Video SDK</h1>
 
+<div align="center">
+  
 A high-performance video rendering and processing library for the web, built with WebCodecs and PixiJS.
+
+<p align="center">
+    <a href="https://designcombo.dev/">Combo</a>
+    ·  
+    <a href="https://discord.gg/2ytdyHBu">Discord</a>
+    ·  
+    <a href="https://github.com/designcombo/ai-video-editor">X</a>
+</p>
+</div>
+
 
 ## Features
 
