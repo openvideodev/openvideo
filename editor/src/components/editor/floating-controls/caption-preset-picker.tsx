@@ -89,9 +89,11 @@ const CaptionPresetPicker = () => {
       (c) => captionClips.includes(c) || mediaIds.has((c as any).mediaId)
     );
 
-    for (const clip of targetClips) {
-      await studio.updateClip(clip.id, styleUpdate);
-    }
+    const updates = targetClips.map((clip) => ({
+      id: clip.id,
+      updates: styleUpdate,
+    }));
+    await studio.updateClips(updates);
   };
 
   const PresetGrid = ({ presets }: { presets: ICaptionsControlProps[] }) => (

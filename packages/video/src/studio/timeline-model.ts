@@ -576,6 +576,49 @@ export class TimelineModel {
     const clip = this.clips.find((c) => c.id === clipId);
     if (!clip) return;
 
+    await this.applyClipUpdate(clip, updates);
+
+    // Recalculate max duration
+    await this.recalculateMaxDuration();
+
+    // Trigger update
+    await this.studio.updateFrame(this.studio.currentTime);
+
+    // Update transformer if selected
+    this.updateTransformer(clip);
+
+    this.studio.emit('clip:updated', { clip });
+  }
+
+  async updateClips(
+    updates: { id: string; updates: Partial<IClip> }[]
+  ): Promise<void> {
+    const updatedClips: IClip[] = [];
+
+    for (const { id, updates: clipUpdates } of updates) {
+      const clip = this.clips.find((c) => c.id === id);
+      if (clip) {
+        await this.applyClipUpdate(clip, clipUpdates);
+        updatedClips.push(clip);
+      }
+    }
+
+    if (updatedClips.length === 0) return;
+
+    // Recalculate max duration once
+    await this.recalculateMaxDuration();
+
+    // Trigger update once
+    await this.studio.updateFrame(this.studio.currentTime);
+
+    // Update transformer for any selected clips
+    for (const clip of updatedClips) {
+      this.updateTransformer(clip);
+      this.studio.emit('clip:updated', { clip });
+    }
+  }
+
+  private async applyClipUpdate(clip: IClip, updates: Partial<IClip>) {
     // Special handling for TextClip style updates
     if (clip instanceof TextClip) {
       await clip.updateStyle(updates as any);
@@ -613,14 +656,9 @@ export class TimelineModel {
         clip.display.to = clip.display.from + clip.duration;
       }
     }
+  }
 
-    // Recalculate max duration
-    await this.recalculateMaxDuration();
-
-    // Trigger update
-    await this.studio.updateFrame(this.studio.currentTime);
-
-    // Update transformer if selected
+  private updateTransformer(clip: IClip) {
     const interactionManager = this.studio.selection;
     if (
       interactionManager.selectedClips.has(clip) &&
@@ -628,8 +666,6 @@ export class TimelineModel {
     ) {
       interactionManager.activeTransformer.updateBounds();
     }
-
-    this.studio.emit('clip:updated', { clip });
   }
 
   /**

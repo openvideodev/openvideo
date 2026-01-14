@@ -174,6 +174,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     canvas?: HTMLCanvasElement;
   };
   public destroyed = false;
+  private renderingSuspended = false;
 
   // Effect system
   public globalEffects = new Map<string, GlobalEffectInfo>();
@@ -578,6 +579,23 @@ export class Studio extends EventEmitter<StudioEvents> {
     return this.timeline.updateClip(id, updates);
   }
 
+  async updateClips(
+    updates: { id: string; updates: Partial<IClip> }[]
+  ): Promise<void> {
+    this.suspendRendering();
+    await this.timeline.updateClips(updates);
+    this.resumeRendering();
+    this.updateFrame(this.currentTime);
+  }
+
+  suspendRendering() {
+    this.renderingSuspended = true;
+  }
+
+  resumeRendering() {
+    this.renderingSuspended = false;
+  }
+
   getTracks(): StudioTrack[] {
     return this.timeline.tracks;
   }
@@ -733,7 +751,8 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   public async updateFrame(timestamp: number): Promise<void> {
-    if (this.destroyed || this.pixiApp == null) return;
+    if (this.destroyed || this.pixiApp == null || this.renderingSuspended)
+      return;
     this.updateActiveGlobalEffect(timestamp);
 
     // We will reset visibility only for sprites that are NOT used this frame
