@@ -219,12 +219,48 @@ export const TimelineStudioSync = ({
       });
     };
 
+    const handleStudioRestored = ({
+      clips,
+      tracks,
+    }: {
+      clips: IClip[];
+      tracks: ITimelineTrack[];
+    }) => {
+      // 1. Sync Duration
+      if (studio) {
+        usePlaybackStore
+          .getState()
+          .setDuration(studio.getMaxDuration() / 1_000_000);
+        usePlaybackStore.getState().setCurrentTime(0);
+        usePlaybackStore.getState().setIsPlaying(false);
+      }
+
+      // 2. Map clips to store format
+      const newClipsMap: Record<string, IClip> = {};
+      clips.forEach((c) => {
+        newClipsMap[c.id] = {
+          ...c,
+          // Ensure sourceDuration is set if possible, though clip.duration is often sufficient for valid clips
+          sourceDuration: (c as any).meta?.duration || c.duration,
+        };
+      });
+
+      // 3. Update Store fully
+      useTimelineStore.setState((state) => ({
+        ...state,
+        clips: newClipsMap,
+        _tracks: tracks,
+        tracks: tracks,
+      }));
+    };
+
     studio.on('clip:added', handleClipAdded);
     studio.on('clips:added', handleClipsAdded);
     studio.on('clip:removed', handleClipRemoved);
     studio.on('clip:updated', handleClipUpdated);
     studio.on('track:added', handleTrackAdded as any);
     studio.on('track:removed', handleTrackRemoved);
+    studio.on('studio:restored', handleStudioRestored as any);
 
     studio.on('currentTime', handleTimeUpdate);
     studio.on('play', handlePlay);
@@ -247,6 +283,7 @@ export const TimelineStudioSync = ({
       studio.off('clip:updated', handleClipUpdated);
       studio.off('track:added', handleTrackAdded);
       studio.off('track:removed', handleTrackRemoved);
+      studio.off('studio:restored', handleStudioRestored as any);
 
       studio.off('currentTime', handleTimeUpdate);
       studio.off('play', handlePlay);

@@ -58,6 +58,11 @@ export interface StudioEvents {
   'clips:added': { clips: IClip[]; trackId?: string }; // Batch event
   'clip:removed': { clipId: string };
   'clip:updated': { clip: IClip };
+  'studio:restored': {
+    clips: IClip[];
+    tracks: StudioTrack[];
+    settings: IStudioOpts;
+  };
   currentTime: { currentTime: number };
   play: { isPlaying: boolean };
   pause: { isPlaying: boolean };

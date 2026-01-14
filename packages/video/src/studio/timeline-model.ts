@@ -14,6 +14,7 @@ import {
   ClipJSON,
   TransitionJSON,
 } from '../json-serialization';
+import { fontManager, IFont } from '../utils/fonts';
 
 export class TimelineModel {
   public tracks: StudioTrack[] = [];
@@ -751,7 +752,15 @@ export class TimelineModel {
     }
 
     // Load all clips first (Normalized)
+    // Load all clips in parallel (Batched)
+    const clipPromises: Promise<{
+      clip: IClip | null;
+      intendedTrackId?: string;
+    }>[] = [];
     if (json.clips) {
+      // 1. Load Fonts First
+      await this.ensureFontsForClips(json.clips);
+
       // Build map of ClipID -> TrackID from json.tracks
       const clipToTrackId = new Map<string, string>();
       if (json.tracks) {
@@ -776,70 +785,136 @@ export class TimelineModel {
         }
       }
 
-      // Now load clips
+      // Create promises for clip loading
       for (const clipJSON of json.clips) {
-        let intendedTrackId = clipJSON.id
-          ? clipToTrackId.get(clipJSON.id)
-          : undefined;
+        clipPromises.push(
+          (async () => {
+            try {
+              let intendedTrackId = clipJSON.id
+                ? clipToTrackId.get(clipJSON.id)
+                : undefined;
 
-        // Inference for Transitions without top-level ID
-        if (clipJSON.type === 'Transition') {
-          const transJSON = clipJSON as any;
-          const targetId = transJSON.toClipId || transJSON.fromClipId;
-          if (targetId) {
-            intendedTrackId = clipToTrackId.get(targetId);
-          }
-          const prevClipId = clipJSON.fromClipId || '';
-          const targetClipId = clipJSON.toClipId || '';
-          const fromClip = this.getClipById(prevClipId);
-          const toClip = this.getClipById(targetClipId);
+              // Inference for Transitions without top-level ID
+              if (clipJSON.type === 'Transition') {
+                const transJSON = clipJSON as any;
+                const targetId = transJSON.toClipId || transJSON.fromClipId;
+                if (targetId) {
+                  intendedTrackId = clipToTrackId.get(targetId);
+                }
+              }
 
-          if (fromClip && toClip) {
-            // Find the TransitionClip that connects these two
-            const tClip = this.clips.find(
-              (c) =>
-                c.type === 'Transition' &&
-                (c as any).fromClipId === prevClipId &&
-                (c as any).toClipId === targetClipId
-            );
+              // Pre-validation for empty sources
+              if (
+                clipJSON.type !== 'Text' &&
+                clipJSON.type !== 'Caption' &&
+                clipJSON.type !== 'Effect' &&
+                clipJSON.type !== 'Transition' &&
+                (!clipJSON.src || clipJSON.src.trim() === '')
+              ) {
+                console.warn(
+                  `Skipping clip ${clipJSON.type} with empty source`,
+                  clipJSON
+                );
+                return { clip: null };
+              }
 
-            const duration = clipJSON.duration;
-            let start: number;
-            let end: number;
+              const clip = await jsonToClip(clipJSON);
 
-            if (tClip) {
-              start = tClip.display.from;
-              end = tClip.display.to;
-            } else {
-              // Fallback calculation: centered at the junction
-              const midPoint = toClip.display.from;
-              start = Math.max(0, midPoint - duration / 2);
-              end = start + duration;
+              // If scaling needed (Video/Image)
+              if (
+                (clip instanceof VideoClip || clip instanceof ImageClip) &&
+                (!clipJSON.width || !clipJSON.height)
+              ) {
+                // We defer scaling to after we have the clip ready,
+                // but we can assume jsonToClip awaits 'ready' or we await it here
+                // jsonToClip returns fully constructed clip, but 'ready' promise might not be awaited inside it fully?
+                // Actually jsonToClip awaits fetch and createImageBitmap, so basic dimensions should be known.
+                if (this.studio.opts.width && this.studio.opts.height) {
+                  if (typeof (clip as any).scaleToFit === 'function') {
+                    await (clip as any).scaleToFit(
+                      this.studio.opts.width,
+                      this.studio.opts.height
+                    );
+                  }
+                  if (typeof (clip as any).centerInScene === 'function') {
+                    (clip as any).centerInScene(
+                      this.studio.opts.width,
+                      this.studio.opts.height
+                    );
+                  }
+                }
+              }
+
+              // Handle audioSource if necessary?
+              // setupPlaybackForClip uses audioSource if provided.
+              // We'll pass it down or attach to clip temporarily?
+              // Or better, we handle playback setup later using the source URL we already have in clip.src
+
+              return { clip, intendedTrackId };
+            } catch (err) {
+              console.error(
+                `Failed to load clip ${clipJSON.id || 'unknown'}:`,
+                err
+              );
+              return { clip: null };
             }
-
-            const transitionMeta = {
-              key: clipJSON.transitionEffect.key,
-              name: clipJSON.transitionEffect.name,
-              duration: duration,
-              fromClipId: prevClipId,
-              toClipId: targetClipId,
-              start,
-              end,
-            };
-
-            if ('transition' in fromClip)
-              (fromClip as any).transition = transitionMeta;
-            if ('transition' in toClip)
-              (toClip as any).transition = transitionMeta;
-          } else {
-            console.warn(
-              `[Studio] Could not find clips for transition ${clipJSON.transitionEffect.key}: from=${prevClipId}, to=${targetClipId}`
-            );
-          }
-        }
-
-        await this.loadClipIntoTrack(clipJSON, intendedTrackId);
+          })()
+        );
       }
+
+      const results = await Promise.all(clipPromises);
+
+      // Add clips to internal list and tracks
+      for (const { clip, intendedTrackId } of results) {
+        if (!clip) continue;
+
+        // Ensure ID
+        if (!clip.id) {
+          (clip as any).id = `clip_${Date.now()}_${Math.random()
+            .toString(36)
+            .substr(2, 9)}`;
+        }
+        this.clips.push(clip);
+        this.addClipToTrack(clip, intendedTrackId);
+      }
+    }
+
+    // Now process loaded clips (listeners, renderer, ready)
+    // IMPORTANT: this.studio.pixiApp must be ready
+    if (this.studio.pixiApp) {
+      await Promise.all(
+        this.clips.map(async (clip) => {
+          // A. Listen for property changes
+          const onPropsChange = async () => {
+            await this.studio.updateFrame(this.studio.currentTime);
+            const interactionManager = this.studio.selection;
+            if (
+              interactionManager.activeTransformer != null &&
+              interactionManager.selectedClips.has(clip) &&
+              typeof (interactionManager.activeTransformer as any)
+                .updateBounds === 'function'
+            ) {
+              (interactionManager.activeTransformer as any).updateBounds();
+            }
+          };
+          clip.on('propsChange', onPropsChange);
+          this.studio.clipListeners.set(clip, onPropsChange);
+
+          // B. Link Renderer
+          if (typeof clip.setRenderer === 'function') {
+            clip.setRenderer(this.studio.pixiApp!.renderer);
+          }
+
+          // C. Wait for Ready (Safety)
+          await clip.ready;
+
+          // D. Setup Visuals & Playback
+          // We can call setupClipVisuals, but we need to ensure it doesn't try to add duplicates to containers if run multiple times?
+          // setupClipVisuals just sets up renderer and playback.
+          // It creates new PixiSpriteRenderer.
+          await this.setupClipVisuals(clip);
+        })
+      );
     }
 
     // Restore global effects from loaded clips
@@ -859,48 +934,22 @@ export class TimelineModel {
       }
     }
 
-    // Ensure the initial frame is rendered with transitions
+    // Recalculate duration once
+    await this.recalculateMaxDuration();
+
+    // Update Frame once
     try {
       await this.studio.updateFrame(this.studio.currentTime);
     } catch (err) {
       console.error('[Studio] Failed to update initial frame:', err);
     }
-  }
 
-  private async loadClipIntoTrack(clipJSON: ClipJSON, trackId?: string) {
-    if (
-      clipJSON.type !== 'Text' &&
-      clipJSON.type !== 'Caption' &&
-      clipJSON.type !== 'Effect' &&
-      clipJSON.type !== 'Transition' &&
-      (!clipJSON.src || clipJSON.src.trim() === '')
-    ) {
-      console.warn(`Skipping clip ${clipJSON.type} with empty source`);
-      return;
-    }
-
-    try {
-      const clip = await jsonToClip(clipJSON);
-      const audioSource = clip instanceof AudioClip ? clipJSON.src : undefined;
-
-      await this.addClip(clip, { trackId, audioSource });
-
-      if (
-        (clip instanceof VideoClip || clip instanceof ImageClip) &&
-        (!clipJSON.width || !clipJSON.height)
-      ) {
-        await (clip as any).scaleToFit(
-          this.studio.opts.width,
-          this.studio.opts.height
-        );
-        (clip as any).centerInScene(
-          this.studio.opts.width,
-          this.studio.opts.height
-        );
-      }
-    } catch (error) {
-      console.warn(`Failed to load clip of type ${clipJSON.type}:`, error);
-    }
+    // Emit single restore event
+    this.studio.emit('studio:restored', {
+      clips: this.clips,
+      tracks: this.tracks,
+      settings: this.studio.opts,
+    });
   }
 
   /**
@@ -1102,6 +1151,47 @@ export class TimelineModel {
     this.tracks = tracks;
     await this.recalculateMaxDuration();
     await this.studio.updateFrame(this.studio.currentTime);
+  }
+
+  private async ensureFontsForClips(clips: any[]): Promise<void> {
+    const fontsToLoad = new Map<string, IFont>();
+    for (const clip of clips) {
+      // Check TextClip style
+      if (clip.type === 'Text') {
+        const fontUrl = clip.style?.fontUrl || (clip as any).fontUrl;
+        if (fontUrl) {
+          fontsToLoad.set(fontUrl, {
+            name:
+              clip.style?.fontFamily ||
+              (clip as any).fontFamily ||
+              'CustomFont',
+            url: fontUrl,
+          });
+        }
+      }
+
+      // Check CaptionClip style
+      if (clip.type === 'Caption') {
+        const fontUrl = clip.style?.fontUrl || (clip as any).fontUrl;
+        if (fontUrl) {
+          fontsToLoad.set(fontUrl, {
+            name:
+              clip.style?.fontFamily ||
+              (clip as any).fontFamily ||
+              'CustomFont',
+            url: fontUrl,
+          });
+        }
+      }
+    }
+
+    if (fontsToLoad.size > 0) {
+      try {
+        await fontManager.loadFonts(Array.from(fontsToLoad.values()));
+      } catch (err) {
+        console.warn('Failed to load some fonts:', err);
+      }
+    }
   }
 
   async recalculateMaxDuration(): Promise<void> {

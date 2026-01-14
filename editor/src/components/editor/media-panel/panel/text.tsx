@@ -114,6 +114,7 @@ export default function PanelText() {
         dropShadow: (preset?.style as any)?.dropShadow || undefined,
         wordWrap: true,
         wordWrapWidth: 800,
+        fontUrl: (preset?.style as any)?.fontUrl,
       });
 
       textClip.display.from = 0;

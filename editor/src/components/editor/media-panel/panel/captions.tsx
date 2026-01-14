@@ -142,12 +142,17 @@ export default function PanelCaptions() {
         [];
 
       // 2. Load fonts
-      await fontManager.loadFonts([
-        {
-          name: 'Bangers-Regular',
-          url: 'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf',
-        },
-      ]);
+      const fontName = 'Bangers-Regular';
+      const fontUrl =
+        'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf';
+
+      // This should ideally come from a selected preset or configuration
+      await fontManager.addFont({
+        name: fontName,
+        url: fontUrl,
+      });
+
+      // 3. Generate caption JSON is handled next...
 
       // 3. Generate caption JSON
       const captionClipsJSON = await generateCaptionClips({

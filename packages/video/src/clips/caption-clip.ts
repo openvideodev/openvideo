@@ -459,7 +459,6 @@ export class CaptionClip extends BaseClip implements IClip {
     this.originalOpts = { ...opts };
     // Store external renderer if provided (e.g., from Studio)
     this.externalRenderer = renderer ?? null;
-
     // Set default options (matching TextClip defaults where applicable)
     this.opts = {
       fontSize: opts.fontSize ?? 30,

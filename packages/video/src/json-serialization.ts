@@ -521,7 +521,6 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       if (json.mediaId) {
         captionClipOpts.mediaId = json.mediaId;
       }
-
       clip = new CaptionClip(text, captionClipOpts);
       break;
     }

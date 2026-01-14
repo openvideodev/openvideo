@@ -37,6 +37,10 @@ export interface ITextClipOpts {
    */
   fontStyle?: string;
   /**
+   * Font URL for custom fonts
+   */
+  fontUrl?: string;
+  /**
    * Text color (hex string, color name, or gradient object)
    * @default '#ffffff'
    */

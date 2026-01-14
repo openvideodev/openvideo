@@ -123,11 +123,21 @@ export default function Header() {
         </div>
 
         <div className=" pointer-events-auto flex h-10 items-center px-1.5">
-          <Button className="text-muted-foreground" variant="ghost" size="icon">
-            <UndoIcon width={20} />
+          <Button
+            onClick={handleExportJSON}
+            className="text-muted-foreground"
+            variant="ghost"
+            size="icon"
+          >
+            export
           </Button>
-          <Button className="text-muted-foreground" variant="ghost" size="icon">
-            <RedoIcon width={20} />
+          <Button
+            onClick={handleImportJSON}
+            className="text-muted-foreground"
+            variant="ghost"
+            size="icon"
+          >
+            import
           </Button>
         </div>
       </div>
