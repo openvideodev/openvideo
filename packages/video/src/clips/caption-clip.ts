@@ -240,47 +240,95 @@ export class CaptionClip extends BaseClip implements IClip {
   }
 
   override set style(v: any) {
-    if (!v) return;
+    this.updateStyle(v);
+  }
 
-    // Convert keys from style object to ICaptionClipOpts
-    const newOpts: Partial<ICaptionClipOpts> = {};
+  get fontFamily(): string {
+    return this.opts.fontFamily;
+  }
 
-    if (v.fontSize !== undefined) newOpts.fontSize = v.fontSize;
-    if (v.fontFamily !== undefined) newOpts.fontFamily = v.fontFamily;
-    if (v.fontWeight !== undefined) newOpts.fontWeight = v.fontWeight;
-    if (v.fontStyle !== undefined) newOpts.fontStyle = v.fontStyle;
-    if (v.color !== undefined) newOpts.fill = v.color; // Map color to fill
-    if (v.fill !== undefined) newOpts.fill = v.fill;
-    if (v.align !== undefined) newOpts.align = v.align;
-    if (v.textCase !== undefined) newOpts.textCase = v.textCase;
+  set fontFamily(v: string) {
+    this.updateStyle({ fontFamily: v });
+  }
 
-    // Handle stroke
-    if (v.stroke !== undefined) {
-      if (typeof v.stroke === 'object') {
-        newOpts.stroke = {
-          color: v.stroke.color,
-          width: v.stroke.width,
-          join: v.stroke.join,
-        };
-      } else {
-        newOpts.stroke = v.stroke;
-      }
-    }
+  get fontUrl(): string {
+    return this.opts.fontUrl;
+  }
 
-    // Handle shadow
-    if (v.shadow !== undefined) {
-      newOpts.dropShadow = {
-        color: v.shadow.color,
-        alpha: v.shadow.alpha,
-        blur: v.shadow.blur,
-        distance: v.shadow.distance,
-        angle: v.shadow.angle,
-      };
-    } else if (v.dropShadow !== undefined) {
-      newOpts.dropShadow = v.dropShadow;
-    }
+  set fontUrl(v: string) {
+    this.updateStyle({ fontUrl: v });
+  }
 
-    this.updateStyle(newOpts);
+  get fontSize(): number {
+    return this.opts.fontSize;
+  }
+
+  set fontSize(v: number) {
+    this.updateStyle({ fontSize: v });
+  }
+
+  get fontWeight(): string {
+    return this.opts.fontWeight;
+  }
+
+  set fontWeight(v: string) {
+    this.updateStyle({ fontWeight: v });
+  }
+
+  get fontStyle(): string {
+    return this.opts.fontStyle;
+  }
+
+  set fontStyle(v: string) {
+    this.updateStyle({ fontStyle: v });
+  }
+
+  get fill(): any {
+    return this.opts.fill;
+  }
+
+  set fill(v: any) {
+    this.updateStyle({ fill: v });
+  }
+
+  get align(): 'left' | 'center' | 'right' {
+    return this.opts.align;
+  }
+
+  set align(v: 'left' | 'center' | 'right') {
+    this.updateStyle({ align: v });
+  }
+
+  get stroke(): any {
+    return this.originalOpts?.stroke;
+  }
+
+  set stroke(v: any) {
+    this.updateStyle({ stroke: v });
+  }
+
+  get strokeWidth(): number {
+    return this.opts.strokeWidth;
+  }
+
+  set strokeWidth(v: number) {
+    this.updateStyle({ strokeWidth: v });
+  }
+
+  get dropShadow(): any {
+    return this.originalOpts?.dropShadow;
+  }
+
+  set dropShadow(v: any) {
+    this.updateStyle({ dropShadow: v });
+  }
+
+  get caption(): any {
+    return this.originalOpts?.caption;
+  }
+
+  set caption(v: any) {
+    this.updateStyle({ caption: v });
   }
 
   /**
@@ -569,6 +617,7 @@ export class CaptionClip extends BaseClip implements IClip {
     // 2. Update internal opts
     if (opts.fontSize !== undefined) this.opts.fontSize = opts.fontSize;
     if (opts.fontFamily !== undefined) this.opts.fontFamily = opts.fontFamily;
+    if (opts.fontUrl !== undefined) this.opts.fontUrl = opts.fontUrl;
     if (opts.fontWeight !== undefined) this.opts.fontWeight = opts.fontWeight;
     if (opts.fontStyle !== undefined) this.opts.fontStyle = opts.fontStyle;
     if (opts.fill !== undefined) this.opts.fill = opts.fill;
@@ -577,6 +626,24 @@ export class CaptionClip extends BaseClip implements IClip {
       this.opts.letterSpacing = opts.letterSpacing;
     if (opts.lineHeight !== undefined) this.opts.lineHeight = opts.lineHeight;
     if (opts.textCase !== undefined) this.opts.textCase = opts.textCase;
+
+    // Handle nested colors in opts.caption.colors
+    if (opts.caption?.colors) {
+      if (opts.caption.colors.appeared !== undefined)
+        this.opts.appeared = opts.caption.colors.appeared;
+      if (opts.caption.colors.active !== undefined)
+        this.opts.active = opts.caption.colors.active;
+      if (opts.caption.colors.activeFill !== undefined)
+        this.opts.activeFill = opts.caption.colors.activeFill;
+      if (opts.caption.colors.background !== undefined)
+        this.opts.background = opts.caption.colors.background;
+      if (opts.caption.colors.keyword !== undefined)
+        this.opts.keyword = opts.caption.colors.keyword;
+    }
+
+    if (opts.caption?.preserveKeywordColor !== undefined) {
+      this.opts.preserveKeywordColor = opts.caption.preserveKeywordColor;
+    }
 
     // 3. Update TextStyle
     const styleOptions: any = {
@@ -630,7 +697,7 @@ export class CaptionClip extends BaseClip implements IClip {
           }
         }
       } else {
-        const strokeColor = parseColor(this.originalOpts.stroke);
+        const strokeColor = parseColor(this.originalOpts.stroke as any);
         const strokeWidth =
           opts.strokeWidth ?? this.originalOpts.strokeWidth ?? 0;
         if (strokeColor !== undefined) {
@@ -641,11 +708,28 @@ export class CaptionClip extends BaseClip implements IClip {
       }
     }
 
+    // Handle dropShadow
+    const dropShadow = opts.dropShadow ?? this.originalOpts.dropShadow;
+    if (dropShadow) {
+      const shadowColor = parseColor(dropShadow.color);
+      if (shadowColor !== undefined) {
+        styleOptions.dropShadow = {
+          color: shadowColor,
+          alpha: dropShadow.alpha ?? 0.5,
+          blur: dropShadow.blur ?? 4,
+          angle: dropShadow.angle ?? Math.PI / 6,
+          distance: dropShadow.distance ?? 2,
+        };
+      }
+    }
+
     this.textStyle = new TextStyle(styleOptions);
 
     // 4. Refresh captions
     await this.refreshCaptions();
+    this.emit('propsChange', opts as any);
   }
+
 
   private async refreshCaptions() {
     if (!this.pixiTextContainer) {

@@ -11,6 +11,7 @@ import {
 import { usePanelStore } from '@/stores/panel-store';
 import Header from '@/components/editor/header';
 import { Loading } from '@/components/editor/loading';
+import FloatingControl from '@/components/editor/floating-controls/floating-control';
 
 export default function Editor() {
   const {
@@ -42,9 +43,10 @@ export default function Editor() {
             minSize={15}
             maxSize={40}
             onResize={setToolsPanel}
-            className="max-w-96 rounded-sm"
+            className="max-w-96 rounded-sm relative overflow-visible!"
           >
             <MediaPanel />
+            <FloatingControl />
           </ResizablePanel>
 
           <ResizableHandle />
