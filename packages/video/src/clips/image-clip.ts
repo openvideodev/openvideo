@@ -473,47 +473,4 @@ export class ImageClip extends BaseClip implements IClip {
 
     return clip;
   }
-
-  /**
-   * Scale clip to fit within the scene dimensions while maintaining aspect ratio
-   * Similar to fabric.js scaleToFit
-   * @param sceneWidth Scene width
-   * @param sceneHeight Scene height
-   */
-  async scaleToFit(sceneWidth: number, sceneHeight: number): Promise<void> {
-    await this.ready;
-    const { width, height } = this.meta;
-    if (width === 0 || height === 0) return;
-
-    const scale = Math.min(sceneWidth / width, sceneHeight / height);
-    this.width = width * scale;
-    this.height = height * scale;
-  }
-
-  /**
-   * Scale clip to fill the scene dimensions while maintaining aspect ratio
-   * May crop parts of the clip. Similar to fabric.js scaleToFill
-   * @param sceneWidth Scene width
-   * @param sceneHeight Scene height
-   */
-  async scaleToFill(sceneWidth: number, sceneHeight: number): Promise<void> {
-    await this.ready;
-    const { width, height } = this.meta;
-    if (width === 0 || height === 0) return;
-
-    const scale = Math.max(sceneWidth / width, sceneHeight / height);
-    this.width = width * scale;
-    this.height = height * scale;
-  }
-
-  /**
-   * Center the clip within the scene dimensions
-   * Similar to fabric.js center
-   * @param sceneWidth Scene width
-   * @param sceneHeight Scene height
-   */
-  centerInScene(sceneWidth: number, sceneHeight: number): void {
-    this.left = (sceneWidth - this.width) / 2;
-    this.top = (sceneHeight - this.height) / 2;
-  }
 }

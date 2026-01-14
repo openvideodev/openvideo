@@ -10,6 +10,7 @@ export {
   TextClip,
   EffectClip,
   TransitionClip,
+  PlaceholderClip,
 } from './clips';
 export type { ITextClipOpts } from './clips';
 export type { IClip, IMP4ClipOpts } from './clips';

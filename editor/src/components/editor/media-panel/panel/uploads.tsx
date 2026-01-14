@@ -103,6 +103,9 @@ export default function PanelUploads() {
         await studio.addClip(imageClip);
       } else {
         const videoClip = await VideoClip.fromUrl(asset.src);
+        // Scale to fit and center in scene (1080x1920)
+        await videoClip.scaleToFit(1080, 1920);
+        videoClip.centerInScene(1080, 1920);
         await studio.addClip(videoClip);
       }
     } catch (error) {

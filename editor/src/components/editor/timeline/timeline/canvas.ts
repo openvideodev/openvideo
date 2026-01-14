@@ -549,7 +549,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           clip.type === 'Image' ||
           clip.type === 'Audio' ||
           clip.type === 'Effect' ||
-          clip.type === 'Transition'
+          clip.type === 'Transition' ||
+          clip.type === 'Placeholder'
         ) {
           let timelineClip = this.#clipObjects.get(clip.id);
           const clipName = clip.text || clip.name || clip.type;
@@ -566,7 +567,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
             if (clip.type === 'Audio') {
               timelineClip = new AudioClip(commonProps);
-            } else if (clip.type === 'Video') {
+            } else if (clip.type === 'Video' || clip.type === 'Placeholder') {
               timelineClip = new VideoClip(commonProps);
             } else if (clip.type === 'Image') {
               timelineClip = new ImageClip(commonProps);

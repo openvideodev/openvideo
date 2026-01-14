@@ -9,4 +9,5 @@ export { VideoClip } from './video-clip';
 export type { IMP4ClipOpts } from './video-clip';
 export * from './text-clip';
 export * from './effect-clip';
+export * from './placeholder-clip';
 export * from './transition-clip';

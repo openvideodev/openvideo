@@ -36,6 +36,7 @@ export const TRACK_COLORS = {
 export const TRACK_HEIGHTS: Record<string, number> = {
   video: 40,
   image: 40,
+  placeholder: 40,
   text: 32,
   effect: 32,
   audio: 32,

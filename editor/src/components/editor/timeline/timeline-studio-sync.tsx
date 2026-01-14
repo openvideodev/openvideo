@@ -254,10 +254,39 @@ export const TimelineStudioSync = ({
       }));
     };
 
+    const handleClipReplaced = ({
+      newClip,
+    }: {
+      oldClip: IClip;
+      newClip: IClip;
+      trackId: string;
+    }) => {
+      useTimelineStore.setState((state) => {
+        if (!state.clips[newClip.id]) return state;
+
+        const updatedClips = {
+          ...state.clips,
+          [newClip.id]: {
+            ...state.clips[newClip.id],
+            ...newClip,
+            display: { ...newClip.display },
+            trim: newClip.trim ? { ...newClip.trim } : undefined,
+            sourceDuration: (newClip as any).meta?.duration || newClip.duration,
+          },
+        };
+
+        return {
+          ...state,
+          clips: updatedClips,
+        };
+      });
+    };
+
     studio.on('clip:added', handleClipAdded);
     studio.on('clips:added', handleClipsAdded);
     studio.on('clip:removed', handleClipRemoved);
     studio.on('clip:updated', handleClipUpdated);
+    studio.on('clip:replaced', handleClipReplaced);
     studio.on('track:added', handleTrackAdded as any);
     studio.on('track:removed', handleTrackRemoved);
     studio.on('studio:restored', handleStudioRestored as any);
@@ -281,6 +310,7 @@ export const TimelineStudioSync = ({
       studio.off('clips:added', handleClipsAdded);
       studio.off('clip:removed', handleClipRemoved);
       studio.off('clip:updated', handleClipUpdated);
+      studio.off('clip:replaced', handleClipReplaced);
       studio.off('track:added', handleTrackAdded);
       studio.off('track:removed', handleTrackRemoved);
       studio.off('studio:restored', handleStudioRestored as any);

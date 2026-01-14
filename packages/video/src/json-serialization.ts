@@ -6,6 +6,7 @@ import {
   CaptionClip,
   EffectClip,
   TransitionClip,
+  PlaceholderClip,
   type IClip,
   type ITransitionInfo,
 } from './clips';
@@ -199,6 +200,11 @@ export interface TransitionClipJSON extends BaseClipJSON {
   toClipId: string | null;
 }
 
+// Placeholder clip specific
+export interface PlaceholderClipJSON extends BaseClipJSON {
+  type: 'Placeholder';
+}
+
 // Transition interface
 export interface TransitionJSON {
   key: string;
@@ -215,7 +221,8 @@ export type ClipJSON =
   | TextClipJSON
   | CaptionClipJSON
   | EffectClipJSON
-  | TransitionClipJSON;
+  | TransitionClipJSON
+  | PlaceholderClipJSON;
 
 export interface StudioTrackJSON {
   id: string;
@@ -288,6 +295,9 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       break;
     case 'Transition':
       ClipClass = TransitionClip;
+      break;
+    case 'Placeholder':
+      ClipClass = PlaceholderClip;
       break;
   }
 

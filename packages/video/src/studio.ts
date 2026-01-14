@@ -58,6 +58,7 @@ export interface StudioEvents {
   'clips:added': { clips: IClip[]; trackId?: string }; // Batch event
   'clip:removed': { clipId: string };
   'clip:updated': { clip: IClip };
+  'clip:replaced': { oldClip: IClip; newClip: IClip; trackId: string };
   'studio:restored': {
     clips: IClip[];
     tracks: StudioTrack[];
@@ -846,8 +847,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       // Handle playback elements (VideoClip and AudioClip)
       const playbackInfo = this.playbackElements.get(clip);
 
-      const isTransitionable =
-        clip instanceof VideoClip || clip instanceof ImageClip;
+      const isTransitionable = clip.type === 'Video' || clip.type === 'Image';
       const transitionStartTime = clip.transition ? clip.transition.start! : 0;
       const transitionEndTime = clip.transition ? clip.transition.end! : 0;
       const inTransition =
@@ -867,7 +867,7 @@ export class Studio extends EventEmitter<StudioEvents> {
         );
 
         // For VideoClip, handle sprite visibility
-        if (clip instanceof VideoClip) {
+        if (clip.type === 'Video' && this.isPlaybackCapable(clip)) {
           const videoSprite = this.videoSprites.get(clip);
           if (videoSprite != null) {
             const clipDurationSeconds = clip.meta.duration / 1e6;
@@ -1075,8 +1075,8 @@ export class Studio extends EventEmitter<StudioEvents> {
 
         // Optimized path: Check if clip has a Texture (e.g., ImageClip.fromUrl, TextClip)
         // This avoids ImageBitmap → Canvas → Texture conversion
-        if (clip instanceof ImageClip) {
-          const texture = clip.getTexture();
+        if (clip.type === 'Image') {
+          const texture = (clip as ImageClip).getTexture();
           if (texture != null) {
             // Use Texture directly for optimized rendering
             await renderer.updateFrame(texture);
@@ -1090,8 +1090,8 @@ export class Studio extends EventEmitter<StudioEvents> {
 
         // Optimized path for TextClip: Use Texture directly
         // This avoids Text → RenderTexture → ImageBitmap → Canvas → Texture conversion
-        if (clip instanceof TextClip) {
-          const texture = await clip.getTexture();
+        if (clip.type === 'Text') {
+          const texture = await (clip as TextClip).getTexture();
           if (texture != null) {
             // Use Texture directly for optimized rendering
             await renderer.updateFrame(texture);
@@ -1105,10 +1105,10 @@ export class Studio extends EventEmitter<StudioEvents> {
 
         // Optimized path for CaptionClip: Use Texture directly
         // This avoids Text → RenderTexture → ImageBitmap → Canvas → Texture conversion
-        if (clip instanceof CaptionClip) {
+        if (clip.type === 'Caption') {
           // Update caption highlighting based on current time before rendering
-          clip.updateState(relativeTime);
-          const texture = await clip.getTexture();
+          (clip as CaptionClip).updateState(relativeTime);
+          const texture = await (clip as CaptionClip).getTexture();
           if (texture != null) {
             // Use Texture directly for optimized rendering
             await renderer.updateFrame(texture);

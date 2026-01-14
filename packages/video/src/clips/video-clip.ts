@@ -11,6 +11,7 @@ import { audioResample, extractPCM4AudioData, sleep } from '../utils';
 import { BaseClip } from './base-clip';
 import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
 import { type VideoClipJSON } from '../json-serialization';
+import { AssetManager } from '../utils/asset-manager';
 
 let CLIP_ID = 0;
 
@@ -183,14 +184,38 @@ export class VideoClip extends BaseClip implements IPlaybackCapable {
       height?: number;
     } = {}
   ): Promise<VideoClip> {
+    const cachedFile = await AssetManager.get(url);
+    if (cachedFile) {
+      const clip = new VideoClip(cachedFile, {}, url);
+      await clip.ready;
+      // Set position and size
+      if (opts.x !== undefined) clip.left = opts.x;
+      if (opts.y !== undefined) clip.top = opts.y;
+      if (opts.width !== undefined) clip.width = opts.width;
+      if (opts.height !== undefined) clip.height = opts.height;
+      return clip;
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(
         `Failed to fetch video from ${url}: ${response.status} ${response.statusText}`
       );
     }
-    const clip = new VideoClip(response.body!, {}, url);
-    await clip.ready;
+
+    // Store in OPFS while loading
+    const stream = response.body!;
+    const [s1, s2] = stream.tee();
+
+    const clipPromise = (async () => {
+      const clip = new VideoClip(s1, {}, url);
+      await clip.ready;
+      return clip;
+    })();
+
+    const cachePromise = AssetManager.put(url, s2);
+
+    const [clip] = await Promise.all([clipPromise, cachePromise]);
 
     // Set position and size
     if (opts.x !== undefined) clip.left = opts.x;

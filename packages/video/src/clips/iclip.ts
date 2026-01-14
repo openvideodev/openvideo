@@ -41,6 +41,11 @@ export interface IClip extends Omit<BaseSprite, 'destroy' | 'ready'> {
    */
   readonly type: string;
 
+  /**
+   * Source URL or identifier for this clip
+   */
+  src: string;
+
   // Clip-specific methods
   /**
    * Extract data from clip at specified time
@@ -119,6 +124,21 @@ export interface IClip extends Omit<BaseSprite, 'destroy' | 'ready'> {
   getVisibleHandles?: () => Array<
     'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
   >;
+
+  /**
+   * Scale clip to fit within the scene dimensions while maintaining aspect ratio
+   */
+  scaleToFit(sceneWidth: number, sceneHeight: number): Promise<void>;
+
+  /**
+   * Scale clip to fill the scene dimensions while maintaining aspect ratio
+   */
+  scaleToFill(sceneWidth: number, sceneHeight: number): Promise<void>;
+
+  /**
+   * Center the clip within the scene dimensions
+   */
+  centerInScene(sceneWidth: number, sceneHeight: number): void;
 }
 
 /**

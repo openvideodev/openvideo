@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
-import { VideoClip, Log } from '@designcombo/video';
+import { VideoClip, Log, PlaceholderClip } from '@designcombo/video';
 import { Search, Film, Loader2 } from 'lucide-react';
 import {
   InputGroup,
@@ -78,7 +78,7 @@ export default function PanelVideos() {
 
   const addItemToCanvas = async (asset: PexelsVideo) => {
     if (!studio) return;
-
+    console.log({ asset });
     try {
       // Find the best quality mp4 link
       const videoFile =
@@ -86,8 +86,49 @@ export default function PanelVideos() {
         asset.video_files[0];
       if (!videoFile) throw new Error('No video file found');
 
-      const videoClip = await VideoClip.fromUrl(videoFile.link);
-      await studio.addClip(videoClip);
+      const src = videoFile.link;
+      console.log({ asset });
+      // 1. Create and add placeholder immediately
+      const placeholder = new PlaceholderClip(
+        src,
+        {
+          width: asset.width,
+          height: asset.height,
+          duration: asset.duration * 1e6, // seconds to microseconds
+        },
+        'Video'
+      );
+
+      // Scale to fit and center in scene (1080x1920)
+      await placeholder.scaleToFit(1080, 1920);
+      placeholder.centerInScene(1080, 1920);
+
+      await studio.addClip(placeholder);
+
+      // 2. Load the real clip in the background
+      console.log('REPLACING LOADING');
+      VideoClip.fromUrl(src)
+        .then(async (videoClip) => {
+          // 3. Replace all placeholders with this source once loaded
+          console.log('REPLACING LOADED');
+          await studio.timeline.replaceClipsBySource(src, async (oldClip) => {
+            const clone = await videoClip.clone();
+            // Copy state from placeholder (user might have moved/resized/split it)
+            clone.id = oldClip.id; // Keep the same ID if possible, or replaceClipsBySource handles it
+            clone.left = oldClip.left;
+            clone.top = oldClip.top;
+            clone.width = oldClip.width;
+            clone.height = oldClip.height;
+            clone.display = { ...oldClip.display };
+            clone.trim = { ...oldClip.trim };
+            clone.zIndex = oldClip.zIndex;
+            return clone;
+          });
+        })
+        .catch((err) => {
+          Log.error('Failed to load video in background:', err);
+          // Optional: handle failure by removing placeholder or showing error
+        });
     } catch (error) {
       Log.error(`Failed to add video:`, error);
     }

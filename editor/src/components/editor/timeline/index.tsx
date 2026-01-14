@@ -540,7 +540,7 @@ function TrackIcon({ track }: { track: TimelineTrack }) {
       {track.type === 'Image' && (
         <Image className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
-      {track.type === 'Video' && (
+      {(track.type === 'Video' || track.type === 'Placeholder') && (
         <Video className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
       {track.type === 'Text' && (
