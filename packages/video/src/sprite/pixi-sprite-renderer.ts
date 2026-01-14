@@ -108,11 +108,15 @@ export class PixiSpriteRenderer {
     }
 
     // Optimized path: If frame is already a Texture, use it directly
-    if (frame instanceof Texture) {
+    // Duck typing: Check for Texture-like object (has source property) to avoid instanceof issues
+    // This is critical because sometimes RenderTexture instance checks fail across module boundaries
+    const isTexture = frame instanceof Texture || (frame && typeof (frame as any).source !== 'undefined');
+
+    if (isTexture) {
       // Validate texture dimensions
       if (frame.width === 0 || frame.height === 0) {
         console.warn(
-          'PixiSpriteRenderer: Invalid texture dimensions',
+          'PixiSpriteRenderer: Texture has zero dimensions',
           frame.width,
           frame.height
         );
@@ -120,13 +124,13 @@ export class PixiSpriteRenderer {
       }
 
       if (this.pixiSprite == null) {
-        this.pixiSprite = new Sprite(frame);
+        this.pixiSprite = new Sprite(frame as Texture);
         this.pixiSprite.label = 'MainSprite';
         // this.root is already created in constructor
         this.root!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
-        this.pixiSprite.texture = frame;
+        this.pixiSprite.texture = frame as Texture;
       }
 
       if (this.root != null) {
@@ -138,24 +142,37 @@ export class PixiSpriteRenderer {
 
     // Traditional path: ImageBitmap → Canvas → Texture
     // Validate frame dimensions
-    if (frame.width === 0 || frame.height === 0) {
+    // Safe access to width/height and ensure they are numbers
+    const width = (frame as any).width;
+    const height = (frame as any).height;
+
+    if (
+      typeof width !== 'number' ||
+      typeof height !== 'number' ||
+      width <= 0 ||
+      height <= 0
+    ) {
       console.warn(
         'PixiSpriteRenderer: Invalid frame dimensions',
-        frame.width,
-        frame.height
+        width,
+        height
       );
       return;
     }
 
     // Initialize texture and sprite on first frame if not already created
     const isFirstFrame = this.texture == null || this.pixiSprite == null;
-    // Update canvas size if needed
+    
+    // Update canvas size using integers to prevent "Value is not of type unsigned long" errors
+    const intWidth = Math.floor(width);
+    const intHeight = Math.floor(height);
+    
     const needsResize =
-      this.canvas.width !== frame.width || this.canvas.height !== frame.height;
+      this.canvas.width !== intWidth || this.canvas.height !== intHeight;
 
     if (needsResize || isFirstFrame) {
-      this.canvas.width = frame.width;
-      this.canvas.height = frame.height;
+      this.canvas.width = intWidth;
+      this.canvas.height = intHeight;
 
       if (this.texture != null) {
         this.texture.destroy(true);

@@ -7,8 +7,8 @@ import {
   FederatedPointerEvent,
 } from 'pixi.js';
 import type { IClip } from '../clips/iclip';
-import { TextClip } from '../clips/text-clip';
-import { CaptionClip } from '../clips/caption-clip';
+import { Text } from '../clips/text-clip';
+import { Caption } from '../clips/caption-clip';
 import { Transformer } from '../transfomer/transformer';
 import type { Studio } from '../studio';
 
@@ -23,7 +23,7 @@ export class SelectionManager {
   private dragSelectionStart = new Point();
 
   // Text/Caption realtime resize state
-  private isUpdatingTextClipRealtime = false;
+  private isUpdatingTextRealtime = false;
   private textClipResizedWidth: number | null = null;
   private textClipResizeHandle: string | null = null;
   private textClipResizedSx: number | null = null;
@@ -423,15 +423,15 @@ export class SelectionManager {
   // Copied Sync Logic
   private async syncSelectedClipsTransformsRealtime(): Promise<void> {
     if (this.selectedClips.size === 0 || this.activeTransformer == null) return;
-    if (this.isUpdatingTextClipRealtime) return;
-    this.isUpdatingTextClipRealtime = true;
+    if (this.isUpdatingTextRealtime) return;
+    this.isUpdatingTextRealtime = true;
 
     try {
       const activeHandle = this.activeTransformer.activeHandle;
       if (activeHandle !== 'mr' && activeHandle !== 'ml') return;
 
       for (const clip of this.selectedClips) {
-        if (!(clip instanceof TextClip)) continue;
+        if (!(clip instanceof Text)) continue;
 
         const renderer = this.studio.spriteRenderers.get(clip);
         if (renderer == null) continue;
@@ -474,7 +474,7 @@ export class SelectionManager {
         }
       }
     } finally {
-      this.isUpdatingTextClipRealtime = false;
+      this.isUpdatingTextRealtime = false;
     }
   }
 
@@ -496,7 +496,7 @@ export class SelectionManager {
       const newHeight = Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
 
       const finalNewWidth =
-        (clip instanceof TextClip || clip instanceof CaptionClip) &&
+        (clip instanceof Text || clip instanceof Caption) &&
         this.textClipResizedWidth !== null
           ? this.textClipResizedWidth
           : newWidth;
@@ -514,7 +514,7 @@ export class SelectionManager {
       const newLeft = root.x - finalNewWidth / 2;
 
       const isReflowableTextClip =
-        clip instanceof TextClip && this.textClipResizedWidth !== null;
+        clip instanceof Text && this.textClipResizedWidth !== null;
 
       if (isReflowableTextClip) {
         const styleUpdate: any = {

@@ -320,11 +320,11 @@ export class Transformer extends Container {
     const sy = proposed.height / this.#opBounds.height;
     const pivotWorld = this.toGlobal(pivotLocal);
 
-    // Check if we're transforming a TextClip or CaptionClip (Fabric.js Textbox behavior)
+    // Check if we're transforming a Text or Caption (Fabric.js Textbox behavior)
     const isTextClip = this.opts.clip && this.opts.clip.type === 'Text';
 
     if (isTextClip) {
-      // For TextClip: Only adjust container width, text reflows naturally
+      // For Text: Only adjust container width, text reflows naturally
       // Calculate new width based on scale
       const newWidth = proposed.width;
 
@@ -340,7 +340,7 @@ export class Transformer extends Container {
         sy,
       });
     } else {
-      // Standard scaling for non-TextClip objects
+      // Standard scaling for non-Text objects
       this.#applyWorldDelta(this.#deltaScale(pivotWorld, this.#angle, sx, sy));
     }
 

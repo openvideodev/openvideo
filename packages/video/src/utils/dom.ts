@@ -77,15 +77,15 @@ export async function renderTxt2Img(
 }
 
 /**
- * Render text as {@link ImageBitmap} for creating {@link ImageClip}
+ * Render text as {@link ImageBitmap} for creating {@link Image}
  * @param text - Text to render
  * @param cssText - CSS styles to apply to the text
  * @param opts - Options
  * @param opts.font - Custom font
  * @param opts.onCreated - Callback after creation
  *
- * @example
- * new ImageClip(
+ * // Example:
+ * new Image(
  *   await renderTxt2ImgBitmap(
  *     'Watermark',
  *    `font-size:40px; color: white; text-shadow: 2px 2px 6px red; font-family: CustomFont;`,

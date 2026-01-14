@@ -1,6 +1,6 @@
 import {
   type Application,
-  Text,
+  Text as PixiText,
   TextStyle,
   RenderTexture,
   Color,
@@ -12,10 +12,10 @@ import {
 import { Log } from '../utils/log';
 import { BaseClip } from './base-clip';
 import type { IClip } from './iclip';
-import type { TextClipJSON, TextStyleJSON } from '../json-serialization';
+import type { TextJSON, TextStyleJSON } from '../json-serialization';
 import { parseColor, resolveColor } from '../utils/color';
 
-export interface ITextClipOpts {
+export interface ITextOpts {
   /**
    * Font size in pixels
    * @default 40
@@ -139,7 +139,7 @@ export interface ITextClipOpts {
  * Text clip using PixiJS Text for rendering
  *
  * @example
- * const textClip = new TextClip('Hello World', {
+ * const textClip = new Text('Hello World', {
  *   fontSize: 48,
  *   fill: '#ffffff',
  *   stroke: '#000000',
@@ -153,7 +153,7 @@ export interface ITextClipOpts {
  * });
  * textClip.duration = 5e6; // 5 seconds
  */
-export class TextClip extends BaseClip {
+export class Text extends BaseClip {
   readonly type = 'Text';
   ready: IClip['ready'];
 
@@ -260,7 +260,7 @@ export class TextClip extends BaseClip {
     };
   }
 
-  override set style(opts: Partial<ITextClipOpts>) {
+  override set style(opts: Partial<ITextOpts>) {
     this.updateStyle(opts);
   }
 
@@ -313,15 +313,15 @@ export class TextClip extends BaseClip {
     this.updateStyle({ textCase: v });
   }
 
-  private pixiText: Text | null = null;
+  private pixiText: PixiText | null = null;
   private textStyle: TextStyle;
   private renderTexture: RenderTexture | null = null;
   // External renderer (preferred) - provided via constructor or setRenderer()
-  // If not provided, TextClip will create its own minimal renderer as fallback
+  // If not provided, Text will create its own minimal renderer as fallback
   private externalRenderer: Application['renderer'] | null = null;
   private pixiApp: Application | null = null; // Fallback renderer
   // Store original options for serialization to avoid accessing TextStyle properties
-  private originalOpts: ITextClipOpts;
+  private originalOpts: ITextOpts;
 
   /**
    * Unique identifier for this clip instance
@@ -341,10 +341,12 @@ export class TextClip extends BaseClip {
 
   constructor(
     text: string,
-    opts: ITextClipOpts = {},
+    opts: ITextOpts = {},
     renderer?: Application['renderer']
   ) {
     super();
+
+    console.log('opts', opts);
     // Store original options for serialization (shallow copy is fine since options are primitives)
     this.originalOpts = { ...opts };
     this.text = text;
@@ -366,7 +368,7 @@ export class TextClip extends BaseClip {
 
       // Constructor specific: check if we need to set duration from meta
       const meta = { ...this._meta };
-      Log.info('TextClip ready:', meta);
+      Log.info('Text ready:', meta);
       return meta;
     })();
   }
@@ -430,7 +432,7 @@ export class TextClip extends BaseClip {
     await this.ready;
 
     if (this.pixiText == null || this.renderTexture == null) {
-      throw new Error('TextClip not initialized');
+      throw new Error('Text not initialized');
     }
 
     // Validate RenderTexture dimensions before rendering
@@ -549,7 +551,7 @@ export class TextClip extends BaseClip {
     };
 
     // Start with original options (preserves gradients and complex objects)
-    const opts: ITextClipOpts = {
+    const opts: ITextOpts = {
       fontSize: originalOpts.fontSize ?? style.fontSize,
       fontFamily:
         originalOpts.fontFamily ??
@@ -631,7 +633,7 @@ export class TextClip extends BaseClip {
     if (originalOpts.lineHeight !== undefined) {
       opts.lineHeight = originalOpts.lineHeight;
     } else if (style.lineHeight !== undefined) {
-      // CRITICAL: style.lineHeight is absolute pixels, but ITextClipOpts.lineHeight is a multiplier
+      // CRITICAL: style.lineHeight is absolute pixels, but ITextOpts.lineHeight is a multiplier
       // Convert back to multiplier by dividing by fontSize
       const fontSize = opts.fontSize ?? style.fontSize ?? 40;
       opts.lineHeight = style.lineHeight / fontSize;
@@ -642,7 +644,7 @@ export class TextClip extends BaseClip {
       opts.letterSpacing = style.letterSpacing;
     }
 
-    const newClip = new TextClip(this.text, opts) as this;
+    const newClip = new Text(this.text, opts) as this;
     await newClip.ready;
     this.copyStateTo(newClip);
     // Copy id and effects
@@ -655,7 +657,7 @@ export class TextClip extends BaseClip {
    * Update text styling options and refresh the texture
    * This is used for dynamic updates like resizing with text reflow
    */
-  async updateStyle(opts: Partial<ITextClipOpts>): Promise<void> {
+  async updateStyle(opts: Partial<ITextOpts>): Promise<void> {
     // 1. Update originalOpts with new values
     this.originalOpts = { ...this.originalOpts, ...opts };
 
@@ -693,7 +695,7 @@ export class TextClip extends BaseClip {
 
     // Reuse Pixi Text object to avoid resource churn and potential v8 sync issues
     if (!this.pixiText) {
-      this.pixiText = new Text({ text: textToRender, style });
+      this.pixiText = new PixiText({ text: textToRender, style });
     } else {
       this.pixiText.text = textToRender;
       this.pixiText.style = style;
@@ -867,9 +869,9 @@ export class TextClip extends BaseClip {
   }
 
   /**
-   * Helper to create PixiJS TextStyle options from TextClip options
+   * Helper to create PixiJS TextStyle options from Text options
    */
-  private createStyleFromOpts(opts: ITextClipOpts): any {
+  private createStyleFromOpts(opts: ITextOpts): any {
     const fontSize = opts.fontSize ?? 40;
     const lineHeightMultiplier = opts.lineHeight ?? 1;
 
@@ -966,7 +968,7 @@ export class TextClip extends BaseClip {
 
   destroy(): void {
     if (this.destroyed) return;
-    Log.info('TextClip destroy');
+    Log.info('Text destroy');
 
     // Destroy pixiText first (must be destroyed before app)
     // Note: pixiText is not added to stage, but may reference app internals
@@ -1025,7 +1027,7 @@ export class TextClip extends BaseClip {
     super.destroy();
   }
 
-  toJSON(main: boolean = false): TextClipJSON {
+  toJSON(main: boolean = false): TextJSON {
     const base = super.toJSON(main);
 
     // Build style object from originalOpts
@@ -1058,7 +1060,7 @@ export class TextClip extends BaseClip {
           color: this.originalOpts.stroke.color as any,
           width: this.originalOpts.stroke.width,
           join: this.originalOpts.stroke.join,
-          cap: (this.originalOpts.stroke as any).cap, // cap might be missing from ITextClipOpts definition but present in object
+          cap: (this.originalOpts.stroke as any).cap, // cap might be missing from ITextOpts definition but present in object
           miterLimit: (this.originalOpts.stroke as any).miterLimit,
         };
       } else {
@@ -1086,15 +1088,15 @@ export class TextClip extends BaseClip {
       style,
       id: this.id,
       effects: this.effects,
-    } as TextClipJSON;
+    } as TextJSON;
   }
 
   /**
-   * Create a TextClip instance from a JSON object (fabric.js pattern)
+   * Create a Text instance from a JSON object (fabric.js pattern)
    * @param json The JSON object representing the clip
-   * @returns Promise that resolves to a TextClip instance
+   * @returns Promise that resolves to a Text instance
    */
-  static async fromObject(json: TextClipJSON): Promise<TextClip> {
+  static async fromObject(json: TextJSON): Promise<Text> {
     if (json.type !== 'Text') {
       throw new Error(`Expected Text, got ${json.type}`);
     }
@@ -1104,7 +1106,7 @@ export class TextClip extends BaseClip {
     const style = json.style || {};
 
     // Build options object from style
-    const textClipOpts: ITextClipOpts = {};
+    const textClipOpts: ITextOpts = {};
     if (style.fontSize !== undefined) textClipOpts.fontSize = style.fontSize;
     if (style.fontFamily !== undefined)
       textClipOpts.fontFamily = style.fontFamily;
@@ -1151,7 +1153,7 @@ export class TextClip extends BaseClip {
       };
     }
 
-    const clip = new TextClip(text, textClipOpts);
+    const clip = new Text(text, textClipOpts);
 
     // Apply properties
     clip.left = json.left;

@@ -60,7 +60,7 @@ export abstract class BaseSprite extends EventEmitter<BaseSpriteEvents> {
    * Playback rate of current clip, 1 means normal playback
    * **Note**
    *    1. When setting playbackRate, duration must be actively corrected
-   *    2. Audio uses the simplest interpolation algorithm to change rate, so changing rate will cause pitch variation, for custom algorithm please use {@link VideoClip.tickInterceptor} to implement
+   *    2. Audio uses the simplest interpolation algorithm to change rate, so changing rate will cause pitch variation, for custom algorithm please use {@link Video.tickInterceptor} to implement
    */
   playbackRate = 1;
   /**

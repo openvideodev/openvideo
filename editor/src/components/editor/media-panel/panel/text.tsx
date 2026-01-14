@@ -116,11 +116,11 @@ export default function PanelText() {
         wordWrapWidth: 800,
         fontUrl: (preset?.style as any)?.fontUrl,
       });
-
+      await textClip.ready;
       textClip.display.from = 0;
       textClip.duration = 5e6;
       textClip.display.to = 5e6;
-
+      console.log('textClipppppp', {textClip});
       await studio.addClip(textClip);
     } catch (error) {
       Log.error('Failed to add text:', error);

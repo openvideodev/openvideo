@@ -1,9 +1,9 @@
 import { Texture, Sprite } from 'pixi.js';
 import type { Studio, StudioTrack } from '../studio';
 import type { IClip, IPlaybackCapable } from '../clips/iclip';
-import { VideoClip } from '../clips/video-clip';
-import { ImageClip } from '../clips/image-clip';
-import { TextClip } from '../clips/text-clip';
+import { Video } from '../clips/video-clip';
+import { Image } from '../clips/image-clip';
+import { Text } from '../clips/text-clip';
 import { TransitionClip } from '../clips/transition-clip';
 import { PixiSpriteRenderer } from '../sprite/pixi-sprite-renderer';
 import {
@@ -78,7 +78,7 @@ export class TimelineModel {
   /**
    * Add a Media clip (Video/Image) to the main track with ripple effect
    */
-  async addMedia(clip: VideoClip | ImageClip): Promise<void> {
+  async addMedia(clip: Video | Image | Text): Promise<void> {
     if (this.studio.destroyed) return;
 
     // 1. Scale and Center
@@ -715,8 +715,8 @@ export class TimelineModel {
 
   private async applyClipUpdate(clip: IClip, updates: Partial<IClip>) {
     // Special handling for TextClip style updates
-    if (clip instanceof TextClip) {
-      await clip.updateStyle(updates as any);
+    if (clip instanceof Text) {
+      await (clip as Text).updateStyle(updates as any);
       // Remove 'style' from updates to prevent "Cannot set property style of #<TextClip> which has only a getter"
       if ('style' in updates) {
         delete (updates as any).style;
@@ -1265,7 +1265,7 @@ export class TimelineModel {
         }
       }
 
-      // Check CaptionClip style
+      // Check Caption style
       if (clip.type === 'Caption') {
         const fontUrl = clip.style?.fontUrl || (clip as any).fontUrl;
         if (fontUrl) {

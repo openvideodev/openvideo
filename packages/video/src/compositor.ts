@@ -28,8 +28,8 @@ import {
   type ProjectJSON,
   type TransitionJSON,
 } from './json-serialization';
-import { VideoClip } from './clips/video-clip';
-import { ImageClip } from './clips/image-clip';
+import { Video } from './clips/video-clip';
+import { Image } from './clips/image-clip';
 import { makeTransition } from './transition/transition';
 
 export interface ICompositorOpts {
@@ -69,10 +69,10 @@ async function waitEncoderQueue(getQSize: () => number) {
  * Video compositor that can add multiple {@link OffscreenSprite} instances,
  * @example
  * const spr1 = new OffscreenSprite(
- *   new VideoClip((await fetch('<mp4 url>')).body),
+ *   new Video((await fetch('<mp4 url>')).body),
  * );
  * const spr2 = new OffscreenSprite(
- *   await AudioClip.fromUrl('<audio url>'),
+ *   await Audio.fromUrl('<audio url>'),
  * );
  * const com = new Compositor({ width: 1280, height: 720, });
 
@@ -314,7 +314,7 @@ export class Compositor extends EventEmitter<{
 
     if (maxTime === Infinity || maxTime <= 0) {
       throw Error(
-        'Unable to determine the end time, please specify a main sprite, or limit the duration of ImageClip, AudioClip'
+        'Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio'
       );
     }
     // Main video's (main) videoTrack duration value is 0
@@ -539,7 +539,7 @@ export class Compositor extends EventEmitter<{
               c.id !== clip.id &&
               c.zIndex === clip.zIndex &&
               c.display.from < clip.display.from &&
-              (c instanceof VideoClip || c instanceof ImageClip)
+              (c instanceof Video || c instanceof Image)
           )
           .sort((a, b) => b.display.to - a.display.to)[0];
 
@@ -677,7 +677,7 @@ function createSpritesRender(opts: {
             c.id !== clip.id &&
             c.zIndex === clip.zIndex && // SAME TRACK
             c.display.from < clip.display.from &&
-            (c instanceof VideoClip || c instanceof ImageClip)
+            (c instanceof Video || c instanceof Image)
         )
         .sort((a, b) => b.display.to - a.display.to)[0] || null
     );
@@ -710,6 +710,7 @@ function createSpritesRender(opts: {
 
   const renderClipToTransitionTexture = (
     clip: IClip,
+    // Example: new Image(imageBitmap), or Texture
     frame: ImageBitmap | Texture,
     target: RenderTexture
   ) => {
@@ -942,8 +943,7 @@ function createSpritesRender(opts: {
       // Handle video rendering if we have a Pixi app
       if (hasVideoTrack && pixiApp != null && clipsNormalContainer != null) {
         // Transition logic: Only for video or image clips
-        const isTransitionable =
-          sprite instanceof VideoClip || sprite instanceof ImageClip;
+        const isTransitionable =          sprite instanceof Video || sprite instanceof Image;
         if (
           isTransitionable &&
           sprite.transition &&

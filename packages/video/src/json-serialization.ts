@@ -1,9 +1,9 @@
 import {
-  AudioClip,
-  ImageClip,
-  VideoClip,
-  TextClip,
-  CaptionClip,
+  Audio,
+  Image,
+  Video,
+  Text,
+  Caption,
   EffectClip,
   TransitionClip,
   PlaceholderClip,
@@ -65,21 +65,21 @@ interface BaseClipJSON {
 }
 
 // Video clip specific
-export interface VideoClipJSON extends BaseClipJSON {
+export interface VideoJSON extends BaseClipJSON {
   type: 'Video';
   audio?: boolean;
   volume?: number;
 }
 
 // Audio clip specific
-export interface AudioClipJSON extends BaseClipJSON {
+export interface AudioJSON extends BaseClipJSON {
   type: 'Audio';
   loop?: boolean;
   volume?: number;
 }
 
 // Image clip specific
-export interface ImageClipJSON extends BaseClipJSON {
+export interface ImageJSON extends BaseClipJSON {
   type: 'Image';
 }
 
@@ -114,7 +114,7 @@ export interface TextStyleJSON {
 }
 
 // Text clip specific
-export interface TextClipJSON extends BaseClipJSON {
+export interface TextJSON extends BaseClipJSON {
   type: 'Text';
   text: string;
   style?: TextStyleJSON;
@@ -151,7 +151,7 @@ export interface CaptionDataJSON {
 }
 
 // Caption clip specific
-export interface CaptionClipJSON extends BaseClipJSON {
+export interface CaptionJSON extends BaseClipJSON {
   type: 'Caption';
   text: string;
   style?: TextStyleJSON;
@@ -215,11 +215,11 @@ export interface TransitionJSON {
 // Union type for all clip types
 
 export type ClipJSON =
-  | VideoClipJSON
-  | AudioClipJSON
-  | ImageClipJSON
-  | TextClipJSON
-  | CaptionClipJSON
+  | VideoJSON
+  | AudioJSON
+  | ImageJSON
+  | TextJSON
+  | CaptionJSON
   | EffectClipJSON
   | TransitionClipJSON
   | PlaceholderClipJSON;
@@ -276,19 +276,20 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   let ClipClass: any = null;
   switch (json.type) {
     case 'Video':
-      ClipClass = VideoClip;
+      ClipClass = Video;
       break;
     case 'Audio':
-      ClipClass = AudioClip;
+      ClipClass = Audio;
       break;
-    case 'Image':
-      ClipClass = ImageClip;
-      break;
+    case 'Image': {
+      clip = await Image.fromObject(json);
+      return clip; // Return immediately after reconstructing Image clip
+    }
     case 'Text':
-      ClipClass = TextClip;
+      ClipClass = Text;
       break;
     case 'Caption':
-      ClipClass = CaptionClip;
+      ClipClass = Caption;
       break;
     case 'Effect':
       ClipClass = EffectClip;
@@ -320,54 +321,21 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
         json.audio !== undefined
           ? { audio: json.audio, volume: json.volume }
           : { volume: json.volume };
-      clip = new VideoClip(response.body!, options as any, json.src);
+      clip = new Video(response.body!, options as any, json.src);
       break;
     }
     case 'Audio': {
       if (!json.src || json.src.trim() === '') {
-        throw new Error('AudioClip requires a valid source URL');
+        throw new Error('Audio requires a valid source URL');
       }
       // Support both new flat structure and old options structure
       const options: any = {};
       if (json.loop !== undefined) options.loop = json.loop;
       if (json.volume !== undefined) options.volume = json.volume;
-      clip = await AudioClip.fromUrl(json.src, options);
+      clip = await Audio.fromUrl(json.src, options);
       break;
     }
-    case 'Image': {
-      if (!json.src || json.src.trim() === '') {
-        throw new Error(
-          'ImageClip requires a valid source URL. Generated clips (like text-to-image) cannot be loaded from JSON without their source data.'
-        );
-      }
-
-      try {
-        const response = await fetch(json.src);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch image from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
-          );
-        }
-        const blob = await response.blob();
-        if (!blob.type.startsWith('image/')) {
-          throw new Error(
-            `Invalid image format: ${blob.type}. Expected an image file.`
-          );
-        }
-        clip = new ImageClip(await createImageBitmap(blob), json.src);
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message.includes('could not be decoded')
-        ) {
-          throw new Error(
-            `Failed to decode image from ${json.src}. The image may be corrupted, in an unsupported format, or there may be CORS issues.`
-          );
-        }
-        throw error;
-      }
-      break;
-    }
+    // Image is handled via fromObject
     case 'Text': {
       // Read from new hybrid structure
       const text = json.text || '';
@@ -400,7 +368,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
         };
       }
 
-      clip = new TextClip(text, textClipOpts);
+      clip = new Text(text, textClipOpts);
       break;
     }
     case 'Caption': {
@@ -531,7 +499,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       if (json.mediaId) {
         captionClipOpts.mediaId = json.mediaId;
       }
-      clip = new CaptionClip(text, captionClipOpts);
+      clip = new Caption(text, captionClipOpts);
       break;
     }
     case 'Effect': {

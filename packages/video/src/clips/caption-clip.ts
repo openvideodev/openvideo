@@ -1,7 +1,7 @@
 import { Log } from '../utils/log';
 import { BaseClip } from './base-clip';
 import type { IClip } from './iclip';
-import type { CaptionClipJSON, TextStyleJSON } from '../json-serialization';
+import type { CaptionJSON, TextStyleJSON } from '../json-serialization';
 import {
   type Application,
   SplitBitmapText,
@@ -15,7 +15,7 @@ import {
 } from 'pixi.js';
 import { isTransparent, parseColor, resolveColor } from '../utils/color';
 
-export interface ICaptionClipOpts {
+export interface ICaptionOpts {
   /**
    * Font size in pixels
    * @default 30
@@ -190,7 +190,7 @@ export interface ICaptionClipOpts {
  * captionClip.display.from = 0;
  * captionClip.duration = 3e6; // 3 seconds
  */
-export class CaptionClip extends BaseClip implements IClip {
+export class Caption extends BaseClip implements IClip {
   readonly type = 'Caption';
   ready: IClip['ready'];
 
@@ -446,11 +446,11 @@ export class CaptionClip extends BaseClip implements IClip {
   private textStyle!: TextStyle;
   private externalRenderer: Application['renderer'] | null = null;
   private pixiApp: Application | null = null;
-  private originalOpts: ICaptionClipOpts | null = null;
+  private originalOpts: ICaptionOpts | null = null;
 
   constructor(
     text: string,
-    opts: ICaptionClipOpts = {},
+    opts: ICaptionOpts = {},
     renderer?: Application['renderer']
   ) {
     super();
@@ -608,7 +608,7 @@ export class CaptionClip extends BaseClip implements IClip {
   /**
    * Update text styling options and refresh the caption rendering
    */
-  async updateStyle(opts: Partial<ICaptionClipOpts>): Promise<void> {
+  async updateStyle(opts: Partial<ICaptionOpts>): Promise<void> {
     if (!this.originalOpts) this.originalOpts = {};
     // 1. Update originalOpts with new values
     this.originalOpts = { ...this.originalOpts, ...opts };
@@ -1126,7 +1126,7 @@ export class CaptionClip extends BaseClip implements IClip {
     await this.ready;
     // Use originalOpts when available to preserve all options
     const opts = this.originalOpts || {};
-    const newClip = new CaptionClip(this.text, opts) as this;
+    const newClip = new Caption(this.text, opts) as this;
     this.copyStateTo(newClip);
     // Copy id and effects
     newClip.id = this.id;
@@ -1136,7 +1136,7 @@ export class CaptionClip extends BaseClip implements IClip {
 
   destroy(): void {
     if (this.destroyed) return;
-    Log.info('CaptionClip destroy');
+    Log.info('Caption destroy');
 
     // Destroy wordTexts array first
     try {
@@ -1208,7 +1208,7 @@ export class CaptionClip extends BaseClip implements IClip {
     super.destroy();
   }
 
-  toJSON(main: boolean = false): CaptionClipJSON {
+  toJSON(main: boolean = false): CaptionJSON {
     const base = super.toJSON(main);
 
     // Build style object from originalOpts
@@ -1325,15 +1325,15 @@ export class CaptionClip extends BaseClip implements IClip {
       id: this.id,
       effects: this.effects,
       mediaId: this.mediaId,
-    } as CaptionClipJSON;
+    } as CaptionJSON;
   }
 
   /**
-   * Create a CaptionClip instance from a JSON object (fabric.js pattern)
+   * Create a Caption instance from a JSON object (fabric.js pattern)
    * @param json The JSON object representing the clip
-   * @returns Promise that resolves to a CaptionClip instance
+   * @returns Promise that resolves to a Caption instance
    */
-  static async fromObject(json: CaptionClipJSON): Promise<CaptionClip> {
+  static async fromObject(json: CaptionJSON): Promise<Caption> {
     if (json.type !== 'Caption') {
       throw new Error(`Expected Caption, got ${json.type}`);
     }
@@ -1343,38 +1343,38 @@ export class CaptionClip extends BaseClip implements IClip {
     const style = json.style || {};
 
     // Build options object from style
-    const captionClipOpts: ICaptionClipOpts = {};
-    if (style.fontSize !== undefined) captionClipOpts.fontSize = style.fontSize;
+    const captionOpts: ICaptionOpts = {};
+    if (style.fontSize !== undefined) captionOpts.fontSize = style.fontSize;
     if (style.fontFamily !== undefined)
-      captionClipOpts.fontFamily = style.fontFamily;
+      captionOpts.fontFamily = style.fontFamily;
     if (style.fontWeight !== undefined)
-      captionClipOpts.fontWeight = style.fontWeight as any;
+      captionOpts.fontWeight = style.fontWeight as any;
     if (style.fontStyle !== undefined)
-      captionClipOpts.fontStyle = style.fontStyle;
-    if (style.color !== undefined) captionClipOpts.fill = style.color;
-    if (style.align !== undefined) captionClipOpts.align = style.align;
-    if (style.textCase !== undefined) captionClipOpts.textCase = style.textCase;
+      captionOpts.fontStyle = style.fontStyle;
+    if (style.color !== undefined) captionOpts.fill = style.color;
+    if (style.align !== undefined) captionOpts.align = style.align;
+    if (style.textCase !== undefined) captionOpts.textCase = style.textCase;
 
     // Handle fontUrl from style (new) or top-level (old)
     if (style.fontUrl !== undefined) {
-      captionClipOpts.fontUrl = style.fontUrl;
+      captionOpts.fontUrl = style.fontUrl;
     } else if (json.fontUrl !== undefined) {
-      captionClipOpts.fontUrl = json.fontUrl;
+      captionOpts.fontUrl = json.fontUrl;
     }
 
     // Handle mediaId
     if (json.mediaId) {
-      captionClipOpts.mediaId = json.mediaId;
+      captionOpts.mediaId = json.mediaId;
     }
 
     // Handle stroke
     if (style.stroke) {
-      captionClipOpts.stroke = style.stroke.color;
-      captionClipOpts.strokeWidth = style.stroke.width;
+      captionOpts.stroke = style.stroke.color;
+      captionOpts.strokeWidth = style.stroke.width;
     }
 
     if (style.shadow) {
-      captionClipOpts.dropShadow = {
+      captionOpts.dropShadow = {
         color: style.shadow.color,
         alpha: style.shadow.alpha,
         blur: style.shadow.blur,
@@ -1385,16 +1385,16 @@ export class CaptionClip extends BaseClip implements IClip {
 
     // Handle new nested structure vs old flat structure
     if (json.caption) {
-      captionClipOpts.caption = json.caption;
+      captionOpts.caption = json.caption;
     } else {
       // Old flat structure (backward compatibility)
       if (json.bottomOffset !== undefined) {
-        captionClipOpts.bottomOffset = json.bottomOffset;
+        captionOpts.bottomOffset = json.bottomOffset;
       }
 
       // Restore words array if present
       if (json.words !== undefined) {
-        captionClipOpts.words = json.words;
+        captionOpts.words = json.words;
       }
 
       // Restore caption-specific color properties (backward compatibility)
@@ -1405,37 +1405,37 @@ export class CaptionClip extends BaseClip implements IClip {
         json.backgroundColor !== undefined ||
         json.isKeyWordColor !== undefined
       ) {
-        captionClipOpts.colors = {};
+        captionOpts.colors = {};
         if (json.appearedColor !== undefined) {
-          captionClipOpts.colors.appeared = json.appearedColor;
+          captionOpts.colors.appeared = json.appearedColor;
         }
         if (json.activeColor !== undefined) {
-          captionClipOpts.colors.active = json.activeColor;
+          captionOpts.colors.active = json.activeColor;
         }
         if (json.activeFillColor !== undefined) {
-          captionClipOpts.colors.activeFill = json.activeFillColor;
+          captionOpts.colors.activeFill = json.activeFillColor;
         }
         if (json.backgroundColor !== undefined) {
-          captionClipOpts.colors.background = json.backgroundColor;
+          captionOpts.colors.background = json.backgroundColor;
         }
         if (json.isKeyWordColor !== undefined) {
-          captionClipOpts.colors.keyword = json.isKeyWordColor;
+          captionOpts.colors.keyword = json.isKeyWordColor;
         }
       }
       if (json.preservedColorKeyWord !== undefined) {
-        captionClipOpts.preserveKeywordColor = json.preservedColorKeyWord;
+        captionOpts.preserveKeywordColor = json.preservedColorKeyWord;
       }
 
       // Restore layout properties
       if (json.videoWidth !== undefined) {
-        captionClipOpts.videoWidth = json.videoWidth;
+        captionOpts.videoWidth = json.videoWidth;
       }
       if (json.videoHeight !== undefined) {
-        captionClipOpts.videoHeight = json.videoHeight;
+        captionOpts.videoHeight = json.videoHeight;
       }
     }
 
-    const clip = new CaptionClip(text, captionClipOpts);
+    const clip = new Caption(text, captionOpts);
 
     // Apply properties
     clip.left = json.left;

@@ -3,19 +3,24 @@ export { createChromakey } from './utils/chromakey';
 export { renderTxt2ImgBitmap } from './utils/dom';
 
 export {
-  AudioClip,
-  CaptionClip,
-  ImageClip,
-  VideoClip,
-  TextClip,
+  Audio,
+  Caption,
+  Image,
+  Video,
+  Text,
   EffectClip,
   TransitionClip,
   PlaceholderClip,
 } from './clips';
-export type { ITextClipOpts } from './clips';
+
+// Export types 
 export type { IClip, IMP4ClipOpts } from './clips';
+
+// Constants
+export { DEFAULT_AUDIO_CONF } from './clips/iclip';
+
 // Keep MP4Clip as alias for backward compatibility
-export { VideoClip as MP4Clip } from './clips';
+export { Video as MP4Clip } from './clips';
 export { Compositor } from './compositor';
 export type { ICompositorOpts } from './compositor';
 export { Studio } from './studio';

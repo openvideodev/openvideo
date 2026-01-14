@@ -7,11 +7,11 @@ import {
   RenderTexture,
 } from 'pixi.js';
 
-import { CaptionClip } from './clips/caption-clip';
-import { ImageClip } from './clips/image-clip';
+import { Caption } from './clips/caption-clip';
+import { Image } from './clips/image-clip';
 import type { IClip, IPlaybackCapable } from './clips/iclip';
-import { TextClip } from './clips/text-clip';
-import { VideoClip } from './clips/video-clip';
+import { Text } from './clips/text-clip';
+import { Video } from './clips/video-clip';
 import { EffectClip } from './clips/effect-clip';
 import {
   PixiSpriteRenderer,
@@ -153,7 +153,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
   public videoSprites = new Map<IClip, Sprite>();
   public clipListeners = new Map<IClip, () => void>();
-  // Only for VideoClip
+  // Only for Video
 
   public get isPlaying() {
     return this.transport.isPlaying;
@@ -518,7 +518,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   /**
    * Add a Media clip (Video/Image) to the main track with ripple effect
    */
-  async addMedia(clip: VideoClip | ImageClip): Promise<void> {
+  async addMedia(clip: Video | Image | Text): Promise<void> {
     return this.timeline.addMedia(clip);
   }
 
@@ -1073,42 +1073,15 @@ export class Studio extends EventEmitter<StudioEvents> {
         // The transformer directly manipulates the sprite, so we don't want to overwrite it
         const isSelected = this.selectedClips.has(clip);
 
-        // Optimized path: Check if clip has a Texture (e.g., ImageClip.fromUrl, TextClip)
-        // This avoids ImageBitmap → Canvas → Texture conversion
-        if (clip.type === 'Image') {
-          const texture = (clip as ImageClip).getTexture();
-          if (texture != null) {
-            // Use Texture directly for optimized rendering
-            await renderer.updateFrame(texture);
-            // Only update transforms if not currently being transformed
-            if (!isSelected) {
-              renderer.updateTransforms();
-            }
-            continue;
-          }
-        }
-
-        // Optimized path for TextClip: Use Texture directly
-        // This avoids Text → RenderTexture → ImageBitmap → Canvas → Texture conversion
-        if (clip.type === 'Text') {
-          const texture = await (clip as TextClip).getTexture();
-          if (texture != null) {
-            // Use Texture directly for optimized rendering
-            await renderer.updateFrame(texture);
-            // Only update transforms if not currently being transformed
-            if (!isSelected) {
-              renderer.updateTransforms();
-            }
-            continue;
-          }
-        }
-
-        // Optimized path for CaptionClip: Use Texture directly
-        // This avoids Text → RenderTexture → ImageBitmap → Canvas → Texture conversion
-        if (clip.type === 'Caption') {
-          // Update caption highlighting based on current time before rendering
-          (clip as CaptionClip).updateState(relativeTime);
-          const texture = await (clip as CaptionClip).getTexture();
+        // Optimized path: Check if clip has a Texture (e.g., Image.fromUrl)
+        // Skip Text and Caption clips here as they have async getTexture() and are handled below
+        if (
+          clip.type !== 'Text' &&
+          clip.type !== 'Caption' &&
+          typeof (clip as any).getTexture === 'function' &&
+          (clip as Image).getTexture() != null
+        ) {
+          const texture = (clip as Image).getTexture();
           if (texture != null) {
             // Use Texture directly for optimized rendering
             await renderer.updateFrame(texture);
@@ -1120,10 +1093,51 @@ export class Studio extends EventEmitter<StudioEvents> {
               this.selection.setupSpriteInteractivity(clip);
             }
             continue;
-          } else {
-            console.log(
-              '[Studio] CaptionClip texture is null, falling back to traditional path'
-            );
+          }
+        }
+
+        // Optimized path for Text: Use Texture directly
+        if (clip.type === 'Text') {
+          const textClip = clip as Text;
+          if (this.pixiApp?.renderer && typeof textClip.setRenderer === 'function') {
+            textClip.setRenderer(this.pixiApp.renderer);
+          }
+          const texture = await textClip.getTexture();
+          
+          if (texture != null) {
+            // Use Texture directly for optimized rendering
+            await renderer.updateFrame(texture);
+            // Only update transforms if not currently being transformed
+            if (!isSelected) {
+              renderer.updateTransforms();
+            }
+            if (this.opts.interactivity) {
+              this.selection.setupSpriteInteractivity(clip);
+            }
+            continue;
+          }
+        }
+
+        // Optimized path for Caption: Use Texture directly
+        if (clip.type === 'Caption') {
+          // Update caption highlighting based on current time before rendering
+          (clip as Caption).updateState(relativeTime);
+          const captionClip = clip as Caption;
+          if (this.pixiApp?.renderer && typeof captionClip.setRenderer === 'function') {
+            captionClip.setRenderer(this.pixiApp.renderer);
+          }
+          const texture = await captionClip.getTexture();
+          if (texture != null) {
+            // Use Texture directly for optimized rendering
+            await renderer.updateFrame(texture);
+            // Only update transforms if not currently being transformed
+            if (!isSelected) {
+              renderer.updateTransforms();
+            }
+            if (this.opts.interactivity) {
+              this.selection.setupSpriteInteractivity(clip);
+            }
+            continue;
           }
         }
 
@@ -1339,16 +1353,16 @@ export class Studio extends EventEmitter<StudioEvents> {
       duration: options.duration ?? 1_000_000,
     };
     for (const clip of clips) {
-      if (clip instanceof ImageClip) {
+      if (clip instanceof Image) {
         clip.addEffect(effect);
       }
-      if (clip instanceof VideoClip) {
+      if (clip instanceof Video) {
         clip.addEffect(effect);
       }
-      if (clip instanceof TextClip) {
+      if (clip instanceof Text) {
         clip.addEffect(effect);
       }
-      if (clip instanceof CaptionClip) {
+      if (clip instanceof Caption) {
         clip.addEffect(effect);
       }
     }
@@ -1406,7 +1420,7 @@ export class Studio extends EventEmitter<StudioEvents> {
             c.id !== clip.id &&
             this.getTrackIndex(c.id) === trackIndex &&
             c.display.from < clip.display.from &&
-            (c instanceof VideoClip || c instanceof ImageClip)
+            (c instanceof Video || c instanceof Image)
         )
         .sort((a, b) => b.display.to - a.display.to)[0] || null
     );

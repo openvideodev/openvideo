@@ -3,7 +3,7 @@ import { Log } from '../utils/log';
 import { decodeImg } from '../utils';
 import { BaseClip } from './base-clip';
 import { type IClip } from './iclip';
-import { type ClipJSON, type ImageClipJSON } from '../json-serialization';
+import { type ClipJSON, type ImageJSON } from '../json-serialization';
 
 type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
 
@@ -14,14 +14,14 @@ type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
  *
  * @example
  * // Load from URL using PixiJS Assets (optimized for Studio)
- * const imgClip = await ImageClip.fromUrl('path/to/image.png');
+ * const imgClip = await Image.fromUrl('path/to/image.png');
  *
  * @example
  * // Traditional approach (for Compositor/export)
- * new ImageClip((await fetch('<img url>')).body);
+ * new Image((await fetch('<img url>')).body);
  *
  * @example
- * new ImageClip(
+ * new Image(
  *   await renderTxt2ImgBitmap(
  *     'Watermark',
  *    `font-size:40px; color: white; text-shadow: 2px 2px 6px red;`,
@@ -29,7 +29,7 @@ type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
  * )
  *
  */
-export class ImageClip extends BaseClip implements IClip {
+export class Image extends BaseClip implements IClip {
   readonly type = 'Image';
   ready: IClip['ready'];
 
@@ -80,12 +80,12 @@ export class ImageClip extends BaseClip implements IClip {
    *
    * @param url Image URL
    * @param src Optional source identifier for serialization
-   * @returns Promise that resolves to an ImageClip instance
+   * @returns Promise that resolves to an Image instance
    *
    * @example
-   * const imgClip = await ImageClip.fromUrl('path/to/image.png');
+   * const imgClip = await Image.fromUrl('path/to/image.png');
    */
-  static async fromUrl(url: string, src?: string): Promise<ImageClip> {
+  static async fromUrl(url: string, src?: string): Promise<Image> {
     // Use PixiJS Assets.load() for optimized loading with caching
     const texture = await Assets.load<Texture>(url);
 
@@ -137,7 +137,7 @@ export class ImageClip extends BaseClip implements IClip {
       imageBitmap = await createImageBitmap(blob);
     }
 
-    const clip = new ImageClip(imageBitmap, src || url);
+    const clip = new Image(imageBitmap, src || url);
     // Store the Texture for optimized preview rendering
     clip.pixiTexture = texture;
 
@@ -260,10 +260,10 @@ export class ImageClip extends BaseClip implements IClip {
       width: firstVf.codedWidth,
       height: firstVf.codedHeight,
     };
-    Log.info('ImageClip ready:', this._meta);
+    Log.info('Image ready:', this._meta);
   }
 
-  tickInterceptor: <T extends Awaited<ReturnType<ImageClip['tick']>>>(
+  tickInterceptor: <T extends Awaited<ReturnType<Image['tick']>>>(
     time: number,
     tickRet: T
   ) => Promise<T> = async (_, tickRet) => tickRet;
@@ -295,8 +295,8 @@ export class ImageClip extends BaseClip implements IClip {
     await this.ready;
     if (this.img != null) {
       return [
-        new ImageClip(await createImageBitmap(this.img), this.src),
-        new ImageClip(await createImageBitmap(this.img), this.src),
+        new Image(await createImageBitmap(this.img), this.src),
+        new Image(await createImageBitmap(this.img), this.src),
       ] as [this, this];
     }
     let hitIdx = -1;
@@ -317,8 +317,8 @@ export class ImageClip extends BaseClip implements IClip {
         })
     );
     return [
-      new ImageClip(preSlice, this.src),
-      new ImageClip(postSlice, this.src),
+      new Image(preSlice, this.src),
+      new Image(postSlice, this.src),
     ] as [this, this];
   }
 
@@ -328,7 +328,7 @@ export class ImageClip extends BaseClip implements IClip {
       this.img == null
         ? this.frames.map((vf) => vf.clone())
         : await createImageBitmap(this.img);
-    const newClip = new ImageClip(data, this.src) as this;
+    const newClip = new Image(data, this.src) as this;
     newClip.tickInterceptor = this.tickInterceptor;
     // Copy sprite state (animations, opacity, rect, etc.) to the cloned clip
     this.copyStateTo(newClip);
@@ -371,7 +371,7 @@ export class ImageClip extends BaseClip implements IClip {
   }
 
   destroy(): void {
-    Log.info('ImageClip destroy');
+    Log.info('Image destroy');
     this.img?.close();
     this.frames.forEach((f) => f.close());
     // Note: We don't destroy the Texture here as it's managed by Assets cache
@@ -380,32 +380,32 @@ export class ImageClip extends BaseClip implements IClip {
     super.destroy();
   }
 
-  toJSON(main: boolean = false): ImageClipJSON {
+  toJSON(main: boolean = false): ImageJSON {
     const base = super.toJSON(main);
     return {
       ...base,
       type: 'Image',
       id: this.id,
       effects: this.effects,
-    } as ImageClipJSON;
+    } as ImageJSON;
   }
 
   /**
-   * Create an ImageClip instance from a JSON object (fabric.js pattern)
+   * Create an Image instance from a JSON object (fabric.js pattern)
    * @param json The JSON object representing the clip
-   * @returns Promise that resolves to an ImageClip instance
+   * @returns Promise that resolves to an Image instance
    */
-  static async fromObject(json: ClipJSON): Promise<ImageClip> {
+  static async fromObject(json: ClipJSON): Promise<Image> {
     if (json.type !== 'Image') {
       throw new Error(`Expected Image, got ${json.type}`);
     }
     if (!json.src || json.src.trim() === '') {
       throw new Error(
-        'ImageClip requires a valid source URL. Generated clips (like text-to-image) cannot be loaded from JSON without their source data.'
+        'Image requires a valid source URL. Generated clips (like text-to-image) cannot be loaded from JSON without their source data.'
       );
     }
 
-    let clip: ImageClip;
+    let clip: Image;
     try {
       const response = await fetch(json.src);
       if (!response.ok) {
@@ -419,7 +419,7 @@ export class ImageClip extends BaseClip implements IClip {
           `Invalid image format: ${blob.type}. Expected an image file.`
         );
       }
-      clip = new ImageClip(await createImageBitmap(blob), json.src);
+      clip = new Image(await createImageBitmap(blob), json.src);
     } catch (error) {
       if (
         error instanceof Error &&
