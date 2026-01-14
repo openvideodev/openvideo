@@ -110,7 +110,9 @@ export class PixiSpriteRenderer {
     // Optimized path: If frame is already a Texture, use it directly
     // Duck typing: Check for Texture-like object (has source property) to avoid instanceof issues
     // This is critical because sometimes RenderTexture instance checks fail across module boundaries
-    const isTexture = frame instanceof Texture || (frame && typeof (frame as any).source !== 'undefined');
+    const isTexture =
+      frame instanceof Texture ||
+      (frame && typeof (frame as any).source !== 'undefined');
 
     if (isTexture) {
       // Validate texture dimensions
@@ -162,11 +164,11 @@ export class PixiSpriteRenderer {
 
     // Initialize texture and sprite on first frame if not already created
     const isFirstFrame = this.texture == null || this.pixiSprite == null;
-    
+
     // Update canvas size using integers to prevent "Value is not of type unsigned long" errors
     const intWidth = Math.floor(width);
     const intHeight = Math.floor(height);
-    
+
     const needsResize =
       this.canvas.width !== intWidth || this.canvas.height !== intHeight;
 

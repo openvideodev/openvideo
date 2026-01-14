@@ -5,9 +5,9 @@ import {
   Video,
   Audio,
   Image,
-  EffectClip,
+  Effect,
   type BaseTimelineClip,
-  TransitionClip,
+  Transition,
 } from './clips';
 import { TransitionButton } from './objects/transition-button';
 import { TIMELINE_CONSTANTS, getTrackHeight } from './utils';
@@ -572,9 +572,9 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
             } else if (clip.type === 'Image') {
               timelineClip = new Image(commonProps);
             } else if (clip.type === 'Effect') {
-              timelineClip = new EffectClip(commonProps);
+              timelineClip = new Effect(commonProps);
             } else if (clip.type === 'Transition') {
-              timelineClip = new TransitionClip(commonProps);
+              timelineClip = new Transition(commonProps);
             } else {
               timelineClip = new Text(commonProps);
             }

@@ -316,10 +316,10 @@ export class Image extends BaseClip implements IClip {
           timestamp: vf.timestamp - time,
         })
     );
-    return [
-      new Image(preSlice, this.src),
-      new Image(postSlice, this.src),
-    ] as [this, this];
+    return [new Image(preSlice, this.src), new Image(postSlice, this.src)] as [
+      this,
+      this,
+    ];
   }
 
   async clone() {

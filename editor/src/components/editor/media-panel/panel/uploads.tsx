@@ -90,9 +90,7 @@ export default function PanelUploads() {
 
     try {
       if (asset.type === 'image') {
-        const imageClip = await Image.fromUrl(
-          asset.src + '?v=' + Date.now()
-        );
+        const imageClip = await Image.fromUrl(asset.src + '?v=' + Date.now());
         imageClip.display = { from: 0, to: 5 * 1e6 };
         imageClip.duration = 5 * 1e6;
 

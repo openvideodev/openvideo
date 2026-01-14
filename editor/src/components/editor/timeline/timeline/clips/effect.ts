@@ -3,7 +3,7 @@ import { TRACK_COLORS } from '../utils';
 import { Control } from 'fabric';
 import { createResizeControls } from '../controls';
 
-export class EffectClip extends BaseTimelineClip {
+export class Effect extends BaseTimelineClip {
   isSelected: boolean;
   static createControls(): { controls: Record<string, Control> } {
     return { controls: createResizeControls() };
@@ -22,7 +22,7 @@ export class EffectClip extends BaseTimelineClip {
   };
   constructor(options: BaseClipProps) {
     super(options);
-    Object.assign(this, EffectClip.ownDefaults);
+    Object.assign(this, Effect.ownDefaults);
     this.set({
       // fill: options.fill || TRACK_COLORS.effect.solid,
     });

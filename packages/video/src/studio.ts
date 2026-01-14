@@ -12,7 +12,7 @@ import { Image } from './clips/image-clip';
 import type { IClip, IPlaybackCapable } from './clips/iclip';
 import { Text } from './clips/text-clip';
 import { Video } from './clips/video-clip';
-import { EffectClip } from './clips/effect-clip';
+import { Effect } from './clips/effect-clip';
 import {
   PixiSpriteRenderer,
   updateSpriteTransform,
@@ -1099,11 +1099,14 @@ export class Studio extends EventEmitter<StudioEvents> {
         // Optimized path for Text: Use Texture directly
         if (clip.type === 'Text') {
           const textClip = clip as Text;
-          if (this.pixiApp?.renderer && typeof textClip.setRenderer === 'function') {
+          if (
+            this.pixiApp?.renderer &&
+            typeof textClip.setRenderer === 'function'
+          ) {
             textClip.setRenderer(this.pixiApp.renderer);
           }
           const texture = await textClip.getTexture();
-          
+
           if (texture != null) {
             // Use Texture directly for optimized rendering
             await renderer.updateFrame(texture);
@@ -1123,7 +1126,10 @@ export class Studio extends EventEmitter<StudioEvents> {
           // Update caption highlighting based on current time before rendering
           (clip as Caption).updateState(relativeTime);
           const captionClip = clip as Caption;
-          if (this.pixiApp?.renderer && typeof captionClip.setRenderer === 'function') {
+          if (
+            this.pixiApp?.renderer &&
+            typeof captionClip.setRenderer === 'function'
+          ) {
             captionClip.setRenderer(this.pixiApp.renderer);
           }
           const texture = await captionClip.getTexture();
@@ -1180,10 +1186,9 @@ export class Studio extends EventEmitter<StudioEvents> {
             this.moveClipToEffectContainer(c, false);
           }
 
-          // Check if active effect is an EffectClip (Adjustment Layer)
+          // Check if active effect is an Effect (Adjustment Layer)
           const isAdjustmentLayer = this.clips.some(
-            (c) =>
-              c.id === this.activeGlobalEffect!.id && c instanceof EffectClip
+            (c) => c.id === this.activeGlobalEffect!.id && c instanceof Effect
           );
 
           for (const c of this.clips) {
@@ -1202,7 +1207,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
               shouldApply =
                 c.id !== this.activeGlobalEffect!.id &&
-                !(c instanceof EffectClip) &&
+                !(c instanceof Effect) &&
                 clipTrackIndex > effectTrackIndex;
             } else {
               const effects = (c as any).effects;
@@ -1512,18 +1517,18 @@ export class Studio extends EventEmitter<StudioEvents> {
   private updateActiveGlobalEffect(currentTime: number): void {
     let candidate: ActiveGlobalEffect | null = null;
 
-    // 1. Check for EffectClip instances (Adjustment Layer)
+    // 1. Check for Effect instances (Adjustment Layer)
     // These take precedence and apply to all clips below them (conceptually)
-    // For now, we just pick the first active EffectClip
+    // For now, we just pick the first active Effect
     for (const clip of this.clips) {
       if (
-        clip instanceof EffectClip &&
+        clip instanceof Effect &&
         currentTime >= clip.display.from &&
         (clip.display.to === 0 || currentTime < clip.display.to)
       ) {
         candidate = {
           id: clip.id,
-          key: clip.effect.key,
+          key: (clip as Effect).effect.key,
           startTime: clip.display.from,
           duration:
             clip.duration > 0
@@ -1535,7 +1540,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       }
     }
 
-    // 2. Fallback to legacy globalEffects map if no EffectClip found
+    // 2. Fallback to legacy globalEffects map if no Effect found
     if (!candidate) {
       for (const effect of this.globalEffects.values()) {
         const endTime = effect.startTime + effect.duration;

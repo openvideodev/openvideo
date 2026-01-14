@@ -264,49 +264,49 @@ clip.show(): void
 clip.hide(): void
 ```
 
-## VideoClip
+## Video
 
 Video clip class.
 
 ### Loading
 
 ```ts
-import { VideoClip } from "@designcombo/video";
+import { Video } from "@designcombo/video";
 
-VideoClip.fromUrl(url: string, options?): Promise<VideoClip>
-// VideoClip.fromFile(file: File, options?): Promise<VideoClip>
+Video.fromUrl(url: string, options?): Promise<Video>
+// Video.fromFile(file: File, options?): Promise<Video>
 ```
 
 ### Properties
 
 ```ts
-videoClip.duration: number        // Video duration in microseconds usually, check implementation
-videoClip.volume: number          // 0.0 to 1.0
+video.duration: number        // Video duration in microseconds usually, check implementation
+video.volume: number          // 0.0 to 1.0
 // ...
 ```
 
-## ImageClip
+## Image
 
 Image clip class.
 
 ### Loading
 
 ```ts
-import { ImageClip } from "@designcombo/video";
+import { Image } from "@designcombo/video";
 
-ImageClip.fromUrl(url: string, options?): Promise<ImageClip>
+Image.fromUrl(url: string, options?): Promise<Image>
 ```
 
-## TextClip
+## Text
 
 Text clip class.
 
 ### Constructor
 
 ```ts
-import { TextClip } from "@designcombo/video";
+import { Text } from "@designcombo/video";
 
-new TextClip(text: string, options: TextClipOptions)
+new Text(text: string, options: TextOptions)
 ```
 
 ## Transition
@@ -415,9 +415,9 @@ Audio track class.
 ### Loading
 
 ```ts
-Combo.Audio.fromUrl(url: string, options?): Promise<AudioTrack>
-Combo.Audio.fromFile(file: File, options?): Promise<AudioTrack>
-Combo.Audio.fromBlob(blob: Blob, options?): Promise<AudioTrack>
+Combo.Audio.fromUrl(url: string, options?): Promise<Audio>
+Combo.Audio.fromFile(file: File, options?): Promise<Audio>
+Combo.Audio.fromBlob(blob: Blob, options?): Promise<Audio>
 ```
 
 ### Properties
@@ -462,13 +462,13 @@ Combo.timeToFrames(ms: number, fps: number): number
 ```ts
 import { 
   Studio, 
-  VideoClip, 
-  ImageClip, 
-  TextClip, 
-  AudioClip
+  Video, 
+  Image, 
+  Text, 
+  Audio
 } from "@designcombo/video";
 
 // Use imported types directly
 let studio: Studio;
-let clip: VideoClip;
+let clip: Video;
 ```

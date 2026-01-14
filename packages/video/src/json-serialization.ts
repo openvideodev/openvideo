@@ -4,9 +4,9 @@ import {
   Video,
   Text,
   Caption,
-  EffectClip,
-  TransitionClip,
-  PlaceholderClip,
+  Effect,
+  Transition,
+  Placeholder,
   type IClip,
   type ITransitionInfo,
 } from './clips';
@@ -179,7 +179,7 @@ export interface CaptionJSON extends BaseClipJSON {
 }
 
 // Effect clip specific
-export interface EffectClipJSON extends BaseClipJSON {
+export interface EffectJSON extends BaseClipJSON {
   type: 'Effect';
   effect: {
     id: string;
@@ -189,7 +189,7 @@ export interface EffectClipJSON extends BaseClipJSON {
 }
 
 // Transition clip specific
-export interface TransitionClipJSON extends BaseClipJSON {
+export interface TransitionJSON extends BaseClipJSON {
   type: 'Transition';
   transitionEffect: {
     id: string;
@@ -201,12 +201,12 @@ export interface TransitionClipJSON extends BaseClipJSON {
 }
 
 // Placeholder clip specific
-export interface PlaceholderClipJSON extends BaseClipJSON {
+export interface PlaceholderJSON extends BaseClipJSON {
   type: 'Placeholder';
 }
 
-// Transition interface
-export interface TransitionJSON {
+// Global Transition interface (applied between clips)
+export interface GlobalTransitionJSON {
   key: string;
   duration: number;
   clips: string[];
@@ -220,9 +220,9 @@ export type ClipJSON =
   | ImageJSON
   | TextJSON
   | CaptionJSON
-  | EffectClipJSON
-  | TransitionClipJSON
-  | PlaceholderClipJSON;
+  | EffectJSON
+  | TransitionJSON
+  | PlaceholderJSON;
 
 export interface StudioTrackJSON {
   id: string;
@@ -234,8 +234,8 @@ export interface StudioTrackJSON {
 export interface ProjectJSON {
   tracks?: StudioTrackJSON[];
   clips: ClipJSON[]; // Normalized: Source of truth for clips
-  transition?: TransitionJSON[];
-  transitions?: TransitionJSON[]; // Alias for transition for better compatibility
+  transition?: GlobalTransitionJSON[];
+  transitions?: GlobalTransitionJSON[]; // Alias for transition for better compatibility
   globalEffects?: Array<{
     id: string;
     key: string;
@@ -292,13 +292,13 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       ClipClass = Caption;
       break;
     case 'Effect':
-      ClipClass = EffectClip;
+      ClipClass = Effect;
       break;
     case 'Transition':
-      ClipClass = TransitionClip;
+      ClipClass = Transition;
       break;
     case 'Placeholder':
-      ClipClass = PlaceholderClip;
+      ClipClass = Placeholder;
       break;
   }
 
@@ -503,8 +503,8 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       break;
     }
     case 'Effect': {
-      clip = new EffectClip((json as EffectClipJSON).effect.key as any);
-      (clip as EffectClip).effect = (json as EffectClipJSON).effect;
+      clip = new Effect((json as EffectJSON).effect.key as any);
+      (clip as Effect).effect = (json as EffectJSON).effect;
       break;
     }
     default:

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GL_TRANSITION_OPTIONS, TransitionClip } from '@designcombo/video';
+import { GL_TRANSITION_OPTIONS, Transition } from '@designcombo/video';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
 import { Loader2 } from 'lucide-react';
@@ -43,7 +43,7 @@ const PanelTransition = () => {
                   studio.addTransition(effect.key, TRANSITION_DURATION_DEFAULT);
 
                   // const clip = selectedClips[0];
-                  // if (clip instanceof TransitionClip) {
+                  // if (clip instanceof Transition) {
                   //   const fromClipId = clip.fromClipId;
                   //   const toClipId = clip.toClipId;
                   //   studio.addTransition(

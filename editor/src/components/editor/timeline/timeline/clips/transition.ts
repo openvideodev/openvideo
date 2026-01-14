@@ -2,7 +2,7 @@ import { BaseTimelineClip, BaseClipProps } from './base';
 import { TRACK_COLORS } from '../utils';
 import { Control } from 'fabric';
 
-export class TransitionClip extends BaseTimelineClip {
+export class Transition extends BaseTimelineClip {
   isSelected: boolean;
   static createControls(): { controls: Record<string, Control> } {
     return { controls: {} };
@@ -21,7 +21,7 @@ export class TransitionClip extends BaseTimelineClip {
   };
   constructor(options: BaseClipProps) {
     super(options);
-    Object.assign(this, TransitionClip.ownDefaults);
+    Object.assign(this, Transition.ownDefaults);
     this.set({
       fill: options.fill || TRACK_COLORS.transition.solid,
     });

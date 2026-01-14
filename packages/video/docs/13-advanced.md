@@ -33,9 +33,9 @@ Create custom clips using PixiJS containers:
 
 ```ts
 import * as PIXI from "pixi.js";
-import { ImageClip } from "@designcombo/video";
+import { Image } from "@designcombo/video";
 
-class CustomPixiClip extends ImageClip {
+class CustomPixiClip extends Image {
   constructor(options) {
     super(options);
     // ...

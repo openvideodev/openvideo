@@ -1,7 +1,7 @@
 import { BaseClip } from './base-clip';
 import type { IClipMeta } from './iclip';
 
-export class PlaceholderClip extends BaseClip {
+export class Placeholder extends BaseClip {
   type: string = 'Placeholder';
 
   meta: IClipMeta = {
@@ -71,7 +71,7 @@ export class PlaceholderClip extends BaseClip {
   }
 
   async clone() {
-    const clip = new PlaceholderClip(this.src, this.meta);
+    const clip = new Placeholder(this.src, this.meta);
     this.copyStateTo(clip);
     clip.id = this.id;
     return clip as this;

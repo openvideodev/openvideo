@@ -8,12 +8,12 @@ export {
   Image,
   Video,
   Text,
-  EffectClip,
-  TransitionClip,
-  PlaceholderClip,
+  Effect,
+  Transition,
+  Placeholder,
 } from './clips';
 
-// Export types 
+// Export types
 export type { IClip, IMP4ClipOpts } from './clips';
 
 // Constants

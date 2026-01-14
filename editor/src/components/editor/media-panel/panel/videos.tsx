@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
-import { Video, Log, PlaceholderClip } from '@designcombo/video';
+import { Video, Log, Placeholder } from '@designcombo/video';
 import { Search, Film, Loader2 } from 'lucide-react';
 import {
   InputGroup,
@@ -89,7 +89,7 @@ export default function PanelVideos() {
       const src = videoFile.link;
       console.log({ asset });
       // 1. Create and add placeholder immediately
-      const placeholder = new PlaceholderClip(
+      const placeholder = new Placeholder(
         src,
         {
           width: asset.width,

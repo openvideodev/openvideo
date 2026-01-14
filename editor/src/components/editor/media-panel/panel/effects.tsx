@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { EffectClip, GL_EFFECT_OPTIONS } from '@designcombo/video';
+import { Effect, GL_EFFECT_OPTIONS } from '@designcombo/video';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
 import { Loader2 } from 'lucide-react';
@@ -44,7 +44,7 @@ const PanelEffect = () => {
                 className="flex w-full items-center gap-2 flex-col group cursor-pointer"
                 onClick={() => {
                   if (!studio) return;
-                  const clip = new EffectClip(effect.key);
+                  const clip = new Effect(effect.key);
                   clip.duration = EFFECT_DURATION_DEFAULT;
                   studio.addClip(clip);
                 }}

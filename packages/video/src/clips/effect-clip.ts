@@ -2,9 +2,9 @@ import { BaseClip } from './base-clip';
 import { type IClip } from './iclip';
 import { type EffectKey } from '../effect/glsl/gl-effect';
 
-// Since EffectClip is an adjustment layer, it doesn't render visual content directly.
+// Since Effect is an adjustment layer, it doesn't render visual content directly.
 // We can use a minimal dummy implementation for BaseClip abstract methods.
-export class EffectClip extends BaseClip {
+export class Effect extends BaseClip {
   readonly type = 'Effect';
   ready: IClip['ready'];
 
@@ -46,7 +46,7 @@ export class EffectClip extends BaseClip {
   }
 
   async clone() {
-    const newClip = new EffectClip(this.effect.key);
+    const newClip = new Effect(this.effect.key);
     this.copyStateTo(newClip);
     newClip.id = this.id; // Or generate new ID? Usually clone gets new ID if fully new instance, but `copyStateTo` copies props.
     // But in Studio `studio.addClip` ensures unique ID if needed.
@@ -63,7 +63,7 @@ export class EffectClip extends BaseClip {
     return newClip as this;
   }
 
-  // EffectClip is invisible, so it returns empty/dummy data
+  // Effect is invisible, so it returns empty/dummy data
   async tick(_time: number): Promise<{
     video: ImageBitmap | undefined;
     state: 'success';
@@ -92,14 +92,14 @@ export class EffectClip extends BaseClip {
   }
 
   /**
-   * Create an EffectClip instance from a JSON object
+   * Create an Effect instance from a JSON object
    */
-  static async fromObject(json: any): Promise<EffectClip> {
+  static async fromObject(json: any): Promise<Effect> {
     if (json.type !== 'Effect') {
       throw new Error(`Expected Effect, got ${json.type}`);
     }
 
-    const clip = new EffectClip(json.effect.key);
+    const clip = new Effect(json.effect.key);
     clip.effect = json.effect;
 
     // Apply base properties

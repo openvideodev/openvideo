@@ -83,10 +83,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
    *   volume: 0.8,
    * });
    */
-  static async fromUrl(
-    url: string,
-    opts: IAudioOpts = {}
-  ): Promise<Audio> {
+  static async fromUrl(url: string, opts: IAudioOpts = {}): Promise<Audio> {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(
@@ -487,10 +484,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
 /**
  * Concatenate multiple AudioClips
  */
-export async function concatAudioClip(
-  clips: Audio[],
-  opts?: IAudioOpts
-) {
+export async function concatAudioClip(clips: Audio[], opts?: IAudioOpts) {
   const bufs: Float32Array[][] = [];
   for (const clip of clips) {
     await clip.ready;

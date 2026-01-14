@@ -1349,8 +1349,7 @@ export class Caption extends BaseClip implements IClip {
       captionOpts.fontFamily = style.fontFamily;
     if (style.fontWeight !== undefined)
       captionOpts.fontWeight = style.fontWeight as any;
-    if (style.fontStyle !== undefined)
-      captionOpts.fontStyle = style.fontStyle;
+    if (style.fontStyle !== undefined) captionOpts.fontStyle = style.fontStyle;
     if (style.color !== undefined) captionOpts.fill = style.color;
     if (style.align !== undefined) captionOpts.align = style.align;
     if (style.textCase !== undefined) captionOpts.textCase = style.textCase;

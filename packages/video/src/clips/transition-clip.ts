@@ -2,7 +2,7 @@ import { BaseClip } from './base-clip';
 import { type IClip } from './iclip';
 import { type TransitionKey } from '../transition/glsl/gl-transition';
 
-export class TransitionClip extends BaseClip {
+export class Transition extends BaseClip {
   readonly type = 'Transition';
   ready: IClip['ready'];
 
@@ -54,7 +54,7 @@ export class TransitionClip extends BaseClip {
   }
 
   async clone() {
-    const newClip = new TransitionClip(this.transitionEffect.key);
+    const newClip = new Transition(this.transitionEffect.key);
     this.copyStateTo(newClip);
     newClip.fromClipId = this.fromClipId;
     newClip.toClipId = this.toClipId;
@@ -62,7 +62,7 @@ export class TransitionClip extends BaseClip {
     return newClip as this;
   }
 
-  // TransitionClip is invisible (it's applied via renderer logic), so it returns empty/dummy data
+  // Transition is invisible (it's applied via renderer logic), so it returns empty/dummy data
   async tick(_time: number): Promise<{
     video: ImageBitmap | undefined;
     state: 'success';
@@ -93,14 +93,14 @@ export class TransitionClip extends BaseClip {
   }
 
   /**
-   * Create a TransitionClip instance from a JSON object
+   * Create a Transition instance from a JSON object
    */
-  static async fromObject(json: any): Promise<TransitionClip> {
+  static async fromObject(json: any): Promise<Transition> {
     if (json.type !== 'Transition') {
       throw new Error(`Expected Transition, got ${json.type}`);
     }
 
-    const clip = new TransitionClip(json.transitionEffect.key);
+    const clip = new Transition(json.transitionEffect.key);
     clip.transitionEffect = json.transitionEffect;
     clip.fromClipId = json.fromClipId || null;
     clip.toClipId = json.toClipId || null;

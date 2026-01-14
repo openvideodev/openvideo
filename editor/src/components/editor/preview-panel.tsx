@@ -1,10 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Player } from './player';
-import {
-  Studio,
-  Compositor,
-  fontManager,
-} from '@designcombo/video';
+import { Studio, Compositor, fontManager } from '@designcombo/video';
 import { useStudioStore } from '@/stores/studio-store';
 import { editorFont } from './constants';
 
@@ -60,7 +56,6 @@ export function PreviewPanel({ onReady }: PreviewPanelProps) {
     // Set store
     setStudio(previewRef.current);
 
- 
     return () => {
       if (previewRef.current) {
         previewRef.current.destroy();

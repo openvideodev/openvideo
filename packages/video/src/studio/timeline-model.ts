@@ -4,14 +4,14 @@ import type { IClip, IPlaybackCapable } from '../clips/iclip';
 import { Video } from '../clips/video-clip';
 import { Image } from '../clips/image-clip';
 import { Text } from '../clips/text-clip';
-import { TransitionClip } from '../clips/transition-clip';
+import { Transition } from '../clips/transition-clip';
 import { PixiSpriteRenderer } from '../sprite/pixi-sprite-renderer';
 import {
   clipToJSON,
   jsonToClip,
   ProjectJSON,
   ClipJSON,
-  TransitionJSON,
+  GlobalTransitionJSON as TransitionJSON,
 } from '../json-serialization';
 import { fontManager, IFont } from '../utils/fonts';
 
@@ -264,7 +264,7 @@ export class TimelineModel {
       (clipB as any).transition = { ...transitionMeta };
     }
 
-    const tClip = new TransitionClip(transitionKey as any);
+    const tClip = new Transition(transitionKey as any);
     tClip.duration = transitionDuration;
     tClip.fromClipId = Math.max(0, transitionStart) === 0 ? null : clipA.id;
     tClip.toClipId = clipB.id;
@@ -489,8 +489,8 @@ export class TimelineModel {
     const index = this.clips.findIndex((c) => c === clip);
     if (index === -1) return;
 
-    // Separate cleanup for TransitionClip to remove 'transition' property from linked clips
-    if (clip instanceof TransitionClip) {
+    // Separate cleanup for Transition to remove 'transition' property from linked clips
+    if (clip instanceof Transition) {
       if (clip.fromClipId) {
         const fromClip = this.getClipById(clip.fromClipId);
         if (fromClip && 'transition' in fromClip) {
