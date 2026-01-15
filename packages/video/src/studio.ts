@@ -32,6 +32,7 @@ export interface IStudioOpts {
   bgColor?: string;
   canvas?: HTMLCanvasElement;
   interactivity?: boolean;
+  spacing?: number;
 }
 
 interface ActiveGlobalEffect {
@@ -221,6 +222,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       fps: 30,
       bgColor: '#000000',
       interactivity: true,
+      spacing: 0,
       ...opts,
     };
 
@@ -474,11 +476,16 @@ export class Studio extends EventEmitter<StudioEvents> {
       (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientHeight ||
       canvasHeight;
 
-    // Calculate scale to fit artboard in container
-    // 'zoom in the canvas' -> scaling the artboard
-    const scaleX = containerWidth / artboardWidth;
-    const scaleY = containerHeight / artboardHeight;
-    const scale = Math.min(scaleX, scaleY); // Fit entirely? Or User said 'apply some zoom...'.
+      console.log(this.opts)
+
+    const spacing = this.opts.spacing || 0;
+    const containerWidthWithSpacing = Math.max(0, containerWidth - spacing * 2);
+    const containerHeightWithSpacing = Math.max(0, containerHeight - spacing * 2);
+
+    // Calculate scale to fit artboard in container with spacing
+    const scaleX = containerWidthWithSpacing / artboardWidth;
+    const scaleY = containerHeightWithSpacing / artboardHeight;
+    const scale = Math.min(scaleX, scaleY);
     // User said: 'instead of apply transfrom scale ... it should apply some zoom in the canvas and center it'
     // AND 'canvas should take full size of preview container'
     // So yes, scale Artboard to fit (or maybe margin?). Let's stick to fit.

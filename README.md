@@ -50,7 +50,8 @@ const studio = new Studio({
   width: 1920,
   height: 1080,
   fps: 30,
-  canvas: document.getElementById('preview-canvas') as HTMLCanvasElement
+  canvas: document.getElementById('preview-canvas') as HTMLCanvasElement,
+  spacing: 20
 });
 
 // 2. Load and add a Video Clip
