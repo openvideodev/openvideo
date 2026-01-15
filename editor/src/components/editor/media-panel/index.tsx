@@ -62,7 +62,7 @@ export function MediaPanel() {
   }, [studio]);
 
   return (
-    <div className="h-full flex bg-background">
+    <div className="h-full flex">
       <TabBar />
       <div className="flex-1 overflow-hidden" id="panel-content">
         {selectedClips.length > 0 ? (

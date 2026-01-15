@@ -16,6 +16,7 @@ const studio = new Studio({
   fps: 30,
   bgColor: "#ffffff",
   canvas: document.getElementById("canvas") as HTMLCanvasElement,
+  spacing: 20,
 });
 
 // The studio initializes its PixiJS application automatically on construction (via initPixiApp).
@@ -35,6 +36,7 @@ interface IStudioOpts {
   bgColor?: string;
   canvas?: HTMLCanvasElement;
   interactivity?: boolean;
+  spacing?: number;
 }
 ```
 

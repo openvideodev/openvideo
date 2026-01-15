@@ -76,7 +76,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
   #trackRegions: { top: number; bottom: number; id: string }[] = [];
   #activeSeparatorIndex: number | null = null;
-  #junctionButton: TransitionButton | null = null;
+  #transitionButton: TransitionButton | null = null;
 
   // Bound event handlers
   #onDragging: (opt: any) => void;
@@ -182,13 +182,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
     const track = this.getTrackAt(y);
     if (!track) {
-      this.clearJunctionButton();
+      this.clearTransitionButton();
       return;
     }
 
     const trackData = this.#tracks.find((t) => t.id === track.id);
     if (!trackData) {
-      this.clearJunctionButton();
+      this.clearTransitionButton();
       return;
     }
 
@@ -199,8 +199,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       .filter((c) => !!c)
       .sort((a, b) => a.display.from - b.display.from);
 
-    const JUNCTION_THRESHOLD = 10; // Pixels
-    let foundJunction = null;
+    const TRANSITION_POINT_THRESHOLD = 10; // Pixels
+    let foundTransitionPoint = null;
 
     for (let i = 0; i < clipsAtTrack.length - 1; i++) {
       const clipA = clipsAtTrack[i];
@@ -219,10 +219,10 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         TIMELINE_CONSTANTS.PIXELS_PER_SECOND *
         this.#timeScale;
 
-      // Junction point is average or just endXAs if they are snapped
-      const junctionX = (endXA + startXB) / 2;
+      // Transition point is average or just endXAs if they are snapped
+      const transitionPointX = (endXA + startXB) / 2;
 
-      if (Math.abs(x - junctionX) < JUNCTION_THRESHOLD) {
+      if (Math.abs(x - transitionPointX) < TRANSITION_POINT_THRESHOLD) {
         // Higher priority check: types must be media (Video/Image)
         if (
           (clipA.type === 'Video' || clipA.type === 'Image') &&
@@ -232,7 +232,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           const hasTransition = trackData.clipIds.some((id) => {
             const c = this.#clipsMap[id];
             if (!c || c.type !== 'Transition') return false;
-            // Transition is roughly centered at junction
+            // Transition is roughly centered at transition point
             const tStart =
               (c.display.from / MICROSECONDS_PER_SECOND) *
               TIMELINE_CONSTANTS.PIXELS_PER_SECOND *
@@ -241,52 +241,57 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               (c.display.to / MICROSECONDS_PER_SECOND) *
               TIMELINE_CONSTANTS.PIXELS_PER_SECOND *
               this.#timeScale;
-            return junctionX >= tStart && junctionX <= tEnd;
+            return transitionPointX >= tStart && transitionPointX <= tEnd;
           });
 
           if (!hasTransition) {
-            foundJunction = { x: junctionX, clipA, clipB, trackId: track.id };
+            foundTransitionPoint = {
+              x: transitionPointX,
+              clipA,
+              clipB,
+              trackId: track.id,
+            };
             break;
           }
         }
       }
     }
 
-    if (foundJunction) {
-      this.showJunctionButton(
-        foundJunction.x - 58,
-        track.top - 25 + (track.bottom - track.top) / 2,
-        foundJunction.clipA.id,
-        foundJunction.clipB.id,
-        foundJunction.trackId
+    if (foundTransitionPoint) {
+      this.showTransitionButton(
+        foundTransitionPoint.x,
+        track.top + (track.bottom - track.top) / 2,
+        foundTransitionPoint.clipA.id,
+        foundTransitionPoint.clipB.id,
+        foundTransitionPoint.trackId
       );
     } else {
-      this.clearJunctionButton();
+      this.clearTransitionButton();
     }
   }
 
-  private showJunctionButton(
+  private showTransitionButton(
     x: number,
     y: number,
     clipAId: string,
     clipBId: string,
     trackId: string
   ) {
-    if (this.#junctionButton) {
+    if (this.#transitionButton) {
       // If already showing for these clips, just move it if needed (though it shouldn't move much)
       if (
-        (this.#junctionButton as any).clipAId === clipAId &&
-        (this.#junctionButton as any).clipBId === clipBId
+        (this.#transitionButton as any).clipAId === clipAId &&
+        (this.#transitionButton as any).clipBId === clipBId
       ) {
-        this.#junctionButton.set({ left: x, top: y });
-        this.#junctionButton.setCoords();
+        this.#transitionButton.set({ left: x, top: y });
+        this.#transitionButton.setCoords();
         this.canvas.requestRenderAll();
         return;
       }
-      this.clearJunctionButton();
+      this.clearTransitionButton();
     }
 
-    this.#junctionButton = new TransitionButton({
+    this.#transitionButton = new TransitionButton({
       left: x,
       top: y,
       onClick: () => {
@@ -298,18 +303,18 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       },
     });
 
-    (this.#junctionButton as any).clipAId = clipAId;
-    (this.#junctionButton as any).clipBId = clipBId;
+    (this.#transitionButton as any).clipAId = clipAId;
+    (this.#transitionButton as any).clipBId = clipBId;
 
-    this.canvas.add(this.#junctionButton);
-    this.canvas.bringObjectToFront(this.#junctionButton);
+    this.canvas.add(this.#transitionButton);
+    this.canvas.bringObjectToFront(this.#transitionButton);
     this.canvas.requestRenderAll();
   }
 
-  private clearJunctionButton() {
-    if (this.#junctionButton) {
-      this.canvas.remove(this.#junctionButton);
-      this.#junctionButton = null;
+  private clearTransitionButton() {
+    if (this.#transitionButton) {
+      this.canvas.remove(this.#transitionButton);
+      this.#transitionButton = null;
       this.canvas.requestRenderAll();
     }
   }
@@ -425,7 +430,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     });
     this.#separatorLines = [];
     this.#trackRegions = [];
-    this.clearJunctionButton();
+    this.clearTransitionButton();
 
     this.canvas.requestRenderAll();
     this.emit('timeline:cleared', {});
@@ -836,7 +841,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       this.canvas.off('selection:cleared', this.#onSelectionClear);
       this.canvas.off('mouse:move', this.#onMouseMove);
 
-      this.clearJunctionButton();
+      this.clearTransitionButton();
       this.scrollbars.dispose();
       this.canvas.dispose();
     }

@@ -36,6 +36,7 @@ export function PreviewPanel({ onReady }: PreviewPanelProps) {
       bgColor: '#18181b',
       canvas: previewCanvasRef.current,
       interactivity: true,
+      spacing: 20,
     });
 
     const init = async () => {
