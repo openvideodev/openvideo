@@ -5,3 +5,4 @@ export * from './video';
 export * from './image';
 export * from './effect';
 export * from './transition';
+export * from './caption';

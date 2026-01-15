@@ -1,5 +1,4 @@
 import { BaseTimelineClip, BaseClipProps } from './base';
-import { TRACK_COLORS } from '../utils';
 import { Control } from 'fabric';
 import { createTrimControls } from '../controls';
 
@@ -10,22 +9,22 @@ export class Video extends BaseTimelineClip {
   }
 
   static ownDefaults = {
-    rx: 4,
-    ry: 4,
+    rx: 10,
+    ry: 10,
     objectCaching: false,
     borderColor: 'transparent',
     stroke: 'transparent',
     strokeWidth: 0,
-    fill: '#27272a',
+    fill: '#831843',
     borderOpacityWhenMoving: 1,
     hoverCursor: 'default',
   };
 
   constructor(options: BaseClipProps) {
     super(options);
-    // Object.assign(this, Video.ownDefaults);
+    Object.assign(this, Video.ownDefaults);
     this.set({
-      fill: options.fill || TRACK_COLORS.video.solid,
+      // fill: options.fill || TRACK_COLORS.video.solid,
     });
   }
 
@@ -34,12 +33,16 @@ export class Video extends BaseTimelineClip {
     this.set({ dirty: true });
   }
 
+  public _render(ctx: CanvasRenderingContext2D) {
+    super._render(ctx);
+    // this.drawTextIdentity(ctx);
+    this.updateSelected(ctx);
+  }
+
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected
-      ? 'rgba(255, 255, 255,1.0)'
-      : 'rgba(255, 255, 255,0.05)';
+    const borderColor = this.isSelected ? '#be185d' : '#9d174d';
     const borderWidth = 2;
-    const radius = 4;
+    const radius = 10;
 
     ctx.save();
     ctx.fillStyle = borderColor;

@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { usePlaybackStore } from '@/stores/playback-store';
 import { TimelineTrack } from '@/types/timeline';
-import { TIMELINE_CONSTANTS } from '@/constants/timeline-constants';
+import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
 import { useTimelinePlayhead } from '@/hooks/use-timeline-playhead';
 
 interface TimelinePlayheadProps {

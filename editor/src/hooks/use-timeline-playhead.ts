@@ -1,4 +1,4 @@
-import { snapTimeToFrame } from '@/constants/timeline-constants';
+import { snapTimeToFrame } from '@/components/editor/timeline/timeline-constants';
 import { DEFAULT_FPS } from '@/stores/project-store';
 import { usePlaybackStore } from '@/stores/playback-store';
 import { useState, useEffect, useCallback, useRef } from 'react';

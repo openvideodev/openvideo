@@ -7,7 +7,7 @@ import {
   MICROSECONDS_PER_SECOND,
   type TrackType,
 } from '@/types/timeline';
-import { TIMELINE_CONSTANTS } from '../utils';
+import { TIMELINE_CONSTANTS } from '../../timeline-constants';
 
 /**
  * Helper to safely update the local clips map in Timeline to reflect the new visual state

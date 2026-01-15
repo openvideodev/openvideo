@@ -1,4 +1,4 @@
-import { TIMELINE_CONSTANTS } from './timeline-constants';
+import { TIMELINE_CONSTANTS } from '../components/editor/timeline/timeline-constants';
 
 export interface TextElement {
   id: string;

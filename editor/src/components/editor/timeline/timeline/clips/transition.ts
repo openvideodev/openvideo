@@ -1,5 +1,4 @@
 import { BaseTimelineClip, BaseClipProps } from './base';
-import { TRACK_COLORS } from '../utils';
 import { Control, Path } from 'fabric';
 
 export class Transition extends BaseTimelineClip {

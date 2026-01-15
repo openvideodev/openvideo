@@ -1,5 +1,4 @@
 import { BaseTimelineClip, BaseClipProps } from './base';
-import { TRACK_COLORS } from '../utils';
 import { Control } from 'fabric';
 import { createTrimControls } from '../controls';
 
