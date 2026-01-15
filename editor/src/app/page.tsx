@@ -35,29 +35,35 @@ export default function Editor() {
         </div>
       )}
       <Header />
-      <div className="flex-1 min-h-0 min-w-0">
-        <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+      <div className="flex-1 min-h-0 min-w-0 px-2 pb-2">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full w-full gap-1"
+        >
           {/* Left Column: Media Panel */}
           <ResizablePanel
             defaultSize={toolsPanel}
             minSize={15}
             maxSize={40}
             onResize={setToolsPanel}
-            className="max-w-96 rounded-sm relative overflow-visible!"
+            className="max-w-96 rounded-sm relative overflow-visible! bg-panel"
           >
             <MediaPanel />
             <FloatingControl />
           </ResizablePanel>
 
-          <ResizableHandle />
+          <ResizableHandle className="bg-transparent" />
 
           {/* Middle Column: Preview + Timeline */}
           <ResizablePanel
-            defaultSize={100 - toolsPanel - propertiesPanel}
+            defaultSize={100 - toolsPanel}
             minSize={40}
             className="min-w-0 min-h-0"
           >
-            <ResizablePanelGroup direction="vertical" className="h-full w-full">
+            <ResizablePanelGroup
+              direction="vertical"
+              className="h-full w-full gap-1"
+            >
               {/* Preview Panel */}
               <ResizablePanel
                 defaultSize={mainContent}
@@ -69,7 +75,7 @@ export default function Editor() {
                 <PreviewPanel onReady={() => setIsReady(true)} />
               </ResizablePanel>
 
-              <ResizableHandle />
+              <ResizableHandle className="bg-transparent" />
 
               {/* Timeline Panel */}
               <ResizablePanel

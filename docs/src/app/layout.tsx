@@ -13,7 +13,8 @@ export const metadata: Metadata = {
     template: '%s | Combo',
     default: 'Combo | The Video SDK for Modern Web',
   },
-  description: 'DesignCombo is a framework-agnostic video editor SDK built on WebCodecs and PixiJS.',
+  description:
+    'DesignCombo is a framework-agnostic video editor SDK built on WebCodecs and PixiJS.',
   openGraph: {
     title: 'Combo | The Video SDK for Modern Web',
     description: 'Build professional video editing experiences in the browser.',

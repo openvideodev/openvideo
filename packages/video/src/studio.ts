@@ -476,11 +476,14 @@ export class Studio extends EventEmitter<StudioEvents> {
       (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientHeight ||
       canvasHeight;
 
-      console.log(this.opts)
+    console.log(this.opts);
 
     const spacing = this.opts.spacing || 0;
     const containerWidthWithSpacing = Math.max(0, containerWidth - spacing * 2);
-    const containerHeightWithSpacing = Math.max(0, containerHeight - spacing * 2);
+    const containerHeightWithSpacing = Math.max(
+      0,
+      containerHeight - spacing * 2
+    );
 
     // Calculate scale to fit artboard in container with spacing
     const scaleX = containerWidthWithSpacing / artboardWidth;
@@ -518,7 +521,6 @@ export class Studio extends EventEmitter<StudioEvents> {
       'Canvas not initialized yet. Wait for initPixiApp to complete.'
     );
   }
-
 
   async addTransition(
     transitionKey: string,

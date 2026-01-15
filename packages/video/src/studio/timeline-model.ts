@@ -73,7 +73,6 @@ export class TimelineModel {
     this.studio.emit('track:removed', { trackId });
   }
 
-
   /**
    * Add a Transition clip at the join where the selected clip starts.
    */
