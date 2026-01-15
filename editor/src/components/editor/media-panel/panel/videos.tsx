@@ -10,7 +10,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { VisualsChatPanel } from '../visuals-chat-panel';
 import { debounce } from 'lodash';
 
 interface PexelsVideo {
@@ -142,7 +141,7 @@ export default function PanelVideos() {
 
       <div className="flex items-center px-4">
         <div className="flex-1 pb-4">
-          <InputGroup className="h-8">
+          <InputGroup>
             <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
               <Search size={14} />
             </InputGroupAddon>

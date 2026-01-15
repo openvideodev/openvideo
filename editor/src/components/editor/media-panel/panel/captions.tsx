@@ -292,8 +292,8 @@ export default function PanelCaptions() {
   };
 
   return (
-    <div className="px-4 h-full">
-      <div className="text-text-primary flex h-12 flex-none items-center text-sm font-medium">
+    <div className="h-full">
+      <div className="text-text-primary flex px-4 h-12 flex-none items-center text-sm font-medium">
         Captions
       </div>
       <div className="flex flex-1 flex-col gap-4 px-4 overflow-hidden">
@@ -307,7 +307,7 @@ export default function PanelCaptions() {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select media" />
               </SelectTrigger>
-              <SelectContent className="z-[200]">
+              <SelectContent>
                 {mediaItems.map((item) => (
                   <SelectItem value={item.id} key={item.id}>
                     {(item as any).src?.split('/').pop() || item.id}
@@ -317,7 +317,7 @@ export default function PanelCaptions() {
             </Select>
 
             {!selectedMediaId ? (
-              <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground p-8">
+              <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground py-2">
                 Select a video or audio clip to manage captions.
               </div>
             ) : captionItems.length > 0 ? (
@@ -351,7 +351,7 @@ export default function PanelCaptions() {
                 </ScrollArea>
               </div>
             ) : (
-              <div className="flex flex-col gap-4 py-8 items-center text-center">
+              <div className="flex flex-col gap-6 py-2 items-center text-center">
                 <div className="text-sm text-muted-foreground">
                   Recognize speech in the selected media and generate captions
                   automatically.

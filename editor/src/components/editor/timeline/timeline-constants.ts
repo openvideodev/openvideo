@@ -75,7 +75,7 @@ export const TRACK_HEIGHTS: Record<TrackType, number> = {
   Video: 40,
   Image: 40,
   Text: 32,
-  Effect: 40,
+  Effect: 32,
   Audio: 36,
   Caption: 32,
   Transition: 40,

@@ -126,10 +126,10 @@ export default function PanelUploads() {
 
       <div className="flex items-center w-full px-4">
         <Button
-          className="w-full"
+          className="w-full h-9"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          size={'sm'}
+          // size={'sm'}
         >
           <Upload size={14} />
           <span className="text-xs font-medium">
