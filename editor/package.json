@@ -1,5 +1,5 @@
 {
-  "name": "editor-legacy",
+  "name": "editor",
   "description": "Open-source AI Video Editor with client-side rendering (WebCodecs) and AI Copilot.",
   "version": "0.1.0",
   "private": true,
