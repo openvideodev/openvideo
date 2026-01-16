@@ -114,8 +114,17 @@ export default function PanelVideos() {
             clone.top = oldClip.top;
             clone.width = oldClip.width;
             clone.height = oldClip.height;
+            const realDuration = videoClip.meta.duration;
+            const newTrim = { ...oldClip.trim };
+            newTrim.to = Math.min(newTrim.to, realDuration);
+            newTrim.from = Math.min(newTrim.from, newTrim.to);
+            console.warn(
+              'This needs to be reviewed. assets from pexels may not have the right duration'
+            );
             clone.display = { ...oldClip.display };
-            clone.trim = { ...oldClip.trim };
+            clone.trim = newTrim;
+            clone.duration = (newTrim.to - newTrim.from) / clone.playbackRate;
+            clone.display.to = clone.display.from + clone.duration;
             clone.zIndex = oldClip.zIndex;
             return clone;
           });

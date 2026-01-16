@@ -1,17 +1,57 @@
 import { BaseTimelineClip, BaseClipProps } from './base';
-import { Control } from 'fabric';
+import { Control, Pattern } from 'fabric';
 import { createTrimControls } from '../controls';
 import { editorFont } from '@/components/editor/constants';
+import { useStudioStore } from '@/stores/studio-store';
+import { Video as VideoClip } from '@designcombo/video';
+import ThumbnailCache from '../utils/thumbnail-cache';
+import {
+  Filmstrip,
+  EMPTY_FILMSTRIP,
+  calculateThumbnailSegmentLayout,
+  calculateOffscreenSegments,
+  timeMsToUnits,
+  unitsToTimeMs,
+} from '../utils/filmstrip';
+
+const MICROSECONDS_IN_SECOND = 1_000_000;
+const DEFAULT_THUMBNAIL_HEIGHT = 52;
+const DEFAULT_ASPECT_RATIO = 16 / 9;
+const FALLBACK_COLOR = '#1e1b4b'; // Deep Indigo
+const THUMBNAIL_STEP_US = 1_000_000; // 1fps
 
 export class Video extends BaseTimelineClip {
-  isSelected: boolean;
   static createControls(): { controls: Record<string, Control> } {
     return { controls: createTrimControls() };
   }
 
+  public studioClipId?: string;
+  public duration: number = 0;
+  public sourceDuration: number = 0;
+  public playbackRate: number = 1;
+  public trim: { from: number; to: number } = { from: 0, to: 0 };
+
+  private _aspectRatio: number = DEFAULT_ASPECT_RATIO;
+  private _scrollLeft: number = 0;
+  private _thumbnailsPerSegment: number = 0;
+  private _segmentSize: number = 0;
+
+  private _thumbnailWidth: number = 0;
+  private _thumbnailHeight: number = DEFAULT_THUMBNAIL_HEIGHT;
+  private _isFetchingThumbnails: boolean = false;
+  private _thumbAborter: AbortController | null = null;
+  private _thumbnailCache: ThumbnailCache = new ThumbnailCache();
+
+  private _currentFilmstrip: Filmstrip = EMPTY_FILMSTRIP;
+  private _nextFilmstrip: Filmstrip = { ...EMPTY_FILMSTRIP, segmentIndex: 0 };
+  private _loadingFilmstrip: Filmstrip = EMPTY_FILMSTRIP;
+
+  private _fallbackSegmentIndex: number = 0;
+  private _fallbackSegmentsCount: number = 0;
+
   static ownDefaults = {
-    rx: 10,
-    ry: 10,
+    rx: 6,
+    ry: 6,
     objectCaching: false,
     borderColor: 'transparent',
     stroke: 'transparent',
@@ -24,52 +64,422 @@ export class Video extends BaseTimelineClip {
   constructor(options: BaseClipProps) {
     super(options);
     Object.assign(this, Video.ownDefaults);
-    this.set({
-      // fill: options.fill || TRACK_COLORS.video.solid,
+    this.initialize();
+  }
+
+  set(key: string, value: any) {
+    if (key === 'width') {
+      console.log(key, value);
+    }
+    return super.set(key, value);
+  }
+
+  public initDimensions() {
+    this._thumbnailHeight = this.height || DEFAULT_THUMBNAIL_HEIGHT;
+    this._thumbnailWidth = this._thumbnailHeight * this._aspectRatio;
+
+    const segmentOptions = calculateThumbnailSegmentLayout(
+      this._thumbnailWidth
+    );
+    this._thumbnailsPerSegment = segmentOptions.thumbnailsPerSegment;
+    this._segmentSize = segmentOptions.segmentSize;
+  }
+
+  public async initialize() {
+    this.initDimensions();
+    this.onScrollChange({ scrollLeft: 0 });
+
+    // Initial fallback with default 16:9
+    await this.createFallbackThumbnail();
+    this.createFallbackPattern();
+
+    // Trigger loading which will also update aspect ratio if metadata is ready
+    this.loadAndRenderThumbnails();
+  }
+
+  private async createFallbackThumbnail() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const targetHeight = DEFAULT_THUMBNAIL_HEIGHT;
+    const targetWidth = Math.round(targetHeight * this._aspectRatio);
+
+    canvas.height = targetHeight;
+    canvas.width = targetWidth;
+
+    ctx.fillStyle = FALLBACK_COLOR;
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+    });
+
+    this._thumbnailWidth = targetWidth;
+    this._thumbnailCache.setThumbnail('fallback', img);
+  }
+
+  private createFallbackPattern() {
+    const canvas = this.canvas;
+    if (!canvas) return;
+
+    const canvasWidth = canvas.width;
+    const maxPatternSize = 12000;
+    const fallbackSource = this._thumbnailCache.getThumbnail('fallback');
+
+    if (!fallbackSource) return;
+
+    const totalWidthNeeded = Math.min(canvasWidth * 20, maxPatternSize);
+    const segmentsRequired = Math.ceil(totalWidthNeeded / this._segmentSize);
+    this._fallbackSegmentsCount = segmentsRequired;
+    const patternWidth = segmentsRequired * this._segmentSize;
+
+    const offCanvas = document.createElement('canvas');
+    offCanvas.height = this._thumbnailHeight;
+    offCanvas.width = patternWidth;
+
+    const context = offCanvas.getContext('2d');
+    if (!context) return;
+    const thumbnailsTotal = segmentsRequired * this._thumbnailsPerSegment;
+
+    for (let i = 0; i < thumbnailsTotal; i++) {
+      const x = i * this._thumbnailWidth;
+      context.drawImage(
+        fallbackSource,
+        x,
+        0,
+        this._thumbnailWidth,
+        this._thumbnailHeight
+      );
+    }
+
+    const fillPattern = new Pattern({
+      source: offCanvas,
+      repeat: 'no-repeat',
+      patternTransform: [1, 0, 0, 1, 0, 0],
+    });
+
+    this.set('fill', fillPattern);
+    this.canvas?.requestRenderAll();
+  }
+
+  public onScrollChange({
+    scrollLeft,
+    force,
+  }: {
+    scrollLeft: number;
+    force?: boolean;
+  }) {
+    this._scrollLeft = scrollLeft;
+
+    const offscreenWidth = Math.max(0, -(this.left + scrollLeft));
+    const trimFromSize = timeMsToUnits(
+      this.trim.from,
+      this.timeScale,
+      this.playbackRate
+    );
+
+    const segmentToDraw = calculateOffscreenSegments(
+      offscreenWidth,
+      trimFromSize,
+      this._segmentSize
+    );
+
+    if (!force && this._currentFilmstrip.segmentIndex === segmentToDraw) {
+      return false;
+    }
+
+    if (segmentToDraw !== this._fallbackSegmentIndex) {
+      const fillPattern = this.fill as Pattern;
+      if (fillPattern instanceof Pattern) {
+        fillPattern.offsetX =
+          this._segmentSize *
+          (segmentToDraw - Math.floor(this._fallbackSegmentsCount / 2));
+      }
+      this._fallbackSegmentIndex = segmentToDraw;
+    }
+
+    if (!this._isFetchingThumbnails || force) {
+      const widthOnScreen = this.calculateWidthOnScreen(scrollLeft);
+
+      const dimensions = this.calculateFilmstripDimensions({
+        widthOnScreen,
+        segmentIndex: segmentToDraw,
+      });
+
+      this._nextFilmstrip = {
+        segmentIndex: segmentToDraw,
+        offset: dimensions.filmstripOffset,
+        startTime: dimensions.filmstripStartTime,
+        thumbnailsCount: dimensions.filmstrimpThumbnailsCount,
+        widthOnScreen,
+      };
+
+      this.loadAndRenderThumbnails();
+    }
+  }
+
+  private calculateWidthOnScreen(scrollLeft: number): number {
+    const canvasWidth = this.canvas?.width || 0;
+    const clipStartOnTimeline = this.left + scrollLeft;
+    const clipEndOnTimeline = clipStartOnTimeline + this.width;
+
+    const visibleStart = Math.max(0, clipStartOnTimeline);
+    const visibleEnd = Math.min(canvasWidth, clipEndOnTimeline);
+
+    return Math.max(0, visibleEnd - visibleStart);
+  }
+
+  private calculateFilmstripDimensions({
+    segmentIndex,
+    widthOnScreen,
+  }: {
+    segmentIndex: number;
+    widthOnScreen: number;
+  }) {
+    const filmstripOffset = segmentIndex * this._segmentSize;
+    const backlogSize = this._segmentSize;
+    const filmstripStartTime = unitsToTimeMs(filmstripOffset, this.timeScale);
+    const filmstrimpThumbnailsCount =
+      1 + Math.round((widthOnScreen + backlogSize * 2) / this._thumbnailWidth);
+
+    return {
+      filmstripOffset,
+      filmstripStartTime,
+      filmstrimpThumbnailsCount,
+    };
+  }
+
+  public async loadAndRenderThumbnails() {
+    if (this._isFetchingThumbnails) return;
+
+    const studio = useStudioStore.getState().studio;
+    if (!studio || !this.studioClipId) return;
+
+    const clip = studio.getClipById(this.studioClipId);
+    if (!clip || clip.type !== 'Video') return;
+
+    const videoClip = clip as VideoClip;
+
+    // Update aspect ratio from metadata if available
+    const { width, height, duration: sourceDuration } = videoClip.meta;
+    let needsUpdate = false;
+
+    if (width && height) {
+      const newAspectRatio = width / height;
+      if (Math.abs(this._aspectRatio - newAspectRatio) > 0.01) {
+        this._aspectRatio = newAspectRatio;
+        needsUpdate = true;
+      }
+    }
+
+    if (sourceDuration && sourceDuration !== this.sourceDuration) {
+      this.sourceDuration = sourceDuration;
+
+      // Clamp current trim and duration to new source duration
+      if (this.trim.to > sourceDuration) {
+        this.trim.to = sourceDuration;
+        this.trim.from = Math.min(this.trim.from, this.trim.to);
+        this.duration = (this.trim.to - this.trim.from) / this.playbackRate;
+        needsUpdate = true;
+      }
+    }
+
+    if (needsUpdate) {
+      this.initDimensions();
+      await this.createFallbackThumbnail();
+      this.createFallbackPattern();
+    }
+
+    this._thumbAborter?.abort();
+    this._thumbAborter = new AbortController();
+    const { signal } = this._thumbAborter;
+
+    this._loadingFilmstrip = { ...this._nextFilmstrip };
+    this._isFetchingThumbnails = true;
+
+    const { startTime, thumbnailsCount } = this._loadingFilmstrip;
+    const timestamps = this.generateTimestamps(startTime, thumbnailsCount);
+
+    try {
+      const thumbnailsArr = await videoClip.thumbnails(this._thumbnailWidth, {
+        start: timestamps[0] * MICROSECONDS_IN_SECOND,
+        end: timestamps[timestamps.length - 1] * MICROSECONDS_IN_SECOND,
+        step: THUMBNAIL_STEP_US,
+      });
+
+      if (signal.aborted) return;
+
+      await this.loadThumbnailBatch(thumbnailsArr);
+
+      this._isFetchingThumbnails = false;
+      this._currentFilmstrip = { ...this._loadingFilmstrip };
+      this.canvas?.requestRenderAll();
+    } catch (error: any) {
+      if (error.message !== 'generate thumbnails aborted') {
+        console.warn('Failed to load thumbnails:', error);
+      }
+      this._isFetchingThumbnails = false;
+    }
+  }
+
+  private generateTimestamps(startTime: number, count: number): number[] {
+    const timePerThumbnail = unitsToTimeMs(
+      this._thumbnailWidth,
+      this.timeScale,
+      this.playbackRate
+    );
+
+    return Array.from({ length: count }, (_, i) => {
+      const timeInFilmstripe = startTime + i * timePerThumbnail;
+      return Math.floor(timeInFilmstripe / MICROSECONDS_IN_SECOND);
     });
   }
 
-  public setSelected(selected: boolean) {
-    this.isSelected = selected;
-    this.set({ dirty: true });
+  private async loadThumbnailBatch(thumbnails: { ts: number; img: Blob }[]) {
+    const loadPromises = thumbnails.map(async (thumbnail) => {
+      const tsSeconds = Math.floor(thumbnail.ts / MICROSECONDS_IN_SECOND);
+      if (this._thumbnailCache.getThumbnail(tsSeconds)) return;
+
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(thumbnail.img);
+        img.src = url;
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          this._thumbnailCache.setThumbnail(tsSeconds, img);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+      });
+    });
+
+    await Promise.all(loadPromises);
   }
 
   public _render(ctx: CanvasRenderingContext2D) {
     super._render(ctx);
-    this.drawIdentity(ctx);
-    this.updateSelected(ctx);
-  }
-
-  public drawIdentity(ctx: CanvasRenderingContext2D) {
-    const svgPath = new Path2D(
-      'M15 2.68164C14.9999 2.62494 14.9856 2.56904 14.958 2.51953C14.9303 2.46994 14.8901 2.42829 14.8418 2.39844C14.7935 2.36862 14.7383 2.35119 14.6816 2.34863C14.6249 2.34609 14.5684 2.35841 14.5176 2.38379L11 4.1416V6.85742L14.5176 8.61621C14.5684 8.64159 14.6249 8.65391 14.6816 8.65137C14.7383 8.64881 14.7935 8.63138 14.8418 8.60156C14.8901 8.57171 14.9303 8.53006 14.958 8.48047C14.9856 8.43096 14.9999 8.37506 15 8.31836V2.68164ZM10 2.16699C10 1.85757 9.877 1.56059 9.6582 1.3418C9.43941 1.123 9.14243 1 8.83301 1H2.16699C1.85757 1 1.56059 1.123 1.3418 1.3418C1.123 1.56059 1 1.85757 1 2.16699V8.83301C1 9.14243 1.123 9.43941 1.3418 9.6582C1.56059 9.877 1.85757 10 2.16699 10H8.83301C9.14243 10 9.43941 9.877 9.6582 9.6582C9.877 9.43941 10 9.14243 10 8.83301V2.16699ZM11 3.02344L14.0703 1.48926C14.2735 1.38772 14.4996 1.34038 14.7266 1.35059C14.9534 1.3608 15.174 1.42851 15.3672 1.54785C15.5604 1.66724 15.7204 1.83389 15.8311 2.03223C15.9418 2.23062 15.9999 2.45445 16 2.68164V8.31836L15.9893 8.48828C15.9676 8.65614 15.914 8.81907 15.8311 8.96777C15.7204 9.16611 15.5604 9.33276 15.3672 9.45215C15.174 9.57149 14.9534 9.6392 14.7266 9.64941C14.4996 9.65962 14.2735 9.61228 14.0703 9.51074L11 7.97559V8.83301C11 9.40764 10.7716 9.95891 10.3652 10.3652C9.95891 10.7716 9.40764 11 8.83301 11H2.16699C1.59236 11 1.04109 10.7716 0.634766 10.3652C0.228437 9.95891 0 9.40764 0 8.83301V2.16699C0 1.59236 0.228437 1.04109 0.634766 0.634766C1.04109 0.228437 1.59236 0 2.16699 0H8.83301C9.40764 0 9.95891 0.228437 10.3652 0.634766C10.7716 1.04109 11 1.59236 11 2.16699V3.02344Z'
-    );
 
     ctx.save();
     ctx.translate(-this.width / 2, -this.height / 2);
-    ctx.translate(0, 11);
-    ctx.font = `400 12px ${editorFont.fontFamily}`;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-    ctx.textAlign = 'left';
+
+    // Apply global rounded clip for thumbnails and identity
+    const radius = this.rx || 6;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, this.width, this.height, radius);
     ctx.clip();
-    ctx.fillText(this.src || '', 36, 12);
 
-    ctx.translate(8, 1);
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-    ctx.fill(svgPath);
+    this.drawFilmstrip(ctx);
+    this.drawIdentity(ctx);
     ctx.restore();
+
+    this.updateSelected(ctx);
+  }
+
+  private drawFilmstrip(ctx: CanvasRenderingContext2D) {
+    const canvasWidth = this.canvas?.width || 0;
+    const clipStartOnTimeline = this.left + this._scrollLeft;
+
+    // Determine the visible range of the clip in its local coordinates
+    const visibleStart = Math.max(0, -clipStartOnTimeline);
+    const visibleEnd = Math.min(this.width, canvasWidth - clipStartOnTimeline);
+
+    if (visibleStart >= visibleEnd) return;
+
+    const thumbnailWidth = this._thumbnailWidth;
+    const thumbnailHeight = this._thumbnailHeight;
+    const timeScale = this.timeScale;
+    const trimFromSize = timeMsToUnits(
+      this.trim.from,
+      timeScale,
+      this.playbackRate
+    );
+
+    // Filter indices that cover the visible range + small buffer
+    const firstIdx = Math.floor(visibleStart / thumbnailWidth);
+    const lastIdx = Math.ceil(visibleEnd / thumbnailWidth);
+
+    for (let i = firstIdx; i <= lastIdx; i++) {
+      const x = i * thumbnailWidth;
+      // Source time for this thumbnail slot
+      const localTime = unitsToTimeMs(
+        x + trimFromSize,
+        timeScale,
+        this.playbackRate
+      );
+      const tsSeconds = Math.floor(localTime / MICROSECONDS_IN_SECOND);
+
+      let img = this._thumbnailCache.getThumbnail(tsSeconds);
+      if (!img) {
+        img = this._thumbnailCache.getThumbnail('fallback');
+      }
+
+      if (img) {
+        ctx.drawImage(img, x, 0, thumbnailWidth, thumbnailHeight);
+      }
+    }
+  }
+
+  public drawIdentity(ctx: CanvasRenderingContext2D) {
+    const text = this.text || '';
+    const seconds = Math.round(this.duration / MICROSECONDS_IN_SECOND);
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    const durationText = `${m}:${s.toString().padStart(2, '0')}`;
+
+    // Note: ctx is already translated and clipped in _render
+
+    ctx.font = `600 11px ${editorFont.fontFamily}`;
+    const paddingX = 6;
+    const paddingY = 2;
+    const bgHeight = 14 + paddingY * 2;
+    const margin = 4;
+    const blockGap = 4;
+
+    let currentX = margin;
+    const y = margin;
+
+    // Helper to draw a text block with background
+    const drawBlock = (content: string, isDimmed = false) => {
+      const metrics = ctx.measureText(content);
+      const bgWidth = metrics.width + paddingX * 2;
+
+      // Draw background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.beginPath();
+      ctx.roundRect(currentX, y, bgWidth, bgHeight, 4);
+      ctx.fill();
+
+      // Draw text
+      ctx.fillStyle = isDimmed
+        ? 'rgba(255, 255, 255, 0.5)'
+        : 'rgba(255, 255, 255, 0.9)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(content, currentX + paddingX, y + paddingY + 1);
+
+      currentX += bgWidth + blockGap;
+    };
+
+    if (text) {
+      drawBlock(text);
+    }
+    drawBlock(durationText, true);
   }
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected ? '#4338ca' : '#3730a3';
+    const borderColor = this.isSelected ? '#ffffff' : '#3730a3';
     const borderWidth = 2;
-    const radius = 10;
+    const radius = 6;
 
     ctx.save();
     ctx.fillStyle = borderColor;
 
-    // Create a path for the outer rectangle
     ctx.beginPath();
     ctx.roundRect(
       -this.width / 2,
@@ -79,7 +489,6 @@ export class Video extends BaseTimelineClip {
       radius
     );
 
-    // Create a path for the inner rectangle (the hole)
     ctx.roundRect(
       -this.width / 2 + borderWidth,
       -this.height / 2 + borderWidth,
@@ -88,7 +497,6 @@ export class Video extends BaseTimelineClip {
       radius - borderWidth
     );
 
-    // Use even-odd fill rule to create the border effect
     ctx.fill('evenodd');
     ctx.restore();
   }
