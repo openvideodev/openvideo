@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { TIMELINE_CONSTANTS } from '@/constants/timeline-constants';
+import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
 
 interface TimelineRulerProps {
   zoomLevel: number;

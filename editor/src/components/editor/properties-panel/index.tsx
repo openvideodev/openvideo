@@ -6,6 +6,8 @@ import { AudioProperties } from './audio-properties';
 import { CaptionProperties } from './caption-properties';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { IClip } from '@designcombo/video';
+import { EffectProperties } from './effect-properties';
+import { TransitionProperties } from './transition-properties';
 
 export function PropertiesPanel({ selectedClips }: { selectedClips: IClip[] }) {
   const [, setTick] = useState(0);
@@ -48,6 +50,10 @@ export function PropertiesPanel({ selectedClips }: { selectedClips: IClip[] }) {
         return <VideoProperties clip={clip} />;
       case 'Audio':
         return <AudioProperties clip={clip} />;
+      case 'Effect':
+        return <EffectProperties clip={clip} />;
+      case 'Transition':
+        return <TransitionProperties clip={clip} />;
       default:
         return null;
     }

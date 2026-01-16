@@ -1,8 +1,4 @@
-import updatedData from './updated.json';
 import { ITimelineTrack, IClip } from '@/types/timeline';
-
-// Directly importing local JSON and transforming to Store format
-const rawData = updatedData;
 
 export function loadStudioData() {
   const clips: Record<string, IClip> = {};

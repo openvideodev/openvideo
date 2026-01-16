@@ -6,7 +6,7 @@ import { Log, type IClip } from '@designcombo/video';
 import { ExportModal } from './export-modal';
 import { LogoIcons } from '../shared/logos';
 import Link from 'next/link';
-import { RedoIcon, UndoIcon } from 'lucide-react';
+import { Icons } from '../shared/icons';
 
 export default function Header() {
   const { studio } = useStudioStore();
@@ -123,13 +123,8 @@ export default function Header() {
         </div>
 
         <div className=" pointer-events-auto flex h-10 items-center px-1.5">
-          <Button
-            onClick={handleExportJSON}
-            className="text-muted-foreground"
-            variant="ghost"
-            size="icon"
-          >
-            export
+          <Button onClick={handleExportJSON} variant="ghost" size="icon">
+            <Icons.undo className="size-5" />
           </Button>
           <Button
             onClick={handleImportJSON}
@@ -137,7 +132,7 @@ export default function Header() {
             variant="ghost"
             size="icon"
           >
-            import
+            <Icons.redo className="size-5" />
           </Button>
         </div>
       </div>

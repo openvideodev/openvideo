@@ -1,8 +1,8 @@
 import { TransformActionHandler, controlsUtils } from 'fabric';
 import { resolveOrigin, isTransformCentered } from './utils';
 import { CENTER, LEFT, RIGHT } from './constants';
-import { TIMELINE_CONSTANTS } from '../utils';
 import { MICROSECONDS_PER_SECOND } from '@/types/timeline';
+import { TIMELINE_CONSTANTS } from '../../timeline-constants';
 
 const { wrapWithFireEvent, getLocalPoint, wrapWithFixedAnchor } = controlsUtils;
 

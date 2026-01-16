@@ -90,65 +90,13 @@ export class TimelineModel {
     if (fromClipId && toClipId) {
       clipA = this.getClipById(fromClipId) ?? null;
       clipB = this.getClipById(toClipId) ?? null;
-
-      if (!clipA || !clipB) {
-        console.warn('[Studio] Invalid fromClipId or toClipId', {
-          fromClipId,
-          toClipId,
-        });
-        return;
-      }
-    }
-
-    if (!clipB) {
-      const candidateTracks = this.tracks.filter(
-        (t) =>
-          ['media', 'video', 'image', 'Video', 'Image'].includes(t.type) ||
-          t.clipIds.length > 1
-      );
-
-      for (const track of candidateTracks) {
-        const trackClips = track.clipIds
-          .map((id) => this.getClipById(id))
-          .filter((c): c is IClip => !!c && c.type !== 'Transition')
-          .sort((a, b) => a.display.from - b.display.from);
-
-        for (let i = 0; i < trackClips.length - 1; i++) {
-          const current = trackClips[i];
-          const next = trackClips[i + 1];
-
-          if (Math.abs(next.display.from - current.display.to) < 100000) {
-            clipA = current;
-            clipB = next;
-            break;
-          }
-        }
-        if (clipA && clipB) break;
-      }
-    }
-
-    if (clipB && !clipA) {
-      const trackId = this.findTrackIdByClipId(clipB.id);
-      if (trackId) {
-        const track = this.tracks.find((t) => t.id === trackId);
-        if (track) {
-          const trackClips = track.clipIds
-            .map((id) => this.getClipById(id))
-            .filter((c): c is IClip => !!c && c.type !== 'Transition')
-            .sort((a, b) => a.display.from - b.display.from);
-
-          const index = trackClips.findIndex((c) => c.id === clipB.id);
-          if (index > 0) {
-            clipA = trackClips[index - 1];
-          }
-        }
-      }
     }
 
     if (!clipA || !clipB) {
-      console.warn(
-        '[Studio] Unable to resolve Clip A and Clip B for transition'
-      );
+      console.warn('[Studio] Invalid fromClipId or toClipId', {
+        fromClipId,
+        toClipId,
+      });
       return;
     }
 
@@ -179,7 +127,6 @@ export class TimelineModel {
             const tc = c as any;
             return tc.fromClipId === clipA!.id && tc.toClipId === clipB!.id;
           });
-
         // Remove existing transition clips
         for (const existingTransition of existingTransitions) {
           await this.removeClip(existingTransition);
@@ -197,12 +144,9 @@ export class TimelineModel {
       this.studio.transitionRenderers.delete(clipB.id);
     }
 
-    if ('transition' in clipA) {
-      (clipA as any).transition = { ...transitionMeta };
-    }
-    if ('transition' in clipB) {
-      (clipB as any).transition = { ...transitionMeta };
-    }
+    // Force set transition property
+    (clipA as any).transition = { ...transitionMeta };
+    (clipB as any).transition = { ...transitionMeta };
 
     const tClip = new Transition(transitionKey as any);
     tClip.duration = transitionDuration;

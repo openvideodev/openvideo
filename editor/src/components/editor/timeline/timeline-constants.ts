@@ -47,6 +47,18 @@ export const TRACK_COLORS: Record<
   },
 } as const;
 
+// Global constants
+export const TIMELINE_CONSTANTS = {
+  TRACK_SPACING: 6,
+  TRACK_PADDING_TOP: 6,
+  ELEMENT_MIN_WIDTH: 80,
+  PIXELS_PER_SECOND: 50,
+  TRACK_HEIGHT: 60, // Default fallback
+  DEFAULT_TEXT_DURATION: 5,
+  DEFAULT_IMAGE_DURATION: 5,
+  ZOOM_LEVELS: [0.25, 0.5, 1, 1.5, 2, 3, 4],
+} as const;
+
 // Utility functions
 export function getTrackColors(type: TrackType) {
   return TRACK_COLORS[type];
@@ -63,8 +75,8 @@ export const TRACK_HEIGHTS: Record<TrackType, number> = {
   Video: 40,
   Image: 40,
   Text: 32,
-  Effect: 40,
-  Audio: 40,
+  Effect: 32,
+  Audio: 36,
   Caption: 32,
   Transition: 40,
   Placeholder: 40,
@@ -80,7 +92,7 @@ export function getCumulativeHeightBefore(
   tracks: Array<{ type: TrackType }>,
   trackIndex: number
 ): number {
-  const GAP = 4; // 4px gap between tracks (equivalent to Tailwind's gap-1)
+  const GAP = TIMELINE_CONSTANTS.TRACK_SPACING;
   return tracks
     .slice(0, trackIndex)
     .reduce((sum, track) => sum + getTrackHeight(track.type) + GAP, 0);
@@ -90,7 +102,7 @@ export function getCumulativeHeightBefore(
 export function getTotalTracksHeight(
   tracks: Array<{ type: TrackType }>
 ): number {
-  const GAP = 4; // 4px gap between tracks (equivalent to Tailwind's gap-1)
+  const GAP = TIMELINE_CONSTANTS.TRACK_SPACING;
   const tracksHeight = tracks.reduce(
     (sum, track) => sum + getTrackHeight(track.type),
     0
@@ -100,14 +112,7 @@ export function getTotalTracksHeight(
 }
 
 // Other timeline constants
-export const TIMELINE_CONSTANTS = {
-  ELEMENT_MIN_WIDTH: 80,
-  PIXELS_PER_SECOND: 50,
-  TRACK_HEIGHT: 60, // Default fallback
-  DEFAULT_TEXT_DURATION: 5,
-  DEFAULT_IMAGE_DURATION: 5,
-  ZOOM_LEVELS: [0.25, 0.5, 1, 1.5, 2, 3, 4],
-} as const;
+// Moved up to avoid temporal dead zone if needed, or just cleaner organization
 
 // FPS presets for project settings
 export const FPS_PRESETS = [

@@ -103,7 +103,7 @@ export default function PanelText() {
     if (!studio) return;
 
     try {
-      const textClip = new Text(preset ? preset.description : 'Add Text', {
+      const textClip = new Text(preset ? preset.description : 'Add Text pro', {
         fontSize: preset?.style.fontSize || 124,
         fontFamily: preset?.style.fontFamily || 'Arial',
         align: 'center',
@@ -120,7 +120,6 @@ export default function PanelText() {
       textClip.display.from = 0;
       textClip.duration = 5e6;
       textClip.display.to = 5e6;
-      console.log('textClipppppp', { textClip });
       await studio.addClip(textClip);
     } catch (error) {
       Log.error('Failed to add text:', error);

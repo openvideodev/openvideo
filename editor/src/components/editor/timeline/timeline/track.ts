@@ -1,5 +1,4 @@
 import { Rect, RectProps } from 'fabric';
-import { getTrackHeight } from './utils';
 import { TrackType } from '@/types/timeline';
 
 export interface TrackProps extends Partial<RectProps> {

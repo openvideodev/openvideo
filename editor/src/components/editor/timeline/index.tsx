@@ -18,7 +18,7 @@ import {
   getTrackHeight,
   TIMELINE_CONSTANTS,
   snapTimeToFrame,
-} from '@/constants/timeline-constants';
+} from '@/components/editor/timeline/timeline-constants';
 import { TimelineToolbar } from './timeline-toolbar';
 import { TimelineCanvas } from './timeline';
 import { TimelineStudioSync } from './timeline-studio-sync';
@@ -493,7 +493,7 @@ export function Timeline() {
                         <div
                           className="w-full"
                           style={{
-                            height: '4px',
+                            height: `${TIMELINE_CONSTANTS.TRACK_SPACING}px`,
                             marginBottom: '0px',
                             background: 'transparent',
                           }}
@@ -513,7 +513,7 @@ export function Timeline() {
                       <div
                         className="w-full relative"
                         style={{
-                          height: '4px',
+                          height: `${TIMELINE_CONSTANTS.TRACK_SPACING}px`,
                           background: 'transparent',
                         }}
                       ></div>

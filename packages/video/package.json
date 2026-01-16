@@ -1,6 +1,6 @@
 {
   "name": "@designcombo/video",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Video rendering and processing library",
   "type": "module",
   "publishConfig": {
@@ -25,6 +25,7 @@
   "main": "src/index.ts",
   "module": "src/index.ts",
   "types": "src/index.ts",
+
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build"

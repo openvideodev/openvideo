@@ -26,5 +26,11 @@
   },
   "lint-staged": {
     "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.8",
+      "@types/react-dom": "19.2.3"
+    }
   }
 }

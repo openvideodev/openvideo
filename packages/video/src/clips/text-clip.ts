@@ -345,8 +345,6 @@ export class Text extends BaseClip {
     renderer?: Application['renderer']
   ) {
     super();
-
-    console.log('opts', opts);
     // Store original options for serialization (shallow copy is fine since options are primitives)
     this.originalOpts = { ...opts };
     this.text = text;

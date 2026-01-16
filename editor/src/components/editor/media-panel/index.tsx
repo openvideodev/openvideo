@@ -37,6 +37,7 @@ export function MediaPanel() {
   const { activeTab } = useMediaPanelStore();
   const [selectedClips, setSelectedClips] = useState<IClip[]>([]);
   const { studio, setSelectedClips: setStudioSelectedClips } = useStudioStore();
+  const [showProperties, setShowProperties] = useState(false);
 
   useEffect(() => {
     if (!studio) return;
@@ -44,10 +45,12 @@ export function MediaPanel() {
     const handleSelection = (data: any) => {
       setSelectedClips(data.selected);
       setStudioSelectedClips(data.selected);
+      setShowProperties(true);
     };
 
     const handleClear = () => {
       setSelectedClips([]);
+      setShowProperties(false);
     };
 
     studio.on('selection:created', handleSelection);
@@ -61,11 +64,17 @@ export function MediaPanel() {
     };
   }, [studio]);
 
+  useEffect(() => {
+    if (activeTab) {
+      setShowProperties(false);
+    }
+  }, [activeTab]);
+
   return (
     <div className="h-full flex">
       <TabBar />
-      <div className="flex-1 overflow-hidden" id="panel-content">
-        {selectedClips.length > 0 ? (
+      <div className="flex-1 overflow-hidden">
+        {selectedClips.length > 0 && showProperties ? (
           <PropertiesPanel selectedClips={selectedClips} />
         ) : (
           <div className="h-full overflow-y-auto">{viewMap[activeTab]}</div>

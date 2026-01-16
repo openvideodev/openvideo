@@ -1,5 +1,4 @@
 import { BaseTimelineClip, BaseClipProps } from './base';
-import { TRACK_COLORS } from '../utils';
 import { Control } from 'fabric';
 import { createResizeControls } from '../controls';
 import { editorFont } from '@/components/editor/constants';
@@ -28,7 +27,6 @@ export class Text extends BaseTimelineClip {
   constructor(options: TextClipProps) {
     super(options);
     Object.assign(this, Text.ownDefaults);
-    this.text = 'Text clip';
     this.set({
       // fill: TRACK_COLORS.text.solid,
     });

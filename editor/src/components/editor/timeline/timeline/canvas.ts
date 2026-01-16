@@ -8,9 +8,10 @@ import {
   Effect,
   type BaseTimelineClip,
   Transition,
+  Caption,
 } from './clips';
 import { TransitionButton } from './objects/transition-button';
-import { TIMELINE_CONSTANTS, getTrackHeight } from './utils';
+import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
 import {
   type ITimelineTrack,
   type IClip,
@@ -19,12 +20,11 @@ import {
 } from '@/types/timeline';
 import { useTimelineStore } from '@/stores/timeline-store';
 import EventEmitter from './event-emitter';
-import { generateUUID } from '@/utils/id';
-import { clearAuxiliaryObjects } from './guidelines/utils';
 import * as SelectionHandlers from './handlers/selection';
 import * as DragHandlers from './handlers/drag-handler';
 import * as ModifyHandlers from './handlers/modify-handler';
 import { Scrollbars } from './scrollbar';
+import { getTrackHeight } from '@/components/editor/timeline/timeline-constants';
 
 export interface TimelineCanvasEvents {
   scroll: { deltaX: number; deltaY: number };
@@ -338,7 +338,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   public get totalTracksHeight() {
-    return this.#tracks.reduce((acc, track) => {
+    return this.#tracks.reduce<number>((acc, track) => {
       let trackType: TrackType = 'Video';
       if (
         track.type.toLowerCase() === 'caption' ||
@@ -353,8 +353,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       ) {
         trackType = 'Effect';
       }
-      return acc + getTrackHeight(trackType) + 4; // 4 is GAP
-    }, 4); // 4 is PADDING_TOP
+      return acc + getTrackHeight(trackType) + TIMELINE_CONSTANTS.TRACK_SPACING;
+    }, TIMELINE_CONSTANTS.TRACK_PADDING_TOP);
   }
 
   public get activeSeparatorIndex() {
@@ -398,8 +398,9 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   public checkSeparatorIntersection(
     cursorY: number
   ): { container: Rect; highlight: Rect; index: number } | null {
-    // Separator height is 4px, so threshold should be small (half height + small margin)
-    const THRESHOLD = 6;
+    // Separator height is derived from gap
+    const SEPARATOR_HEIGHT = TIMELINE_CONSTANTS.TRACK_SPACING;
+    const THRESHOLD = SEPARATOR_HEIGHT / 2 + 5;
 
     for (const sep of this.#separatorLines) {
       const sepCenter = sep.container.getCenterPoint();
@@ -445,8 +446,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     const usedTrackIds = new Set<string>();
     const usedClipIds = new Set<string>();
 
-    const GAP = 4;
-    const PADDING_TOP = 4;
+    const GAP = TIMELINE_CONSTANTS.TRACK_SPACING;
+    const PADDING_TOP = TIMELINE_CONSTANTS.TRACK_PADDING_TOP;
     let currentY = PADDING_TOP;
 
     // Ensure separators are rebuilt (simple rects) - optimizing this later if needed
@@ -558,7 +559,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           clip.type === 'Placeholder'
         ) {
           let timelineClip = this.#clipObjects.get(clip.id);
-          const clipName = clip.text || clip.name || clip.type;
+          const isMedia =
+            clip.type === 'Video' ||
+            clip.type === 'Image' ||
+            clip.type === 'Audio';
+          const clipName = isMedia
+            ? clip.src || clip.name || clip.type
+            : clip.text || clip.name || clip.type;
 
           if (!timelineClip) {
             const commonProps = {
@@ -567,7 +574,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               width: width,
               height: trackHeight,
               elementId: clip.id,
-              content: clipName,
+              text: clipName,
+              src: clip.src,
             };
 
             if (clip.type === 'Audio') {
@@ -580,6 +588,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               timelineClip = new Effect(commonProps);
             } else if (clip.type === 'Transition') {
               timelineClip = new Transition(commonProps);
+            } else if (clip.type === 'Caption') {
+              timelineClip = new Caption(commonProps);
             } else {
               timelineClip = new Text(commonProps);
             }
@@ -605,7 +615,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               top: region.top,
               width: width,
               height: trackHeight,
-              content: clipName,
+              text: clipName,
+              src: clip.src,
               trim: clip.trim
                 ? { ...clip.trim }
                 : {
@@ -787,7 +798,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       left: 0,
       top: top,
       width: width,
-      height: 4,
+      height: TIMELINE_CONSTANTS.TRACK_SPACING,
       fill: 'transparent',
       selectable: false,
       evented: false,

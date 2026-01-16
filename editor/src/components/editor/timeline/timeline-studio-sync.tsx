@@ -5,7 +5,7 @@ import { usePlaybackStore } from '@/stores/playback-store';
 import type { ITimelineTrack, IClip, TrackType } from '@/types/timeline';
 import type { TimelineCanvas } from './timeline';
 import { generateUUID } from '@/utils/id';
-import { clipToJSON, jsonToClip } from '@designcombo/video';
+import { clipToJSON, type IClip as StudioClip } from '@designcombo/video';
 
 interface TimelineStudioSyncProps {
   timelineCanvas?: TimelineCanvas | null;
@@ -60,10 +60,12 @@ export const TimelineStudioSync = ({
       // Let's handle clip:added by manually updating store state fully.
 
       useTimelineStore.setState((state) => {
+        const serializedClip = clipToJSON(clip as unknown as StudioClip);
         const updatedClips = {
           ...state.clips,
           [clip.id]: {
-            ...clip,
+            ...serializedClip,
+            id: (serializedClip.id || clip.id) as string,
             sourceDuration: (clip as any).meta?.duration || clip.duration,
           },
         };
@@ -134,13 +136,15 @@ export const TimelineStudioSync = ({
       useTimelineStore.setState((state) => {
         if (!state.clips[clip.id]) return state;
 
+        const serializedClip = clipToJSON(clip as unknown as StudioClip);
         const updatedClips = {
           ...state.clips,
           [clip.id]: {
             ...state.clips[clip.id],
-            ...clip,
-            display: { ...clip.display },
-            trim: clip.trim ? { ...clip.trim } : undefined,
+            ...serializedClip,
+            id: (serializedClip.id || clip.id) as string,
+            display: { ...serializedClip.display },
+            trim: serializedClip.trim ? { ...serializedClip.trim } : undefined,
           },
         };
 
@@ -186,8 +190,10 @@ export const TimelineStudioSync = ({
         // Update clips map
         clips.forEach((clip) => {
           if (!newClipsMap[clip.id]) {
+            const serializedClip = clipToJSON(clip as unknown as StudioClip);
             newClipsMap[clip.id] = {
-              ...clip,
+              ...serializedClip,
+              id: (serializedClip.id || clip.id) as string,
               sourceDuration: (clip as any).meta?.duration || clip.duration,
             };
             clipsToAdd.push(clip.id);
@@ -264,13 +270,15 @@ export const TimelineStudioSync = ({
       useTimelineStore.setState((state) => {
         if (!state.clips[newClip.id]) return state;
 
+        const serializedClip = clipToJSON(newClip as unknown as StudioClip);
         const updatedClips = {
           ...state.clips,
           [newClip.id]: {
             ...state.clips[newClip.id],
-            ...newClip,
-            display: { ...newClip.display },
-            trim: newClip.trim ? { ...newClip.trim } : undefined,
+            ...serializedClip,
+            id: (serializedClip.id || newClip.id) as string,
+            display: { ...serializedClip.display },
+            trim: serializedClip.trim ? { ...serializedClip.trim } : undefined,
             sourceDuration: (newClip as any).meta?.duration || newClip.duration,
           },
         };

@@ -4,7 +4,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const response = await fetch(
-      'https://api-editor-315477051950.us-central1.run.app/musics/search',
+      'https://api-editor.cloud-45c.workers.dev/api/musics/search',
       {
         method: 'POST',
         headers: {
