@@ -322,8 +322,9 @@ export class Transformer extends Container {
 
     // Check if we're transforming a Text or Caption (Fabric.js Textbox behavior)
     const isTextClip = this.opts.clip && this.opts.clip.type === 'Text';
+    const isCaptionClip = this.opts.clip && this.opts.clip.type === 'Caption';
 
-    if (isTextClip) {
+    if (isTextClip || isCaptionClip) {
       // For Text: Only adjust container width, text reflows naturally
       // Calculate new width based on scale
       const newWidth = proposed.width;

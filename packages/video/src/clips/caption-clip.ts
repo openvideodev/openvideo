@@ -204,10 +204,93 @@ export class Caption extends BaseClip implements IClip {
     return { ...this._meta };
   }
 
+  // Override width/height to trigger refreshCaptions when resized by transformer
+  // Use getters from BaseSprite but override setters
+  override get width(): number {
+    return (this as any)._width;
+  }
+
+  override set width(v: number) {
+    if (this.width === v) return;
+    (this as any)._width = v;
+    this.refreshCaptions();
+    this.emit('propsChange', { width: v });
+  }
+
+  override get height(): number {
+    return (this as any)._height;
+  }
+
+  override set height(v: number) {
+    if (this.height === v) return;
+    (this as any)._height = v;
+    this.refreshCaptions();
+    this.emit('propsChange', { height: v });
+  }
+
+  private _lastContentWidth = 0;
+  private _lastContentHeight = 0;
+  private _initialLayoutApplied = false;
+
+  private _text: string = '';
+
   /**
    * Caption text content (hybrid JSON structure)
    */
-  text: string;
+  get text(): string {
+    return this._text;
+  }
+
+  set text(v: string) {
+    if (this._text === v) return;
+    this._text = v;
+
+    // Sync with words
+    const wordTexts = v
+      .trim()
+      .split(/\s+/)
+      .filter((t) => t !== '');
+    const existingWords = this.opts?.words || [];
+
+    if (wordTexts.length === existingWords.length && wordTexts.length > 0) {
+      // Preserve timing and metadata
+      this.opts.words = existingWords.map((word, i) => ({
+        ...word,
+        text: wordTexts[i],
+      }));
+    } else if (wordTexts.length > 0) {
+      // Redistribute duration equally
+      const totalDuration =
+        this.duration > 0 && this.duration !== Infinity
+          ? this.duration
+          : 1000000; // default 1s if unknown
+      const wordDuration = totalDuration / wordTexts.length;
+      this.opts.words = wordTexts.map((text, i) => ({
+        text,
+        from: i * wordDuration,
+        to: (i + 1) * wordDuration,
+        isKeyWord: false,
+      }));
+    } else {
+      this.opts.words = [];
+    }
+
+    // Sync originalOpts
+    if (this.originalOpts) {
+      if (this.originalOpts.caption) {
+        this.originalOpts.caption.words = this.opts.words;
+      } else {
+        (this.originalOpts as any).words = this.opts.words;
+      }
+    }
+
+    // Only refresh if already initialized
+    if (this.originalOpts && this.textStyle) {
+      this.refreshCaptions().then(() => {
+        this.emit('propsChange', { text: v } as any);
+      });
+    }
+  }
 
   // Text styling (hybrid JSON structure)
   // Provides direct access to styling properties
@@ -395,14 +478,19 @@ export class Caption extends BaseClip implements IClip {
       }
     }
     // Update text property to match words
-    this.text = v
+    const newText = v
       .map((w) => w.text)
       .filter((t) => t && t.trim() !== '')
       .join(' ');
 
-    this.refreshCaptions().then(() => {
-      this.emit('propsChange', {} as any);
-    });
+    if (this._text !== newText) {
+      this.text = newText; // This will trigger text setter, sync, refresh, and emit
+    } else {
+      // Text is same, but words metadata/timing might have changed
+      this.refreshCaptions().then(() => {
+        this.emit('propsChange', { words: v } as any);
+      });
+    }
   }
 
   // Internal opts with defaults applied - use 'any' for complex union types
@@ -454,7 +542,6 @@ export class Caption extends BaseClip implements IClip {
     renderer?: Application['renderer']
   ) {
     super();
-    this.text = text;
     // Store original options for serialization (shallow copy is fine since options are primitives)
     this.originalOpts = { ...opts };
     // Store external renderer if provided (e.g., from Studio)
@@ -500,6 +587,9 @@ export class Caption extends BaseClip implements IClip {
         false,
       mediaId: opts.mediaId,
     };
+
+    // Now set the text, which will use this.opts.words if they exist
+    this.text = text;
 
     // Create PixiJS TextStyle from options (same pattern as TextClip)
     // Build style object conditionally to avoid passing undefined values
@@ -741,7 +831,6 @@ export class Caption extends BaseClip implements IClip {
 
     let currentX = 0;
     let maxHeight = 0;
-    let totalWidth = 0;
 
     const textCase = this.opts.textCase;
     const metrics = CanvasTextMetrics.measureText(' ', this.textStyle);
@@ -783,7 +872,7 @@ export class Caption extends BaseClip implements IClip {
       maxHeight = Math.max(maxHeight, wordHeight);
 
       currentX += wordWidth + metrics.width;
-      totalWidth = currentX - metrics.width;
+      // totalTextWidth = currentX - metrics.width;
 
       this.pixiTextContainer!.addChild(wordText);
 
@@ -793,10 +882,171 @@ export class Caption extends BaseClip implements IClip {
       return wordText;
     });
 
-    const width = totalWidth;
-    const height = maxHeight;
+    // 4. Calculate Layout (Lines)
+    const padding = 15;
+    const spaceWidth = metrics.width;
+    const lineHeight = this.opts.lineHeight * (this.opts.fontSize || 30); // Approximate line height
 
-    // Create semi-transparent background container
+    // Determine wrapping width
+    // Check if we are in "manual" mode (width set by user/transformer) or have explicit wordWrap
+    let wrapWidth = Infinity;
+    const isManualWidth =
+      this.width > 0 && Math.abs(this.width - this._lastContentWidth) > 1;
+
+    if (this.opts.wordWrap && this.opts.wordWrapWidth > 0) {
+      wrapWidth = this.opts.wordWrapWidth - padding * 2;
+    } else if (isManualWidth) {
+      wrapWidth = this.width - padding * 2;
+    }
+
+    const lines: {
+      words: SplitBitmapText[];
+      width: number;
+      height: number;
+    }[] = [];
+    let currentLine: SplitBitmapText[] = [];
+    let currentLineWidth = 0;
+    let currentLineHeight = 0;
+
+    this.wordTexts.forEach((wordText) => {
+      // Calculate word dimensions
+      const bounds = wordText.getLocalBounds();
+      const wordWidth = Math.ceil(bounds.width || wordText.width);
+      const wordHeight = Math.ceil(bounds.height || wordText.height);
+
+      // Check if word fits in current line
+      const projectedWidth =
+        currentLineWidth + (currentLineWidth > 0 ? spaceWidth : 0) + wordWidth;
+
+      if (projectedWidth <= wrapWidth || currentLine.length === 0) {
+        // Fits (or first word), add to current line
+        currentLine.push(wordText);
+        currentLineWidth = projectedWidth;
+        currentLineHeight = Math.max(currentLineHeight, wordHeight);
+      } else {
+        // Doesn't fit, start new line
+        lines.push({
+          words: currentLine,
+          width: currentLineWidth,
+          height: currentLineHeight,
+        });
+        currentLine = [wordText];
+        currentLineWidth = wordWidth;
+        currentLineHeight = wordHeight;
+      }
+    });
+
+    // Add last line
+    if (currentLine.length > 0) {
+      lines.push({
+        words: currentLine,
+        width: currentLineWidth,
+        height: currentLineHeight,
+      });
+    }
+
+    // 5. Dimension Calculation
+    let maxLineWidth = 0;
+    let totalHeight = 0;
+    lines.forEach((line) => {
+      maxLineWidth = Math.max(maxLineWidth, line.width);
+      totalHeight += line.height;
+    });
+    // Add spacing between lines if multiple lines
+    if (lines.length > 1) {
+      // Usually line height includes spacing, but we calculated explicit height.
+      // Let's use standard line spacing (leading).
+      // Simply stepping Y by lineHeight is cleaner than summing arbitrary word heights.
+      // But for mixed fonts... let's stick to standard line height stepping?
+      // Actually, let's use the explicit lineHeight logic for Y stepping.
+      totalHeight = lines.length * lineHeight;
+    } else {
+      // Single line, use measured height if possible, or lineHeight
+      totalHeight = Math.max(totalHeight, lineHeight);
+    }
+
+    const contentWidth = maxLineWidth + padding * 2;
+    const contentHeight = totalHeight + padding * 2;
+
+    const isAutoWidth = !isManualWidth;
+    const isAutoHeight =
+      this.height === 0 ||
+      Math.abs(this.height - this._lastContentHeight) < 0.1;
+
+    const containerWidth = isAutoWidth
+      ? contentWidth
+      : Math.max(contentWidth, this.width || 0);
+
+    // Height should always match content for Captions to avoid "stuck" large heights
+    const containerHeight = contentHeight;
+
+    // Save content-only dimensions
+    this._lastContentWidth = contentWidth;
+    this._lastContentHeight = contentHeight;
+
+    // 6. Positioning
+    // Apply Vertical Alignment for the block as a whole
+    let startY = 0;
+    const finalVAlign = (this.originalOpts as any).verticalAlign || 'center';
+    if (finalVAlign === 'top') {
+      startY = padding;
+    } else if (finalVAlign === 'bottom') {
+      startY = containerHeight - contentHeight + padding;
+    } else {
+      startY = (containerHeight - contentHeight) / 2 + padding;
+    }
+
+    let currentY = startY;
+
+    lines.forEach((line) => {
+      // Calculate X start based on alignment
+      let currentX = padding;
+      if (this.opts.align === 'center') {
+        // Center within the container width (or content width if they match)
+        // NOTE: Should we center relative to `containerWidth` or `contentWidth`?
+        // Standard is relative to containerWidth.
+        currentX = (containerWidth - line.width) / 2;
+      } else if (this.opts.align === 'right') {
+        currentX = containerWidth - padding - line.width;
+      } else {
+        // Left align
+        currentX = padding;
+      }
+
+      line.words.forEach((word) => {
+        const bounds = word.getLocalBounds();
+        const wordWidth = Math.ceil(bounds.width || word.width);
+
+        word.x = currentX;
+        word.y = currentY; // Top-aligned relative to line
+
+        // Advance X
+        currentX += wordWidth + spaceWidth;
+      });
+
+      // Advance Y
+      currentY += lineHeight;
+    });
+
+    // 7. Background Graphics
+    // Calculate global offset for the background block based on alignment
+    let bgX = 0;
+    if (this.opts.align === 'center') {
+      bgX = (containerWidth - contentWidth) / 2;
+    } else if (this.opts.align === 'right') {
+      bgX = containerWidth - contentWidth;
+    }
+
+    let bgY = 0;
+    if (finalVAlign === 'top') {
+      bgY = 0;
+    } else if (finalVAlign === 'bottom') {
+      bgY = containerHeight - contentHeight;
+    } else {
+      bgY = (containerHeight - contentHeight) / 2;
+    }
+
+    // Create semi-transparent background graphics for the WHOLE container
     const bgGraphics = new Graphics();
     bgGraphics.label = 'containerBackground';
 
@@ -808,44 +1058,33 @@ export class Caption extends BaseClip implements IClip {
       : parseColor(this.opts.background);
 
     const alpha = isTransparentBackground ? 0 : 1;
-    const padding = 15;
     const cornerRadius = 10;
 
-    bgGraphics.roundRect(
-      0,
-      0,
-      width + padding * 2,
-      height + padding * 2,
-      cornerRadius
-    );
+    bgGraphics.roundRect(bgX, bgY, contentWidth, contentHeight, cornerRadius);
     bgGraphics.fill({ color: bgColor, alpha });
-
-    this.wordTexts.forEach((w) => {
-      this.extraPadding = 0;
-      w.pivot.y = 0;
-      w.pivot.x = 0;
-      w.y = padding - this.extraPadding;
-
-      w.x += padding;
-    });
 
     this.pixiTextContainer.addChildAt(bgGraphics, 0);
 
-    const finalWidth = width + padding * 2;
-    const finalHeight = height + padding * 2;
-
-    // Reuse or recreate RenderTexture
+    // Reuse or recreate RenderTexture with container dimensions
     if (this.renderTexture) {
-      this.renderTexture.resize(finalWidth, finalHeight);
+      if (
+        this.renderTexture.width !== containerWidth ||
+        this.renderTexture.height !== containerHeight
+      ) {
+        this.renderTexture.destroy();
+        this.renderTexture = RenderTexture.create({
+          width: containerWidth,
+          height: containerHeight,
+        });
+      }
     } else {
       this.renderTexture = RenderTexture.create({
-        width: finalWidth,
-        height: finalHeight,
+        width: containerWidth,
+        height: containerHeight,
       });
     }
 
-    // CRITICAL: Render content to the texture BEFORE updating clip dimensions.
-    // This ensures that when PixiSpriteRenderer updates, it uses the correct texture size for scaling.
+    // CRITICAL: Render content to the texture
     try {
       const renderer = await this.getRenderer();
       renderer.render({
@@ -856,26 +1095,33 @@ export class Caption extends BaseClip implements IClip {
       Log.warn('CaptionClip: Could not render captions during refresh', err);
     }
 
-    this._meta.width = finalWidth;
-    this._meta.height = finalHeight;
+    this._meta.width = containerWidth;
+    this._meta.height = containerHeight;
     this._meta.duration = Infinity;
 
-    const videoWidth = this.opts.videoWidth;
-    const videoHeight = this.opts.videoHeight;
-    const bottomOffset = this.opts.bottomOffset;
+    // Update clip dimensions for BaseSprite
+    (this as any)._width = containerWidth;
+    (this as any)._height = containerHeight;
+    // We don't automatically update top/left here to allow user positioning,
+    // unless it's initial auto-positioning.
+    // In TextClip it doesn't update top/left, only width/height.
+    // However, Caption has a tradition of centering at the bottom.
+    // We'll keep the videoWidth/Height logic but wrap it in an isAuto check if needed.
+    // Actually, let's stick to the plan of replicating TextClip's behavior which is mostly about dimensions.
 
-    // Calculate new position
-    const newTop = videoHeight - finalHeight - bottomOffset;
-    const newLeft = (videoWidth - finalWidth) / 2;
+    // If we're in auto mode AND haven't positioned yet, we might want to keep it centered at the bottom
+    if (!this._initialLayoutApplied && (isAutoWidth || isAutoHeight)) {
+      const videoWidth = this.opts.videoWidth;
+      const videoHeight = this.opts.videoHeight;
+      const bottomOffset = this.opts.bottomOffset;
 
-    // Always sync width and height with content to prevent stretching
-    // Use atomic update to avoid multiple propsChange events and redundant renders
-    this.update({
-      width: finalWidth,
-      height: finalHeight,
-      top: newTop,
-      left: newLeft,
-    } as any);
+      const newTop = videoHeight - containerHeight - bottomOffset;
+      const newLeft = (videoWidth - containerWidth) / 2;
+
+      this.top = newTop;
+      this.left = newLeft;
+      this._initialLayoutApplied = true;
+    }
   }
 
   private lastLoggedTime = -1;
@@ -1467,5 +1713,11 @@ export class Caption extends BaseClip implements IClip {
 
     await clip.ready;
     return clip;
+  }
+
+  override getVisibleHandles(): Array<
+    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
+  > {
+    return ['mr', 'mb', 'br', 'rot'];
   }
 }

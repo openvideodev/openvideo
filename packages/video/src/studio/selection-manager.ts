@@ -1,10 +1,10 @@
 import {
-  Application,
-  Container,
+  type Application,
+  type Container,
   Graphics,
   Point,
   Rectangle,
-  FederatedPointerEvent,
+  type FederatedPointerEvent,
 } from 'pixi.js';
 import type { IClip } from '../clips/iclip';
 import { Text } from '../clips/text-clip';
@@ -514,7 +514,8 @@ export class SelectionManager {
       const newLeft = root.x - finalNewWidth / 2;
 
       const isReflowableTextClip =
-        clip instanceof Text && this.textClipResizedWidth !== null;
+        (clip instanceof Text || clip instanceof Caption) &&
+        this.textClipResizedWidth !== null;
 
       if (isReflowableTextClip) {
         const styleUpdate: any = {
