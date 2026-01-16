@@ -46,6 +46,12 @@ type ExtMP4Sample = Omit<MP4Sample, 'data'> & {
 
 type LocalFileReader = Awaited<ReturnType<OPFSToolFile['createReader']>>;
 
+type ThumbnailOpts = {
+  start: number;
+  end: number;
+  step: number;
+};
+
 /**
  * Video clip, parses MP4 files, uses {@link Video.tick} to decode image frames at specified time on demand
  *
@@ -325,12 +331,23 @@ export class Video extends BaseClip implements IPlaybackCapable {
         this.width = this.width === 0 ? meta.width : this.width;
         this.height = this.height === 0 ? meta.height : this.height;
 
-        // Update trim.to if not set
-        this.trim.to = this.trim.to === 0 ? meta.duration : this.trim.to;
+        // Update trim.to if not set or exceeds meta.duration
+        this.trim.to =
+          this.trim.to === 0
+            ? meta.duration
+            : Math.min(this.trim.to, meta.duration);
+
+        // Ensure trim.from is also valid
+        this.trim.from = Math.min(this.trim.from, this.trim.to);
 
         const effectiveDuration =
           (this.trim.to - this.trim.from) / this.playbackRate;
         this.duration = this.duration === 0 ? effectiveDuration : this.duration;
+
+        // Display check: if duration was 0 or incorrect from placeholder, sync it
+        if (Math.abs(this.duration - effectiveDuration) > 1) {
+          this.duration = effectiveDuration;
+        }
 
         // Update display.to when duration changes
         this.display.to = this.display.from + this.duration;
@@ -394,6 +411,99 @@ export class Video extends BaseClip implements IPlaybackCapable {
     });
   }
 
+  private thumbAborter = new AbortController();
+  /**
+   * Generate thumbnails, default generates one 100px width thumbnail per keyframe.
+   *
+   * @param imgWidth Thumbnail width, default 100
+   * @param opts Partial<ThumbnailOpts>
+   * @returns Promise<Array<{ ts: number; img: Blob }>>
+   */
+  async thumbnails(
+    imgWidth = 100,
+    opts?: Partial<ThumbnailOpts>
+  ): Promise<Array<{ ts: number; img: Blob }>> {
+    this.thumbAborter.abort();
+    this.thumbAborter = new AbortController();
+    const aborterSignal = this.thumbAborter.signal;
+
+    await this.ready;
+    const abortMsg = 'generate thumbnails aborted';
+    if (aborterSignal.aborted) throw Error(abortMsg);
+
+    const { width, height } = this._meta;
+    const convtr = createVF2BlobConvtr(
+      imgWidth,
+      Math.round(height * (imgWidth / width)),
+      { quality: 0.1, type: 'image/png' }
+    );
+
+    return new Promise<Array<{ ts: number; img: Blob }>>(
+      async (resolve, reject) => {
+        let pngPromises: Array<{ ts: number; img: Promise<Blob> }> = [];
+        const vc = this.decoderConf.video;
+        if (vc == null || this.videoSamples.length === 0) {
+          resolver();
+          return;
+        }
+        aborterSignal.addEventListener('abort', () => {
+          reject(Error(abortMsg));
+        });
+
+        async function resolver() {
+          if (aborterSignal.aborted) return;
+          resolve(
+            await Promise.all(
+              pngPromises.map(async (it) => ({
+                ts: it.ts,
+                img: await it.img,
+              }))
+            )
+          );
+        }
+
+        function pushPngPromise(vf: VideoFrame) {
+          pngPromises.push({
+            ts: vf.timestamp,
+            img: convtr(vf),
+          });
+        }
+
+        const { start = 0, end = this._meta.duration, step } = opts ?? {};
+        if (step) {
+          let cur = start;
+          // Create a new VideoFrameFinder instance to avoid conflicts with the tick method
+          const videoFrameFinder = new VideoFrameFinder(
+            await this.localFile.createReader(),
+            this.videoSamples,
+            {
+              ...vc,
+              hardwareAcceleration: this.opts.__unsafe_hardwareAcceleration__,
+            }
+          );
+          while (cur <= end && !aborterSignal.aborted) {
+            const vf = await videoFrameFinder.find(cur);
+            if (vf) pushPngPromise(vf);
+            cur += step;
+          }
+          videoFrameFinder.destroy();
+          resolver();
+        } else {
+          await thumbnailByKeyFrame(
+            this.videoSamples,
+            this.localFile,
+            vc,
+            aborterSignal,
+            { start, end },
+            (vf, done) => {
+              if (vf != null) pushPngPromise(vf);
+              if (done) resolver();
+            }
+          );
+        }
+      }
+    );
+  }
   async split(time: number) {
     await this.ready;
 
@@ -1840,4 +1950,97 @@ function memoryUsageInfo() {
   } catch (err) {
     return {};
   }
+}
+
+async function thumbnailByKeyFrame(
+  samples: ExtMP4Sample[],
+  localFile: OPFSToolFile,
+  decConf: VideoDecoderConfig,
+  abortSingl: AbortSignal,
+  time: { start: number; end: number },
+  onOutput: (vf: VideoFrame | null, done: boolean) => void
+) {
+  const fileReader = await localFile.createReader();
+
+  const chunks = await videosamples2Chunks(
+    samples.filter(
+      (s) => !s.deleted && s.is_sync && s.cts >= time.start && s.cts <= time.end
+    ),
+    fileReader
+  );
+  if (chunks.length === 0 || abortSingl.aborted) {
+    onOutput(null, true);
+    return;
+  }
+
+  let outputCnt = 0;
+  decodeGoP(createVideoDec(), chunks, {
+    onDecodingError: (err) => {
+      Log.warn('thumbnailsByKeyFrame', err);
+      // 尝试降级一次
+      if (outputCnt === 0) {
+        decodeGoP(createVideoDec(true), chunks, {
+          onDecodingError: (err) => {
+            fileReader.close();
+            Log.error('thumbnailsByKeyFrame retry soft deocde', err);
+          },
+        });
+      } else {
+        onOutput(null, true);
+        fileReader.close();
+      }
+    },
+  });
+
+  function createVideoDec(downgrade = false) {
+    const encoderConf = {
+      ...decConf,
+      ...(downgrade ? { hardwareAcceleration: 'prefer-software' } : {}),
+    } as VideoDecoderConfig;
+    const dec = new VideoDecoder({
+      output: (vf) => {
+        outputCnt += 1;
+        const done = outputCnt === chunks.length;
+        onOutput(vf, done);
+        if (done) {
+          fileReader.close();
+          if (dec.state !== 'closed') dec.close();
+        }
+      },
+      error: (err) => {
+        const errMsg = `thumbnails decoder error: ${err.message}, config: ${JSON.stringify(encoderConf)}, state: ${JSON.stringify(
+          {
+            qSize: dec.decodeQueueSize,
+            state: dec.state,
+            outputCnt,
+            inputCnt: chunks.length,
+          }
+        )}`;
+        Log.error(errMsg);
+        throw Error(errMsg);
+      },
+    });
+    abortSingl.addEventListener('abort', () => {
+      fileReader.close();
+      if (dec.state !== 'closed') dec.close();
+    });
+    dec.configure(encoderConf);
+    return dec;
+  }
+}
+
+function createVF2BlobConvtr(
+  width: number,
+  height: number,
+  opts?: ImageEncodeOptions
+) {
+  const cvs = new OffscreenCanvas(width, height);
+  const ctx = cvs.getContext('2d')!;
+
+  return async (vf: VideoFrame) => {
+    ctx.drawImage(vf, 0, 0, width, height);
+    vf.close();
+    const blob = await cvs.convertToBlob(opts);
+    return blob;
+  };
 }

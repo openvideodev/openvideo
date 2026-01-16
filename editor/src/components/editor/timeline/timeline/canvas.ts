@@ -828,6 +828,20 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
   public setTimeScale(zoom: number) {
     this.#timeScale = zoom;
+
+    // Notify clips about zoom change (affects thumbnails density)
+    this.#clipObjects.forEach((clip) => {
+      if (
+        'onScrollChange' in clip &&
+        typeof (clip as any).onScrollChange === 'function'
+      ) {
+        (clip as any).onScrollChange({
+          scrollLeft: -this.canvas.viewportTransform[4],
+          force: true,
+        });
+      }
+    });
+
     this.render();
   }
 
@@ -835,6 +849,17 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     const vpt = this.canvas.viewportTransform;
     vpt[4] = -scrollX;
     vpt[5] = -scrollY;
+
+    // Notify clips about scroll change for lazy loading thumbnails
+    this.#clipObjects.forEach((clip) => {
+      if (
+        'onScrollChange' in clip &&
+        typeof (clip as any).onScrollChange === 'function'
+      ) {
+        (clip as any).onScrollChange({ scrollLeft: scrollX });
+      }
+    });
+
     this.canvas.requestRenderAll();
   }
 
