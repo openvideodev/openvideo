@@ -77,7 +77,6 @@ export default function PanelVideos() {
 
   const addItemToCanvas = async (asset: PexelsVideo) => {
     if (!studio) return;
-    console.log({ asset });
     try {
       // Find the best quality mp4 link
       const videoFile =
@@ -86,7 +85,6 @@ export default function PanelVideos() {
       if (!videoFile) throw new Error('No video file found');
 
       const src = videoFile.link;
-      console.log({ asset });
       // 1. Create and add placeholder immediately
       const placeholder = new Placeholder(
         src,
@@ -105,11 +103,9 @@ export default function PanelVideos() {
       await studio.addClip(placeholder);
 
       // 2. Load the real clip in the background
-      console.log('REPLACING LOADING');
       Video.fromUrl(src)
         .then(async (videoClip) => {
           // 3. Replace all placeholders with this source once loaded
-          console.log('REPLACING LOADED');
           await studio.timeline.replaceClipsBySource(src, async (oldClip) => {
             const clone = await videoClip.clone();
             // Copy state from placeholder (user might have moved/resized/split it)

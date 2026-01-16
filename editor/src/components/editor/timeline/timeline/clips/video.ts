@@ -52,7 +52,7 @@ export class Video extends BaseTimelineClip {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
     ctx.textAlign = 'left';
     ctx.clip();
-    ctx.fillText('Video clip', 36, 12);
+    ctx.fillText(this.src || '', 36, 12);
 
     ctx.translate(8, 1);
 

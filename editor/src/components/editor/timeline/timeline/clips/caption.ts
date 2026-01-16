@@ -27,7 +27,6 @@ export class Caption extends BaseTimelineClip {
   constructor(options: CaptionClipProps) {
     super(options);
     Object.assign(this, Caption.ownDefaults);
-    this.text = 'Caption clip';
     this.set({
       // fill: TRACK_COLORS.text.solid,
     });

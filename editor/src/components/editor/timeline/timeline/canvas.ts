@@ -559,7 +559,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           clip.type === 'Placeholder'
         ) {
           let timelineClip = this.#clipObjects.get(clip.id);
-          const clipName = clip.text || clip.name || clip.type;
+          const isMedia =
+            clip.type === 'Video' ||
+            clip.type === 'Image' ||
+            clip.type === 'Audio';
+          const clipName = isMedia
+            ? clip.src || clip.name || clip.type
+            : clip.text || clip.name || clip.type;
 
           if (!timelineClip) {
             const commonProps = {
@@ -568,7 +574,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               width: width,
               height: trackHeight,
               elementId: clip.id,
-              content: clipName,
+              text: clipName,
+              src: clip.src,
             };
 
             if (clip.type === 'Audio') {
@@ -608,7 +615,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               top: region.top,
               width: width,
               height: trackHeight,
-              content: clipName,
+              text: clipName,
+              src: clip.src,
               trim: clip.trim
                 ? { ...clip.trim }
                 : {

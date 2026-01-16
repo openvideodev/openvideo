@@ -2,18 +2,21 @@ import { Rect, RectProps } from 'fabric';
 
 export interface BaseClipProps extends Partial<RectProps> {
   elementId: string;
-  content: string;
+  text: string;
+  src?: string;
 }
 
 export abstract class BaseTimelineClip extends Rect {
   elementId: string;
-  content: string;
+  text: string;
+  src?: string;
   public timeScale: number = 1;
 
   constructor(options: BaseClipProps) {
     super(options);
     this.elementId = options.elementId;
-    this.content = options.content;
+    this.text = options.text;
+    this.src = options.src;
 
     this.set({
       rx: 4, // Rounded corners

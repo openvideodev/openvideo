@@ -103,7 +103,7 @@ export default function PanelText() {
     if (!studio) return;
 
     try {
-      const textClip = new Text(preset ? preset.description : 'Add Text', {
+      const textClip = new Text(preset ? preset.description : 'Add Text pro', {
         fontSize: preset?.style.fontSize || 124,
         fontFamily: preset?.style.fontFamily || 'Arial',
         align: 'center',
