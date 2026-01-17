@@ -913,6 +913,37 @@ export class TimelineModel {
       }
     }
 
+    // Restore transition links on target clips
+    // Transition clips store fromClipId/toClipId, but the preview engine
+    // expects clip.transition on the actual video/image clips
+    for (const clip of this.clips) {
+      if (clip instanceof Transition) {
+        const transitionMeta = {
+          name: clip.transitionEffect.key,
+          key: clip.transitionEffect.key,
+          duration: clip.duration,
+          fromClipId: clip.fromClipId,
+          toClipId: clip.toClipId,
+          start: clip.display.from,
+          end: clip.display.to,
+        };
+
+        if (clip.fromClipId) {
+          const fromClip = this.getClipById(clip.fromClipId);
+          if (fromClip) {
+            (fromClip as any).transition = { ...transitionMeta };
+          }
+        }
+
+        if (clip.toClipId) {
+          const toClip = this.getClipById(clip.toClipId);
+          if (toClip) {
+            (toClip as any).transition = { ...transitionMeta };
+          }
+        }
+      }
+    }
+
     // Recalculate duration once
     await this.recalculateMaxDuration();
 
