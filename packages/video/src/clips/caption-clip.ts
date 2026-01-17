@@ -216,7 +216,7 @@ export class Caption extends BaseClip implements IClip {
   }
 
   override set width(v: number) {
-    if (this.width === v) return;
+    if (Math.abs(this.width - v) < 1) return;
     (this as any)._width = v;
     this.refreshCaptions();
     this.emit('propsChange', { width: v });
@@ -227,15 +227,15 @@ export class Caption extends BaseClip implements IClip {
   }
 
   override set height(v: number) {
-    if (this.height === v) return;
+    if (Math.abs(this.height - v) < 1) return;
     (this as any)._height = v;
     this.refreshCaptions();
     this.emit('propsChange', { height: v });
   }
 
+  private _initialLayoutApplied = false;
   private _lastContentWidth = 0;
   private _lastContentHeight = 0;
-  private _initialLayoutApplied = false;
 
   private _text: string = '';
 
@@ -275,6 +275,7 @@ export class Caption extends BaseClip implements IClip {
           this.opts.words = currentWords.map((word, i) => ({
             ...word,
             text: newSegmentTexts[i],
+            paragraphIndex: i, // Force newline by index
           }));
         } else if (newSegmentTexts.length > 0) {
           // Redistribute duration equally for new count
@@ -288,6 +289,7 @@ export class Caption extends BaseClip implements IClip {
             from: i * wordDuration,
             to: (i + 1) * wordDuration,
             isKeyWord: false,
+            paragraphIndex: i, // Force newline by index
           }));
         } else {
           this.opts.words = [];
@@ -908,7 +910,11 @@ export class Caption extends BaseClip implements IClip {
       } else {
         const strokeColor = parseColor(this.originalOpts.stroke as any);
         const strokeWidth =
-          opts.strokeWidth ?? this.originalOpts.strokeWidth ?? 0;
+          opts.strokeWidth !== undefined
+            ? opts.strokeWidth
+            : this.originalOpts.strokeWidth !== undefined
+              ? this.originalOpts.strokeWidth
+              : 0;
         if (strokeColor !== undefined) {
           styleOptions.stroke = { color: strokeColor, width: strokeWidth };
         } else if (strokeWidth > 0) {
@@ -918,16 +924,20 @@ export class Caption extends BaseClip implements IClip {
     }
 
     // Handle dropShadow
-    const dropShadow = opts.dropShadow ?? this.originalOpts.dropShadow;
+    const dropShadow =
+      opts.dropShadow !== undefined
+        ? opts.dropShadow
+        : this.originalOpts.dropShadow;
     if (dropShadow) {
       const shadowColor = parseColor(dropShadow.color);
       if (shadowColor !== undefined) {
         styleOptions.dropShadow = {
           color: shadowColor,
-          alpha: dropShadow.alpha ?? 0.5,
-          blur: dropShadow.blur ?? 4,
-          angle: dropShadow.angle ?? Math.PI / 6,
-          distance: dropShadow.distance ?? 2,
+          alpha: dropShadow.alpha !== undefined ? dropShadow.alpha : 0.5,
+          blur: dropShadow.blur !== undefined ? dropShadow.blur : 4,
+          angle:
+            dropShadow.angle !== undefined ? dropShadow.angle : Math.PI / 6,
+          distance: dropShadow.distance !== undefined ? dropShadow.distance : 2,
         };
       }
     }
@@ -947,76 +957,81 @@ export class Caption extends BaseClip implements IClip {
       this.pixiTextContainer.removeChildren();
     }
 
-    const style = this.textStyle;
-
-    let currentX = 0;
-    let maxHeight = 0;
-
-    const textCase = this.opts.textCase;
     const metrics = CanvasTextMetrics.measureText(' ', this.textStyle);
 
-    this.wordTexts = this.opts.words.map((word) => {
-      let textToRender = word.text;
+    // 3. Create rendered word objects (flatten segments into individual words)
+    const flattenedWords: SplitBitmapText[] = [];
 
-      // Handle empty words by creating an empty container to keep indices aligned
-      if (!textToRender || textToRender.trim() === '') {
-        const empty = new Container();
-        empty.label = 'emptyWord';
-        this.pixiTextContainer!.addChild(empty);
-        return empty as any;
-      }
+    this.opts.words.forEach((segment, segmentIndex) => {
+      const textCase = this.opts.textCase;
+      let segmentText = segment.text || '';
 
       if (textCase === 'uppercase') {
-        textToRender = textToRender.toUpperCase();
+        segmentText = segmentText.toUpperCase();
       } else if (textCase === 'lowercase') {
-        textToRender = textToRender.toLowerCase();
+        segmentText = segmentText.toLowerCase();
       } else if (textCase === 'title') {
-        textToRender = textToRender.replace(
+        segmentText = segmentText.replace(
           /\w\S*/g,
           (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
         );
       }
 
-      const wordText = new SplitBitmapText({
-        text: textToRender,
-        style,
+      // Split into individual words
+      const subWords = segmentText.split(/\s+/).filter((v) => v.length > 0);
+
+      subWords.forEach((wordStr) => {
+        const wordText = new SplitBitmapText({
+          text: wordStr,
+          style: this.textStyle,
+        });
+
+        // Store segment mapping for updateState
+        (wordText as any).segmentIndex = segmentIndex;
+
+        const initialColor = parseColor(this.opts.fill);
+        wordText.tint = initialColor ?? 0xffffff;
+
+        flattenedWords.push(wordText);
+        this.pixiTextContainer!.addChild(wordText);
       });
-
-      wordText.x = currentX;
-      wordText.y = 0;
-
-      const bounds = wordText.getLocalBounds();
-      const wordWidth = Math.ceil(bounds.width || wordText.width);
-      const wordHeight = Math.ceil(bounds.height || wordText.height);
-
-      maxHeight = Math.max(maxHeight, wordHeight);
-
-      currentX += wordWidth + metrics.width;
-      // totalTextWidth = currentX - metrics.width;
-
-      this.pixiTextContainer!.addChild(wordText);
-
-      const initialColor = parseColor(this.opts.fill);
-      wordText.tint = initialColor ?? 0xffffff;
-
-      return wordText;
     });
 
+    this.wordTexts = flattenedWords;
+
     // 4. Calculate Layout (Lines)
-    const padding = 15;
-    const spaceWidth = metrics.width;
-    const lineHeight = this.opts.lineHeight * (this.opts.fontSize || 30); // Approximate line height
+    const paddingX = 0;
+    const paddingY = 15;
+    const lineHeight = this.opts.lineHeight * (this.opts.fontSize || 30);
 
-    // Determine wrapping width
-    // Check if we are in "manual" mode (width set by user/transformer) or have explicit wordWrap
-    let wrapWidth = Infinity;
-    const isManualWidth =
-      this.width > 0 && Math.abs(this.width - this._lastContentWidth) > 1;
+    // Measure space width precisely for this Bitmap font
+    const tempSpace = new SplitBitmapText({
+      text: ' ',
+      style: this.textStyle,
+    });
+    const spaceWidth = Math.ceil(
+      tempSpace.getLocalBounds().width || tempSpace.width || metrics.width
+    );
+    tempSpace.destroy();
 
+    // Determine wrapping width for measurement
+    const isAutoWidthNow =
+      this.width === 0 || Math.abs(this.width - this._lastContentWidth) < 0.1;
+
+    // Use a robust videoWidth fallback
+    const videoWidth = this.opts.videoWidth || 1280;
+
+    let wrapWidth = videoWidth - paddingX * 2;
     if (this.opts.wordWrap && this.opts.wordWrapWidth > 0) {
-      wrapWidth = this.opts.wordWrapWidth - padding * 2;
-    } else if (isManualWidth) {
-      wrapWidth = this.width - padding * 2;
+      wrapWidth = this.opts.wordWrapWidth - paddingX * 2;
+    } else if (!isAutoWidthNow && this.width > 0) {
+      // If user resized manually, use that width as the hard limit
+      wrapWidth = this.width - paddingX * 2;
+    }
+
+    // Sanity check: prevent NaN or 0 width from breaking layout
+    if (isNaN(wrapWidth) || wrapWidth <= 0) {
+      wrapWidth = videoWidth;
     }
 
     const lines: {
@@ -1024,44 +1039,63 @@ export class Caption extends BaseClip implements IClip {
       width: number;
       height: number;
     }[] = [];
+
     let currentLine: SplitBitmapText[] = [];
     let currentLineWidth = 0;
     let currentLineHeight = 0;
 
-    this.wordTexts.forEach((wordText) => {
-      // Calculate word dimensions
+    this.wordTexts.forEach((wordText, index) => {
       const bounds = wordText.getLocalBounds();
       const wordWidth = Math.ceil(bounds.width || wordText.width);
       const wordHeight = Math.ceil(bounds.height || wordText.height);
 
-      // Check if word fits in current line
+      const segmentIndex = (wordText as any).segmentIndex;
+      const wordData = this.opts.words[segmentIndex];
+      const prevWordText = index > 0 ? this.wordTexts[index - 1] : null;
+      const prevWordData = prevWordText
+        ? this.opts.words[(prevWordText as any).segmentIndex]
+        : null;
+
+      // Force new line if paragraphIndex changed (explicit breaks/newlines)
+      const shouldForceNewLine =
+        prevWordData &&
+        wordData &&
+        wordData.paragraphIndex !== undefined &&
+        wordData.paragraphIndex !== prevWordData.paragraphIndex;
+
       const projectedWidth =
         currentLineWidth + (currentLineWidth > 0 ? spaceWidth : 0) + wordWidth;
 
-      if (projectedWidth <= wrapWidth || currentLine.length === 0) {
-        // Fits (or first word), add to current line
+      // Heuristic: only wrap if the word DOES NOT FIT anymore.
+      // We allow words to fill up to the wrapWidth.
+      if (
+        !shouldForceNewLine &&
+        (projectedWidth <= wrapWidth + 1 || currentLine.length === 0)
+      ) {
+        // Word fits!
         currentLine.push(wordText);
         currentLineWidth = projectedWidth;
         currentLineHeight = Math.max(currentLineHeight, wordHeight);
       } else {
-        // Doesn't fit, start new line
-        lines.push({
-          words: currentLine,
-          width: currentLineWidth,
-          height: currentLineHeight,
-        });
+        // Word doesn't fit or break forced
+        if (currentLine.length > 0) {
+          lines.push({
+            words: currentLine,
+            width: currentLineWidth,
+            height: Math.max(currentLineHeight, lineHeight),
+          });
+        }
         currentLine = [wordText];
         currentLineWidth = wordWidth;
         currentLineHeight = wordHeight;
       }
     });
 
-    // Add last line
     if (currentLine.length > 0) {
       lines.push({
         words: currentLine,
         width: currentLineWidth,
-        height: currentLineHeight,
+        height: Math.max(currentLineHeight, lineHeight),
       });
     }
 
@@ -1072,35 +1106,26 @@ export class Caption extends BaseClip implements IClip {
       maxLineWidth = Math.max(maxLineWidth, line.width);
       totalHeight += line.height;
     });
-    // Add spacing between lines if multiple lines
-    if (lines.length > 1) {
-      // Usually line height includes spacing, but we calculated explicit height.
-      // Let's use standard line spacing (leading).
-      // Simply stepping Y by lineHeight is cleaner than summing arbitrary word heights.
-      // But for mixed fonts... let's stick to standard line height stepping?
-      // Actually, let's use the explicit lineHeight logic for Y stepping.
-      totalHeight = lines.length * lineHeight;
-    } else {
-      // Single line, use measured height if possible, or lineHeight
-      totalHeight = Math.max(totalHeight, lineHeight);
-    }
 
-    const contentWidth = maxLineWidth + padding * 2;
-    const contentHeight = totalHeight + padding * 2;
+    const contentWidth = maxLineWidth + paddingX * 2;
+    const contentHeight = totalHeight + paddingY * 2;
 
-    const isAutoWidth = !isManualWidth;
+    const isAutoWidth =
+      this.width === 0 || Math.abs(this.width - this._lastContentWidth) < 0.1;
     const isAutoHeight =
       this.height === 0 ||
       Math.abs(this.height - this._lastContentHeight) < 0.1;
 
+    // Use content dimensions for auto-mode, but ensure we respect manual resizing if active.
     const containerWidth = isAutoWidth
       ? contentWidth
       : Math.max(contentWidth, this.width || 0);
 
-    // Height should always match content for Captions to avoid "stuck" large heights
-    const containerHeight = contentHeight;
+    const containerHeight = isAutoHeight
+      ? contentHeight
+      : Math.max(contentHeight, this.height || 0);
 
-    // Save content-only dimensions
+    // Save content-only dimensions for next comparison (exactly like TextClip)
     this._lastContentWidth = contentWidth;
     this._lastContentHeight = contentHeight;
 
@@ -1109,43 +1134,37 @@ export class Caption extends BaseClip implements IClip {
     let startY = 0;
     const finalVAlign = (this.originalOpts as any).verticalAlign || 'center';
     if (finalVAlign === 'top') {
-      startY = padding;
+      startY = paddingY;
     } else if (finalVAlign === 'bottom') {
-      startY = containerHeight - contentHeight + padding;
+      startY = containerHeight - contentHeight + paddingY;
     } else {
-      startY = (containerHeight - contentHeight) / 2 + padding;
+      startY = (containerHeight - contentHeight) / 2 + paddingY;
     }
 
     let currentY = startY;
 
     lines.forEach((line) => {
-      // Calculate X start based on alignment
-      let currentX = padding;
+      // Calculate X start based on alignment within the containerWidth
+      let currentX = paddingX;
       if (this.opts.align === 'center') {
-        // Center within the container width (or content width if they match)
-        // NOTE: Should we center relative to `containerWidth` or `contentWidth`?
-        // Standard is relative to containerWidth.
         currentX = (containerWidth - line.width) / 2;
       } else if (this.opts.align === 'right') {
-        currentX = containerWidth - padding - line.width;
-      } else {
-        // Left align
-        currentX = padding;
+        currentX = containerWidth - line.width - paddingX;
       }
 
-      line.words.forEach((word) => {
-        const bounds = word.getLocalBounds();
-        const wordWidth = Math.ceil(bounds.width || word.width);
+      line.words.forEach((wordText, wordIndex) => {
+        // Position word
+        wordText.x = Math.round(currentX);
+        wordText.y = Math.round(currentY);
 
-        word.x = currentX;
-        word.y = currentY; // Top-aligned relative to line
-
-        // Advance X
-        currentX += wordWidth + spaceWidth;
+        // Advance X (add space unless it's the last word in the line)
+        currentX +=
+          (wordText.getLocalBounds().width || wordText.width) +
+          (wordIndex < line.words.length - 1 ? spaceWidth : 0);
       });
 
       // Advance Y
-      currentY += lineHeight;
+      currentY += line.height;
     });
 
     // 7. Background Graphics
@@ -1259,7 +1278,12 @@ export class Caption extends BaseClip implements IClip {
       this.lastLoggedTime = currentTimeSec;
     }
 
-    this.opts.words.forEach((word, index) => {
+    this.wordTexts.forEach((wordText) => {
+      const segmentIndex = (wordText as any).segmentIndex;
+      const word = this.opts.words[segmentIndex];
+
+      if (!word) return;
+
       const isActive = currentTimeMs >= word.from && currentTimeMs < word.to;
       const hasBeenActive = currentTimeMs >= word.to;
 
@@ -1291,15 +1315,6 @@ export class Caption extends BaseClip implements IClip {
         ));
       } else {
         ({ color: textColor, alpha: textAlpha } = resolveColor(this.opts.fill));
-      }
-
-      const wordText = this.wordTexts[index];
-
-      if (!wordText) {
-        console.warn(
-          `¡WARNING: SplitBitmapText was not found for word "${word.text}"!`
-        );
-        return;
       }
 
       // Aplicar color al texto
@@ -1591,6 +1606,8 @@ export class Caption extends BaseClip implements IClip {
       if (opts.align !== undefined) style.align = opts.align;
       if (opts.textCase !== undefined) style.textCase = opts.textCase;
       if (opts.fontUrl !== undefined) style.fontUrl = opts.fontUrl;
+      if ((opts as any).verticalAlign !== undefined)
+        (style as any).verticalAlign = (opts as any).verticalAlign;
 
       // Handle stroke
       if (opts.stroke) {
@@ -1719,6 +1736,8 @@ export class Caption extends BaseClip implements IClip {
     if (style.color !== undefined) captionOpts.fill = style.color;
     if (style.align !== undefined) captionOpts.align = style.align;
     if (style.textCase !== undefined) captionOpts.textCase = style.textCase;
+    if ((style as any).verticalAlign !== undefined)
+      (captionOpts as any).verticalAlign = (style as any).verticalAlign;
 
     // Handle fontUrl from style (new) or top-level (old)
     if (style.fontUrl !== undefined) {
