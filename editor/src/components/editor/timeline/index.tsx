@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Video, Music, TypeIcon, SparklesIcon, Image } from 'lucide-react';
 import { useTimelineStore } from '@/stores/timeline-store';
 import { usePlaybackStore } from '@/stores/playback-store';
+import { useStudioStore } from '@/stores/studio-store';
 
 import { useTimelineZoom } from '@/hooks/use-timeline-zoom';
 
@@ -357,6 +358,24 @@ export function Timeline() {
 
     return () => {
       canvas.dispose();
+    };
+  }, []);
+
+  // Listen for clip replacement (e.g. Placeholder -> Video)
+  useEffect(() => {
+    const studio = useStudioStore.getState().studio;
+    if (!studio) return;
+
+    const onReplaced = ({ newClip }: { newClip: any }) => {
+      // Reload the clip in the timeline canvas to fetch thumbnails
+      // We use newClip.id as it's the active clip now
+      timelineCanvasRef.current?.reloadClip(newClip.id);
+    };
+
+    studio.on('clip:replaced', onReplaced);
+
+    return () => {
+      studio.off('clip:replaced', onReplaced);
     };
   }, []);
 

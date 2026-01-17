@@ -783,6 +783,16 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.emit('selection:split', { clipId, splitTime });
   }
 
+  public reloadClip(clipId: string) {
+    const clip = this.#clipObjects.get(clipId);
+    if (!clip) return;
+
+    if (clip instanceof Video) {
+      // Re-trigger thumbnail loading
+      clip.loadAndRenderThumbnails();
+    }
+  }
+
   public emitSelectionChange() {
     const activeObjects = this.canvas.getActiveObjects();
     const activeIds = activeObjects

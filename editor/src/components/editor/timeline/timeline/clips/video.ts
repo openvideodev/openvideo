@@ -2,6 +2,7 @@ import { BaseTimelineClip, type BaseClipProps } from './base';
 import { type Control, Pattern } from 'fabric';
 import { createTrimControls } from '../controls';
 import { editorFont } from '@/components/editor/constants';
+import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
 import { useStudioStore } from '@/stores/studio-store';
 import type { Video as VideoClip } from '@designcombo/video';
 import ThumbnailCache from '../utils/thumbnail-cache';
@@ -104,36 +105,8 @@ export class Video extends BaseTimelineClip {
   }
 
   private createFallbackPattern() {
-    const canvas = this.canvas;
-    if (!canvas) return;
-
-    // Create a pattern that covers the current width
-    const fallbackSource = this._thumbnailCache.getThumbnail('fallback');
-    if (!fallbackSource) return;
-
-    // Use a pattern that repeats
-    const offCanvas = document.createElement('canvas');
-    offCanvas.height = this._thumbnailHeight;
-    offCanvas.width = this._thumbnailWidth;
-
-    const context = offCanvas.getContext('2d');
-    if (!context) return;
-
-    context.drawImage(
-      fallbackSource,
-      0,
-      0,
-      this._thumbnailWidth,
-      this._thumbnailHeight
-    );
-
-    const fillPattern = new Pattern({
-      source: offCanvas,
-      repeat: 'repeat-x',
-      patternTransform: [1, 0, 0, 1, 0, 0],
-    });
-
-    this.set('fill', fillPattern);
+    // No longer using pattern fill - we draw directly in _render
+    // Keep this method for compatibility but it does nothing
     this.canvas?.requestRenderAll();
   }
 
@@ -195,43 +168,22 @@ export class Video extends BaseTimelineClip {
     const { signal } = this._thumbAborter;
     this._isFetchingThumbnails = true;
 
-    // Calculate how many thumbnails we need for the entire clip visual width
-    const totalThumbnailsRequired = Math.ceil(
-      this.width / this._thumbnailWidth
-    );
+    // Correct 1fps Strategy:
+    // Load thumbnails for every second of the Source Duration that is used by the trim.
+    // We map [trim.from, trim.to].
 
-    // Generate timestamps for the visual range [0, width] mapped to [trim.from, trim.to]
-    // The previous logic used 'generateTimestamps' helper. We can inline or simplify.
+    // We want 1 thumbnail per second, so step = 1_000_000 us.
+    const stepUs = MICROSECONDS_IN_SECOND;
 
-    const startTimeMs = unitsToTimeMs(0, this.timeScale) + this.trim.from; // time at visual x=0
+    // Start time: floor(trim.from / 1s) * 1s.
+    // End time: ceil(trim.to / 1s) * 1s.
+    const startUs = Math.floor(this.trim.from / stepUs) * stepUs;
+    const endUs = Math.ceil(this.trim.to / stepUs) * stepUs;
 
-    // We need timestamps spaced by _thumbnailWidth in time units
-    const timeStepMs = this.duration / (this.width / this._thumbnailWidth);
-    // Wait, simpler: each thumbnail covers _thumbnailWidth pixels.
-    const thumbnailDurationUnits = this._thumbnailWidth;
-    const thumbnailDurationMs = unitsToTimeMs(
-      thumbnailDurationUnits,
-      this.timeScale,
-      this.playbackRate
-    );
-
-    // However, unitsToTimeMs depends on pixelsPerSecond (timeScale).
-    // If we want equal spacing based on visual thumbnails:
-    // thumbnail 0: time = 0 + trim.from
-    // thumbnail 1: time = 0 + trim.from + (thumbnailWidth converted to ms)
-
+    // Generate expected timestamps at 1s intervals
     const timestamps: number[] = [];
-    for (let i = 0; i < totalThumbnailsRequired; i++) {
-      // visual offset
-      const visualOffset = i * this._thumbnailWidth;
-      // time offset relative to clip start
-      const timeOffsetMs = unitsToTimeMs(
-        visualOffset,
-        this.timeScale,
-        this.playbackRate
-      );
-      const absoluteTimeMs = timeOffsetMs + this.trim.from;
-      timestamps.push(Math.floor(absoluteTimeMs / MICROSECONDS_IN_SECOND));
+    for (let t = startUs; t <= endUs; t += stepUs) {
+      timestamps.push(t);
     }
 
     try {
@@ -240,26 +192,27 @@ export class Video extends BaseTimelineClip {
         return;
       }
 
+      // Fetch from VideoClip
+      // We assume videoClip.thumbnails uses microseconds for start/end/step based on usage
       const thumbnailsArr = await videoClip.thumbnails(this._thumbnailWidth, {
-        start: timestamps[0] * MICROSECONDS_IN_SECOND,
-        end: timestamps[timestamps.length - 1] * MICROSECONDS_IN_SECOND,
-        step: THUMBNAIL_STEP_US, // This step in request might be ignored if we pass specific timestamps?
-        // The mock/real implementation of 'thumbnails' usually takes count or step.
-        // If we want exact timestamps, the current API might behave differently.
-        // Adjusting to match previous behavior: passing range and letting it sample?
-        // Or if the API allows specific timestamps, that's better.
-        // Looking at previous code:
-        // start: timestamps[0] * ..., end: timestamps[last] * ..., step: THUMBNAIL_STEP_US (1s)
-        // It seems it requests 1 thumbnail per second in that range?
-        // But we want 1 thumbnail per `thumbnailDurationMs`.
-        // If `thumbnailDurationMs` is != 1s, we might get mismatch.
-        // Let's rely on the range request for now, assuming the backend/lib handles it,
-        // OR we just request the count we need.
+        start: timestamps[0],
+        end: timestamps[timestamps.length - 1],
+        step: stepUs,
       });
 
       if (signal.aborted) return;
 
-      await this.loadThumbnailBatch(thumbnailsArr);
+      // Cache thumbnails using the SECOND index as key
+      const cacheBatch = thumbnailsArr.map((t, i) => {
+        // Map back to the timestamp we expected
+        // NOTE: thumbnailsArr might not exactly match our loop if the backend does its own stepping.
+        // Robustness: use t.ts from the result if available and reliable, otherwise map by index if linear.
+        // Assuming video-clip returns { ts: number, img: Blob }
+        const key = Math.floor(t.ts / stepUs);
+        return { key, img: t.img };
+      });
+
+      await this.loadThumbnailBatch(cacheBatch);
 
       this._isFetchingThumbnails = false;
       this.canvas?.requestRenderAll();
@@ -271,18 +224,17 @@ export class Video extends BaseTimelineClip {
     }
   }
 
-  private async loadThumbnailBatch(thumbnails: { ts: number; img: Blob }[]) {
-    const loadPromises = thumbnails.map(async (thumbnail) => {
-      const tsSeconds = Math.floor(thumbnail.ts / MICROSECONDS_IN_SECOND);
-      if (this._thumbnailCache.getThumbnail(tsSeconds)) return;
+  private async loadThumbnailBatch(thumbnails: { key: number; img: Blob }[]) {
+    const loadPromises = thumbnails.map(async ({ key, img: blob }) => {
+      if (this._thumbnailCache.getThumbnail(key)) return;
 
       return new Promise<void>((resolve) => {
         const img = new Image();
-        const url = URL.createObjectURL(thumbnail.img);
+        const url = URL.createObjectURL(blob);
         img.src = url;
         img.onload = () => {
           URL.revokeObjectURL(url);
-          this._thumbnailCache.setThumbnail(tsSeconds, img);
+          this._thumbnailCache.setThumbnail(key, img);
           resolve();
         };
         img.onerror = () => {
@@ -296,45 +248,178 @@ export class Video extends BaseTimelineClip {
   }
 
   public _render(ctx: CanvasRenderingContext2D) {
-    super._render(ctx);
-
+    // Save context and set up clipping BEFORE any drawing
     ctx.save();
-    ctx.translate(-this.width / 2, -this.height / 2);
 
-    // Apply global rounded clip for thumbnails and identity
+    // Apply rounded rectangle clipping to ensure ALL content stays within bounds
     const radius = this.rx || 6;
     ctx.beginPath();
-    ctx.roundRect(0, 0, this.width, this.height, radius);
+    ctx.roundRect(
+      -this.width / 2,
+      -this.height / 2,
+      this.width,
+      this.height,
+      radius
+    );
     ctx.clip();
+
+    // Draw background fill manually (instead of using super._render with pattern)
+    ctx.fillStyle = (this.fill as string) || '#312e81';
+    ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+
+    // Translate for filmstrip and identity drawing
+    ctx.translate(-this.width / 2, -this.height / 2);
 
     this.drawFilmstrip(ctx);
     this.drawIdentity(ctx);
+
     ctx.restore();
 
+    // Draw selection border (outside the clipping region)
     this.updateSelected(ctx);
   }
 
   private drawFilmstrip(ctx: CanvasRenderingContext2D) {
-    const thumbnailWidth = this._thumbnailWidth;
-    const thumbnailHeight = this._thumbnailHeight;
-    const totalThumbnails = Math.ceil(this.width / thumbnailWidth);
+    const height = this.height || DEFAULT_THUMBNAIL_HEIGHT;
+    const thumbnailWidth = Math.round(height * this._aspectRatio);
+    const thumbnailHeight = height;
 
-    // Draw all thumbnails covering the width
-    for (let i = 0; i < totalThumbnails; i++) {
-      const x = i * thumbnailWidth;
+    // Width of 1 second in pixels on the timeline
+    const oneSourceSecWidth =
+      (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * this.timeScale) /
+      (this.playbackRate || 1);
 
-      // Calculate the time this slot represents
-      const timeOffsetMs = unitsToTimeMs(x, this.timeScale, this.playbackRate);
-      const absoluteTimeMs = timeOffsetMs + this.trim.from;
-      const tsSeconds = Math.floor(absoluteTimeMs / MICROSECONDS_IN_SECOND);
+    let minX = Infinity;
+    let maxX = -Infinity;
 
-      let img = this._thumbnailCache.getThumbnail(tsSeconds);
-      if (!img) {
-        img = this._thumbnailCache.getThumbnail('fallback');
+    // Use a small threshold to switch strategies. If a second is wider than a thumbnail,
+    // we want to tile the image representing that second to fill the visual space.
+    // If a second is narrower than a thumbnail (zoomed out or short duration),
+    // we use slot-based drawing to avoid drawing thousands of tiny rects.
+
+    if (oneSourceSecWidth >= thumbnailWidth) {
+      // Zoomed In / Normal Strategy: Iterate Source Seconds
+      const startSourceSec = Math.floor(
+        this.trim.from / MICROSECONDS_IN_SECOND
+      );
+      const endSourceSec = Math.ceil(this.trim.to / MICROSECONDS_IN_SECOND);
+
+      for (let sec = startSourceSec; sec <= endSourceSec; sec++) {
+        const sourceTimeUs = sec * MICROSECONDS_IN_SECOND;
+        const relativeSourceTimeUs = sourceTimeUs - this.trim.from;
+        const relativeVisualTimeSec =
+          relativeSourceTimeUs /
+          MICROSECONDS_IN_SECOND /
+          (this.playbackRate || 1);
+
+        const xStart =
+          relativeVisualTimeSec *
+          TIMELINE_CONSTANTS.PIXELS_PER_SECOND *
+          this.timeScale;
+        const xEnd = xStart + oneSourceSecWidth;
+
+        // Skip if completely out of view
+        if (xEnd < 0 || xStart > this.width) continue;
+
+        const img =
+          this._thumbnailCache.getThumbnail(sec) ||
+          this._thumbnailCache.getThumbnail('fallback');
+        if (img) {
+          // Determine how many tiles are needed to fill this second's visual width
+          const tileCount = Math.ceil(oneSourceSecWidth / thumbnailWidth);
+
+          for (let t = 0; t < tileCount; t++) {
+            const tileX = xStart + t * thumbnailWidth;
+
+            // Skip individual tile if completely out of view
+            if (tileX + thumbnailWidth < 0 || tileX >= this.width) continue;
+
+            // Clamp the drawing to ensure it doesn't exceed bounds
+            const drawX = Math.max(0, tileX);
+            const drawWidth = Math.min(thumbnailWidth, this.width - drawX);
+            const drawHeight = Math.min(thumbnailHeight, this.height);
+
+            // Only draw if there's actual visible area
+            if (drawWidth > 0 && drawHeight > 0) {
+              // Calculate source clipping if needed
+              const sourceX = drawX > tileX ? drawX - tileX : 0;
+
+              ctx.drawImage(
+                img,
+                sourceX,
+                0,
+                drawWidth,
+                drawHeight, // source
+                drawX,
+                0,
+                drawWidth,
+                drawHeight // destination
+              );
+
+              minX = Math.min(minX, drawX);
+              maxX = Math.max(maxX, drawX + drawWidth);
+            }
+          }
+        }
       }
+    } else {
+      // Zoomed Out Strategy: Iterate Visual Slots
+      const totalThumbnails = Math.ceil(this.width / thumbnailWidth);
 
-      if (img) {
-        ctx.drawImage(img, x, 0, thumbnailWidth, thumbnailHeight);
+      for (let i = 0; i < totalThumbnails; i++) {
+        const x = i * thumbnailWidth;
+
+        // Skip if beyond width
+        if (x >= this.width) break;
+
+        const timeOffsetUs = unitsToTimeMs(
+          x,
+          this.timeScale,
+          this.playbackRate || 1
+        );
+        const absoluteTimeUs = timeOffsetUs + this.trim.from;
+        const secKey = Math.floor(absoluteTimeUs / MICROSECONDS_IN_SECOND);
+
+        let img = this._thumbnailCache.getThumbnail(secKey);
+        if (!img) {
+          img = this._thumbnailCache.getThumbnail('fallback');
+        }
+
+        if (img) {
+          // Clamp drawing to bounds
+          const drawWidth = Math.min(thumbnailWidth, this.width - x);
+          const drawHeight = Math.min(thumbnailHeight, this.height);
+
+          if (drawWidth > 0 && drawHeight > 0) {
+            ctx.drawImage(
+              img,
+              0,
+              0,
+              drawWidth,
+              drawHeight, // source
+              x,
+              0,
+              drawWidth,
+              drawHeight // destination
+            );
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x + drawWidth);
+          }
+        }
+      }
+    }
+
+    if (this.width > 0) {
+      const isMissingEnd = maxX < this.width - 0.5;
+      const isMissingStart = minX > 0.5;
+      if (isMissingEnd || isMissingStart) {
+        console.warn(
+          `[Video Filmstrip] MISSING COVERAGE! Desired: ${this.width.toFixed(2)}, Drawn: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], Strategy: ${oneSourceSecWidth >= thumbnailWidth ? 'Zoomed In' : 'Zoomed Out'}`
+        );
+      } else {
+        console.log(
+          `[Video Filmstrip] OK: ${this.width.toFixed(2)}, Range: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], Strategy: ${oneSourceSecWidth >= thumbnailWidth ? 'Zoomed In' : 'Zoomed Out'}`
+        );
       }
     }
   }
