@@ -3,14 +3,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Play, Trash2 } from 'lucide-react';
+import { Loader2, Play, Trash2, Check, ChevronsUpDown } from 'lucide-react';
 import { useStudioStore } from '@/stores/studio-store';
 import { fontManager, jsonToClip, Log, type IClip } from '@designcombo/video';
 import { generateCaptionClips } from '@/lib/caption-generator';
@@ -23,62 +21,88 @@ export default function PanelCaptions() {
   const [selectedMediaId, setSelectedMediaId] = useState<string>('');
   const [captionItems, setCaptionItems] = useState<IClip[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [activeCaptionId, setActiveCaptionId] = useState<string | null>(null);
+
+  // Use refs to access latest state inside event listeners without re-binding
+  const captionItemsRef = useRef<IClip[]>([]);
+  const activeCaptionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    captionItemsRef.current = captionItems;
+  }, [captionItems]);
+
+  const updateClips = (currentMediaId: string) => {
+    if (!studio) return;
+    const tracks = studio.getTracks();
+    const allClips: IClip[] = [];
+    tracks.forEach((track) => {
+      track.clipIds.forEach((id) => {
+        const clip = studio.getClipById(id);
+        if (clip) allClips.push(clip);
+      });
+    });
+
+    const mediaClips = allClips.filter(
+      (clip: IClip) => clip.type === 'Video' || clip.type === 'Audio'
+    );
+    setMediaItems(mediaClips);
+
+    // If selected media is gone, reset selection
+    if (
+      currentMediaId &&
+      !mediaClips.find((m: IClip) => m.id === currentMediaId)
+    ) {
+      setSelectedMediaId('');
+    }
+
+    // Find captions for selected media
+    if (currentMediaId) {
+      const captions = allClips.filter(
+        (clip: IClip) =>
+          clip.type === 'Caption' && (clip as any).mediaId === currentMediaId
+      );
+      const sorted = captions.sort(
+        (a: IClip, b: IClip) => a.display.from - b.display.from
+      );
+      setCaptionItems(sorted);
+    } else {
+      setCaptionItems([]);
+    }
+  };
 
   useEffect(() => {
     if (!studio) return;
 
-    const updateClips = () => {
-      const tracks = studio.getTracks();
-      const allClips: IClip[] = [];
-      tracks.forEach((track) => {
-        track.clipIds.forEach((id) => {
-          const clip = studio.getClipById(id);
-          if (clip) allClips.push(clip);
-        });
-      });
-
-      const mediaClips = allClips.filter(
-        (clip: IClip) => clip.type === 'Video' || clip.type === 'Audio'
-      );
-      setMediaItems(mediaClips);
-
-      // If selected media is gone, reset selection
-      if (
-        selectedMediaId &&
-        !mediaClips.find((m: IClip) => m.id === selectedMediaId)
-      ) {
-        setSelectedMediaId('');
-      }
-
-      // Find captions for selected media
-      if (selectedMediaId) {
-        const captions = allClips.filter(
-          (clip: IClip) =>
-            clip.type === 'Caption' && (clip as any).mediaId === selectedMediaId
-        );
-        setCaptionItems(
-          captions.sort((a: IClip, b: IClip) => a.display.from - b.display.from)
-        );
-      } else {
-        setCaptionItems([]);
-      }
-    };
+    const handleUpdate = () => updateClips(selectedMediaId);
 
     const handleTimeUpdate = ({ currentTime }: { currentTime: number }) => {
-      setCurrentTime(currentTime);
+      // Find the currently active caption
+      // We use the Ref because this closure is created once and we don't want to re-bind listener
+      const activeItem = captionItemsRef.current.find(
+        (item) =>
+          currentTime >= item.display.from && currentTime < item.display.to
+      );
+
+      const newActiveId = activeItem ? activeItem.id : null;
+
+      // Only trigger re-render if the active caption actually changes
+      if (newActiveId !== activeCaptionIdRef.current) {
+        setActiveCaptionId(newActiveId);
+        activeCaptionIdRef.current = newActiveId;
+      }
     };
 
-    updateClips();
-    studio.on('clip:added', updateClips);
-    studio.on('clip:removed', updateClips);
-    studio.on('clip:updated', updateClips);
+    handleUpdate();
+    studio.on('clip:added', handleUpdate);
+    studio.on('clip:removed', handleUpdate);
+    studio.on('clip:updated', handleUpdate);
     studio.on('currentTime', handleTimeUpdate);
 
     return () => {
-      studio.off('clip:added', updateClips);
-      studio.off('clip:removed', updateClips);
-      studio.off('clip:updated', updateClips);
+      studio.off('clip:added', handleUpdate);
+      studio.off('clip:removed', handleUpdate);
+      studio.off('clip:updated', handleUpdate);
       studio.off('currentTime', handleTimeUpdate);
     };
   }, [studio, selectedMediaId]);
@@ -151,6 +175,8 @@ export default function PanelCaptions() {
 
       if (clipsToAdd.length > 0) {
         await studio.addClip(clipsToAdd, { trackId: captionTrackId });
+        setSelectedMediaId(mediaClip.id);
+        updateClips(mediaClip.id);
       }
     } catch (error) {
       Log.error('Failed to generate captions:', error);
@@ -177,29 +203,62 @@ export default function PanelCaptions() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="text-text-primary flex px-4 h-12 flex-none items-center text-sm font-medium">
-        Captions
-        <div className="flex-1" />
-      </div>
-      <div className="flex flex-1 flex-col gap-4 px-4 overflow-hidden">
+      <div className="flex flex-1 flex-col gap-4 p-4 overflow-hidden min-w-0">
         {mediaItems.length === 0 ? (
           <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground p-8">
             Add video or audio to the timeline to generate captions.
           </div>
         ) : (
           <>
-            <Select value={selectedMediaId} onValueChange={handleSelectChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select media" />
-              </SelectTrigger>
-              <SelectContent>
-                {mediaItems.map((item) => (
-                  <SelectItem value={item.id} key={item.id}>
-                    {(item as any).src?.split('/').pop() || item.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between hover:bg-zinc-800/50 hover:text-white border-zinc-800 bg-zinc-900 min-w-0"
+                >
+                  <span className="truncate flex-1 text-left">
+                    {selectedMediaId
+                      ? mediaItems
+                          .find((media) => media.id === selectedMediaId)
+                          ?.src?.split('/')
+                          .pop() || selectedMediaId
+                      : 'Select media...'}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] bg-zinc-800 p-2"
+                align="start"
+              >
+                <div className="flex flex-col p-1">
+                  {mediaItems.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        handleSelectChange(item.id);
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        'flex cursor-pointer  w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-zinc-800 hover:text-white transition-colors',
+                        selectedMediaId === item.id
+                          ? 'bg-zinc-800 text-white'
+                          : 'text-zinc-400'
+                      )}
+                    >
+                      <span className="truncate flex-1 min-w-0">
+                        {(item as any).src?.split('/').pop() || item.id}
+                      </span>
+                      {selectedMediaId === item.id && (
+                        <Check className="ml-2 h-4 w-4 shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {!selectedMediaId ? (
               <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground py-2">
@@ -207,16 +266,13 @@ export default function PanelCaptions() {
               </div>
             ) : captionItems.length > 0 ? (
               <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full pr-3">
+                <ScrollArea className="h-full">
                   <div className="flex flex-col gap-2 pb-4">
                     {captionItems.map((item) => (
                       <CaptionItem
                         key={item.id}
                         item={item}
-                        isActive={
-                          currentTime >= item.display.from &&
-                          currentTime < item.display.to
-                        }
+                        isActive={item.id === activeCaptionId}
                         onUpdate={(text) => handleUpdateCaption(item.id, text)}
                         onDelete={() => handleDeleteCaption(item.id)}
                         onSeek={() => handleSeek(item.display.from)}
@@ -297,8 +353,8 @@ function CaptionItem({
       className={cn(
         'group relative flex flex-col gap-2 rounded-md p-3 transition-colors border-l-2',
         isActive
-          ? 'bg-zinc-800/50 border-blue-500'
-          : 'hover:bg-zinc-800/30 border-transparent'
+          ? 'bg-zinc-700/10 border-zinc-300 border'
+          : 'hover:bg-zinc-700/10  border'
       )}
     >
       <div className="flex items-center justify-between">

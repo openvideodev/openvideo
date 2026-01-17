@@ -46,7 +46,7 @@ export default function Editor() {
             minSize={15}
             maxSize={40}
             onResize={setToolsPanel}
-            className="max-w-7xl rounded-sm relative overflow-visible! bg-panel"
+            className="max-w-7xl rounded-sm relative overflow-visible! bg-panel min-w-0"
           >
             <MediaPanel />
             <FloatingControl />
