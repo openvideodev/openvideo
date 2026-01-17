@@ -499,6 +499,9 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       if (json.mediaId) {
         captionClipOpts.mediaId = json.mediaId;
       }
+      // Set initialLayoutApplied to true to preserve loaded left/top
+      captionClipOpts.initialLayoutApplied = true;
+
       clip = new Caption(text, captionClipOpts);
       break;
     }

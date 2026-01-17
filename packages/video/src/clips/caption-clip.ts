@@ -173,6 +173,11 @@ export interface ICaptionOpts {
    * Media ID to which the captions were applied
    */
   mediaId?: string;
+  /**
+   * Whether the initial layout (auto-positioning) has already been applied.
+   * Set to true when loading from JSON to preserve existing coordinates.
+   */
+  initialLayoutApplied?: boolean;
 }
 
 /**
@@ -245,34 +250,147 @@ export class Caption extends BaseClip implements IClip {
     if (this._text === v) return;
     this._text = v;
 
-    // Sync with words
-    const wordTexts = v
-      .trim()
-      .split(/\s+/)
-      .filter((t) => t !== '');
-    const existingWords = this.opts?.words || [];
+    // Support for multi-word segments and intelligent alignment
+    // 1. Check if the new text is already consistent with current words
+    // (This prevents the 'sabotage' when words setter calls text setter)
+    const currentWords = this.opts?.words || [];
+    const currentJoinedText = currentWords.map((w) => w.text).join(' ');
 
-    if (wordTexts.length === existingWords.length && wordTexts.length > 0) {
-      // Preserve timing and metadata
-      this.opts.words = existingWords.map((word, i) => ({
-        ...word,
-        text: wordTexts[i],
-      }));
-    } else if (wordTexts.length > 0) {
-      // Redistribute duration equally
-      const totalDuration =
-        this.duration > 0 && this.duration !== Infinity
-          ? this.duration
-          : 1000000; // default 1s if unknown
-      const wordDuration = totalDuration / wordTexts.length;
-      this.opts.words = wordTexts.map((text, i) => ({
-        text,
-        from: i * wordDuration,
-        to: (i + 1) * wordDuration,
-        isKeyWord: false,
-      }));
+    if (v.trim() === currentJoinedText.trim()) {
+      // Text matches segments already, no need to redistribute or align
     } else {
-      this.opts.words = [];
+      // 2. Determine redistribution path
+      if (v.includes('\n')) {
+        // Explicit segments via newlines
+        const newSegmentTexts = v
+          .split('\n')
+          .map((s) => s.trim())
+          .filter((s) => s !== '');
+
+        if (
+          newSegmentTexts.length === currentWords.length &&
+          newSegmentTexts.length > 0
+        ) {
+          // Preserve timing, just update text
+          this.opts.words = currentWords.map((word, i) => ({
+            ...word,
+            text: newSegmentTexts[i],
+          }));
+        } else if (newSegmentTexts.length > 0) {
+          // Redistribute duration equally for new count
+          const totalDuration =
+            this.duration > 0 && this.duration !== Infinity
+              ? this.duration
+              : 1000000;
+          const wordDuration = totalDuration / newSegmentTexts.length;
+          this.opts.words = newSegmentTexts.map((text, i) => ({
+            text,
+            from: i * wordDuration,
+            to: (i + 1) * wordDuration,
+            isKeyWord: false,
+          }));
+        } else {
+          this.opts.words = [];
+        }
+      } else {
+        // Intelligent alignment for space-separated edits
+        const newWords = v
+          .trim()
+          .split(/\s+/)
+          .filter((t) => t !== '');
+
+        if (newWords.length === 0) {
+          this.opts.words = [];
+        } else if (currentWords.length === 0) {
+          // First time initialization
+          const totalDuration =
+            this.duration > 0 && this.duration !== Infinity
+              ? this.duration
+              : 1000000;
+          const wordDuration = totalDuration / newWords.length;
+          this.opts.words = newWords.map((text, i) => ({
+            text,
+            from: i * wordDuration,
+            to: (i + 1) * wordDuration,
+            isKeyWord: false,
+          }));
+        } else {
+          // Perform word-to-segment alignment
+          const oldWordsInfo: Array<{ word: string; segIndex: number }> = [];
+          currentWords.forEach((seg, i) => {
+            seg.text
+              .split(/\s+/)
+              .filter((w) => w !== '')
+              .forEach((word) => {
+                oldWordsInfo.push({ word, segIndex: i });
+              });
+          });
+
+          // Greedy alignment
+          const newWordSegIndices: number[] = new Array(newWords.length).fill(
+            -1
+          );
+          let lastOldIdx = 0;
+          for (let i = 0; i < newWords.length; i++) {
+            for (let j = lastOldIdx; j < oldWordsInfo.length; j++) {
+              if (
+                oldWordsInfo[j].word.toLowerCase() === newWords[i].toLowerCase()
+              ) {
+                newWordSegIndices[i] = oldWordsInfo[j].segIndex;
+                lastOldIdx = j + 1;
+                break;
+              }
+            }
+          }
+
+          // Fill gaps (assign to previous segment or 0)
+          let currentSegIdx = 0;
+          for (let i = 0; i < newWordSegIndices.length; i++) {
+            if (newWordSegIndices[i] === -1) {
+              newWordSegIndices[i] = currentSegIdx;
+            } else {
+              currentSegIdx = newWordSegIndices[i];
+            }
+          }
+
+          // Group newWords by their target segmentIndex
+          const groups = new Map<number, string[]>();
+          newWordSegIndices.forEach((segIdx, i) => {
+            if (!groups.has(segIdx)) groups.set(segIdx, []);
+            groups.get(segIdx)!.push(newWords[i]);
+          });
+
+          // Build the final words array preserving timings for existing indices
+          const resultWords: any[] = [];
+          for (let i = 0; i < currentWords.length; i++) {
+            const wordsInGroup = groups.get(i);
+            if (wordsInGroup && wordsInGroup.length > 0) {
+              resultWords.push({
+                ...currentWords[i],
+                text: wordsInGroup.join(' '),
+              });
+            }
+          }
+
+          // If alignment failed significantly (no words mapped to existing segments),
+          // fallback to equal redistribution to ensure data integrity
+          if (resultWords.length === 0) {
+            const totalDuration =
+              this.duration > 0 && this.duration !== Infinity
+                ? this.duration
+                : 1000000;
+            const wordDuration = totalDuration / newWords.length;
+            this.opts.words = newWords.map((text, i) => ({
+              text,
+              from: i * wordDuration,
+              to: (i + 1) * wordDuration,
+              isKeyWord: false,
+            }));
+          } else {
+            this.opts.words = resultWords;
+          }
+        }
+      }
     }
 
     // Sync originalOpts
@@ -587,6 +705,8 @@ export class Caption extends BaseClip implements IClip {
         false,
       mediaId: opts.mediaId,
     };
+
+    this._initialLayoutApplied = opts.initialLayoutApplied ?? false;
 
     // Now set the text, which will use this.opts.words if they exist
     this.text = text;
@@ -1679,6 +1799,9 @@ export class Caption extends BaseClip implements IClip {
         captionOpts.videoHeight = json.videoHeight;
       }
     }
+
+    // Set initialLayoutApplied to true to preserve loaded left/top
+    captionOpts.initialLayoutApplied = true;
 
     const clip = new Caption(text, captionOpts);
 
