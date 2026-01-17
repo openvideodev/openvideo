@@ -12,16 +12,16 @@ import { useEffect, useRef, useState } from 'react';
 export function TabBar() {
   const { activeTab, setActiveTab } = useMediaPanelStore();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showTopFade, setShowTopFade] = useState(false);
-  const [showBottomFade, setShowBottomFade] = useState(false);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(false);
 
   const checkScrollPosition = () => {
     const element = scrollRef.current;
     if (!element) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = element;
-    setShowTopFade(scrollTop > 0);
-    setShowBottomFade(scrollTop < scrollHeight - clientHeight - 1);
+    const { scrollLeft, scrollWidth, clientWidth } = element;
+    setShowLeftFade(scrollLeft > 0);
+    setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
   };
 
   useEffect(() => {
@@ -41,8 +41,14 @@ export function TabBar() {
   }, []);
 
   return (
-    <div className="flex py-4 px-3 border-r">
-      <div className="flex items-center flex-col gap-2 overflow-x-auto scrollbar-hidden">
+    <div className="relative flex items-center justify-center py-2 px-4 bg-zinc-800">
+      {showLeftFade && (
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-zinc-800 to-transparent z-10 pointer-events-none" />
+      )}
+      <div
+        ref={scrollRef}
+        className="flex items-center gap-2 overflow-x-auto scrollbar-hidden w-full"
+      >
         {(Object.keys(tabs) as Tab[]).map((tabKey) => {
           const tab = tabs[tabKey];
           const isActive = activeTab === tabKey;
@@ -61,7 +67,7 @@ export function TabBar() {
                 <TooltipTrigger asChild>
                   <tab.icon className="size-5" />
                 </TooltipTrigger>
-                <TooltipContent side="right" align="center" sideOffset={8}>
+                <TooltipContent side="bottom" align="center" sideOffset={8}>
                   {tab.label}
                 </TooltipContent>
               </Tooltip>
@@ -69,6 +75,9 @@ export function TabBar() {
           );
         })}
       </div>
+      {showRightFade && (
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-zinc-800 to-transparent z-10 pointer-events-none" />
+      )}
     </div>
   );
 }

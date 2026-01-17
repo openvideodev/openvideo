@@ -7,10 +7,13 @@ import { ExportModal } from './export-modal';
 import { LogoIcons } from '../shared/logos';
 import Link from 'next/link';
 import { Icons } from '../shared/icons';
+import { Keyboard } from 'lucide-react';
+import { ShortcutsModal } from './shortcuts-modal';
 
 export default function Header() {
   const { studio } = useStudioStore();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
 
   const handleNew = () => {
     if (!studio) return;
@@ -144,6 +147,16 @@ export default function Header() {
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
+        <div className="flex items-center mr-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={() => setIsShortcutsModalOpen(true)}
+          >
+            <Keyboard className="size-5" />
+          </Button>
+        </div>
         <Link href="https://discord.gg/SCfMrQx8kr" target="_blank">
           <Button className="h-7 rounded-lg" variant={'outline'}>
             <LogoIcons.discord className="w-6 h-6" />
@@ -154,6 +167,10 @@ export default function Header() {
         <ExportModal
           open={isExportModalOpen}
           onOpenChange={setIsExportModalOpen}
+        />
+        <ShortcutsModal
+          open={isShortcutsModalOpen}
+          onOpenChange={setIsShortcutsModalOpen}
         />
 
         <Button

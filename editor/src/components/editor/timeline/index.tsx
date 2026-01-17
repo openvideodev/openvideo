@@ -22,6 +22,7 @@ import {
 import { TimelineToolbar } from './timeline-toolbar';
 import { TimelineCanvas } from './timeline';
 import { TimelineStudioSync } from './timeline-studio-sync';
+import { useEditorHotkeys } from '@/hooks/use-editor-hotkeys';
 export function Timeline() {
   // Timeline shows all tracks (video, audio, effects) and their elements.
   // You can drag media here to add it to your project.
@@ -379,6 +380,11 @@ export function Timeline() {
     const splitTime = usePlaybackStore.getState().currentTime * 1_000_000;
     timelineCanvasRef.current?.splitSelectedClip(splitTime);
   }, []);
+
+  useEditorHotkeys({
+    timelineCanvas: timelineCanvasRef.current,
+    setZoomLevel,
+  });
 
   return (
     <div
