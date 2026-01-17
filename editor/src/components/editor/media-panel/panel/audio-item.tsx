@@ -68,21 +68,15 @@ export const AudioItem = ({
         )}
       </Button>
 
-      <div className="flex flex-col min-w-0 flex-1">
+      <div
+        onClick={() => onAdd(item.url)}
+        className="flex flex-col min-w-0 flex-1 cursor-pointer"
+      >
         <span className="text-xs font-medium truncate mb-0.5 text-zinc-300">
           {item.text}
         </span>
         <span className="text-[10px] text-muted-foreground">{duration}</span>
       </div>
-
-      <Button
-        size="icon"
-        // variant="secon"
-        className="size-5.5 cursor-pointer rounded-full opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-1/2 -translate-y-1/2"
-        onClick={() => onAdd(item.url)}
-      >
-        <IconPlus className="size-4" />
-      </Button>
     </div>
   );
 };

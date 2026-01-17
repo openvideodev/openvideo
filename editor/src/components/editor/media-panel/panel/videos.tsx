@@ -140,12 +140,8 @@ export default function PanelVideos() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="text-text-primary px-4 flex h-12 flex-none items-center text-sm font-medium">
-        Videos
-      </div>
-
-      <div className="flex items-center px-4">
-        <div className="flex-1 pb-4">
+      <div>
+        <div className="flex-1 p-4">
           <InputGroup>
             <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
               <Search size={14} />

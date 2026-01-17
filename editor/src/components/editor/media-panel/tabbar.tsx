@@ -41,9 +41,9 @@ export function TabBar() {
   }, []);
 
   return (
-    <div className="relative flex items-center justify-center py-2 px-4 bg-zinc-800">
+    <div className="relative flex items-center justify-center py-2 px-4 bg-stone-800">
       {showLeftFade && (
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-zinc-800 to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-stone-800 to-transparent z-10 pointer-events-none" />
       )}
       <div
         ref={scrollRef}

@@ -118,7 +118,7 @@ export default function Header() {
   };
 
   return (
-    <header className="relative flex h-[52px] w-full shrink-0 items-center justify-between bg-background px-4">
+    <header className="relative flex h-[52px] w-full shrink-0 items-center justify-between px-4">
       {/* Left Section */}
       <div className="flex items-center gap-2">
         <div className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-md text-zinc-200">

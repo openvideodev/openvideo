@@ -33,7 +33,7 @@ export function PreviewPanel({ onReady }: PreviewPanelProps) {
       width: defaultSize.width,
       height: defaultSize.height,
       fps: 30,
-      bgColor: '#18181b',
+      bgColor: '#1c1917',
       canvas: previewCanvasRef.current,
       interactivity: true,
       spacing: 20,

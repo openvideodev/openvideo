@@ -5,14 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudioStore } from '@/stores/studio-store';
 import { Image, Video, Log } from '@designcombo/video';
-import { Upload, Search, Image as ImageIcon, Film } from 'lucide-react';
+import { Upload, Film } from 'lucide-react';
 import { uploadFile } from '@/lib/upload-utils';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group';
-import { VisualsChatPanel } from '../visuals-chat-panel';
 
 interface VisualAsset {
   id: string;
@@ -120,16 +114,11 @@ export default function PanelUploads() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="text-text-primary px-4 flex h-12 flex-none items-center text-sm font-medium">
-        Uploads
-      </div>
-
-      <div className="flex items-center w-full px-4">
+      <div className="flex items-center w-full p-4">
         <Button
           className="w-full h-9"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          // size={'sm'}
         >
           <Upload size={14} />
           <span className="text-xs font-medium">
@@ -145,7 +134,7 @@ export default function PanelUploads() {
         />
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 px-4">
         {filteredAssets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
             <Upload size={32} className="opacity-50" />
