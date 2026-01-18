@@ -110,6 +110,7 @@ export function TimelinePlayhead({
         top: 0,
         height: `${totalHeight}px`,
         width: '1px',
+        opacity: duration === 0 ? 0 : 1,
       }}
       onMouseDown={handlePlayheadMouseDown}
     >

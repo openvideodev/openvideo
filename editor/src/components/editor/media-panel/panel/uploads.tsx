@@ -26,7 +26,11 @@ import {
   type StorageStats,
 } from '@/lib/storage/storage-service';
 import type { MediaFile, MediaType } from '@/types/media';
-
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 interface VisualAsset {
   id: string;
   type: MediaType;
@@ -356,49 +360,38 @@ export default function PanelUploads() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Upload button */}
-      <div className="flex items-center w-full p-4">
-        <Button
-          type="button"
-          className="w-full h-9"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-        >
-          <Upload size={14} />
-          <span className="text-xs font-medium">
-            {isUploading ? 'Uploading...' : 'Upload files'}
-          </span>
-        </Button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*,video/*,audio/*"
-          multiple
-          onChange={handleFileUpload}
-        />
-      </div>
-
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*,video/*,audio/*"
+        multiple
+        onChange={handleFileUpload}
+      />
       {/* Search input */}
       {uploads.length > 0 && (
-        <div className="relative px-4 mb-2">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search uploads..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 text-sm bg-secondary rounded-md border-none outline-none focus:ring-1 focus:ring-primary/50"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        <div>
+          <div className="flex-1 p-4 flex gap-2">
+            <InputGroup>
+              <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
+                <Search size={14} />
+              </InputGroupAddon>
+
+              <InputGroupInput
+                placeholder="Search uploads..."
+                className="bg-secondary/30 border-0 h-full text-xs box-border pl-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </InputGroup>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              variant={'outline'}
             >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+              <Upload size={14} />
+            </Button>
+          </div>
         </div>
       )}
 

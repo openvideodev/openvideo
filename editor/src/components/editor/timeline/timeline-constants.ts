@@ -73,7 +73,7 @@ export function getTrackElementClasses(type: TrackType) {
 // Track height definitions
 export const TRACK_HEIGHTS: Record<TrackType, number> = {
   Video: 52,
-  Image: 40,
+  Image: 52,
   Text: 32,
   Effect: 32,
   Audio: 36,

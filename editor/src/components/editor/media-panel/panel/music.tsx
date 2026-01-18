@@ -5,7 +5,6 @@ import { Audio, Log } from '@designcombo/video';
 import { IconMusic } from '@tabler/icons-react';
 import { AudioItem } from './audio-item';
 import { useState, useEffect, useCallback } from 'react';
-import { MusicChatPanel } from '../music-chat-panel';
 import { Search, Loader2 } from 'lucide-react';
 import {
   InputGroup,
@@ -89,21 +88,19 @@ export default function PanelMusic() {
 
   return (
     <div className="h-full flex flex-col">
-      <div>
-        <div className="p-4">
-          <InputGroup>
-            <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
-              <Search size={14} />
-            </InputGroupAddon>
+      <div className="p-4">
+        <InputGroup>
+          <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
+            <Search size={14} />
+          </InputGroupAddon>
 
-            <InputGroupInput
-              placeholder="Search stock music..."
-              className="bg-secondary/30 border-0 h-full text-xs box-border pl-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
-          </InputGroup>
-        </div>
+          <InputGroupInput
+            placeholder="Search stock music..."
+            className="bg-secondary/30 border-0 h-full text-xs box-border pl-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        </InputGroup>
       </div>
 
       <ScrollArea className="flex-1 px-4">

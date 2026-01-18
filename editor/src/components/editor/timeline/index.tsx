@@ -340,7 +340,7 @@ export function Timeline() {
 
       {/* Timeline Container */}
       <div
-        className="flex-1 flex flex-col overflow-hidden relative"
+        className="flex-1 flex flex-col overflow-hidden relative bg-[#161412]"
         ref={timelineRef}
       >
         <TimelinePlayhead
@@ -358,7 +358,10 @@ export function Timeline() {
         />
 
         {/* Timeline Header with Ruler */}
-        <div className="flex bg-[#0E0E0E] sticky top-0 z-10">
+        <div
+          style={{ opacity: duration === 0 ? 0 : 1 }}
+          className="flex sticky top-0"
+        >
           {/* Track Labels Header */}
           <div className="w-10 shrink-0 bg-panel border-r flex items-center justify-between h-6">
             {/* Empty space */}
@@ -410,7 +413,7 @@ export function Timeline() {
         </div>
 
         {/* Tracks Area */}
-        <div className="flex-1 flex overflow-hidden bg-[#0E0E0E]">
+        <div className="flex-1 flex overflow-hidden">
           {/* Track Labels */}
           {tracks.length > 0 && (
             <div
@@ -435,12 +438,7 @@ export function Timeline() {
 
                     <div
                       className={cn(
-                        'flex items-center px-3 group bg-zinc-800',
-                        ['Text', 'Caption', 'Effect', 'Transition'].includes(
-                          track.type
-                        )
-                          ? 'h-8'
-                          : 'h-12'
+                        'flex items-center px-3 group bg-stone-800'
                       )}
                       style={{ height: getTrackHeight(track.type as any) }}
                     >
@@ -466,7 +464,7 @@ export function Timeline() {
           )}
 
           {/* Timeline Tracks Content */}
-          <div className="flex-1 relative overflow-hidden bg-red-800">
+          <div className="flex-1 relative overflow-hidden">
             <div id="timeline-canvas" className="w-full h-full" />
           </div>
         </div>

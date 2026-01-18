@@ -29,7 +29,6 @@ export class SelectionManager {
   private textClipResizedSx: number | null = null;
   private textClipResizedSy: number | null = null;
 
-
   constructor(private studio: Studio) {}
 
   public init(app: Application, artboard: Container) {
@@ -47,7 +46,6 @@ export class SelectionManager {
     app.stage.on('globalpointermove', (e) => this.onStagePointerMove(e));
     app.stage.on('pointerup', () => this.onStagePointerUp());
     app.stage.on('pointerupoutside', () => this.onStagePointerUp());
-
   }
 
   private onStagePointerDown(e: FederatedPointerEvent) {
@@ -327,7 +325,6 @@ export class SelectionManager {
     }
   }
 
-
   public async move(dx: number, dy: number) {
     if (this.selectedClips.size === 0) return;
 
@@ -353,7 +350,6 @@ export class SelectionManager {
   public clear() {
     this.deselectClip();
     this.interactiveClips.clear();
-
   }
 
   private recreateTransformer() {

@@ -163,7 +163,10 @@ export class Transport {
   async frameNext(): Promise<void> {
     const fps = this.studio.opts.fps || 30;
     const frameDuration = 1_000_000 / fps;
-    const nextTime = Math.min(this.currentTime + frameDuration, this.maxDuration);
+    const nextTime = Math.min(
+      this.currentTime + frameDuration,
+      this.maxDuration
+    );
     await this.seek(nextTime);
   }
 

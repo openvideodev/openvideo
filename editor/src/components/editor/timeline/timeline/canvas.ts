@@ -156,7 +156,6 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.canvas = new Canvas(canvasElement, {
       width: clientWidth,
       height: clientHeight,
-      backgroundColor: '#0E0E0E',
       selection: true,
       renderOnAddRemove: false, // Performance optimization
     });
