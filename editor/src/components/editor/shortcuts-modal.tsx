@@ -8,7 +8,6 @@ import {
 } from '@/components/ui/dialog';
 import { Kbd } from '@/components/ui/kbd';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
 interface ShortcutsModalProps {
@@ -34,8 +33,7 @@ const SHORTCUTS: ShortcutCategory[] = [
       { label: 'Select all', keys: ['⌘', 'A'] },
       {
         label: 'Select multiple clips',
-        keys: ['⌘', 'Left-Click'],
-        disabled: true,
+        keys: ['⇧', 'Left-Click'],
       },
       { label: 'Copy', keys: ['⌘', 'C'] },
       { label: 'Cut', keys: ['⌘', 'X'] },
@@ -56,8 +54,8 @@ const SHORTCUTS: ShortcutCategory[] = [
       { label: 'Zoom out', keys: ['⌘', '-'] },
       { label: 'Scroll up or down', keys: ['Scroll'], disabled: true },
       { label: 'Scroll left or right', keys: ['⇧', 'Scroll'], disabled: true },
-      { label: 'Last frame', keys: ['⌘', '←'], disabled: true },
-      { label: 'Next frame', keys: ['⌘', '→'], disabled: true },
+      { label: 'Last frame', keys: ['⌘', '←'] },
+      { label: 'Next frame', keys: ['⌘', '→'] },
       { label: 'Turn on or off preview axis', keys: ['S'], disabled: true },
       { label: 'Attach', keys: ['N'], disabled: true },
       {
@@ -80,8 +78,11 @@ const SHORTCUTS: ShortcutCategory[] = [
       { label: 'Zoom to 50%', keys: ['⇧', '0'], disabled: true },
       { label: 'Zoom to 100%', keys: ['⇧', '1'], disabled: true },
       { label: 'Zoom to 200%', keys: ['⇧', '2'], disabled: true },
-      { label: 'Move up 1 px', keys: ['↑'], disabled: true },
-      { label: 'Move down 1 px', keys: ['↓'], disabled: true },
+      { label: 'Move up 1 px', keys: ['↑'] },
+      { label: 'Move down 1 px', keys: ['↓'] },
+      { label: 'Move left 1 px', keys: ['←'] },
+      { label: 'Move right 1 px', keys: ['→'] },
+      { label: 'Move 5 px', keys: ['⇧', 'Arrow Keys'] },
     ],
   },
 ];

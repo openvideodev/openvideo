@@ -94,6 +94,54 @@ export function useEditorHotkeys({
       studio?.redo();
     });
 
+    // Move Up
+    hotkeys('up, shift+up', (event) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+      event.preventDefault();
+      const step = event.shiftKey ? 5 : 1;
+      studio?.selection.move(0, -step);
+    });
+
+    // Move Down
+    hotkeys('down, shift+down', (event) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+      event.preventDefault();
+      const step = event.shiftKey ? 5 : 1;
+      studio?.selection.move(0, step);
+    });
+
+    // Move Left
+    hotkeys('left, shift+left', (event) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+      event.preventDefault();
+      const step = event.shiftKey ? 5 : 1;
+      studio?.selection.move(-step, 0);
+    });
+
+    // Move Right
+    hotkeys('right, shift+right', (event) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+      event.preventDefault();
+      const step = event.shiftKey ? 5 : 1;
+      studio?.selection.move(step, 0);
+    });
+
+    // Last Frame
+    hotkeys('command+left, ctrl+left', (event) => {
+      event.preventDefault();
+      studio?.framePrev();
+    });
+
+    // Next Frame
+    hotkeys('command+right, ctrl+right', (event) => {
+      event.preventDefault();
+      studio?.frameNext();
+    });
+
     return () => {
       hotkeys.unbind('space');
       hotkeys.unbind('command+b, ctrl+b');
@@ -105,6 +153,12 @@ export function useEditorHotkeys({
       hotkeys.unbind('command+-, ctrl+-');
       hotkeys.unbind('command+z, ctrl+z');
       hotkeys.unbind('command+shift+z, ctrl+shift+z, command+y, ctrl+y');
+      hotkeys.unbind('up, shift+up');
+      hotkeys.unbind('down, shift+down');
+      hotkeys.unbind('left, shift+left');
+      hotkeys.unbind('right, shift+right');
+      hotkeys.unbind('command+left, ctrl+left');
+      hotkeys.unbind('command+right, ctrl+right');
     };
   }, [isPlaying, timelineCanvas, currentTime, toggle, setZoomLevel]);
 }

@@ -29,6 +29,7 @@ export class SelectionManager {
   private textClipResizedSx: number | null = null;
   private textClipResizedSy: number | null = null;
 
+
   constructor(private studio: Studio) {}
 
   public init(app: Application, artboard: Container) {
@@ -46,6 +47,7 @@ export class SelectionManager {
     app.stage.on('globalpointermove', (e) => this.onStagePointerMove(e));
     app.stage.on('pointerup', () => this.onStagePointerUp());
     app.stage.on('pointerupoutside', () => this.onStagePointerUp());
+
   }
 
   private onStagePointerDown(e: FederatedPointerEvent) {
@@ -325,10 +327,33 @@ export class SelectionManager {
     }
   }
 
+
+  public async move(dx: number, dy: number) {
+    if (this.selectedClips.size === 0) return;
+
+    const updates: { id: string; updates: Partial<IClip> }[] = [];
+    for (const clip of this.selectedClips) {
+      updates.push({
+        id: clip.id,
+        updates: {
+          left: (clip.left ?? 0) + dx,
+          top: (clip.top ?? 0) + dy,
+        },
+      });
+    }
+
+    await this.studio.updateClips(updates);
+
+    // Refresh transformer bounds if active
+    if (this.activeTransformer) {
+      this.activeTransformer.updateBounds();
+    }
+  }
+
   public clear() {
     this.deselectClip();
     this.interactiveClips.clear();
-    // selectiongraphics in init?
+
   }
 
   private recreateTransformer() {

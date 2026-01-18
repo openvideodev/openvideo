@@ -157,6 +157,26 @@ export class Transport {
     }
   }
 
+  /**
+   * Move to the next frame
+   */
+  async frameNext(): Promise<void> {
+    const fps = this.studio.opts.fps || 30;
+    const frameDuration = 1_000_000 / fps;
+    const nextTime = Math.min(this.currentTime + frameDuration, this.maxDuration);
+    await this.seek(nextTime);
+  }
+
+  /**
+   * Move to the previous frame
+   */
+  async framePrev(): Promise<void> {
+    const fps = this.studio.opts.fps || 30;
+    const frameDuration = 1_000_000 / fps;
+    const prevTime = Math.max(0, this.currentTime - frameDuration);
+    await this.seek(prevTime);
+  }
+
   private async renderLoop(): Promise<void> {
     if (!this.isPlaying || this.studio.destroyed || this.studio.pixiApp == null)
       return;

@@ -786,6 +786,84 @@ export class Studio extends EventEmitter<StudioEvents> {
     return this.timeline.updateClip(id, updates);
   }
 
+  /**
+   * Centers object vertically and horizontally in the studio
+   */
+  async centerClip(clipOrId: IClip | string): Promise<void> {
+    const clip =
+      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+    if (!clip) return;
+    const left = (this.opts.width - clip.width) / 2;
+    const top = (this.opts.height - clip.height) / 2;
+    return this.updateClip(clip.id, { left, top });
+  }
+
+  /**
+   * Centers object horizontally in the studio
+   */
+  async centerClipH(clipOrId: IClip | string): Promise<void> {
+    const clip =
+      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+    if (!clip) return;
+    const left = (this.opts.width - clip.width) / 2;
+    return this.updateClip(clip.id, { left });
+  }
+
+  /**
+   * Centers object vertically in the studio
+   */
+  async centerClipV(clipOrId: IClip | string): Promise<void> {
+    const clip =
+      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+    if (!clip) return;
+    const top = (this.opts.height - clip.height) / 2;
+    return this.updateClip(clip.id, { top });
+  }
+
+  /**
+   * Scale clip to fit within the studio dimensions while maintaining aspect ratio
+   */
+  async scaleToFit(clipOrId: IClip | string): Promise<void> {
+    const clip =
+      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+    if (!clip) return;
+
+    const meta = await clip.ready;
+    const { width: origWidth, height: origHeight } = meta;
+    if (origWidth === 0 || origHeight === 0) return;
+
+    const scale = Math.min(
+      this.opts.width / origWidth,
+      this.opts.height / origHeight
+    );
+    const width = origWidth * scale;
+    const height = origHeight * scale;
+
+    return this.updateClip(clip.id, { width, height });
+  }
+
+  /**
+   * Scale clip to fill the studio dimensions while maintaining aspect ratio
+   */
+  async scaleToCover(clipOrId: IClip | string): Promise<void> {
+    const clip =
+      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+    if (!clip) return;
+
+    const meta = await clip.ready;
+    const { width: origWidth, height: origHeight } = meta;
+    if (origWidth === 0 || origHeight === 0) return;
+
+    const scale = Math.max(
+      this.opts.width / origWidth,
+      this.opts.height / origHeight
+    );
+    const width = origWidth * scale;
+    const height = origHeight * scale;
+
+    return this.updateClip(clip.id, { width, height });
+  }
+
   async updateClips(
     updates: { id: string; updates: Partial<IClip> }[]
   ): Promise<void> {
@@ -952,6 +1030,20 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   async seek(time: number): Promise<void> {
     return this.transport.seek(time);
+  }
+
+  /**
+   * Move to the next frame
+   */
+  async frameNext(): Promise<void> {
+    return this.transport.frameNext();
+  }
+
+  /**
+   * Move to the previous frame
+   */
+  async framePrev(): Promise<void> {
+    return this.transport.framePrev();
   }
 
   /**
