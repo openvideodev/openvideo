@@ -366,7 +366,6 @@ export class Text extends BaseClip {
 
       // Constructor specific: check if we need to set duration from meta
       const meta = { ...this._meta };
-      Log.info('Text ready:', meta);
       return meta;
     })();
   }

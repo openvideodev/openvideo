@@ -104,9 +104,7 @@ export function useEditorHotkeys({
       hotkeys.unbind('command+=, ctrl+=');
       hotkeys.unbind('command+-, ctrl+-');
       hotkeys.unbind('command+z, ctrl+z');
-      hotkeys.unbind(
-        'command+shift+z, ctrl+shift+z, command+y, ctrl+y'
-      );
+      hotkeys.unbind('command+shift+z, ctrl+shift+z, command+y, ctrl+y');
     };
   }, [isPlaying, timelineCanvas, currentTime, toggle, setZoomLevel]);
 }

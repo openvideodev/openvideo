@@ -25,7 +25,6 @@ import { TimelineCanvas } from './timeline';
 import { TimelineStudioSync } from './timeline-studio-sync';
 import { useEditorHotkeys } from '@/hooks/use-editor-hotkeys';
 
-
 export function Timeline() {
   const { tracks, clips, getTotalDuration } = useTimelineStore();
   const { duration, seek, setDuration } = usePlaybackStore();
@@ -243,7 +242,7 @@ export function Timeline() {
         Math.min(
           duration,
           (mouseX + scrollLeft) /
-          (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel)
+            (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel)
         )
       );
 
@@ -332,8 +331,8 @@ export function Timeline() {
       handleWheel({
         ctrlKey: true,
         deltaY: delta,
-        preventDefault: () => { },
-        stopPropagation: () => { },
+        preventDefault: () => {},
+        stopPropagation: () => {},
       } as any);
     });
 

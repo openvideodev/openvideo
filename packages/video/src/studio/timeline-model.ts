@@ -296,24 +296,28 @@ export class TimelineModel {
         }
       } else {
         // Track ID provided but doesn't exist -> Create it
-        this.tracks.unshift({
+        const newTrack: StudioTrack = {
           id: trackId,
           name: `Track ${this.tracks.length + 1}`,
           type: clip.type,
           clipIds: [clip.id],
-        });
+        };
+        this.tracks.unshift(newTrack);
+        this.studio.emit('track:added', { track: newTrack });
       }
     } else {
       // Auto-create new track
       const newTrackId = `track_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
-      this.tracks.unshift({
+      const newTrack: StudioTrack = {
         id: newTrackId,
         name: `Track ${this.tracks.length + 1}`,
         type: clip.type,
         clipIds: [clip.id],
-      });
+      };
+      this.tracks.unshift(newTrack);
+      this.studio.emit('track:added', { track: newTrack });
     }
   }
 
@@ -803,7 +807,7 @@ export class TimelineModel {
       id: track.id,
       name: track.name,
       type: track.type,
-      clipIds: track.clipIds,
+      clipIds: [...track.clipIds], // Create a new array to avoid reference leakage
     }));
 
     const transitions: TransitionJSON[] = [];
@@ -947,7 +951,6 @@ export class TimelineModel {
                 (clip.type === 'Video' || clip.type === 'Image') &&
                 (!clipJSON.width || !clipJSON.height)
               ) {
-                console.log('Scaling clip', clipJSON);
                 // We defer scaling to after we have the clip ready,
                 // but we can assume jsonToClip awaits 'ready' or we await it here
                 // jsonToClip returns fully constructed clip, but 'ready' promise might not be awaited inside it fully?
@@ -1302,7 +1305,8 @@ export class TimelineModel {
   }
 
   async setTracks(tracks: StudioTrack[]): Promise<void> {
-    this.tracks = tracks;
+    // Deep clone tracks to avoid sharing references with history or other sources
+    this.tracks = JSON.parse(JSON.stringify(tracks));
     await this.recalculateMaxDuration();
     await this.studio.updateFrame(this.studio.currentTime);
   }

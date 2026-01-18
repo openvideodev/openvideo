@@ -7,7 +7,7 @@ export interface HistoryOptions {
 
 export interface HistoryState {
   clips: Record<string, ClipJSON>;
-  tracks: Record<string, StudioTrackJSON>;
+  tracks: StudioTrackJSON[];
   settings: any;
 }
 
@@ -23,20 +23,18 @@ export class HistoryManager {
 
   private projectToHistoryState(project: ProjectJSON): HistoryState {
     const clips: Record<string, ClipJSON> = {};
-    const tracks: Record<string, StudioTrackJSON> = {};
+    const tracks: StudioTrackJSON[] = JSON.parse(
+      JSON.stringify(project.tracks || [])
+    );
 
     project.clips.forEach((clip) => {
-      if (clip.id) clips[clip.id] = clip;
-    });
-
-    project.tracks?.forEach((track) => {
-      tracks[track.id] = track;
+      if (clip.id) clips[clip.id] = JSON.parse(JSON.stringify(clip));
     });
 
     return {
       clips,
       tracks,
-      settings: project.settings || {},
+      settings: JSON.parse(JSON.stringify(project.settings || {})),
     };
   }
 
@@ -44,7 +42,9 @@ export class HistoryManager {
    * Initialize history with the starting state
    */
   public init(state: ProjectJSON) {
-    this.lastState = this.projectToHistoryState(JSON.parse(JSON.stringify(state)));
+    this.lastState = this.projectToHistoryState(
+      JSON.parse(JSON.stringify(state))
+    );
     this.past = [];
     this.future = [];
   }
@@ -58,7 +58,9 @@ export class HistoryManager {
       return;
     }
 
-    const currentHistoryState = this.projectToHistoryState(JSON.parse(JSON.stringify(newState)));
+    const currentHistoryState = this.projectToHistoryState(
+      JSON.parse(JSON.stringify(newState))
+    );
     const patches = diff(this.lastState, currentHistoryState);
 
     if (patches.length === 0) return;
@@ -109,7 +111,6 @@ export class HistoryManager {
 
     // Calculate new state by applying patches
     const newState = this.applyPatches(currentHistoryState, patches, false);
-
     this.past.push(patches);
     this.lastState = newState;
 
@@ -127,7 +128,7 @@ export class HistoryManager {
       const { type, path } = patch;
       const value = (patch as any).value;
       const oldValue = (patch as any).oldValue;
-      
+
       let target = newObj;
       let skip = false;
       for (let i = 0; i < path.length - 1; i++) {
@@ -142,7 +143,7 @@ export class HistoryManager {
       }
 
       if (skip) continue;
-      
+
       const lastKey = path[path.length - 1];
 
       if (reverse) {
@@ -155,16 +156,25 @@ export class HistoryManager {
             }
             break;
           case 'REMOVE':
-            target[lastKey] = oldValue;
+            target[lastKey] =
+              oldValue && typeof oldValue === 'object'
+                ? JSON.parse(JSON.stringify(oldValue))
+                : oldValue;
             break;
           case 'CHANGE':
-            target[lastKey] = oldValue;
+            target[lastKey] =
+              oldValue && typeof oldValue === 'object'
+                ? JSON.parse(JSON.stringify(oldValue))
+                : oldValue;
             break;
         }
       } else {
         switch (type) {
           case 'CREATE':
-            target[lastKey] = value;
+            target[lastKey] =
+              value && typeof value === 'object'
+                ? JSON.parse(JSON.stringify(value))
+                : value;
             break;
           case 'REMOVE':
             if (Array.isArray(target)) {
@@ -174,12 +184,15 @@ export class HistoryManager {
             }
             break;
           case 'CHANGE':
-            target[lastKey] = value;
+            target[lastKey] =
+              value && typeof value === 'object'
+                ? JSON.parse(JSON.stringify(value))
+                : value;
             break;
         }
       }
     }
-    
+
     return newObj;
   }
 

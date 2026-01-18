@@ -269,11 +269,12 @@ export const TimelineStudioSync = ({
       }
 
       // 2. Map clips to store format
-      const newClipsMap: Record<string, IClip> = {};
+      const newClipsMap: Record<string, any> = {};
       clips.forEach((c) => {
+        const serialized = clipToJSON(c as unknown as StudioClip);
         newClipsMap[c.id] = {
-          ...c,
-          // Ensure sourceDuration is set if possible, though clip.duration is often sufficient for valid clips
+          ...serialized,
+          id: (serialized.id || c.id) as string,
           sourceDuration: (c as any).meta?.duration || c.duration,
         };
       });

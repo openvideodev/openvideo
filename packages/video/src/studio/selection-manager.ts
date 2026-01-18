@@ -401,12 +401,15 @@ export class SelectionManager {
       this.textClipResizedSy = data.sy;
     });
 
-    this.activeTransformer.on('transformEnd', () => {
+    this.activeTransformer.on('transformEnd', async () => {
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
         rafId = null;
       }
-      this.syncSelectedClipsTransforms();
+      await this.syncSelectedClipsTransforms();
+      for (const clip of this.selectedClips) {
+        this.studio.emit('clip:updated', { clip });
+      }
     });
 
     this.activeTransformer.on('pointerdown', (e: any) => {
@@ -600,6 +603,7 @@ export class SelectionManager {
         clip.angle = flipFactor * root.angle;
 
         renderer.updateTransforms();
+        this.studio.emit('clip:updated', { clip });
       }
     }
   }

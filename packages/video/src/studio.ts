@@ -254,7 +254,6 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.on('track:added', this.handleTimelineChange);
   }
 
-
   private handleTimelineChange = () => {
     // Force a re-render of the current frame to reflect changes
     this.updateFrame(this.currentTime);
@@ -336,7 +335,11 @@ export class Studio extends EventEmitter<StudioEvents> {
         }
       } else if (path[0] === 'settings') {
         if (reverse) {
-          this.setPath(this.opts, path.slice(1) as (string | number)[], oldValue);
+          this.setPath(
+            this.opts,
+            path.slice(1) as (string | number)[],
+            oldValue
+          );
         } else {
           this.setPath(this.opts, path.slice(1) as (string | number)[], value);
         }
@@ -359,9 +362,9 @@ export class Studio extends EventEmitter<StudioEvents> {
 
       // Find original track ID from target state
       let trackId: string | undefined;
-      for (const tId in state.tracks) {
-        if (state.tracks[tId].clipIds.includes(clipId)) {
-          trackId = tId;
+      for (const track of state.tracks) {
+        if (track.clipIds.includes(clipId)) {
+          trackId = track.id;
           break;
         }
       }
@@ -375,7 +378,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     }
 
     // Sync all tracks at once to ensure correct order and clipIds
-    this.timeline.setTracks(Object.values(state.tracks));
+    this.timeline.setTracks(state.tracks);
 
     // Emit single restore event to sync UI (e.g. Timeline Store)
     // This ensures tracks and clips are perfectly in sync with the engine state
@@ -668,8 +671,6 @@ export class Studio extends EventEmitter<StudioEvents> {
       (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientHeight ||
       canvasHeight;
 
-    console.log(this.opts);
-
     const spacing = this.opts.spacing || 0;
     const containerWidthWithSpacing = Math.max(0, containerWidth - spacing * 2);
     const containerHeightWithSpacing = Math.max(
@@ -750,7 +751,13 @@ export class Studio extends EventEmitter<StudioEvents> {
   ): Promise<void> {
     const clips = Array.isArray(clipOrClips) ? clipOrClips : [clipOrClips];
     clips.forEach((c) => this.clipCache.set(c.id, c));
-    return this.timeline.addClip(clipOrClips, options);
+
+    this.beginHistoryGroup();
+    try {
+      return await this.timeline.addClip(clipOrClips, options);
+    } finally {
+      this.endHistoryGroup();
+    }
   }
 
   /**
@@ -871,11 +878,21 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   async duplicateSelected(): Promise<void> {
-    return this.timeline.duplicateSelected();
+    this.beginHistoryGroup();
+    try {
+      return await this.timeline.duplicateSelected();
+    } finally {
+      this.endHistoryGroup();
+    }
   }
 
   async splitSelected(splitTime?: number): Promise<void> {
-    return this.timeline.splitSelected(splitTime);
+    this.beginHistoryGroup();
+    try {
+      return await this.timeline.splitSelected(splitTime);
+    } finally {
+      this.endHistoryGroup();
+    }
   }
 
   async trimSelected(trimFromSeconds: number): Promise<void> {
