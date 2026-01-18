@@ -27,25 +27,21 @@ export function useEditorHotkeys({
     // Split
     hotkeys('command+b, ctrl+b', (event, handler) => {
       event.preventDefault();
-      if (timelineCanvas) {
-        // TimelineCanvas expects microseconds
+      if (studio) {
+        // Studio expects microseconds
         const splitTime = currentTime * 1_000_000;
-        timelineCanvas.splitSelectedClip(splitTime);
+        studio.splitSelected(splitTime);
       }
     });
 
     // Delete
     hotkeys('backspace, delete', (event, handler) => {
-      // event.preventDefault(); // CAREFUL: This prevents deleting text in inputs if not scoped
-      // We should check if we are in an input. hotkeys-js has a filter usually.
-      // But for now, let's assume global editor context or check logic.
-      // hotkeys.filter returns true by default for inputs.
-      if (timelineCanvas) {
-        // Check if active element is input
-        const activeTag = document.activeElement?.tagName.toLowerCase();
-        if (activeTag === 'input' || activeTag === 'textarea') return;
+      // Check if active element is input
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
 
-        timelineCanvas.deleteSelectedClips();
+      if (studio) {
+        studio.deleteSelected();
       }
     });
 
@@ -69,8 +65,8 @@ export function useEditorHotkeys({
 
     hotkeys('command+v, ctrl+v', (event) => {
       // event.preventDefault();
-      if (timelineCanvas) {
-        timelineCanvas.duplicateSelectedClips(); // Reuse duplicate for now as paste
+      if (studio) {
+        studio.duplicateSelected(); // Reuse duplicate for now as paste
       }
     });
 
@@ -86,6 +82,18 @@ export function useEditorHotkeys({
       setZoomLevel?.((prev) => Math.max(0.1, prev - 0.15));
     });
 
+    // Undo
+    hotkeys('command+z, ctrl+z', (event) => {
+      event.preventDefault();
+      studio?.undo();
+    });
+
+    // Redo
+    hotkeys('command+shift+z, ctrl+shift+z, command+y, ctrl+y', (event) => {
+      event.preventDefault();
+      studio?.redo();
+    });
+
     return () => {
       hotkeys.unbind('space');
       hotkeys.unbind('command+b, ctrl+b');
@@ -95,6 +103,8 @@ export function useEditorHotkeys({
       hotkeys.unbind('command+v, ctrl+v');
       hotkeys.unbind('command+=, ctrl+=');
       hotkeys.unbind('command+-, ctrl+-');
+      hotkeys.unbind('command+z, ctrl+z');
+      hotkeys.unbind('command+shift+z, ctrl+shift+z, command+y, ctrl+y');
     };
   }, [isPlaying, timelineCanvas, currentTime, toggle, setZoomLevel]);
 }

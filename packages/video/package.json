@@ -21,16 +21,9 @@
   "files": [
     "dist"
   ],
-  "main": "dist/index.umd.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.umd.js"
-    }
-  },
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
 
   "scripts": {
     "dev": "vite",
@@ -47,6 +40,7 @@
   "dependencies": {
     "@pixi/layout": "^3.2.0",
     "gl-transitions": "^1.43.0",
+    "microdiff": "^1.4.0",
     "opfs-tools": "^0.7.2",
     "pixi.js": "^8.14.3",
     "wave-resampler": "^1.0.0",

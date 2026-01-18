@@ -51,6 +51,7 @@ export interface TimelineCanvasEvents {
   'selection:duplicated': { clipIds: string[] };
   'selection:split': { clipId: string; splitTime: number };
   'transition:add': { fromClipId: string; toClipId: string; trackId: string };
+  'selection:delete': undefined;
   'viewport:changed': { scrollX: number; scrollY: number };
   [key: string]: any;
   [key: symbol]: any;
@@ -701,30 +702,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.canvas.requestRenderAll();
   }
 
-  public deleteSelectedClips() {
+  public async deleteSelectedClips() {
     const activeObjects = this.canvas.getActiveObjects();
     if (!activeObjects || activeObjects.length === 0) return;
 
-    const clipIdsToDelete: string[] = [];
-
-    // Filter out everything that is not a clip (e.g. tracks, separators)
-    // Though usually only clips are selectable.
-    activeObjects.forEach((obj: any) => {
-      if (obj.elementId) {
-        clipIdsToDelete.push(obj.elementId);
-        // Remove from canvas immediately
-        this.canvas.remove(obj);
-        // Remove from internal clip map
-        this.#clipObjects.delete(obj.elementId);
-      }
-    });
-
-    if (clipIdsToDelete.length > 0) {
-      this.canvas.discardActiveObject();
-      this.emit('clips:removed', { clipIds: clipIdsToDelete });
-      this.emitSelectionChange(); // Will emit empty selection
-      this.canvas.requestRenderAll();
-    }
+    // We emit intent to delete selected.
+    // The synchronization layer or parent component will handle actually calling the engine.
+    this.emit('selection:delete', undefined);
   }
 
   public duplicateSelectedClips() {

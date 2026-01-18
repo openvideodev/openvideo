@@ -68,6 +68,7 @@ export interface StudioEvents {
   currentTime: { currentTime: number };
   play: { isPlaying: boolean };
   pause: { isPlaying: boolean };
+  'history:changed': { canUndo: boolean; canRedo: boolean };
   [key: string]: any;
   [key: symbol]: any;
 }
@@ -102,11 +103,15 @@ export interface StudioTrack {
 import { SelectionManager } from './studio/selection-manager';
 import { Transport } from './studio/transport';
 import { TimelineModel } from './studio/timeline-model';
+import { HistoryManager, HistoryState } from './studio/history-manager';
+import { jsonToClip } from './json-serialization';
+import { Difference } from 'microdiff';
 
 export class Studio extends EventEmitter<StudioEvents> {
   public selection: SelectionManager;
   public transport: Transport;
   public timeline: TimelineModel;
+  public history: HistoryManager;
   public pixiApp: Application | null = null;
   public get tracks() {
     return this.timeline.tracks;
@@ -182,6 +187,10 @@ export class Studio extends EventEmitter<StudioEvents> {
   };
   public destroyed = false;
   private renderingSuspended = false;
+  private historyPaused = false;
+  private processingHistory = false;
+  private historyGroupDepth = 0;
+  private clipCache = new Map<string, IClip>();
 
   // Effect system
   public globalEffects = new Map<string, GlobalEffectInfo>();
@@ -229,12 +238,18 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.selection = new SelectionManager(this);
     this.transport = new Transport(this);
     this.timeline = new TimelineModel(this);
-    this.ready = this.initPixiApp();
+    this.history = new HistoryManager();
+
+    this.ready = this.initPixiApp().then(() => {
+      // Initialize history with initial state after Pixi is ready and dimensions are set correctly
+      this.history.init(this.exportToJSON());
+    });
 
     this.on('clip:removed', this.handleClipRemoved);
+    this.on('clips:removed', this.handleClipsRemoved);
     this.on('clip:updated', this.handleTimelineChange);
     this.on('clip:added', this.handleTimelineChange);
-    this.on('clips:added', this.handleTimelineChange); // Listen to batch event
+    this.on('clips:added', this.handleTimelineChange);
     this.on('track:removed', this.handleTimelineChange);
     this.on('track:added', this.handleTimelineChange);
   }
@@ -242,9 +257,177 @@ export class Studio extends EventEmitter<StudioEvents> {
   private handleTimelineChange = () => {
     // Force a re-render of the current frame to reflect changes
     this.updateFrame(this.currentTime);
+    this.saveHistory();
   };
 
-  private handleClipRemoved = ({ clipId }: { clipId: string }) => {
+  private saveHistory() {
+    if (this.historyPaused || this.processingHistory) return;
+    this.history.push(this.exportToJSON());
+    this.emit('history:changed', {
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
+    });
+  }
+
+  public beginHistoryGroup() {
+    this.historyGroupDepth++;
+    this.historyPaused = true;
+  }
+
+  public endHistoryGroup() {
+    this.historyGroupDepth = Math.max(0, this.historyGroupDepth - 1);
+    if (this.historyGroupDepth === 0) {
+      this.historyPaused = false;
+      this.saveHistory();
+    }
+  }
+
+  private setPath(obj: any, path: (string | number)[], value: any) {
+    let target = obj;
+    for (let i = 0; i < path.length - 1; i++) {
+      const key = path[i];
+      if (!target[key]) {
+        target[key] = typeof path[i + 1] === 'number' ? [] : {};
+      }
+      target = target[key];
+    }
+    target[path[path.length - 1]] = value;
+  }
+
+  private async applyHistoryPatches(
+    patches: Difference[],
+    state: HistoryState,
+    reverse: boolean
+  ) {
+    const clipChanges = new Map<string, any>();
+    const clipsToAdd = new Map<string, any>();
+    const clipsToRemove = new Set<string>();
+
+    for (const patch of patches) {
+      const { type, path } = patch;
+      const value = (patch as any).value;
+      const oldValue = (patch as any).oldValue;
+
+      if (path[0] === 'clips') {
+        const clipId = path[1] as string;
+        if (reverse) {
+          if (type === 'CREATE') clipsToRemove.add(clipId);
+          else if (type === 'REMOVE') clipsToAdd.set(clipId, oldValue);
+          else if (type === 'CHANGE') {
+            if (!clipChanges.has(clipId)) clipChanges.set(clipId, {});
+            this.setPath(
+              clipChanges.get(clipId),
+              path.slice(2) as (string | number)[],
+              oldValue
+            );
+          }
+        } else {
+          if (type === 'CREATE') clipsToAdd.set(clipId, value);
+          else if (type === 'REMOVE') clipsToRemove.add(clipId);
+          else if (type === 'CHANGE') {
+            if (!clipChanges.has(clipId)) clipChanges.set(clipId, {});
+            this.setPath(
+              clipChanges.get(clipId),
+              path.slice(2) as (string | number)[],
+              value
+            );
+          }
+        }
+      } else if (path[0] === 'settings') {
+        if (reverse) {
+          this.setPath(
+            this.opts,
+            path.slice(1) as (string | number)[],
+            oldValue
+          );
+        } else {
+          this.setPath(this.opts, path.slice(1) as (string | number)[], value);
+        }
+      }
+    }
+
+    // Apply removals
+    for (const clipId of clipsToRemove) {
+      const clip = this.timeline.getClipById(clipId);
+      if (clip) await this.removeClip(clip);
+    }
+
+    // Apply additions
+    for (const [clipId, clipJSON] of clipsToAdd) {
+      let clip = this.clipCache.get(clipId);
+      if (!clip) {
+        clip = await jsonToClip(clipJSON);
+        this.clipCache.set(clipId, clip);
+      }
+
+      // Find original track ID from target state
+      let trackId: string | undefined;
+      for (const track of state.tracks) {
+        if (track.clipIds.includes(clipId)) {
+          trackId = track.id;
+          break;
+        }
+      }
+
+      await this.addClip(clip, { trackId });
+    }
+
+    // Apply property changes
+    for (const [clipId, updates] of clipChanges) {
+      await this.updateClip(clipId, updates);
+    }
+
+    // Sync all tracks at once to ensure correct order and clipIds
+    this.timeline.setTracks(state.tracks);
+
+    // Emit single restore event to sync UI (e.g. Timeline Store)
+    // This ensures tracks and clips are perfectly in sync with the engine state
+    this.emit('studio:restored', {
+      clips: this.clips,
+      tracks: this.tracks,
+      settings: this.opts,
+    });
+  }
+
+  public async undo() {
+    if (!this.history.canUndo() || this.processingHistory) return;
+    this.processingHistory = true;
+    this.historyPaused = true;
+    try {
+      const result = this.history.undo(this.exportToJSON());
+      if (result) {
+        await this.applyHistoryPatches(result.patches, result.state, true);
+      }
+      this.emit('history:changed', {
+        canUndo: this.history.canUndo(),
+        canRedo: this.history.canRedo(),
+      });
+    } finally {
+      this.historyPaused = false;
+      this.processingHistory = false;
+    }
+  }
+
+  public async redo() {
+    if (!this.history.canRedo() || this.processingHistory) return;
+    this.processingHistory = true;
+    this.historyPaused = true;
+    try {
+      const result = this.history.redo(this.exportToJSON());
+      if (result) {
+        await this.applyHistoryPatches(result.patches, result.state, false);
+      }
+      this.emit('history:changed', {
+        canUndo: this.history.canUndo(),
+        canRedo: this.history.canRedo(),
+      });
+    } finally {
+      this.historyPaused = false;
+      this.processingHistory = false;
+    }
+  }
+
+  private cleanupClipVisuals = (clipId: string) => {
     // 1. Cleanup SpriteRenderers
     for (const [clip, renderer] of this.spriteRenderers) {
       if (clip.id === clipId) {
@@ -295,8 +478,20 @@ export class Studio extends EventEmitter<StudioEvents> {
         break;
       }
     }
+  };
 
+  private handleClipRemoved = ({ clipId }: { clipId: string }) => {
+    this.cleanupClipVisuals(clipId);
     this.updateFrame(this.currentTime);
+    this.saveHistory();
+  };
+
+  private handleClipsRemoved = ({ clipIds }: { clipIds: string[] }) => {
+    for (const clipId of clipIds) {
+      this.cleanupClipVisuals(clipId);
+    }
+    this.updateFrame(this.currentTime);
+    this.saveHistory();
   };
 
   private async initPixiApp(): Promise<void> {
@@ -476,8 +671,6 @@ export class Studio extends EventEmitter<StudioEvents> {
       (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientHeight ||
       canvasHeight;
 
-    console.log(this.opts);
-
     const spacing = this.opts.spacing || 0;
     const containerWidthWithSpacing = Math.max(0, containerWidth - spacing * 2);
     const containerHeightWithSpacing = Math.max(
@@ -556,7 +749,15 @@ export class Studio extends EventEmitter<StudioEvents> {
       | File
       | Blob
   ): Promise<void> {
-    return this.timeline.addClip(clipOrClips, options);
+    const clips = Array.isArray(clipOrClips) ? clipOrClips : [clipOrClips];
+    clips.forEach((c) => this.clipCache.set(c.id, c));
+
+    this.beginHistoryGroup();
+    try {
+      return await this.timeline.addClip(clipOrClips, options);
+    } finally {
+      this.endHistoryGroup();
+    }
   }
 
   /**
@@ -626,26 +827,72 @@ export class Studio extends EventEmitter<StudioEvents> {
    * Remove a clip from the studio
    */
   async removeClip(clip: IClip): Promise<void> {
-    return this.timeline.removeClip(clip);
+    this.beginHistoryGroup();
+    try {
+      this.clipCache.set(clip.id, clip);
+      return this.timeline.removeClip(clip, {
+        permanent: !this.processingHistory,
+      });
+    } finally {
+      this.endHistoryGroup();
+    }
+  }
+
+  async removeClips(clips: IClip[]): Promise<void> {
+    this.beginHistoryGroup();
+    try {
+      clips.forEach((c) => this.clipCache.set(c.id, c));
+      return this.timeline.removeClips(clips, {
+        permanent: !this.processingHistory,
+      });
+    } finally {
+      this.endHistoryGroup();
+    }
   }
 
   async removeClipById(clipId: string): Promise<void> {
-    return this.timeline.removeClipById(clipId);
+    const clip = this.timeline.getClipById(clipId);
+    if (clip) return this.removeClip(clip);
   }
 
-  async deleteSelected(): Promise<void> {
-    return this.timeline.deleteSelected();
+  async removeClipsById(clipIds: string[]): Promise<void> {
+    const clips = clipIds
+      .map((id) => this.timeline.getClipById(id))
+      .filter(Boolean) as IClip[];
+    return this.removeClips(clips);
   }
 
   /**
-   * Duplicate all currently selected clips
+   * Delete all currently selected clips
    */
+  async deleteSelected(): Promise<void> {
+    const selectedClips = this.selection.selectedClips;
+    if (selectedClips.size === 0) return;
+
+    this.beginHistoryGroup();
+    try {
+      await this.removeClips(Array.from(selectedClips));
+    } finally {
+      this.endHistoryGroup();
+    }
+  }
+
   async duplicateSelected(): Promise<void> {
-    return this.timeline.duplicateSelected();
+    this.beginHistoryGroup();
+    try {
+      return await this.timeline.duplicateSelected();
+    } finally {
+      this.endHistoryGroup();
+    }
   }
 
   async splitSelected(splitTime?: number): Promise<void> {
-    return this.timeline.splitSelected(splitTime);
+    this.beginHistoryGroup();
+    try {
+      return await this.timeline.splitSelected(splitTime);
+    } finally {
+      this.endHistoryGroup();
+    }
   }
 
   async trimSelected(trimFromSeconds: number): Promise<void> {

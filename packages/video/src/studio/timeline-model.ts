@@ -296,24 +296,28 @@ export class TimelineModel {
         }
       } else {
         // Track ID provided but doesn't exist -> Create it
-        this.tracks.unshift({
+        const newTrack: StudioTrack = {
           id: trackId,
           name: `Track ${this.tracks.length + 1}`,
           type: clip.type,
           clipIds: [clip.id],
-        });
+        };
+        this.tracks.unshift(newTrack);
+        this.studio.emit('track:added', { track: newTrack });
       }
     } else {
       // Auto-create new track
       const newTrackId = `track_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
-      this.tracks.unshift({
+      const newTrack: StudioTrack = {
         id: newTrackId,
         name: `Track ${this.tracks.length + 1}`,
         type: clip.type,
         clipIds: [clip.id],
-      });
+      };
+      this.tracks.unshift(newTrack);
+      this.studio.emit('track:added', { track: newTrack });
     }
   }
 
@@ -321,6 +325,17 @@ export class TimelineModel {
     clip: IClip,
     audioSource?: string | File | Blob
   ) {
+    // If we've already set up visuals (from cache), check if we need to re-add to container
+    const existingRenderer = this.studio.spriteRenderers.get(clip);
+    if (existingRenderer) {
+      const container = this.studio.clipsNormalContainer!;
+      const root = existingRenderer.getRoot();
+      if (root && !root.parent) {
+        container.addChild(root);
+      }
+      return;
+    }
+
     const meta = await clip.ready;
 
     // Playback
@@ -369,7 +384,11 @@ export class TimelineModel {
     }
   }
 
-  async removeClip(clip: IClip): Promise<void> {
+  async removeClip(
+    clip: IClip,
+    options: { permanent: boolean } = { permanent: true }
+  ): Promise<void> {
+    const { permanent } = options;
     const index = this.clips.findIndex((c) => c === clip);
     if (index === -1) return;
 
@@ -398,10 +417,21 @@ export class TimelineModel {
     this.clips.splice(index, 1);
 
     // Remove ID from tracks
+    const tracksToCheck: string[] = [];
     for (const track of this.tracks) {
       const idx = track.clipIds.indexOf(clip.id);
       if (idx !== -1) {
         track.clipIds.splice(idx, 1);
+        tracksToCheck.push(track.id);
+      }
+    }
+
+    // Auto-remove empty tracks
+    for (const trackId of tracksToCheck) {
+      const trackIndex = this.tracks.findIndex((t) => t.id === trackId);
+      if (trackIndex !== -1 && this.tracks[trackIndex].clipIds.length === 0) {
+        this.tracks.splice(trackIndex, 1);
+        this.studio.emit('track:removed', { trackId });
       }
     }
 
@@ -418,17 +448,25 @@ export class TimelineModel {
     // Clean up renderer
     const renderer = this.studio.spriteRenderers.get(clip);
     if (renderer != null) {
-      renderer.destroy();
-      this.studio.spriteRenderers.delete(clip);
+      if (permanent) {
+        renderer.destroy();
+        this.studio.spriteRenderers.delete(clip);
+      } else {
+        const root = renderer.getRoot();
+        if (root && root.parent) {
+          root.parent.removeChild(root);
+        }
+      }
     }
 
     // Clean up playback element
     const playbackInfo = this.studio.transport.playbackElements.get(clip);
     if (playbackInfo != null) {
-      if (this.isPlaybackCapable(clip)) {
+      if (permanent && this.isPlaybackCapable(clip)) {
         clip.cleanupPlayback(playbackInfo.element, playbackInfo.objectUrl);
+        this.studio.transport.playbackElements.delete(clip);
       }
-      this.studio.transport.playbackElements.delete(clip);
+      // If NOT permanent, we don't cleanupPlayback, keeping the <video> alive.
     }
 
     // Clean up video sprite
@@ -437,14 +475,124 @@ export class TimelineModel {
       if (sprite.parent) {
         sprite.parent.removeChild(sprite);
       }
-      sprite.destroy();
-      this.studio.videoSprites.delete(clip);
+      if (permanent) {
+        sprite.destroy();
+        this.studio.videoSprites.delete(clip);
+      }
     }
 
     // Recalculate max duration
     await this.recalculateMaxDuration();
 
     this.studio.emit('clip:removed', { clipId: clip.id });
+  }
+
+  /**
+   * Remove multiple clips in a batch
+   */
+  async removeClips(
+    clips: IClip[],
+    options: { permanent: boolean } = { permanent: true }
+  ): Promise<void> {
+    if (clips.length === 0) return;
+
+    for (const clip of clips) {
+      const index = this.clips.findIndex((c) => c === clip);
+      if (index === -1) continue;
+
+      // Transition cleanup
+      if (clip instanceof Transition) {
+        if (clip.fromClipId) {
+          const fromClip = this.getClipById(clip.fromClipId);
+          if (fromClip && 'transition' in fromClip) {
+            delete (fromClip as any).transition;
+          }
+        }
+        if (clip.toClipId) {
+          const toClip = this.getClipById(clip.toClipId);
+          if (toClip && 'transition' in toClip) {
+            delete (toClip as any).transition;
+          }
+        }
+      }
+
+      // Deselect
+      if (this.studio.selection.selectedClips.has(clip)) {
+        this.studio.selection.deselectClip();
+      }
+
+      // Remove from generic clips list
+      this.clips.splice(index, 1);
+
+      // Remove ID from tracks
+      for (const track of this.tracks) {
+        const idx = track.clipIds.indexOf(clip.id);
+        if (idx !== -1) {
+          track.clipIds.splice(idx, 1);
+        }
+      }
+
+      // Remove from interactive tracking
+      this.studio.selection.interactiveClips.delete(clip);
+
+      // Clean up listener
+      const onPropsChange = this.studio.clipListeners.get(clip);
+      if (onPropsChange) {
+        clip.off('propsChange', onPropsChange);
+        this.studio.clipListeners.delete(clip);
+      }
+
+      // Clean up renderer
+      const renderer = this.studio.spriteRenderers.get(clip);
+      if (renderer != null) {
+        if (options.permanent) {
+          renderer.destroy();
+          this.studio.spriteRenderers.delete(clip);
+        } else {
+          const root = renderer.getRoot();
+          if (root && root.parent) {
+            root.parent.removeChild(root);
+          }
+        }
+      }
+
+      // Clean up playback element
+      const playbackInfo = this.studio.transport.playbackElements.get(clip);
+      if (playbackInfo != null) {
+        if (options.permanent && this.isPlaybackCapable(clip)) {
+          clip.cleanupPlayback(playbackInfo.element, playbackInfo.objectUrl);
+          this.studio.transport.playbackElements.delete(clip);
+        }
+      }
+
+      // Clean up video sprite
+      const sprite = this.studio.videoSprites.get(clip);
+      if (sprite != null && this.studio.pixiApp != null) {
+        if (sprite.parent) {
+          sprite.parent.removeChild(sprite);
+        }
+        if (options.permanent) {
+          sprite.destroy();
+          this.studio.videoSprites.delete(clip);
+        }
+      }
+    }
+
+    // Auto-remove empty tracks
+    for (let i = this.tracks.length - 1; i >= 0; i--) {
+      if (this.tracks[i].clipIds.length === 0) {
+        const trackId = this.tracks[i].id;
+        this.tracks.splice(i, 1);
+        this.studio.emit('track:removed', { trackId });
+      }
+    }
+
+    // Batch updates
+    await this.recalculateMaxDuration();
+
+    this.studio.emit('clips:removed', {
+      clipIds: clips.map((c) => c.id),
+    });
   }
 
   async removeClipById(clipId: string): Promise<void> {
@@ -659,7 +807,7 @@ export class TimelineModel {
       id: track.id,
       name: track.name,
       type: track.type,
-      clipIds: track.clipIds,
+      clipIds: [...track.clipIds], // Create a new array to avoid reference leakage
     }));
 
     const transitions: TransitionJSON[] = [];
@@ -803,7 +951,6 @@ export class TimelineModel {
                 (clip.type === 'Video' || clip.type === 'Image') &&
                 (!clipJSON.width || !clipJSON.height)
               ) {
-                console.log('Scaling clip', clipJSON);
                 // We defer scaling to after we have the clip ready,
                 // but we can assume jsonToClip awaits 'ready' or we await it here
                 // jsonToClip returns fully constructed clip, but 'ready' promise might not be awaited inside it fully?
@@ -1158,7 +1305,8 @@ export class TimelineModel {
   }
 
   async setTracks(tracks: StudioTrack[]): Promise<void> {
-    this.tracks = tracks;
+    // Deep clone tracks to avoid sharing references with history or other sources
+    this.tracks = JSON.parse(JSON.stringify(tracks));
     await this.recalculateMaxDuration();
     await this.studio.updateFrame(this.studio.currentTime);
   }
