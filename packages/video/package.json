@@ -1,6 +1,6 @@
 {
   "name": "@designcombo/video",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Video rendering and processing library",
   "type": "module",
   "publishConfig": {

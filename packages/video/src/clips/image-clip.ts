@@ -86,36 +86,12 @@ export class Image extends BaseClip implements IClip {
    * const imgClip = await Image.fromUrl('path/to/image.png');
    */
   static async fromUrl(url: string, src?: string): Promise<Image> {
-    // Use PixiJS Assets.load() for optimized loading with caching
-    const texture = await Assets.load<Texture>(url);
+    let texture: Texture | null = null;
+    let imageBitmap: ImageBitmap | null = null;
 
-    // Extract ImageBitmap from Texture for compatibility with Compositor
-    // Try multiple methods to extract ImageBitmap from the Texture
-    // Use Texture.source instead of baseTexture (PixiJS v8.0.0+)
-    const source = texture.source?.resource?.source;
-    let imageBitmap: ImageBitmap;
-
-    try {
-      if (
-        source instanceof HTMLCanvasElement ||
-        source instanceof OffscreenCanvas
-      ) {
-        imageBitmap = await createImageBitmap(source);
-      } else if (source instanceof HTMLImageElement) {
-        // For HTMLImageElement, create a canvas and draw it
-        const canvas = new OffscreenCanvas(source.width, source.height);
-        const ctx = canvas.getContext('2d');
-        if (ctx == null) {
-          throw new Error('Failed to create 2d context');
-        }
-        ctx.drawImage(source, 0, 0);
-        imageBitmap = await createImageBitmap(canvas);
-      } else if (source instanceof ImageBitmap) {
-        // If source is already an ImageBitmap, clone it
-        imageBitmap = await createImageBitmap(source);
-      } else {
-        // Fallback: fetch the image again to get ImageBitmap
-        // This is safe because Assets.load() caches the Texture
+    // Optimized handling for blob URLs to avoid PixiJS warnings about unknown extensions
+    if (url.startsWith('blob:')) {
+      try {
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(
@@ -124,22 +100,72 @@ export class Image extends BaseClip implements IClip {
         }
         const blob = await response.blob();
         imageBitmap = await createImageBitmap(blob);
+        // Create texture from bitmap for Studio optimization
+        try {
+          texture = Texture.from(imageBitmap);
+        } catch (e) {
+          Log.warn('Failed to create Pixi texture from bitmap:', e);
+        }
+      } catch (err) {
+        Log.error(`Failed to load blob image from ${url}`, err);
+        throw err;
       }
-    } catch (err) {
-      // Final fallback: fetch the image directly
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch image: ${response.status} ${response.statusText}`
+    } else {
+      // Use PixiJS Assets.load() for optimized loading with caching for regular URLs
+      try {
+        texture = await Assets.load<Texture>(url);
+
+        if (texture) {
+          // Extract ImageBitmap from Texture for compatibility with Compositor
+          const source = texture.source?.resource?.source;
+
+          if (
+            source instanceof HTMLCanvasElement ||
+            source instanceof OffscreenCanvas
+          ) {
+            imageBitmap = await createImageBitmap(source);
+          } else if (source instanceof HTMLImageElement) {
+            const canvas = new OffscreenCanvas(source.width, source.height);
+            const ctx = canvas.getContext('2d');
+            if (ctx == null) {
+              throw new Error('Failed to create 2d context');
+            }
+            ctx.drawImage(source, 0, 0);
+            imageBitmap = await createImageBitmap(canvas);
+          } else if (source instanceof ImageBitmap) {
+            imageBitmap = await createImageBitmap(source);
+          }
+        }
+      } catch (err) {
+        Log.warn(
+          `Failed to load texture via Assets.load for ${url}, using fallback`,
+          err
         );
       }
-      const blob = await response.blob();
-      imageBitmap = await createImageBitmap(blob);
+
+      // Fallback for regular URLs if Assets.load failed
+      if (!imageBitmap) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch image: ${response.status} ${response.statusText}`
+            );
+          }
+          const blob = await response.blob();
+          imageBitmap = await createImageBitmap(blob);
+        } catch (err) {
+          Log.error(`Failed to load image from ${url}`, err);
+          throw err;
+        }
+      }
     }
 
     const clip = new Image(imageBitmap, src || url);
     // Store the Texture for optimized preview rendering
-    clip.pixiTexture = texture;
+    if (texture) {
+      clip.pixiTexture = texture;
+    }
 
     return clip;
   }
@@ -415,8 +441,8 @@ export class Image extends BaseClip implements IClip {
       }
       const blob = await response.blob();
       if (!blob.type.startsWith('image/')) {
-        throw new Error(
-          `Invalid image format: ${blob.type}. Expected an image file.`
+        Log.warn(
+          `Image blob has unexpected type: ${blob.type}. Attempting to load anyway.`
         );
       }
       clip = new Image(await createImageBitmap(blob), json.src);

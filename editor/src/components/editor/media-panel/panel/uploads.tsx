@@ -67,17 +67,17 @@ function detectFileType(file: File): MediaType {
 }
 
 // Replace old blob URLs with new ones in serialized clips
-function replaceUrlsInClips<T>(
-  clips: T[],
-  urlMapping: Record<string, string>
-): T[] {
-  const json = JSON.stringify(clips);
-  let updated = json;
-  for (const [oldUrl, newUrl] of Object.entries(urlMapping)) {
-    updated = updated.split(oldUrl).join(newUrl);
-  }
-  return JSON.parse(updated);
-}
+// function replaceUrlsInClips<T>(
+//   clips: T[],
+//   urlMapping: Record<string, string>
+// ): T[] {
+//   const json = JSON.stringify(clips);
+//   let updated = json;
+//   for (const [oldUrl, newUrl] of Object.entries(urlMapping)) {
+//     updated = updated.split(oldUrl).join(newUrl);
+//   }
+//   return JSON.parse(updated);
+// }
 
 // Asset card component
 function AssetCard({
@@ -209,25 +209,33 @@ export default function PanelUploads() {
             duration: file.duration,
           };
         });
+        console.warn("USE THIS LOGIC WHEN NEW CLIPS ARE ADDEDE EVENT")
+        // // Update timeline clips with new blob URLs if needed
+        // if (Object.keys(urlMapping).length > 0 && studio) {
+        //   try {
+        //     // Serialize current clips
+        //     const serializedClips = studio.clips.map((clip) =>
+        //       clipToJSON(clip as unknown as StudioClip)
+        //     );
+        //     console.log('Serialized clips:', {
+        //       serializedClips,
+        //       urlMapping
+        //     });
+        //     // Replace old URLs with new blob URLs
+        //     const updatedClips = replaceUrlsInClips(
+        //       serializedClips,
+        //       urlMapping
+        //     );
+        //     if (updatedClips.length > 0) {
+        //       console.log('Updated clips:', updatedClips);
 
-        // Update timeline clips with new blob URLs if needed
-        if (Object.keys(urlMapping).length > 0 && studio) {
-          try {
-            // Serialize current clips
-            const serializedClips = studio.clips.map((clip) =>
-              clipToJSON(clip as unknown as StudioClip)
-            );
-            // Replace old URLs with new blob URLs
-            const updatedClips = replaceUrlsInClips(
-              serializedClips,
-              urlMapping
-            );
-            // Reload with updated URLs
-            await studio.loadFromJSON({ clips: updatedClips });
-          } catch (error) {
-            Log.warn('Failed to update timeline URLs:', error);
-          }
-        }
+        //       // Reload with updated URLs
+        //       await studio.loadFromJSON({ clips: updatedClips });
+        //     }
+        //   } catch (error) {
+        //     Log.warn('Failed to update timeline URLs:', error);
+        //   }
+        // }
 
         setUploads(recoveredAssets);
         // Update localStorage with new URLs
@@ -325,7 +333,7 @@ export default function PanelUploads() {
 
     try {
       if (asset.type === 'image') {
-        const imageClip = await Image.fromUrl(asset.src + '?v=' + Date.now());
+        const imageClip = await Image.fromUrl(asset.src);
         imageClip.display = { from: 0, to: 5 * 1e6 };
         imageClip.duration = 5 * 1e6;
         await imageClip.scaleToFit(1080, 1920);
@@ -357,7 +365,7 @@ export default function PanelUploads() {
       </div>
     );
   }
-
+  console.log({ uploads })
   return (
     <div className="h-full flex flex-col">
       <input
@@ -369,7 +377,7 @@ export default function PanelUploads() {
         onChange={handleFileUpload}
       />
       {/* Search input */}
-      {uploads.length > 0 && (
+      {uploads.length > 0 ? (
         <div>
           <div className="flex-1 p-4 flex gap-2">
             <InputGroup>
@@ -392,8 +400,21 @@ export default function PanelUploads() {
               <Upload size={14} />
             </Button>
           </div>
-        </div>
-      )}
+        </div>) : (<div>
+          <div className="flex-1 p-4 flex gap-2">
+
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              variant={'outline'}
+              className='w-full'
+            >
+              <Upload size={14} /> Upload
+            </Button>
+          </div>
+        </div>)}
+
+
 
       {/* Assets grid */}
       <ScrollArea className="flex-1 px-4">
