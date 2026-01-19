@@ -795,7 +795,13 @@ export class Studio extends EventEmitter<StudioEvents> {
     if (!clip) return;
     const left = (this.opts.width - clip.width) / 2;
     const top = (this.opts.height - clip.height) / 2;
-    return this.updateClip(clip.id, { left, top });
+
+    if (this.getClipById(clip.id)) {
+      return this.updateClip(clip.id, { left, top });
+    } else {
+      clip.left = left;
+      clip.top = top;
+    }
   }
 
   /**
@@ -806,7 +812,12 @@ export class Studio extends EventEmitter<StudioEvents> {
       typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
     if (!clip) return;
     const left = (this.opts.width - clip.width) / 2;
-    return this.updateClip(clip.id, { left });
+
+    if (this.getClipById(clip.id)) {
+      return this.updateClip(clip.id, { left });
+    } else {
+      clip.left = left;
+    }
   }
 
   /**
@@ -817,7 +828,12 @@ export class Studio extends EventEmitter<StudioEvents> {
       typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
     if (!clip) return;
     const top = (this.opts.height - clip.height) / 2;
-    return this.updateClip(clip.id, { top });
+
+    if (this.getClipById(clip.id)) {
+      return this.updateClip(clip.id, { top });
+    } else {
+      clip.top = top;
+    }
   }
 
   /**
@@ -839,7 +855,12 @@ export class Studio extends EventEmitter<StudioEvents> {
     const width = origWidth * scale;
     const height = origHeight * scale;
 
-    return this.updateClip(clip.id, { width, height });
+    if (this.getClipById(clip.id)) {
+      return this.updateClip(clip.id, { width, height });
+    } else {
+      clip.width = width;
+      clip.height = height;
+    }
   }
 
   /**
@@ -861,7 +882,12 @@ export class Studio extends EventEmitter<StudioEvents> {
     const width = origWidth * scale;
     const height = origHeight * scale;
 
-    return this.updateClip(clip.id, { width, height });
+    if (this.getClipById(clip.id)) {
+      return this.updateClip(clip.id, { width, height });
+    } else {
+      clip.width = width;
+      clip.height = height;
+    }
   }
 
   async updateClips(
