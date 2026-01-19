@@ -34,6 +34,32 @@ interface PexelsVideo {
   }[];
 }
 
+interface FeaturedVideo {
+  id: string;
+  width: number;
+  height: number;
+  url: string;
+  image: string;
+  duration: number;
+  name: string;
+  video_url: string;
+}
+
+const FEATURED_VIDEOS: FeaturedVideo[] = [
+  {
+    id: 'featured-1',
+    width: 1080,
+    height: 1920,
+    url: 'https://ik.imagekit.io/pablituuu/AI%20Tips,%20Tricks,%20and%20Shortcuts.mp4?updatedAt=1768806308265',
+    image:
+      'https://images.pexels.com/photos/373543/pexels-photo-373543.jpeg?auto=compress&cs=tinysrgb&w=800', // Placeholder AI themed image
+    duration: 30, // Approximate duration if unknown
+    name: 'AI Tips, Tricks, and Shortcuts',
+    video_url:
+      'https://ik.imagekit.io/pablituuu/AI%20Tips,%20Tricks,%20and%20Shortcuts.mp4?updatedAt=1768806308265',
+  },
+];
+
 export default function PanelVideos() {
   const { studio } = useStudioStore();
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,23 +101,33 @@ export default function PanelVideos() {
     debouncedFetch(query);
   };
 
-  const addItemToCanvas = async (asset: PexelsVideo) => {
+  const addItemToCanvas = async (asset: PexelsVideo | FeaturedVideo) => {
     if (!studio) return;
     try {
-      // Find the best quality mp4 link
-      const videoFile =
-        asset.video_files.find((f) => f.quality === 'hd') ||
-        asset.video_files[0];
-      if (!videoFile) throw new Error('No video file found');
+      let src = '';
+      const width = asset.width;
+      const height = asset.height;
+      const duration = asset.duration;
 
-      const src = videoFile.link;
+      if ('video_files' in asset) {
+        // Pexels Video
+        const videoFile =
+          asset.video_files.find((f) => f.quality === 'hd') ||
+          asset.video_files[0];
+        if (!videoFile) throw new Error('No video file found');
+        src = videoFile.link;
+      } else {
+        // Featured Video
+        src = asset.video_url;
+      }
+
       // 1. Create and add placeholder immediately
       const placeholder = new Placeholder(
         src,
         {
-          width: asset.width,
-          height: asset.height,
-          duration: asset.duration * 1e6, // seconds to microseconds
+          width: width,
+          height: height,
+          duration: duration * 1e6, // seconds to microseconds
         },
         'Video'
       );
@@ -153,42 +189,84 @@ export default function PanelVideos() {
       </div>
 
       <ScrollArea className="flex-1 px-4">
+        {FEATURED_VIDEOS.length > 0 && !searchQuery && (
+          <div className="mb-6">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+              Featured
+            </div>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
+              {FEATURED_VIDEOS.map((video) => (
+                <div
+                  key={video.id}
+                  className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
+                  onClick={() => addItemToCanvas(video)}
+                >
+                  <div className="w-full h-full flex items-center justify-center bg-black/20 text-[0px]">
+                    <img
+                      src={video.image}
+                      className="w-full h-full object-cover pointer-events-none"
+                      alt={video.name}
+                    />
+
+                    <span className="absolute bottom-1 right-1 text-[8px] bg-black/60 text-white px-1 rounded">
+                      {Math.floor(video.duration)}s
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-[10px] text-white truncate font-medium">
+                      {video.name}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isLoading && videos.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="animate-spin text-muted-foreground" size={32} />
           </div>
-        ) : videos.length === 0 ? (
+        ) : videos.length === 0 && searchQuery ? (
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
             <Film size={32} className="opacity-50" />
             <span className="text-sm">No videos found</span>
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
-            {videos.map((video) => (
-              <div
-                key={video.id}
-                className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
-                onClick={() => addItemToCanvas(video)}
-              >
-                <div className="w-full h-full flex items-center justify-center bg-black/20 text-[0px]">
-                  <img
-                    src={video.image}
-                    className="w-full h-full object-cover pointer-events-none"
-                    alt={video.user.name}
-                  />
-
-                  <span className="absolute bottom-1 right-1 text-[8px] bg-black/60 text-white px-1 rounded">
-                    {Math.floor(video.duration)}s
-                  </span>
-                </div>
-
-                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-[10px] text-white truncate font-medium">
-                    {video.user.name}
-                  </p>
-                </div>
+          <div>
+            {videos.length > 0 && (
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                Library
               </div>
-            ))}
+            )}
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
+              {videos.map((video) => (
+                <div
+                  key={video.id}
+                  className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
+                  onClick={() => addItemToCanvas(video)}
+                >
+                  <div className="w-full h-full flex items-center justify-center bg-black/20 text-[0px]">
+                    <img
+                      src={video.image}
+                      className="w-full h-full object-cover pointer-events-none"
+                      alt={video.user.name}
+                    />
+
+                    <span className="absolute bottom-1 right-1 text-[8px] bg-black/60 text-white px-1 rounded">
+                      {Math.floor(video.duration)}s
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-[10px] text-white truncate font-medium">
+                      {video.user.name}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
         {isLoading && videos.length > 0 && (
