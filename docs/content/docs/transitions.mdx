@@ -5,47 +5,115 @@ description: Smooth visual effects between consecutive clips.
 
 Transitions create smooth visual effects between two consecutive clips on the timeline. They are applied at the boundary where one clip ends and another begins.
 
-## Basic Transition
+## Usage
+
+To add a transition, you can use the `addTransition` method on the `Studio` instance. It is recommended to add transitions after both clips have been added to the studio.
 
 ```ts
-import { Studio, Video, Transition } from "@designcombo/video";
+import { Studio, Video, GL_TRANSITION_OPTIONS } from '@designcombo/video';
 
 const studio = new Studio({
-    width: 1920,
-    height: 1080,
-    fps: 30,
+  width: 1080,
+  height: 1920,
+  fps: 30,
+  canvas: canvasRef.current!,
 });
 
-const video1 = await Video.fromUrl("clip1.mp4");
-const video2 = await Video.fromUrl("clip2.mp4");
+const video1 = await Video.fromUrl('video1.mp4');
+studio.addClip(video1);
 
-// Add clips and a transition between them
-await studio.addClip(video1);
-await studio.addClip(video2);
+const video2 = await Video.fromUrl('video2.mp4');
+video2.display = {
+  from: video1.duration,
+  to: video1.duration + video2.duration,
+};
+studio.addClip(video2);
 
 // Add transition from video1 to video2
-studio.addTransition({
-  from: video1.id,
-  to: video2.id,
-  type: "fade",
-  duration: 1e6, // 1 second in microseconds
-});
+// Usage: studio.addTransition(key, duration, fromClipId, toClipId)
+try {
+  await studio.addTransition('cube', 2 * 1e6, video1.id, video2.id);
+  console.log('Transition added successfully');
+} catch (e) {
+  console.error('Failed to add transition:', e);
+}
 ```
 
-## Transition Types
+## Available Transitions
 
-### Fade
-Simple cross-fade between clips.
+You can find the full list of available transitions in the `GL_TRANSITION_OPTIONS` constant.
 
-### Slide
-Slide the new clip in from a specified direction (`left`, `right`, `top`, `bottom`).
-
-### Zoom
-Scale-based transition between clips.
-
-### Blur
-Blur the outgoing clip while focusing the incoming clip.
+| Preview | Name | Key |
+| :--- | :--- | :--- |
+| ![Bounce](https://cdn.subgen.co/previews/dynamic/transition_Bounce_dynamic.webp) | **Bounce** | `Bounce` |
+| ![BowTieHorizontal](https://cdn.subgen.co/previews/dynamic/transition_BowTieHorizontal_dynamic.webp) | **BowTieHorizontal** | `BowTieHorizontal` |
+| ![BowTieVertical](https://cdn.subgen.co/previews/dynamic/transition_BowTieVertical_dynamic.webp) | **BowTieVertical** | `BowTieVertical` |
+| ![ButterflyWaveScrawler](https://cdn.subgen.co/previews/dynamic/transition_ButterflyWaveScrawler_dynamic.webp) | **ButterflyWaveScrawler** | `ButterflyWaveScrawler` |
+| ![CircleCrop](https://cdn.subgen.co/previews/dynamic/transition_CircleCrop_dynamic.webp) | **CircleCrop** | `CircleCrop` |
+| ![ColourDistance](https://cdn.subgen.co/previews/dynamic/transition_ColourDistance_dynamic.webp) | **ColourDistance** | `ColourDistance` |
+| ![CrazyParametricFun](https://cdn.subgen.co/previews/dynamic/transition_CrazyParametricFun_dynamic.webp) | **CrazyParametricFun** | `CrazyParametricFun` |
+| ![CrossZoom](https://cdn.subgen.co/previews/dynamic/transition_CrossZoom_dynamic.webp) | **CrossZoom** | `CrossZoom` |
+| ![Directional](https://cdn.subgen.co/previews/dynamic/transition_Directional_dynamic.webp) | **Directional** | `Directional` |
+| ![DoomScreenTransition](https://cdn.subgen.co/previews/dynamic/transition_DoomScreenTransition_dynamic.webp) | **DoomScreenTransition** | `DoomScreenTransition` |
+| ![Dreamy](https://cdn.subgen.co/previews/dynamic/transition_Dreamy_dynamic.webp) | **Dreamy** | `Dreamy` |
+| ![DreamyZoom](https://cdn.subgen.co/previews/dynamic/transition_DreamyZoom_dynamic.webp) | **DreamyZoom** | `DreamyZoom` |
+| ![GlitchDisplace](https://cdn.subgen.co/previews/dynamic/transition_GlitchDisplace_dynamic.webp) | **GlitchDisplace** | `GlitchDisplace` |
+| ![GlitchMemories](https://cdn.subgen.co/previews/dynamic/transition_GlitchMemories_dynamic.webp) | **GlitchMemories** | `GlitchMemories` |
+| ![GridFlip](https://cdn.subgen.co/previews/dynamic/transition_GridFlip_dynamic.webp) | **GridFlip** | `GridFlip` |
+| ![InvertedPageCurl](https://cdn.subgen.co/previews/dynamic/transition_InvertedPageCurl_dynamic.webp) | **InvertedPageCurl** | `InvertedPageCurl` |
+| ![LinearBlur](https://cdn.subgen.co/previews/dynamic/transition_LinearBlur_dynamic.webp) | **LinearBlur** | `LinearBlur` |
+| ![Mosaic](https://cdn.subgen.co/previews/dynamic/transition_Mosaic_dynamic.webp) | **Mosaic** | `Mosaic` |
+| ![PolkaDotsCurtain](https://cdn.subgen.co/previews/dynamic/transition_PolkaDotsCurtain_dynamic.webp) | **PolkaDotsCurtain** | `PolkaDotsCurtain` |
+| ![Radial](https://cdn.subgen.co/previews/dynamic/transition_Radial_dynamic.webp) | **Radial** | `Radial` |
+| ![SimpleZoom](https://cdn.subgen.co/previews/dynamic/transition_SimpleZoom_dynamic.webp) | **SimpleZoom** | `SimpleZoom` |
+| ![StereoViewer](https://cdn.subgen.co/previews/dynamic/transition_StereoViewer_dynamic.webp) | **StereoViewer** | `StereoViewer` |
+| ![Swirl](https://cdn.subgen.co/previews/dynamic/transition_Swirl_dynamic.webp) | **Swirl** | `Swirl` |
+| ![WaterDrop](https://cdn.subgen.co/previews/dynamic/transition_WaterDrop_dynamic.webp) | **WaterDrop** | `WaterDrop` |
+| ![ZoomInCircles](https://cdn.subgen.co/previews/dynamic/transition_ZoomInCircles_dynamic.webp) | **ZoomInCircles** | `ZoomInCircles` |
+| ![angular](https://cdn.subgen.co/previews/dynamic/transition_angular_dynamic.webp) | **angular** | `angular` |
+| ![burn](https://cdn.subgen.co/previews/dynamic/transition_burn_dynamic.webp) | **burn** | `burn` |
+| ![cannabisleaf](https://cdn.subgen.co/previews/dynamic/transition_cannabisleaf_dynamic.webp) | **cannabisleaf** | `cannabisleaf` |
+| ![circle](https://cdn.subgen.co/previews/dynamic/transition_circle_dynamic.webp) | **circle** | `circle` |
+| ![circleopen](https://cdn.subgen.co/previews/dynamic/transition_circleopen_dynamic.webp) | **circleopen** | `circleopen` |
+| ![colorphase](https://cdn.subgen.co/previews/dynamic/transition_colorphase_dynamic.webp) | **colorphase** | `colorphase` |
+| ![crosshatch](https://cdn.subgen.co/previews/dynamic/transition_crosshatch_dynamic.webp) | **crosshatch** | `crosshatch` |
+| ![crosswarp](https://cdn.subgen.co/previews/dynamic/transition_crosswarp_dynamic.webp) | **crosswarp** | `crosswarp` |
+| ![cube](https://cdn.subgen.co/previews/dynamic/transition_cube_dynamic.webp) | **cube** | `cube` |
+| ![directionalwarp](https://cdn.subgen.co/previews/dynamic/transition_directionalwarp_dynamic.webp) | **directionalwarp** | `directionalwarp` |
+| ![directionalwipe](https://cdn.subgen.co/previews/dynamic/transition_directionalwipe_dynamic.webp) | **directionalwipe** | `directionalwipe` |
+| ![displacement](https://cdn.subgen.co/previews/dynamic/transition_displacement_dynamic.webp) | **displacement** | `displacement` |
+| ![doorway](https://cdn.subgen.co/previews/dynamic/transition_doorway_dynamic.webp) | **doorway** | `doorway` |
+| ![fade](https://cdn.subgen.co/previews/dynamic/transition_fade_dynamic.webp) | **fade** | `fade` |
+| ![fadecolor](https://cdn.subgen.co/previews/dynamic/transition_fadecolor_dynamic.webp) | **fadecolor** | `fadecolor` |
+| ![fadegrayscale](https://cdn.subgen.co/previews/dynamic/transition_fadegrayscale_dynamic.webp) | **fadegrayscale** | `fadegrayscale` |
+| ![flyeye](https://cdn.subgen.co/previews/dynamic/transition_flyeye_dynamic.webp) | **flyeye** | `flyeye` |
+| ![heart](https://cdn.subgen.co/previews/dynamic/transition_heart_dynamic.webp) | **heart** | `heart` |
+| ![hexagonalize](https://cdn.subgen.co/previews/dynamic/transition_hexagonalize_dynamic.webp) | **hexagonalize** | `hexagonalize` |
+| ![kaleidoscope](https://cdn.subgen.co/previews/dynamic/transition_kaleidoscope_dynamic.webp) | **kaleidoscope** | `kaleidoscope` |
+| ![luma](https://cdn.subgen.co/previews/dynamic/transition_luma_dynamic.webp) | **luma** | `luma` |
+| ![luminance_melt](https://cdn.subgen.co/previews/dynamic/transition_luminance_melt_dynamic.webp) | **luminance_melt** | `luminance_melt` |
+| ![morph](https://cdn.subgen.co/previews/dynamic/transition_morph_dynamic.webp) | **morph** | `morph` |
+| ![multiply_blend](https://cdn.subgen.co/previews/dynamic/transition_multiply_blend_dynamic.webp) | **multiply_blend** | `multiply_blend` |
+| ![perlin](https://cdn.subgen.co/previews/dynamic/transition_perlin_dynamic.webp) | **perlin** | `perlin` |
+| ![pinwheel](https://cdn.subgen.co/previews/dynamic/transition_pinwheel_dynamic.webp) | **pinwheel** | `pinwheel` |
+| ![pixelize](https://cdn.subgen.co/previews/dynamic/transition_pixelize_dynamic.webp) | **pixelize** | `pixelize` |
+| ![polar_function](https://cdn.subgen.co/previews/dynamic/transition_polar_function_dynamic.webp) | **polar_function** | `polar_function` |
+| ![randomsquares](https://cdn.subgen.co/previews/dynamic/transition_randomsquares_dynamic.webp) | **randomsquares** | `randomsquares` |
+| ![ripple](https://cdn.subgen.co/previews/dynamic/transition_ripple_dynamic.webp) | **ripple** | `ripple` |
+| ![rotate_scale_fade](https://cdn.subgen.co/previews/dynamic/transition_rotate_scale_fade_dynamic.webp) | **rotate_scale_fade** | `rotate_scale_fade` |
+| ![squareswire](https://cdn.subgen.co/previews/dynamic/transition_squareswire_dynamic.webp) | **squareswire** | `squareswire` |
+| ![squeeze](https://cdn.subgen.co/previews/dynamic/transition_squeeze_dynamic.webp) | **squeeze** | `squeeze` |
+| ![swap](https://cdn.subgen.co/previews/dynamic/transition_swap_dynamic.webp) | **swap** | `swap` |
+| ![undulatingBurnOut](https://cdn.subgen.co/previews/dynamic/transition_undulatingBurnOut_dynamic.webp) | **undulatingBurnOut** | `undulatingBurnOut` |
+| ![wind](https://cdn.subgen.co/previews/dynamic/transition_wind_dynamic.webp) | **wind** | `wind` |
+| ![windowblinds](https://cdn.subgen.co/previews/dynamic/transition_windowblinds_dynamic.webp) | **windowblinds** | `windowblinds` |
+| ![windowslice](https://cdn.subgen.co/previews/dynamic/transition_windowslice_dynamic.webp) | **windowslice** | `windowslice` |
+| ![wipeDown](https://cdn.subgen.co/previews/dynamic/transition_wipeDown_dynamic.webp) | **wipeDown** | `wipeDown` |
+| ![wipeLeft](https://cdn.subgen.co/previews/dynamic/transition_wipeLeft_dynamic.webp) | **wipeLeft** | `wipeLeft` |
+| ![wipeRight](https://cdn.subgen.co/previews/dynamic/transition_wipeRight_dynamic.webp) | **wipeRight** | `wipeRight` |
+| ![wipeUp](https://cdn.subgen.co/previews/dynamic/transition_wipeUp_dynamic.webp) | **wipeUp** | `wipeUp` |
+| ![radialSwipe](https://cdn.subgen.co/previews/dynamic/transition_radialSwipe_dynamic.webp) | **Radial Swipe** | `radialSwipe` |
 
 ## Overlap Management
 
-DesignCombo automatically handles the visual overlap during the transition. The software ensures that both clips are active and rendered during the transition duration.
+DesignCombo automatically handles the visual overlap during the transition. The software ensures that both clips are active and rendered during the transition duration. The transition center is aligned with the junction of the two clips.

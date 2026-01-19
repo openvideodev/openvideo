@@ -10,7 +10,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { debounce } from 'lodash';
+import { cloneDeep, debounce } from 'lodash';
 
 interface PexelsVideo {
   id: number;
@@ -150,8 +150,17 @@ export default function PanelVideos() {
             clone.top = oldClip.top;
             clone.width = oldClip.width;
             clone.height = oldClip.height;
+            const realDuration = videoClip.meta.duration;
+            const newTrim = { ...oldClip.trim };
+            newTrim.to = Math.max(newTrim.to, realDuration);
+            newTrim.from = Math.min(newTrim.from, newTrim.to);
+            console.warn(
+              'This needs to be reviewed. assets from pexels may not have the right duration'
+            );
             clone.display = { ...oldClip.display };
-            clone.trim = { ...oldClip.trim };
+            clone.trim = newTrim;
+            clone.duration = (newTrim.to - newTrim.from) / clone.playbackRate;
+            clone.display.to = clone.display.from + clone.duration;
             clone.zIndex = oldClip.zIndex;
             return clone;
           });
@@ -167,12 +176,8 @@ export default function PanelVideos() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="text-text-primary px-4 flex h-12 flex-none items-center text-sm font-medium">
-        Videos
-      </div>
-
-      <div className="flex items-center px-4">
-        <div className="flex-1 pb-4">
+      <div>
+        <div className="flex-1 p-4">
           <InputGroup>
             <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
               <Search size={14} />

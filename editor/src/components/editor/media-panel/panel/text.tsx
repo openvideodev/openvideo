@@ -128,16 +128,12 @@ export default function PanelText() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="text-text-primary flex h-12 flex-none items-center px-4 text-sm font-medium">
-        Text
-      </div>
-      <div className="px-4 py-2">
+      <div className="p-4">
         <Button onClick={() => handleAddText()} className="w-full h-9">
           Add Text
         </Button>
       </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-4">
         <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3 pb-4">
           {TEXT_PRESETS.map((preset, index) => (
             <button

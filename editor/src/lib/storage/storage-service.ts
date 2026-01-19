@@ -1,16 +1,25 @@
-import { TProject } from '@/types/project';
-import { MediaFile } from '@/types/media';
+import type { TProject } from '@/types/project';
+import type { MediaFile } from '@/types/media';
 import { IndexedDBAdapter } from './indexeddb-adapter';
 import { OPFSAdapter } from './opfs-adapter';
-import {
+import type {
   MediaFileData,
   StorageConfig,
   SerializedProject,
   SerializedScene,
   TimelineData,
 } from './types';
-import { TimelineTrack } from '@/types/timeline';
-import { SavedSoundsData, SavedSound, SoundEffect } from '@/types/sounds';
+import type { TimelineTrack } from '@/types/timeline';
+import type { SavedSoundsData, SavedSound, SoundEffect } from '@/types/sounds';
+
+export interface StorageStats {
+  usedBytes: number;
+  quotaBytes: number;
+  usedMB: number;
+  quotaMB: number;
+  percentUsed: number;
+  isPersisted: boolean;
+}
 
 class StorageService {
   private projectsAdapter: IndexedDBAdapter<SerializedProject>;
@@ -458,6 +467,33 @@ class StorageService {
     } catch (error) {
       console.error('Failed to clear saved sounds:', error);
       throw error;
+    }
+  }
+
+  // Storage statistics
+  async getStorageStats(): Promise<StorageStats | null> {
+    if (!('storage' in navigator) || !navigator.storage.estimate) {
+      return null;
+    }
+    try {
+      const [estimate, persisted] = await Promise.all([
+        navigator.storage.estimate(),
+        navigator.storage.persisted?.() ?? Promise.resolve(false),
+      ]);
+      const usedBytes = estimate.usage ?? 0;
+      const quotaBytes = estimate.quota ?? 0;
+      return {
+        usedBytes,
+        quotaBytes,
+        usedMB: Math.round((usedBytes / (1024 * 1024)) * 10) / 10,
+        quotaMB: Math.round((quotaBytes / (1024 * 1024)) * 10) / 10,
+        percentUsed:
+          quotaBytes > 0 ? Math.round((usedBytes / quotaBytes) * 100) : 0,
+        isPersisted: persisted,
+      };
+    } catch (error) {
+      console.error('Failed to get storage stats:', error);
+      return null;
     }
   }
 

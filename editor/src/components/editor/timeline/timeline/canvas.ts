@@ -24,11 +24,20 @@ import * as SelectionHandlers from './handlers/selection';
 import * as DragHandlers from './handlers/drag-handler';
 import * as ModifyHandlers from './handlers/modify-handler';
 import { Scrollbars } from './scrollbar';
+import { makeMouseWheel } from './scrollbar/util';
+import type { ScrollbarsProps } from './scrollbar/types';
 import { getTrackHeight } from '@/components/editor/timeline/timeline-constants';
+import type { TMat2D, TPointerEventInfo } from 'fabric';
 
 export interface TimelineCanvasEvents {
-  scroll: { deltaX: number; deltaY: number };
-  zoom: { delta: number };
+  scroll: {
+    deltaX: number;
+    deltaY: number;
+    scrollX?: number;
+    scrollY?: number;
+    isSelection?: boolean;
+  };
+  zoom: { delta: number; zoomLevel?: number };
   'clip:modified': {
     clipId: string;
     displayFrom: number;
@@ -51,6 +60,7 @@ export interface TimelineCanvasEvents {
   'selection:duplicated': { clipIds: string[] };
   'selection:split': { clipId: string; splitTime: number };
   'transition:add': { fromClipId: string; toClipId: string; trackId: string };
+  'selection:delete': undefined;
   'viewport:changed': { scrollX: number; scrollY: number };
   [key: string]: any;
   [key: symbol]: any;
@@ -63,7 +73,18 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   #timeScale: number = 1;
   #tracks: ITimelineTrack[] = [];
   #clipsMap: Record<string, IClip> = {};
-  scrollbars: Scrollbars;
+  #offsetX: number = 0;
+  #offsetY: number = 0;
+  #scrollX: number = 0;
+  #scrollY: number = 0;
+  #scrollbars?: Scrollbars;
+  #mouseWheelHandler?: (e: TPointerEventInfo<WheelEvent>) => void;
+
+  // Drag Auto-scroll state
+  #dragAutoScrollRaf: number | null = null;
+  #lastPointer: { x: number; y: number } | null = null;
+  #totalTracksHeight: number = 0;
+  #isSelectingArea: boolean = false;
 
   // Cache for Fabric objects
   #trackObjects: Map<string, Track> = new Map();
@@ -98,11 +119,21 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     }
 
     // Bind handlers
-    this.#onDragging = (options) => DragHandlers.handleDragging(this, options);
-    this.#onTrackRelocation = (options) =>
+    this.#onDragging = (options) => {
+      const e = options.e as MouseEvent | PointerEvent | TouchEvent;
+      const pointer = 'clientX' in e ? e : (e as TouchEvent).touches[0];
+      this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
+      this.#startDragAutoScroll();
+      DragHandlers.handleDragging(this, options);
+    };
+    this.#onTrackRelocation = (options) => {
+      this.#stopDragAutoScroll();
       ModifyHandlers.handleTrackRelocation(this, options);
-    this.#onClipModification = (options) =>
+    };
+    this.#onClipModification = (options) => {
+      this.#stopDragAutoScroll();
       ModifyHandlers.handleClipModification(this, options);
+    };
     this.#onSelectionCreate = (e) =>
       SelectionHandlers.handleSelectionCreate(this, e);
     this.#onSelectionUpdate = (e) =>
@@ -125,18 +156,15 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.canvas = new Canvas(canvasElement, {
       width: clientWidth,
       height: clientHeight,
-      backgroundColor: '#0E0E0E',
       selection: true,
       renderOnAddRemove: false, // Performance optimization
     });
 
-    this.scrollbars = new Scrollbars(this, {
-      onViewportChange: ({ scrollX, scrollY }) => {
-        this.emit('viewport:changed', { scrollX, scrollY });
-      },
-    });
-
     this.canvas.on('mouse:wheel', (opt) => {
+      if (this.#mouseWheelHandler) {
+        this.#mouseWheelHandler(opt);
+        return;
+      }
       const e = opt.e;
       e.preventDefault();
       e.stopPropagation();
@@ -147,6 +175,24 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         const deltaX = e.shiftKey ? e.deltaY : e.deltaX;
         const deltaY = e.shiftKey ? 0 : e.deltaY;
         this.emit('scroll', { deltaX, deltaY });
+      }
+    });
+
+    this.canvas.on('mouse:down', (options) => {
+      if (!options.target) {
+        this.#isSelectingArea = true;
+        const e = options.e as MouseEvent | PointerEvent | TouchEvent;
+        const pointer = 'clientX' in e ? e : (e as TouchEvent).touches[0];
+        this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
+        this.#startDragAutoScroll();
+      }
+    });
+
+    this.canvas.on('mouse:move', (options) => {
+      if (this.#isSelectingArea) {
+        const e = options.e as MouseEvent | PointerEvent | TouchEvent;
+        const pointer = 'clientX' in e ? e : (e as TouchEvent).touches[0];
+        this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
       }
     });
 
@@ -173,6 +219,141 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.canvas.on('selection:updated', this.#onSelectionUpdate);
     this.canvas.on('selection:cleared', this.#onSelectionClear);
     this.canvas.on('mouse:move', this.#onMouseMove);
+
+    // Stop auto-scroll on mouse up just in case
+    this.canvas.on('mouse:up', () => this.#stopDragAutoScroll());
+  }
+
+  #startDragAutoScroll() {
+    if (this.#dragAutoScrollRaf) return;
+    const step = () => {
+      this.#handleDragAutoScroll();
+      this.#dragAutoScrollRaf = requestAnimationFrame(step);
+    };
+    this.#dragAutoScrollRaf = requestAnimationFrame(step);
+  }
+
+  #stopDragAutoScroll() {
+    if (this.#dragAutoScrollRaf) {
+      cancelAnimationFrame(this.#dragAutoScrollRaf);
+      this.#dragAutoScrollRaf = null;
+    }
+    this.#lastPointer = null;
+    this.#isSelectingArea = false;
+  }
+
+  #handleDragAutoScroll() {
+    if (!this.#lastPointer) return;
+
+    const viewportWidth = this.canvas.width;
+    const viewportHeight = this.canvas.height;
+    const threshold = 60;
+    const maxSpeed = 30;
+
+    // Get canvas element position to calculate relative mouse position
+    const rect = this.canvas.getElement().getBoundingClientRect();
+    const x = this.#lastPointer.x - rect.left;
+    const y = this.#lastPointer.y - rect.top;
+
+    let deltaX = 0;
+    let deltaY = 0;
+
+    if (x < threshold) {
+      deltaX = -maxSpeed * (1 - Math.max(0, x) / threshold);
+    } else if (x > viewportWidth - threshold) {
+      deltaX = maxSpeed * (1 - Math.max(0, viewportWidth - x) / threshold);
+    }
+
+    if (y < threshold) {
+      deltaY = -maxSpeed * (1 - Math.max(0, y) / threshold);
+    } else if (y > viewportHeight - threshold) {
+      deltaY = maxSpeed * (1 - Math.max(0, viewportHeight - y) / threshold);
+    }
+
+    if (deltaX !== 0 || deltaY !== 0) {
+      // Calculate max scroll values
+      const pixelsPerSecond = TIMELINE_CONSTANTS.PIXELS_PER_SECOND;
+      const projectDuration = useTimelineStore.getState().getTotalDuration();
+      const durationPx = projectDuration * pixelsPerSecond * this.#timeScale;
+
+      const maxScrollX = Math.max(0, durationPx - this.canvas.width);
+      const maxScrollY = Math.max(
+        0,
+        this.#totalTracksHeight + 15 - this.canvas.height
+      ); // 15 is extraMarginY
+
+      if (this.#isSelectingArea) {
+        // --- SYNCHRONOUS CLAMPING FOR AREA SELECTION ---
+        const newScrollX = Math.max(
+          0,
+          Math.min(maxScrollX, this.#scrollX + deltaX)
+        );
+        const newScrollY = Math.max(
+          0,
+          Math.min(maxScrollY, this.#scrollY + deltaY)
+        );
+
+        const actualDeltaX = newScrollX - this.#scrollX;
+        const actualDeltaY = newScrollY - this.#scrollY;
+
+        if (actualDeltaX !== 0 || actualDeltaY !== 0) {
+          this.setScroll(newScrollX, newScrollY);
+
+          this.emit('scroll', {
+            deltaX: actualDeltaX,
+            deltaY: actualDeltaY,
+            scrollX: newScrollX,
+            scrollY: newScrollY,
+            isSelection: true,
+          });
+
+          // Force selection update to keep marquee synced with viewport
+          const e = {
+            clientX: this.#lastPointer.x,
+            clientY: this.#lastPointer.y,
+          } as any;
+          (this.canvas as any)._onMouseMove(e);
+          this.canvas.requestRenderAll();
+        }
+      } else {
+        // --- CLAMPING FOR OBJECT DRAGGING ---
+        // For horizontal dragging, we allow unlimited scrolling to the right (per requirement)
+        // but it must be clamped at 0 (left boundary).
+        const requestedScrollX = this.#scrollX + deltaX;
+        const newScrollX = Math.max(0, requestedScrollX);
+
+        // For vertical dragging, we clamp at both boundaries 0 and maxScrollY.
+        const requestedScrollY = this.#scrollY + deltaY;
+        const newScrollY = Math.max(0, Math.min(maxScrollY, requestedScrollY));
+
+        const actualDeltaX = newScrollX - this.#scrollX;
+        const actualDeltaY = newScrollY - this.#scrollY;
+
+        if (actualDeltaX !== 0 || actualDeltaY !== 0) {
+          this.setScroll(newScrollX, newScrollY);
+
+          this.emit('scroll', {
+            deltaX: actualDeltaX,
+            deltaY: actualDeltaY,
+            scrollX: newScrollX,
+            scrollY: newScrollY,
+          });
+
+          // Simulate mouse move to keep active objects and selection box synced.
+          if (this.#lastPointer) {
+            const e = {
+              clientX: this.#lastPointer.x,
+              clientY: this.#lastPointer.y,
+              type: 'mousemove',
+              preventDefault: () => {},
+              stopPropagation: () => {},
+            } as any;
+            (this.canvas as any)._onMouseMove(e);
+          }
+          this.canvas.requestRenderAll();
+        }
+      }
+    }
   }
 
   private handleMouseMove(opt: any) {
@@ -395,6 +576,38 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     );
   }
 
+  public getTimelineX(canvasX: number): number {
+    const vpt = this.canvas.viewportTransform;
+    return (
+      (canvasX - vpt[4]) /
+      (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * this.#timeScale)
+    );
+  }
+
+  public getCanvasX(timelineSeconds: number): number {
+    const vpt = this.canvas.viewportTransform;
+    return (
+      timelineSeconds * TIMELINE_CONSTANTS.PIXELS_PER_SECOND * this.#timeScale +
+      vpt[4]
+    );
+  }
+
+  /**
+   * Returns the stable X position in the "infinite canvas" space (starts at 0, no scroll/offset)
+   */
+  public getInfiniteX(timelineSeconds: number): number {
+    return (
+      timelineSeconds * TIMELINE_CONSTANTS.PIXELS_PER_SECOND * this.#timeScale
+    );
+  }
+
+  /**
+   * Returns the timeline seconds from a stable X position in "infinite canvas" space
+   */
+  public getTimeFromInfiniteX(infiniteX: number): number {
+    return infiniteX / (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * this.#timeScale);
+  }
+
   public checkSeparatorIntersection(
     cursorY: number
   ): { container: Rect; highlight: Rect; index: number } | null {
@@ -435,6 +648,57 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
     this.canvas.requestRenderAll();
     this.emit('timeline:cleared', {});
+  }
+
+  public initScrollbars(config: any = {}): void {
+    this.#offsetX = config.offsetX ?? 0;
+    this.#offsetY = config.offsetY ?? 0;
+    this.#scrollX = config.scrollX ?? 0;
+    this.#scrollY = config.scrollY ?? 0;
+
+    const scrollConfig: ScrollbarsProps = {
+      offsetX: this.#offsetX,
+      offsetY: this.#offsetY,
+      extraMarginX: config.extraMarginX ?? 50,
+      extraMarginY: config.extraMarginY ?? 15,
+      scrollbarWidth: config.scrollbarWidth ?? 8,
+      scrollbarColor: config.scrollbarColor ?? 'rgba(255, 255, 255, 0.3)',
+      onViewportChange: ({ scrollX, scrollY }) => {
+        if (typeof scrollX === 'number') this.#scrollX = scrollX;
+        if (typeof scrollY === 'number') this.#scrollY = scrollY;
+        this.emit('scroll', {
+          deltaX: 0,
+          deltaY: 0,
+          scrollX,
+          scrollY,
+        });
+      },
+      onZoom: (zoom: number) => {
+        this.emit('zoom', { delta: 0, zoomLevel: zoom });
+      },
+    };
+
+    this.#mouseWheelHandler = makeMouseWheel(this, scrollConfig);
+    this.#scrollbars = new Scrollbars(this, scrollConfig);
+
+    const offsetX = config.offsetX ?? 0;
+    const offsetY = config.offsetY ?? 0;
+
+    if (offsetX !== 0 || offsetY !== 0) {
+      const vpt = this.canvas.viewportTransform.slice(0) as TMat2D;
+      vpt[4] = offsetX;
+      vpt[5] = offsetY;
+      this.canvas.setViewportTransform(vpt);
+      this.canvas.requestRenderAll();
+    }
+  }
+
+  public disposeScrollbars(): void {
+    if (this.#scrollbars) {
+      this.#scrollbars.dispose();
+      this.#scrollbars = undefined;
+    }
+    this.#mouseWheelHandler = undefined;
   }
 
   public render() {
@@ -513,6 +777,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
       currentY += trackHeight + GAP;
     });
+
+    this.#totalTracksHeight = currentY;
 
     // --- PASS 2: SEPARATORS ---
     // Reset currentY for separators or use trackRegions
@@ -701,30 +967,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.canvas.requestRenderAll();
   }
 
-  public deleteSelectedClips() {
+  public async deleteSelectedClips() {
     const activeObjects = this.canvas.getActiveObjects();
     if (!activeObjects || activeObjects.length === 0) return;
 
-    const clipIdsToDelete: string[] = [];
-
-    // Filter out everything that is not a clip (e.g. tracks, separators)
-    // Though usually only clips are selectable.
-    activeObjects.forEach((obj: any) => {
-      if (obj.elementId) {
-        clipIdsToDelete.push(obj.elementId);
-        // Remove from canvas immediately
-        this.canvas.remove(obj);
-        // Remove from internal clip map
-        this.#clipObjects.delete(obj.elementId);
-      }
-    });
-
-    if (clipIdsToDelete.length > 0) {
-      this.canvas.discardActiveObject();
-      this.emit('clips:removed', { clipIds: clipIdsToDelete });
-      this.emitSelectionChange(); // Will emit empty selection
-      this.canvas.requestRenderAll();
-    }
+    // We emit intent to delete selected.
+    // The synchronization layer or parent component will handle actually calling the engine.
+    this.emit('selection:delete', undefined);
   }
 
   public duplicateSelectedClips() {
@@ -783,6 +1032,16 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.emit('selection:split', { clipId, splitTime });
   }
 
+  public reloadClip(clipId: string) {
+    const clip = this.#clipObjects.get(clipId);
+    if (!clip) return;
+
+    if (clip instanceof Video) {
+      // Re-trigger thumbnail loading
+      clip.loadAndRenderThumbnails();
+    }
+  }
+
   public emitSelectionChange() {
     const activeObjects = this.canvas.getActiveObjects();
     const activeIds = activeObjects
@@ -828,13 +1087,50 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
   public setTimeScale(zoom: number) {
     this.#timeScale = zoom;
+
+    // Notify clips about zoom change (affects thumbnails density)
+    this.#clipObjects.forEach((clip) => {
+      if (
+        'onScrollChange' in clip &&
+        typeof (clip as any).onScrollChange === 'function'
+      ) {
+        (clip as any).onScrollChange({
+          scrollLeft: this.#scrollX,
+          force: true,
+        });
+      }
+    });
+
     this.render();
   }
 
-  public setScroll(scrollX: number, scrollY: number) {
-    const vpt = this.canvas.viewportTransform;
-    vpt[4] = -scrollX;
-    vpt[5] = -scrollY;
+  public setScroll(scrollX?: number, scrollY?: number) {
+    if (typeof scrollX === 'number') this.#scrollX = scrollX;
+    if (typeof scrollY === 'number') this.#scrollY = scrollY;
+
+    const vpt = [...this.canvas.viewportTransform];
+    vpt[4] = -this.#scrollX + this.#offsetX;
+    vpt[5] = -this.#scrollY + this.#offsetY;
+
+    this.canvas.setViewportTransform(
+      vpt as [number, number, number, number, number, number]
+    );
+
+    // Notify clips about scroll change for lazy loading thumbnails
+    this.#clipObjects.forEach((clip) => {
+      if (
+        'onScrollChange' in clip &&
+        typeof (clip as any).onScrollChange === 'function'
+      ) {
+        (clip as any).onScrollChange({ scrollLeft: this.#scrollX });
+      }
+    });
+
+    // Update control coordinates when viewport changes
+    this.canvas.getObjects().forEach((obj) => {
+      if (obj.hasControls) obj.setCoords();
+    });
+
     this.canvas.requestRenderAll();
   }
 
@@ -853,7 +1149,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       this.canvas.off('mouse:move', this.#onMouseMove);
 
       this.clearTransitionButton();
-      this.scrollbars.dispose();
+      this.disposeScrollbars();
       this.canvas.dispose();
     }
   }

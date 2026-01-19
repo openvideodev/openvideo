@@ -109,6 +109,16 @@ if (selected.size > 0) {
 }
 ```
 
+### move()
+
+Move all currently selected clips by a relative offset:
+
+```ts
+// Move selected clips 10px right and 5px down
+await studio.selection.move(10, 5);
+```
+```
+
 ## Transformation
 
 The studio automatically shows transform controls when objects are selected. Users can:
@@ -117,6 +127,74 @@ The studio automatically shows transform controls when objects are selected. Use
 - **Drag corners** to resize
 - **Drag rotation handle** to rotate
 - **Selection box** for multi-select
+
+### Centering Objects
+
+You can easily center clips within the studio dimensions. These methods translate the clip to the center of the artboard and are tracked in the history:
+
+```ts
+// Center horizontally and vertically
+await studio.centerClip(clip.id);
+
+// Center horizontally only
+await studio.centerClipH(clip.id);
+
+// Center vertically only
+await studio.centerClipV(clip.id);
+```
+
+### Scaling Objects
+
+You can scale clips to fit or cover the studio dimensions while maintaining aspect ratio:
+
+```ts
+// Scale to fit within the studio (contained)
+await studio.scaleToFit(clip.id);
+
+// Scale to cover the entire studio (filled)
+await studio.scaleToCover(clip.id);
+```
+
+### Keyboard Shortcuts
+
+When the studio is interactive and clips are selected, you can use the following keyboard shortcuts for precise positioning:
+
+| Action | Shortcut |
+| :--- | :--- |
+| Move selected clips 1px | `Arrow Keys` |
+| Move selected clips 5px | `Shift` + `Arrow Keys` |
+| Last frame | `⌘` + `←` |
+| Next frame | `⌘` + `→` |
+
+## Playback Control
+
+The Studio provides high-level methods to control the timeline playback.
+
+### play() / pause()
+
+Control the playback state:
+
+```ts
+studio.play();
+studio.pause();
+```
+
+### seek()
+
+Jump to a specific time (in microseconds):
+
+```ts
+await studio.seek(5000000); // Seek to 5 seconds
+```
+
+### frameNext() / framePrev()
+
+Navigate the timeline frame-by-frame based on the studio's configured FPS:
+
+```ts
+await studio.frameNext();
+await studio.framePrev();
+```
 
 ## Studio Events
 

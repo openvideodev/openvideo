@@ -325,10 +325,31 @@ export class SelectionManager {
     }
   }
 
+  public async move(dx: number, dy: number) {
+    if (this.selectedClips.size === 0) return;
+
+    const updates: { id: string; updates: Partial<IClip> }[] = [];
+    for (const clip of this.selectedClips) {
+      updates.push({
+        id: clip.id,
+        updates: {
+          left: (clip.left ?? 0) + dx,
+          top: (clip.top ?? 0) + dy,
+        },
+      });
+    }
+
+    await this.studio.updateClips(updates);
+
+    // Refresh transformer bounds if active
+    if (this.activeTransformer) {
+      this.activeTransformer.updateBounds();
+    }
+  }
+
   public clear() {
     this.deselectClip();
     this.interactiveClips.clear();
-    // selectiongraphics in init?
   }
 
   private recreateTransformer() {
@@ -401,12 +422,15 @@ export class SelectionManager {
       this.textClipResizedSy = data.sy;
     });
 
-    this.activeTransformer.on('transformEnd', () => {
+    this.activeTransformer.on('transformEnd', async () => {
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
         rafId = null;
       }
-      this.syncSelectedClipsTransforms();
+      await this.syncSelectedClipsTransforms();
+      for (const clip of this.selectedClips) {
+        this.studio.emit('clip:updated', { clip });
+      }
     });
 
     this.activeTransformer.on('pointerdown', (e: any) => {
@@ -601,6 +625,7 @@ export class SelectionManager {
         clip.angle = flipFactor * root.angle;
 
         renderer.updateTransforms();
+        this.studio.emit('clip:updated', { clip });
       }
     }
   }

@@ -71,13 +71,16 @@ export function MediaPanel() {
   }, [activeTab]);
 
   return (
-    <div className="h-full flex">
-      <TabBar />
-      <div className="flex-1 overflow-hidden">
+    <div className="h-full flex flex-col bg-panel rounded-sm overflow-hidden w-full">
+      <div className="flex-none">
+        <TabBar />
+      </div>
+      <Separator orientation="horizontal" />
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
         {selectedClips.length > 0 && showProperties ? (
           <PropertiesPanel selectedClips={selectedClips} />
         ) : (
-          <div className="h-full overflow-y-auto">{viewMap[activeTab]}</div>
+          <>{viewMap[activeTab]}</>
         )}
       </div>
     </div>

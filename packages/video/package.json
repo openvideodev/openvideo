@@ -1,6 +1,6 @@
 {
   "name": "@designcombo/video",
-  "version": "0.1.12",
+  "version": "0.1.15",
   "description": "Video rendering and processing library",
   "type": "module",
   "publishConfig": {
@@ -21,11 +21,16 @@
   "files": [
     "dist"
   ],
-
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "types": "src/index.ts",
-
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build"
@@ -41,6 +46,7 @@
   "dependencies": {
     "@pixi/layout": "^3.2.0",
     "gl-transitions": "^1.43.0",
+    "microdiff": "^1.4.0",
     "opfs-tools": "^0.7.2",
     "pixi.js": "^8.14.3",
     "wave-resampler": "^1.0.0",

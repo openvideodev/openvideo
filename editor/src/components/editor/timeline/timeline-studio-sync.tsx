@@ -108,6 +108,33 @@ export const TimelineStudioSync = ({
       });
     };
 
+    const handleClipsRemoved = ({ clipIds }: { clipIds: string[] }) => {
+      // Sync duration on clips removed
+      if (studio) {
+        usePlaybackStore
+          .getState()
+          .setDuration(studio.getMaxDuration() / 1_000_000);
+      }
+
+      useTimelineStore.setState((state) => {
+        const newClips = { ...state.clips };
+        clipIds.forEach((id) => delete newClips[id]);
+
+        // Remove from tracks
+        const updatedTracks = state._tracks.map((t) => ({
+          ...t,
+          clipIds: t.clipIds.filter((id) => !clipIds.includes(id)),
+        }));
+
+        return {
+          ...state,
+          clips: newClips,
+          _tracks: updatedTracks,
+          tracks: updatedTracks,
+        };
+      });
+    };
+
     const handleTrackAdded = ({ track }: { track: any }) => {
       useTimelineStore.setState((state) => {
         if (state._tracks.find((t) => t.id === track.id)) return state;
@@ -242,11 +269,12 @@ export const TimelineStudioSync = ({
       }
 
       // 2. Map clips to store format
-      const newClipsMap: Record<string, IClip> = {};
+      const newClipsMap: Record<string, any> = {};
       clips.forEach((c) => {
+        const serialized = clipToJSON(c as unknown as StudioClip);
         newClipsMap[c.id] = {
-          ...c,
-          // Ensure sourceDuration is set if possible, though clip.duration is often sufficient for valid clips
+          ...serialized,
+          id: (serialized.id || c.id) as string,
           sourceDuration: (c as any).meta?.duration || c.duration,
         };
       });
@@ -293,6 +321,7 @@ export const TimelineStudioSync = ({
     studio.on('clip:added', handleClipAdded);
     studio.on('clips:added', handleClipsAdded);
     studio.on('clip:removed', handleClipRemoved);
+    studio.on('clips:removed', handleClipsRemoved);
     studio.on('clip:updated', handleClipUpdated);
     studio.on('clip:replaced', handleClipReplaced);
     studio.on('track:added', handleTrackAdded as any);
@@ -317,6 +346,7 @@ export const TimelineStudioSync = ({
       studio.off('clip:added', handleClipAdded);
       studio.off('clips:added', handleClipsAdded);
       studio.off('clip:removed', handleClipRemoved);
+      studio.off('clips:removed', handleClipsRemoved);
       studio.off('clip:updated', handleClipUpdated);
       studio.off('clip:replaced', handleClipReplaced);
       studio.off('track:added', handleTrackAdded);
@@ -546,10 +576,8 @@ export const TimelineStudioSync = ({
       // 2. Update Studio
       if (!studio) return;
 
-      // Use explicit ID removal instead of deleteSelected to avoid race conditions with selection state
-      for (const id of clipIds) {
-        await studio.removeClipById(id);
-      }
+      // Use batch removal method
+      await studio.removeClipsById(clipIds);
     };
 
     const handleSelectionDuplicated = async () => {
@@ -577,12 +605,18 @@ export const TimelineStudioSync = ({
       await studio.addTransition('GridFlip', 2_000_000, fromClipId, toClipId);
     };
 
+    const handleSelectionDelete = async () => {
+      if (!studio) return;
+      await studio.deleteSelected();
+    };
+
     timelineCanvas.on('clip:modified', handleClipModified);
     timelineCanvas.on('clips:modified', handleClipsModified);
     timelineCanvas.on('clip:movedToTrack', handleClipMovedToTrack);
     timelineCanvas.on('clip:movedToNewTrack', handleClipMovedToNewTrack);
     timelineCanvas.on('timeline:updated', handleTimelineUpdated);
     timelineCanvas.on('clips:removed', handleClipsRemoved);
+    timelineCanvas.on('selection:delete', handleSelectionDelete);
     timelineCanvas.on('selection:duplicated', handleSelectionDuplicated);
     timelineCanvas.on('selection:split', handleSelectionSplit);
     timelineCanvas.on('transition:add', handleTransitionAdd);
@@ -594,6 +628,7 @@ export const TimelineStudioSync = ({
       timelineCanvas.off('clip:movedToNewTrack', handleClipMovedToNewTrack);
       timelineCanvas.off('timeline:updated', handleTimelineUpdated);
       timelineCanvas.off('clips:removed', handleClipsRemoved);
+      timelineCanvas.off('selection:delete', handleSelectionDelete);
       timelineCanvas.off('selection:duplicated', handleSelectionDuplicated);
       timelineCanvas.off('selection:split', handleSelectionSplit);
       timelineCanvas.off('transition:add', handleTransitionAdd);

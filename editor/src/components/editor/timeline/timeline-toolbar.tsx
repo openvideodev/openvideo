@@ -47,16 +47,17 @@ export function TimelineToolbar({
   const { currentTime, duration, isPlaying, toggle, seek } = usePlaybackStore();
 
   const handleZoomIn = () => {
-    setZoomLevel(Math.min(4, zoomLevel + 0.25));
+    setZoomLevel(Math.min(3.5, zoomLevel + 0.15));
   };
 
   const handleZoomOut = () => {
-    setZoomLevel(Math.max(0.25, zoomLevel - 0.25));
+    setZoomLevel(Math.max(0.15, zoomLevel - 0.15));
   };
 
   const handleZoomSliderChange = (values: number[]) => {
     setZoomLevel(values[0]);
   };
+
   return (
     <div className="flex items-center justify-between px-2 py-1 border-b h-10">
       <div className="flex items-center gap-1">
@@ -167,9 +168,9 @@ export function TimelineToolbar({
             className="w-24"
             value={[zoomLevel]}
             onValueChange={handleZoomSliderChange}
-            min={0.25}
-            max={4}
-            step={0.25}
+            min={0.15}
+            max={3.5}
+            step={0.15}
           />
           <Button variant="ghost" size="icon" onClick={handleZoomIn}>
             <ZoomIn className="h-4 w-4" />

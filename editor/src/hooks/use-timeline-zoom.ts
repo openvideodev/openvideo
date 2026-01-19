@@ -21,7 +21,7 @@ export function useTimelineZoom({
     // Only zoom if user is using pinch gesture (ctrlKey or metaKey is true)
     if (e.ctrlKey || e.metaKey) {
       const delta = e.deltaY > 0 ? -0.15 : 0.15;
-      setZoomLevel((prev) => Math.max(0.1, Math.min(10, prev + delta)));
+      setZoomLevel((prev) => Math.max(0.15, Math.min(3.5, prev + delta)));
     }
     // For horizontal scrolling (when shift is held or horizontal wheel movement),
     // let the event bubble up to allow ScrollArea to handle it
