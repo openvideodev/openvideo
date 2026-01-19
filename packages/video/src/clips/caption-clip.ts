@@ -174,8 +174,7 @@ export interface ICaptionOpts {
    */
   mediaId?: string;
   /**
-   * Whether the initial layout (auto-positioning) has already been applied.
-   * Set to true when loading from JSON to preserve existing coordinates.
+   * Internal flag to skip automatic positioning
    */
   initialLayoutApplied?: boolean;
 }
@@ -215,34 +214,30 @@ export class Caption extends BaseClip implements IClip {
   private _visualPaddingY = 15;
 
   override get width(): number {
-    const w = (this as any)._width;
-    if (w === 0) return 0;
-    return w - this._visualPaddingX * 2;
+    return (this as any)._width;
   }
 
   override set width(v: number) {
-    const targetWidth = v + this._visualPaddingX * 2;
-    if (Math.abs((this as any)._width - targetWidth) < 1) return;
-    (this as any)._width = targetWidth;
+    if (Math.abs((this as any)._width - v) < 1) return;
+    (this as any)._width = v;
+    this._isWidthConstrained = true;
     this.refreshCaptions();
     this.emit('propsChange', { width: v });
   }
 
   override get height(): number {
-    const h = (this as any)._height;
-    if (h === 0) return 0;
-    return h - this._visualPaddingY * 2;
+    return (this as any)._height;
   }
 
   override set height(v: number) {
-    const targetHeight = v + this._visualPaddingY * 2;
-    if (Math.abs((this as any)._height - targetHeight) < 1) return;
-    (this as any)._height = targetHeight;
+    if (Math.abs((this as any)._height - v) < 1) return;
+    (this as any)._height = v;
     this.refreshCaptions();
     this.emit('propsChange', { height: v });
   }
 
   private _initialLayoutApplied = false;
+  private _isWidthConstrained = false;
   private _lastContentWidth = 0;
   private _lastContentHeight = 0;
 
@@ -1038,11 +1033,11 @@ export class Caption extends BaseClip implements IClip {
       );
       tempSpace.destroy();
 
-      // Determine wrapping width for measurement
       const isAutoWidthNow =
-        this.width === 0 ||
-        this._lastContentWidth === 0 ||
-        Math.abs(this.width - this._lastContentWidth) < 2;
+        !this._isWidthConstrained &&
+        (this.width === 0 ||
+          this._lastContentWidth === 0 ||
+          Math.abs(this.width - this._lastContentWidth) < 2);
 
       // Use a robust videoWidth fallback
       const videoWidth = this.opts.videoWidth || 1280;
@@ -1052,10 +1047,11 @@ export class Caption extends BaseClip implements IClip {
         wrapWidth = this.opts.wordWrapWidth;
       } else if (!isAutoWidthNow && this.width > 0) {
         // If user resized manually, use that width as the hard limit (logical width)
-        wrapWidth = this.width;
+        // Add a 10px buffer to prevent sub-pixel differences from causing accidental wraps
+        wrapWidth = this.width + 10;
       } else {
-        // In auto mode, use a generous width (80% of video) to allow presets to breathe
-        wrapWidth = videoWidth * 0.8;
+        // In auto mode, use a very generous width (5x video) to allow text to grow in one line
+        wrapWidth = videoWidth * 5;
       }
 
       // Sanity check: prevent NaN or 0 width from breaking layout
@@ -1130,7 +1126,7 @@ export class Caption extends BaseClip implements IClip {
         });
       }
 
-      // 5. Dimension Calculation
+      // 5. Dimension Calculation (Logical vs Visual)
       let maxLineWidth = 0;
       let totalHeight = 0;
       lines.forEach((line) => {
@@ -1138,34 +1134,38 @@ export class Caption extends BaseClip implements IClip {
         totalHeight += line.height;
       });
 
-      const contentWidth = maxLineWidth + paddingX * 2;
-      const contentHeight = totalHeight + paddingY * 2;
+      // Logical dimensions (pure text) - these define the SELECTION BOX (the blue box)
+      const logicalContentWidth = maxLineWidth;
+      const logicalContentHeight = totalHeight;
 
       const isAutoWidth =
-        this.width === 0 ||
-        this._lastContentWidth === 0 ||
-        Math.abs(this.width - this._lastContentWidth) < 2;
+        !this._isWidthConstrained &&
+        (this.width === 0 ||
+          this._lastContentWidth === 0 ||
+          Math.abs(this.width - this._lastContentWidth) < 2);
+
       const isAutoHeight =
         this.height === 0 ||
         this._lastContentHeight === 0 ||
         Math.abs(this.height - this._lastContentHeight) < 2;
 
+      // The logical width we will report as the clip's width
+      const finalLogicalWidth = isAutoWidth ? logicalContentWidth : this.width;
+      const finalLogicalHeight = isAutoHeight
+        ? logicalContentHeight
+        : this.height;
+
+      // Visual dimensions (including background bleed) - for RenderTexture size
+      const containerWidth = finalLogicalWidth + paddingX * 2;
+      const containerHeight = finalLogicalHeight + paddingY * 2;
+
+      // The area occupied by the text lines
+      // For alignment logic, 'content' is just the text block.
+      const textBlockHeight = logicalContentHeight;
+
       // Store old values for anchoring BEFORE updating
       const oldWidth = (this as any)._width;
       const oldHeight = (this as any)._height;
-
-      // Use content dimensions for auto-mode, but ensure we respect manual resizing if active.
-      const containerWidth = isAutoWidth
-        ? contentWidth
-        : Math.max(contentWidth, this.width || 0);
-
-      const containerHeight = isAutoHeight
-        ? contentHeight
-        : Math.max(contentHeight, this.height || 0);
-
-      // Save content-only dimensions for next comparison (exactly like TextClip)
-      this._lastContentWidth = contentWidth - paddingX * 2;
-      this._lastContentHeight = contentHeight - paddingY * 2;
 
       // 6. Positioning
       // Apply Vertical Alignment for the block as a whole
@@ -1174,9 +1174,9 @@ export class Caption extends BaseClip implements IClip {
       if (finalVAlign === 'top') {
         startY = paddingY;
       } else if (finalVAlign === 'bottom') {
-        startY = containerHeight - contentHeight + paddingY;
+        startY = containerHeight - textBlockHeight - paddingY;
       } else {
-        startY = (containerHeight - contentHeight) / 2 + paddingY;
+        startY = (containerHeight - textBlockHeight) / 2;
       }
 
       let currentY = startY;
@@ -1206,24 +1206,7 @@ export class Caption extends BaseClip implements IClip {
       });
 
       // 7. Background Graphics
-      // Calculate global offset for the background block based on alignment
-      let bgX = 0;
-      if (this.opts.align === 'center') {
-        bgX = (containerWidth - contentWidth) / 2;
-      } else if (this.opts.align === 'right') {
-        bgX = containerWidth - contentWidth;
-      }
-
-      let bgY = 0;
-      if (finalVAlign === 'top') {
-        bgY = 0;
-      } else if (finalVAlign === 'bottom') {
-        bgY = containerHeight - contentHeight;
-      } else {
-        bgY = (containerHeight - contentHeight) / 2;
-      }
-
-      // Create semi-transparent background graphics for the WHOLE container
+      // Create semi-transparent background graphics for the WHOLE visual area (including bleed)
       const bgGraphics = new Graphics();
       bgGraphics.label = 'containerBackground';
 
@@ -1237,7 +1220,7 @@ export class Caption extends BaseClip implements IClip {
       const alpha = isTransparentBackground ? 0 : 1;
       const cornerRadius = 10;
 
-      bgGraphics.roundRect(bgX, bgY, contentWidth, contentHeight, cornerRadius);
+      bgGraphics.roundRect(0, 0, containerWidth, containerHeight, cornerRadius);
       bgGraphics.fill({ color: bgColor, alpha });
 
       this.pixiTextContainer.addChildAt(bgGraphics, 0);
@@ -1272,18 +1255,17 @@ export class Caption extends BaseClip implements IClip {
         Log.warn('CaptionClip: Could not render captions during refresh', err);
       }
       // 8. Dimension Tracking & Anchoring
-      const newLogicalWidth = containerWidth - paddingX * 2;
-      const newLogicalHeight = containerHeight - paddingY * 2;
 
-      if (this._initialLayoutApplied && oldWidth > 0 && oldHeight > 0) {
-        // If we already have layout, keep the BOTTOM-CENTER stable
-        // (This prevents the 'preset jump' when font sizes change)
-        const dy = containerHeight - oldHeight;
+      if (
+        !this._isWidthConstrained &&
+        this._initialLayoutApplied &&
+        oldWidth > 0 &&
+        oldHeight > 0
+      ) {
+        // ONLY keep the HORIZONTAL center stable if it's an AUTOMATIC change (not manual resize)
+        // This prevents 'fighting' with the transformer during manual resize.
+        // Removing vertical adjustment (dy) allows the caption to grow DOWNWARDS naturally
         const dx = containerWidth - oldWidth;
-
-        if (Math.abs(dy) > 1) {
-          this.top -= dy;
-        }
 
         if (Math.abs(dx) > 1) {
           if (this.opts.align === 'center') {
@@ -1294,13 +1276,18 @@ export class Caption extends BaseClip implements IClip {
         }
       }
 
-      this._meta.width = newLogicalWidth;
-      this._meta.height = newLogicalHeight;
+      this._meta.width = logicalContentWidth;
+      this._meta.height = logicalContentHeight;
       this._meta.duration = Infinity;
 
-      // Update clip dimensions for BaseSprite
-      (this as any)._width = containerWidth;
-      (this as any)._height = containerHeight;
+      // Update clip dimensions for BaseSprite (This is the tight selection box)
+      if (!this._isWidthConstrained) {
+        (this as any)._width = logicalContentWidth;
+      }
+      (this as any)._height = logicalContentHeight;
+
+      this._lastContentWidth = (this as any)._width;
+      this._lastContentHeight = (this as any)._height;
       // We don't automatically update top/left here to allow user positioning,
       // unless it's initial auto-positioning.
       // In TextClip it doesn't update top/left, only width/height.
@@ -1314,13 +1301,8 @@ export class Caption extends BaseClip implements IClip {
         const videoHeight = this.opts.videoHeight;
         const bottomOffset = this.opts.bottomOffset;
 
-        const newTop =
-          videoHeight -
-          (containerHeight - paddingY * 2) -
-          bottomOffset -
-          paddingY;
-        const newLeft =
-          (videoWidth - (containerWidth - paddingX * 2)) / 2 - paddingX;
+        const newTop = videoHeight - containerHeight - bottomOffset;
+        const newLeft = (videoWidth - containerWidth) / 2;
 
         this.top = newTop;
         this.left = newLeft;
@@ -1441,38 +1423,52 @@ export class Caption extends BaseClip implements IClip {
 
   /**
    * Get the PixiJS Texture (RenderTexture) for optimized rendering in Studio
-   * This avoids ImageBitmap → Canvas → Texture conversion
-   *
-   * @returns The RenderTexture containing the rendered caption, or null if not ready
    */
   async getTexture(): Promise<Texture | null> {
     if (this.pixiTextContainer == null || this.renderTexture == null) {
-      console.log(
-        '[CaptionClip] getTexture returning null - container or texture not ready'
-      );
       return null;
     }
 
-    // Get renderer (use external renderer if available)
-    try {
-      const renderer = await this.getRenderer();
+    const renderer = await this.getRenderer();
+    renderer.render({
+      container: this.pixiTextContainer,
+      target: this.renderTexture,
+    });
 
-      // Update caption highlighting based on current time
-      // Note: We need the current time from the Studio, but for now we'll render the current state
-      // The Studio will call updateState separately before calling getTexture
+    // Return the texture as-is. Studio's display logic should handle its size.
+    // However, the texture contains the bleed area.
+    return this.renderTexture;
+  }
 
-      // Render the caption to the render texture
-      renderer.render({
-        container: this.pixiTextContainer,
-        target: this.renderTexture,
-      });
+  override async offscreenRender(
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+    time: number
+  ): Promise<{
+    audio: Float32Array[];
+    done: boolean;
+  }> {
+    const timestamp = time * this.playbackRate;
+    this.animate(timestamp);
+    (this as any)._render(ctx); // Call BaseSprite's transform logic
+    const { width: w, height: h } = this;
+    const { video: imgSource, audio, done } = await this.getFrame(time);
 
-      // RenderTexture extends Texture, so we can return it directly
-      return this.renderTexture;
-    } catch (error) {
-      console.error('[CaptionClip] Error in getTexture:', error);
-      return null;
+    const outAudio = audio ?? [];
+
+    if (done) {
+      return { audio: outAudio, done: true };
     }
+
+    if (imgSource != null) {
+      ctx.save();
+      // Draw the image with BLEED (15px padding on each side)
+      // Since the texture IS ALREADY w+30 x h+30, and it's centered,
+      // we just draw it from -w/2 - 15 to w+30.
+      ctx.drawImage(imgSource, -w / 2 - 15, -h / 2 - 15, w + 30, h + 30);
+      ctx.restore();
+    }
+
+    return { audio: outAudio, done: false };
   }
 
   /**
