@@ -37,7 +37,7 @@ export function parseColor(
 
 export const isTransparent = (color?: any) => color === 'transparent';
 
-export const resolveColor = (color?: string, fallback = 0xffffff) => {
+export const resolveColor = (color?: string | number, fallback = 0xffffff) => {
   if (isTransparent(color)) {
     return { color: fallback, alpha: 0 };
   }

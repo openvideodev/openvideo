@@ -534,8 +534,6 @@ export class SelectionManager {
       // position calculation
       // root is center.
       let newRootX = root.x;
-      const newTop = root.y - newHeight / 2;
-      const newLeft = root.x - finalNewWidth / 2;
 
       const isReflowableTextClip =
         (clip instanceof Text || clip instanceof Caption) &&
@@ -577,10 +575,18 @@ export class SelectionManager {
           root.scale.set(1, 1);
         }
       } else {
-        clip.left = newLeft;
-        clip.top = newTop;
-        clip.width = newWidth;
-        clip.height = newHeight;
+        let logicalWidth = newWidth;
+        let logicalHeight = newHeight;
+
+        if (clip instanceof Caption) {
+          logicalWidth = Math.max(1, newWidth - 30);
+          logicalHeight = Math.max(1, newHeight - 30);
+        }
+
+        clip.left = root.x - logicalWidth / 2;
+        clip.top = root.y - logicalHeight / 2;
+        clip.width = logicalWidth;
+        clip.height = logicalHeight;
 
         const flipFactor = clip.flip == null ? 1 : -1;
         clip.angle = flipFactor * root.angle;
@@ -613,13 +619,22 @@ export class SelectionManager {
         const newHeight =
           Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
 
-        const newLeft = root.x - newWidth / 2;
-        const newTop = root.y - newHeight / 2;
+        let logicalWidth = newWidth;
+        let logicalHeight = newHeight;
+
+        if (clip instanceof Caption) {
+          // Subtract 30px (15px bleed on each side) to get logical dimensions
+          logicalWidth = Math.max(1, newWidth - 30);
+          logicalHeight = Math.max(1, newHeight - 30);
+        }
+
+        const newLeft = root.x - logicalWidth / 2;
+        const newTop = root.y - logicalHeight / 2;
 
         clip.left = newLeft;
         clip.top = newTop;
-        clip.width = newWidth;
-        clip.height = newHeight;
+        clip.width = logicalWidth;
+        clip.height = logicalHeight;
 
         const flipFactor = clip.flip == null ? 1 : -1;
         clip.angle = flipFactor * root.angle;

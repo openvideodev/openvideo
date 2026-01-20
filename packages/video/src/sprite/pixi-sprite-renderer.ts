@@ -1,5 +1,5 @@
 import {
-  Application,
+  type Application,
   Sprite,
   Texture,
   Container,
@@ -249,10 +249,20 @@ export class PixiSpriteRenderer {
     const textureWidth = this.pixiSprite.texture?.width ?? 1;
     const textureHeight = this.pixiSprite.texture?.height ?? 1;
 
+    // For Caption and Text clips, the texture is dynamic and already includes any necessary
+    // padding/background bleed. We should render it at 1:1 scale to avoid squashing the
+    // visual content into the logical selection bounds (which are smaller).
+    const isDynamicText =
+      this.sprite.type === 'Caption' || this.sprite.type === 'Text';
+
     const baseScaleX =
-      width && width !== 0 ? Math.abs(width) / textureWidth : 1;
+      !isDynamicText && width && width !== 0
+        ? Math.abs(width) / textureWidth
+        : 1;
     const baseScaleY =
-      height && height !== 0 ? Math.abs(height) / textureHeight : 1;
+      !isDynamicText && height && height !== 0
+        ? Math.abs(height) / textureHeight
+        : 1;
 
     if (flip === 'horizontal') {
       this.pixiSprite.scale.x = -baseScaleX;
