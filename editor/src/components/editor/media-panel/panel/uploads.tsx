@@ -209,7 +209,7 @@ export default function PanelUploads() {
             duration: file.duration,
           };
         });
-        console.warn("USE THIS LOGIC WHEN NEW CLIPS ARE ADDEDE EVENT")
+        console.warn('USE THIS LOGIC WHEN NEW CLIPS ARE ADDEDE EVENT');
         // // Update timeline clips with new blob URLs if needed
         // if (Object.keys(urlMapping).length > 0 && studio) {
         //   try {
@@ -365,7 +365,7 @@ export default function PanelUploads() {
       </div>
     );
   }
-  console.log({ uploads })
+  console.log({ uploads });
   return (
     <div className="h-full flex flex-col">
       <input
@@ -400,21 +400,21 @@ export default function PanelUploads() {
               <Upload size={14} />
             </Button>
           </div>
-        </div>) : (<div>
+        </div>
+      ) : (
+        <div>
           <div className="flex-1 p-4 flex gap-2">
-
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               variant={'outline'}
-              className='w-full'
+              className="w-full"
             >
               <Upload size={14} /> Upload
             </Button>
           </div>
-        </div>)}
-
-
+        </div>
+      )}
 
       {/* Assets grid */}
       <ScrollArea className="flex-1 px-4">

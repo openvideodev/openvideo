@@ -50,6 +50,6 @@
     "opfs-tools": "^0.7.2",
     "pixi.js": "^8.14.3",
     "wave-resampler": "^1.0.0",
-    "wrapbox": "0.0.1"
+    "wrapbox": "^0.0.2"
   }
 }
