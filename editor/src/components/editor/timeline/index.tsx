@@ -1,7 +1,16 @@
 'use client';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Video, Music, TypeIcon, SparklesIcon, Image } from 'lucide-react';
+import {
+  Video,
+  Music,
+  TypeIcon,
+  SparklesIcon,
+  Image,
+  Ellipsis,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react';
 import { useTimelineStore } from '@/stores/timeline-store';
 import { usePlaybackStore } from '@/stores/playback-store';
 import { useStudioStore } from '@/stores/studio-store';
@@ -25,6 +34,13 @@ import { TimelineToolbar } from './timeline-toolbar';
 import { TimelineCanvas } from './timeline';
 import { TimelineStudioSync } from './timeline-studio-sync';
 import { useEditorHotkeys } from '@/hooks/use-editor-hotkeys';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 export function Timeline() {
   const { tracks, clips, getTotalDuration } = useTimelineStore();
@@ -363,7 +379,7 @@ export function Timeline() {
           className="flex sticky top-0"
         >
           {/* Track Labels Header */}
-          <div className="w-10 shrink-0 bg-panel border-r flex items-center justify-between h-6">
+          <div className="w-16 shrink-0 bg-panel border-r flex items-center justify-between h-6">
             {/* Empty space */}
             <span className="text-sm font-medium text-muted-foreground opacity-0">
               .
@@ -418,7 +434,7 @@ export function Timeline() {
           {tracks.length > 0 && (
             <div
               ref={trackLabelsRef}
-              className="w-10 shrink-0 overflow-y-hidden z-100"
+              className="w-16 shrink-0 overflow-y-hidden z-100"
               data-track-labels
             >
               <div className="flex flex-col">
@@ -442,8 +458,43 @@ export function Timeline() {
                       )}
                       style={{ height: getTrackHeight(track.type as any) }}
                     >
-                      <div className="flex items-center justify-center flex-1 min-w-0">
+                      <div className="flex items-center justify-center flex-1 min-w-0 gap-1">
                         <TrackIcon track={track} />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-4 p-0 hover:bg-stone-700 h-6 w-4"
+                            >
+                              <Ellipsis className="size-3 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" side="right">
+                            <DropdownMenuItem
+                              disabled={index === 0}
+                              onClick={() => {
+                                const { moveTrack } =
+                                  useTimelineStore.getState();
+                                moveTrack(track.id, index - 1);
+                              }}
+                            >
+                              <ArrowUp className="size-4 mr-2" />
+                              Move track up
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={index === tracks.length - 1}
+                              onClick={() => {
+                                const { moveTrack } =
+                                  useTimelineStore.getState();
+                                moveTrack(track.id, index + 1);
+                              }}
+                            >
+                              <ArrowDown className="size-4 mr-2" />
+                              Move track down
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
 
