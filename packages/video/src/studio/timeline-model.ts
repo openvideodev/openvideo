@@ -41,7 +41,10 @@ export class TimelineModel {
   /**
    * Add a new track to the studio
    */
-  addTrack(track: { name: string; type: string; id?: string }): StudioTrack {
+  addTrack(
+    track: { name: string; type: string; id?: string },
+    index?: number
+  ): StudioTrack {
     const newTrack: StudioTrack = {
       id:
         track.id ||
@@ -50,8 +53,16 @@ export class TimelineModel {
       type: track.type,
       clipIds: [],
     };
-    this.tracks.push(newTrack);
-    this.studio.emit('track:added', { track: newTrack });
+
+    if (typeof index === 'number') {
+      this.tracks.splice(index, 0, newTrack);
+    } else {
+      // Default to unshift (front/top) for new tracks if no index provided
+      this.tracks.unshift(newTrack);
+    }
+
+    this.studio.emit('track:added', { track: newTrack, index: index ?? 0 });
+    this.studio.emit('track:order-changed', { tracks: this.tracks });
     return newTrack;
   }
 
@@ -71,6 +82,48 @@ export class TimelineModel {
 
     this.tracks.splice(index, 1);
     this.studio.emit('track:removed', { trackId });
+    this.studio.emit('track:order-changed', { tracks: this.tracks });
+  }
+
+  /**
+   * Move a track to a new index
+   */
+  public async moveTrack(trackId: string, newIndex: number): Promise<void> {
+    const currentIndex = this.tracks.findIndex((t) => t.id === trackId);
+    if (currentIndex === -1) return;
+
+    const track = this.tracks[currentIndex];
+    this.tracks.splice(currentIndex, 1);
+    this.tracks.splice(newIndex, 0, track);
+
+    this.studio.emit('track:order-changed', { tracks: this.tracks });
+    await this.studio.updateFrame(this.studio.currentTime);
+  }
+
+  /**
+   * Set the order of tracks by ID
+   */
+  public async setTrackOrder(trackIds: string[]): Promise<void> {
+    const newTracks: StudioTrack[] = [];
+    const currentTracksMap = new Map(this.tracks.map((t) => [t.id, t]));
+
+    for (const id of trackIds) {
+      const track = currentTracksMap.get(id);
+      if (track) {
+        newTracks.push(track);
+      }
+    }
+
+    // Basic validation: ensure we didn't lose any tracks
+    if (newTracks.length !== this.tracks.length) {
+      console.warn(
+        '[Studio] setTrackOrder: invalid track IDs provided, order not updated fully'
+      );
+    }
+
+    this.tracks = newTracks;
+    this.studio.emit('track:order-changed', { tracks: this.tracks });
+    await this.studio.updateFrame(this.studio.currentTime);
   }
 
   /**
@@ -307,7 +360,8 @@ export class TimelineModel {
           clipIds: [clip.id],
         };
         this.tracks.unshift(newTrack);
-        this.studio.emit('track:added', { track: newTrack });
+        this.studio.emit('track:added', { track: newTrack, index: 0 });
+        this.studio.emit('track:order-changed', { tracks: this.tracks });
       }
     } else {
       // Auto-create new track
@@ -321,7 +375,8 @@ export class TimelineModel {
         clipIds: [clip.id],
       };
       this.tracks.unshift(newTrack);
-      this.studio.emit('track:added', { track: newTrack });
+      this.studio.emit('track:added', { track: newTrack, index: 0 });
+      this.studio.emit('track:order-changed', { tracks: this.tracks });
     }
   }
 

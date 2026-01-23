@@ -18,8 +18,8 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
 
   const MDX = page.data.body;
   const gitConfig = {
-    user: 'username',
-    repo: 'repo',
+    user: 'designcombo',
+    repo: 'combo',
     branch: 'main',
   };
 
@@ -30,9 +30,9 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
         {page.data.description}
       </DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pb-6">
-        <LLMCopyButton markdownUrl={`${page.url}.mdx`} />
+        <LLMCopyButton markdownUrl={`/llms.mdx/docs${page.url}`} />
         <ViewOptions
-          markdownUrl={`${page.url}.mdx`}
+          markdownUrl={`/llms.mdx/docs${page.url}`}
           // update it to match your repo
           githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/docs/content/docs/${page.path}`}
         />

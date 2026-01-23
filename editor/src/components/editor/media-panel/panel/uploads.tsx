@@ -26,6 +26,7 @@ import {
   type StorageStats,
 } from '@/lib/storage/storage-service';
 import type { MediaFile, MediaType } from '@/types/media';
+import { uploadFile } from '@/lib/upload-utils';
 import {
   InputGroup,
   InputGroupAddon,
@@ -195,14 +196,19 @@ export default function PanelUploads() {
           const oldEntry = oldEntries.find(
             (e) => e.id === file.id || e.name === file.name
           );
+
           if (oldEntry?.src && oldEntry.src !== newBlobUrl) {
             urlMapping[oldEntry.src] = newBlobUrl;
           }
 
+          // Prefer R2 URL from previous state if available
+          const isR2Url = oldEntry?.src && !oldEntry.src.startsWith('blob:');
+          const finalUrl = isR2Url ? oldEntry.src! : newBlobUrl;
+
           return {
             id: file.id,
             name: file.name,
-            src: newBlobUrl,
+            src: finalUrl,
             type: file.type,
             width: file.width,
             height: file.height,
@@ -266,18 +272,27 @@ export default function PanelUploads() {
 
     try {
       for (const file of Array.from(files)) {
-        const blobUrl = URL.createObjectURL(file);
         const id = crypto.randomUUID();
         const type = detectFileType(file);
 
-        // Save to OPFS if supported
+        // 1. Upload to R2
+        let uploadResult;
+        try {
+          uploadResult = await uploadFile(file);
+        } catch (error) {
+          console.error('R2 upload failed, falling back to local only:', error);
+        }
+
+        const src = uploadResult?.url || URL.createObjectURL(file);
+
+        // 2. Save to OPFS if supported (for local caching/backup)
         if (storageService.isOPFSSupported()) {
           const mediaFile: MediaFile = {
             id,
             file,
             name: file.name,
             type,
-            url: blobUrl,
+            url: src,
           };
           await storageService.saveMediaFile({
             projectId: PROJECT_ID,
@@ -288,7 +303,7 @@ export default function PanelUploads() {
         newAssets.push({
           id,
           name: file.name,
-          src: blobUrl,
+          src: src,
           type,
           size: file.size,
         });
