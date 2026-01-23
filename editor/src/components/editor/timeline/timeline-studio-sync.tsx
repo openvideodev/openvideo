@@ -135,15 +135,37 @@ export const TimelineStudioSync = ({
       });
     };
 
-    const handleTrackAdded = ({ track }: { track: any }) => {
+    const handleTrackAdded = ({
+      track,
+      index,
+    }: {
+      track: any;
+      index?: number;
+    }) => {
       useTimelineStore.setState((state) => {
         if (state._tracks.find((t) => t.id === track.id)) return state;
+        const updatedTracks = [...state._tracks];
+
+        if (typeof index === 'number') {
+          updatedTracks.splice(index, 0, track);
+        } else {
+          updatedTracks.unshift(track);
+        }
+
         return {
           ...state,
-          _tracks: [...state._tracks, track],
-          tracks: [...state.tracks, track],
+          _tracks: updatedTracks,
+          tracks: updatedTracks,
         };
       });
+    };
+
+    const handleTrackOrderChanged = ({ tracks }: { tracks: any[] }) => {
+      useTimelineStore.setState((state) => ({
+        ...state,
+        _tracks: tracks,
+        tracks: tracks,
+      }));
     };
 
     const handleTrackRemoved = ({ trackId }: { trackId: string }) => {
@@ -325,6 +347,7 @@ export const TimelineStudioSync = ({
     studio.on('clip:updated', handleClipUpdated);
     studio.on('clip:replaced', handleClipReplaced);
     studio.on('track:added', handleTrackAdded as any);
+    studio.on('track:order-changed', handleTrackOrderChanged as any);
     studio.on('track:removed', handleTrackRemoved);
     studio.on('studio:restored', handleStudioRestored as any);
 
@@ -350,6 +373,7 @@ export const TimelineStudioSync = ({
       studio.off('clip:updated', handleClipUpdated);
       studio.off('clip:replaced', handleClipReplaced);
       studio.off('track:added', handleTrackAdded);
+      studio.off('track:order-changed', handleTrackOrderChanged as any);
       studio.off('track:removed', handleTrackRemoved);
       studio.off('studio:restored', handleStudioRestored as any);
 
@@ -663,7 +687,14 @@ export const TimelineStudioSync = ({
     // As long as `studio.setTracks` doesn't emit `track:added` we are good.
 
     // Convert store tracks to studio tracks (Types are identical currently)
-    studio.setTracks(tracks);
+    // Only set if they actually differ to avoid infinite loops if engine emits
+    const studioTracks = studio.getTracks();
+    const storeTracksJson = JSON.stringify(tracks);
+    const studioTracksJson = JSON.stringify(studioTracks);
+
+    if (storeTracksJson !== studioTracksJson) {
+      studio.setTracks(tracks);
+    }
   }, [studio, tracks]); // Depend on `tracks`.
 
   // Sync Selection (Bidirectional)

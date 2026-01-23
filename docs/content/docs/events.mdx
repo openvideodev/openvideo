@@ -86,8 +86,32 @@ studio.on("clip:updated", ({ clip }) => {
 });
 ```
 
-#### `track:added` / `track:removed`
-Emitted when tracks are modified.
+#### `track:added`
+Emitted when a new track is created. The payload includes the track object and its initial index.
+
+```ts
+studio.on("track:added", ({ track, index }) => {
+  console.log(`Track ${track.id} added at position ${index}`);
+});
+```
+
+#### `track:order-changed`
+Emitted whenever the track order is modified (via `moveTrack`, `setTrackOrder`, etc.).
+
+```ts
+studio.on("track:order-changed", ({ tracks }) => {
+  console.log("New track order:", tracks.map(t => t.id));
+});
+```
+
+#### `track:removed`
+Emitted when a track is removed.
+
+```ts
+studio.on("track:removed", ({ trackId }) => {
+  console.log("Track removed:", trackId);
+});
+```
 
 #### `reset`
 Emitted when the studio state is completely reset.

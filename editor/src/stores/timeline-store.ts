@@ -47,7 +47,9 @@ interface TimelineStore {
   getTotalDuration: () => number; // in seconds
 
   // Legacy / Hybrid Support (for now just basics)
-  addTrack: (type: TrackType) => string;
+  addTrack: (type: TrackType, index?: number) => string;
+  moveTrack: (trackId: string, newIndex: number) => void;
+  setTrackOrder: (trackIds: string[]) => void;
   removeTrack: (trackId: string) => void;
   toggleTrackMute: (trackId: string) => void;
 }
@@ -192,7 +194,7 @@ export const useTimelineStore = create<TimelineStore>((set, get) => {
       return maxTime;
     },
 
-    addTrack: (type) => {
+    addTrack: (type, index) => {
       const newTrack: ITimelineTrack = {
         id: generateUUID(),
         name: `${type} Track`,
@@ -200,11 +202,55 @@ export const useTimelineStore = create<TimelineStore>((set, get) => {
         clipIds: [],
         muted: false,
       };
-      set((state) => ({
-        _tracks: [...state._tracks, newTrack],
-        tracks: [...state.tracks, newTrack], // simple sync
-      }));
+      set((state) => {
+        const updatedTracks = [...state._tracks];
+        if (typeof index === 'number') {
+          updatedTracks.splice(index, 0, newTrack);
+        } else {
+          updatedTracks.unshift(newTrack);
+        }
+        return {
+          _tracks: updatedTracks,
+          tracks: updatedTracks,
+        };
+      });
       return newTrack.id;
+    },
+
+    moveTrack: (trackId, newIndex) => {
+      set((state) => {
+        const currentIndex = state._tracks.findIndex((t) => t.id === trackId);
+        if (currentIndex === -1) return state;
+
+        const track = state._tracks[currentIndex];
+        const updatedTracks = [...state._tracks];
+        updatedTracks.splice(currentIndex, 1);
+        updatedTracks.splice(newIndex, 0, track);
+
+        return {
+          _tracks: updatedTracks,
+          tracks: updatedTracks,
+        };
+      });
+    },
+
+    setTrackOrder: (trackIds) => {
+      set((state) => {
+        const currentTracksMap = new Map(state._tracks.map((t) => [t.id, t]));
+        const updatedTracks: ITimelineTrack[] = [];
+
+        for (const id of trackIds) {
+          const track = currentTracksMap.get(id);
+          if (track) {
+            updatedTracks.push(track);
+          }
+        }
+
+        return {
+          _tracks: updatedTracks,
+          tracks: updatedTracks,
+        };
+      });
     },
 
     removeTrack: (trackId) => {

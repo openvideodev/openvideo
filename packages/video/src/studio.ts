@@ -53,7 +53,8 @@ export interface StudioEvents {
   'selection:created': { selected: IClip[] };
   'selection:updated': { selected: IClip[] };
   'selection:cleared': { deselected: IClip[] };
-  'track:added': { track: StudioTrack };
+  'track:added': { track: StudioTrack; index?: number };
+  'track:order-changed': { tracks: StudioTrack[] };
   'track:removed': { trackId: string };
   'clip:added': { clip: IClip; trackId: string };
   'clips:added': { clips: IClip[]; trackId?: string }; // Batch event
@@ -767,12 +768,29 @@ export class Studio extends EventEmitter<StudioEvents> {
   /**
    * Add a new track to the studio
    */
-  addTrack(track: { name: string; type: string; id?: string }): StudioTrack {
-    return this.timeline.addTrack(track);
+  addTrack(
+    track: { name: string; type: string; id?: string },
+    index?: number
+  ): StudioTrack {
+    return this.timeline.addTrack(track, index);
   }
 
   async setTracks(tracks: StudioTrack[]): Promise<void> {
     return this.timeline.setTracks(tracks);
+  }
+
+  /**
+   * Move a track to a new index
+   */
+  public async moveTrack(trackId: string, newIndex: number): Promise<void> {
+    return this.timeline.moveTrack(trackId, newIndex);
+  }
+
+  /**
+   * Set the order of tracks by ID
+   */
+  public async setTrackOrder(trackIds: string[]): Promise<void> {
+    return this.timeline.setTrackOrder(trackIds);
   }
 
   async removeTrack(trackId: string): Promise<void> {

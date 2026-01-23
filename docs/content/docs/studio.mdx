@@ -209,6 +209,14 @@ studio.on('clip:added', ({ clip, trackId }) => {
   console.log('Clip added', clip.id);
 });
 
+studio.on('track:added', ({ track, index }) => {
+  console.log(`Track added at index ${index}:`, track.name);
+});
+
+studio.on('track:order-changed', ({ tracks }) => {
+  console.log('New track order:', tracks.map(t => t.id));
+});
+
 studio.on('currentTime', ({ currentTime }) => {
   // currentTime is in microseconds
   console.log('Current time:', currentTime);
@@ -251,6 +259,40 @@ Trims the selected clips.
 
 ```ts
 await studio.trimSelected(2000000); // Trim 2s
+```
+
+## Track Management
+
+### addTrack()
+
+Explicitly create a new track. You can optionally specify an `index` to control its layering position.
+
+```ts
+const newTrack = studio.addTrack({ name: "Subtitles", type: "Text" }, 0);
+```
+
+### moveTrack()
+
+Move an existing track to a new index.
+
+```ts
+await studio.moveTrack(trackId, 2);
+```
+
+### setTrackOrder()
+
+Reorder all tracks by providing an array of track IDs.
+
+```ts
+await studio.setTrackOrder(["t1", "t2", "t3"]);
+```
+
+### removeTrack()
+
+Remove a track and all its associated clips.
+
+```ts
+await studio.removeTrack(trackId);
 ```
 
 ## Artboard

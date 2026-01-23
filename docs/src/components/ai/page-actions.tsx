@@ -84,8 +84,8 @@ export function ViewOptions({
   const items = useMemo(() => {
     const fullMarkdownUrl =
       typeof window !== 'undefined'
-        ? new URL(markdownUrl, window.location.origin)
-        : 'loading';
+        ? new URL(markdownUrl, window.location.origin).toString()
+        : `https://docs.combo.sh${markdownUrl}`;
     const q = `Read ${fullMarkdownUrl}, I want to ask questions about it.`;
 
     return [
@@ -199,11 +199,14 @@ export function ViewOptions({
         ),
       },
       {
-        title: 'Open in T3 Chat',
-        href: `https://t3.chat/new?${new URLSearchParams({
-          q,
-        })}`,
+        title: 'Join Discord',
+        href: 'https://discord.gg/2ytdyHBu',
         icon: <MessageCircleIcon />,
+      },
+      {
+        title: 'Official Website',
+        href: 'https://combo.sh/',
+        icon: <ExternalLinkIcon />,
       },
     ];
   }, [githubUrl, markdownUrl]);

@@ -37,6 +37,10 @@ await studio.ready;
 
 - `studio.addClip(clip: IClip, trackId?: string)`: Add a clip to the studio.
 - `studio.removeClip(clipId: string)`: Remove a clip by ID.
+- `studio.addTrack(track: StudioTrack, index?: number)`: Create a new track.
+- `studio.moveTrack(trackId: string, newIndex: number)`: Reorder a track.
+- `studio.setTrackOrder(trackIds: string[])`: Set absolute track order.
+- `studio.removeTrack(trackId: string)`: Remove a track and its clips.
 - `studio.play()`: Start playback.
 - `studio.pause()`: Pause playback.
 - `studio.seek(time: number)`: Seek to time (in microseconds).
