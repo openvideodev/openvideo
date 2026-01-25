@@ -107,12 +107,6 @@ export function Timeline() {
 
       // Only process as click if we tracked a mouse down on timeline background
       if (!isMouseDown) {
-        console.log(
-          JSON.stringify({
-            debug_click: 'REJECTED - no mousedown',
-            mouseTracking: mouseTrackingRef.current,
-          })
-        );
         return;
       }
 
@@ -122,59 +116,24 @@ export function Timeline() {
       const deltaTime = e.timeStamp - downTime;
 
       if (deltaX > 5 || deltaY > 5 || deltaTime > 500) {
-        console.log(
-          JSON.stringify({
-            debug_click: 'REJECTED - movement too large',
-            deltaX,
-            deltaY,
-            deltaTime,
-          })
-        );
         return;
       }
 
       // Don't seek if clicking on timeline elements, but still deselect
       if ((e.target as HTMLElement).closest('.timeline-element')) {
-        console.log(
-          JSON.stringify({
-            debug_click: 'REJECTED - clicked timeline element',
-          })
-        );
         return;
       }
 
       // Don't seek if clicking on playhead
       if (playheadRef.current?.contains(e.target as Node)) {
-        console.log(
-          JSON.stringify({
-            debug_click: 'REJECTED - clicked playhead',
-          })
-        );
         return;
       }
 
       // Clear selected elements when clicking empty timeline area
-      console.log(
-        JSON.stringify({
-          debug_click: 'PROCEEDING - clearing elements',
-          clearingSelectedElements: true,
-        })
-      );
 
       // Determine if we're clicking in ruler or tracks area
       const isRulerClick = (e.target as HTMLElement).closest(
         '[data-ruler-area]'
-      );
-
-      console.log(
-        JSON.stringify({
-          debug_click: 'CALCULATING POSITION',
-          isRulerClick,
-          clientX: e.clientX,
-          clientY: e.clientY,
-          target_element: (e.target as HTMLElement).tagName,
-          target_class: (e.target as HTMLElement).className,
-        })
       );
 
       let mouseX: number;
@@ -184,11 +143,6 @@ export function Timeline() {
         // Calculate based on ruler position
         const rulerContent = rulerScrollRef.current;
         if (!rulerContent) {
-          console.log(
-            JSON.stringify({
-              debug_click: 'ERROR - no ruler container found',
-            })
-          );
           return;
         }
         const rect = rulerContent.getBoundingClientRect();

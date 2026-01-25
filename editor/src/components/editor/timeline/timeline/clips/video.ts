@@ -399,9 +399,9 @@ export class Video extends BaseTimelineClip {
           `[Video Filmstrip] MISSING COVERAGE! Desired: ${this.width.toFixed(2)}, Drawn: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], Strategy: ${oneSourceSecWidth >= thumbnailWidth ? 'Zoomed In' : 'Zoomed Out'}`
         );
       } else {
-        console.log(
-          `[Video Filmstrip] OK: ${this.width.toFixed(2)}, Range: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], Strategy: ${oneSourceSecWidth >= thumbnailWidth ? 'Zoomed In' : 'Zoomed Out'}`
-        );
+        // console.log(
+        //   `[Video Filmstrip] OK: ${this.width.toFixed(2)}, Range: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], Strategy: ${oneSourceSecWidth >= thumbnailWidth ? 'Zoomed In' : 'Zoomed Out'}`
+        // );
       }
     }
   }
