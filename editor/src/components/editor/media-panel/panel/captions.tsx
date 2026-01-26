@@ -186,20 +186,24 @@ export default function PanelCaptions() {
   };
 
   function normalizeWordTimings(words: any[]) {
-  let currentTime = 0;
-  return words.map((word, i) => {
-    const duration = word.to - word.from;
-    const newWord = {
-      ...word,
-      from: currentTime,
-      to: currentTime + duration
-    };
-    currentTime += duration;
-    return newWord;
-  });
-}
+    let currentTime = 0;
+    return words.map((word, i) => {
+      const duration = word.to - word.from;
+      const newWord = {
+        ...word,
+        from: currentTime,
+        to: currentTime + duration,
+      };
+      currentTime += duration;
+      return newWord;
+    });
+  }
 
-  const handleSplitCaption = async (id: string, cursorPosition: number, fullText: string) => {
+  const handleSplitCaption = async (
+    id: string,
+    cursorPosition: number,
+    fullText: string
+  ) => {
     if (!studio) return;
 
     const clip = studio.getClipById(id);
@@ -242,7 +246,9 @@ export default function PanelCaptions() {
       .map((w) => w.text)
       .join(' ');
 
-    const clipJson = (clip as any).toJSON ? (clip as any).toJSON() : { ...clip };
+    const clipJson = (clip as any).toJSON
+      ? (clip as any).toJSON()
+      : { ...clip };
     const caption = clipJson.caption || {};
     const words = caption.words || [];
 
@@ -251,7 +257,6 @@ export default function PanelCaptions() {
 
     if (part1Words.length === 0 || part2Words.length === 0) return;
 
-    
     const clip1Json = {
       ...clipJson,
       id: undefined,
@@ -264,14 +269,15 @@ export default function PanelCaptions() {
         from: clipJson.display.from,
         to: part1Words[part1Words.length - 1].to * 1000,
       },
-      duration: part1Words[part1Words.length - 1].to * 1000 - clipJson.display.from,
+      duration:
+        part1Words[part1Words.length - 1].to * 1000 - clipJson.display.from,
     };
-    
+
     const firstWordPart2 = part2Words[0];
     const lastWordPart1 = part1Words[part1Words.length - 1];
 
-    clip1Json.display.to = lastWordPart1.to * 1000; 
-    
+    clip1Json.display.to = lastWordPart1.to * 1000;
+
     const clip2Json = {
       ...clipJson,
       id: undefined,
@@ -284,7 +290,9 @@ export default function PanelCaptions() {
         from: firstWordPart2.from * 1000,
         to: clipJson.display.to,
       },
-      duration: part2Words[part2Words.length - 1].to * 1000 - firstWordPart2.from * 1000,
+      duration:
+        part2Words[part2Words.length - 1].to * 1000 -
+        firstWordPart2.from * 1000,
     };
 
     try {
@@ -309,7 +317,9 @@ export default function PanelCaptions() {
     if (!track) return;
 
     const newWordsText = text.trim().split(/\s+/).filter(Boolean);
-    const clipJson = (clip as any).toJSON ? (clip as any).toJSON() : { ...clip };
+    const clipJson = (clip as any).toJSON
+      ? (clip as any).toJSON()
+      : { ...clip };
     const caption = clipJson.caption || {};
     const oldWords = caption.words || [];
 
@@ -317,7 +327,8 @@ export default function PanelCaptions() {
     let updatedWords;
 
     if (isNewWordAdded) {
-      const totalDurationMs = (clipJson.display.to - clipJson.display.from) / 1000;
+      const totalDurationMs =
+        (clipJson.display.to - clipJson.display.from) / 1000;
       const totalChars = newWordsText.reduce((acc, w) => acc + w.length, 0);
       const durationPerChar = totalChars > 0 ? totalDurationMs / totalChars : 0;
 
@@ -453,7 +464,9 @@ export default function PanelCaptions() {
                         item={item}
                         isActive={item.id === activeCaptionId}
                         onUpdate={(text) => handleUpdateCaption(item.id, text)}
-                        onSplit={(pos, text) => handleSplitCaption(item.id, pos, text)}
+                        onSplit={(pos, text) =>
+                          handleSplitCaption(item.id, pos, text)
+                        }
                         onDelete={() => handleDeleteCaption(item.id)}
                         onSeek={() => handleSeek(item.display.from)}
                       />

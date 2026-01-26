@@ -2,12 +2,20 @@ import { useState } from 'react';
 import { IconShare } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { useStudioStore } from '@/stores/studio-store';
+import { usePanelStore } from '@/stores/panel-store';
 import { Log, type IClip } from '@designcombo/video';
 import { ExportModal } from './export-modal';
 import { LogoIcons } from '../shared/logos';
 import Link from 'next/link';
 import { Icons } from '../shared/icons';
-import { Keyboard, FileJson, FilePlus, Download, Upload } from 'lucide-react';
+import {
+  Keyboard,
+  FileJson,
+  FilePlus,
+  Download,
+  Upload,
+  MessageSquare,
+} from 'lucide-react';
 import { ShortcutsModal } from './shortcuts-modal';
 import { useEffect } from 'react';
 import {
@@ -19,6 +27,7 @@ import {
 
 export default function Header() {
   const { studio } = useStudioStore();
+  const { toggleCopilot, isCopilotVisible } = usePanelStore();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
@@ -213,6 +222,17 @@ export default function Header() {
             onClick={() => setIsShortcutsModalOpen(true)}
           >
             <Keyboard className="size-5" />
+          </Button>
+
+          <Button
+            size={'sm'}
+            variant="outline"
+            onClick={toggleCopilot}
+            className="h-7"
+            title="Toggle Chat Copilot"
+          >
+            <Icons.ai className="size-5" />
+            <span className="hidden md:block">AI Chat</span>
           </Button>
         </div>
         <Link href="https://discord.gg/SCfMrQx8kr" target="_blank">
