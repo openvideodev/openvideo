@@ -931,17 +931,11 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       .map((obj: any) => obj.elementId)
       .filter(Boolean);
 
-    const isSame =
-      clipIds.length === currentIds.length &&
-      clipIds.every((id) => currentIds.includes(id));
+    // Sort to compare arrays regardless of order
+    const sortedClipIds = [...clipIds].sort();
+    const sortedCurrentIds = [...currentIds].sort();
 
-    if (isSame) return;
-
-    this.canvas.discardActiveObject();
-
-    if (clipIds.length === 0) {
-      this.canvas.requestRenderAll();
-      // event will be fired by discardActiveObject -> selection:cleared -> handleSelectionCleared
+    if (JSON.stringify(sortedClipIds) === JSON.stringify(sortedCurrentIds)) {
       return;
     }
 
@@ -951,13 +945,17 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     for (const id of clipIds) {
       const clipObj = this.#clipObjects.get(id);
       if (clipObj) {
+        // Ensure coordinates are fresh before selection to prevent jumping
+        clipObj.setCoords();
         objectsToSelect.push(clipObj);
       }
     }
 
-    if (objectsToSelect.length === 1) {
+    if (objectsToSelect.length === 0) {
+      this.canvas.discardActiveObject();
+    } else if (objectsToSelect.length === 1) {
       this.canvas.setActiveObject(objectsToSelect[0]);
-    } else if (objectsToSelect.length > 1) {
+    } else {
       const activeSelection = new ActiveSelection(objectsToSelect, {
         canvas: this.canvas,
       });
