@@ -185,10 +185,189 @@ export default function PanelCaptions() {
     }
   };
 
-  const handleUpdateCaption = (id: string, text: string) => {
+  function normalizeWordTimings(words: any[]) {
+  let currentTime = 0;
+  return words.map((word, i) => {
+    const duration = word.to - word.from;
+    const newWord = {
+      ...word,
+      from: currentTime,
+      to: currentTime + duration
+    };
+    currentTime += duration;
+    return newWord;
+  });
+}
+
+  const handleSplitCaption = async (id: string, cursorPosition: number, fullText: string) => {
     if (!studio) return;
-    // @ts-expect-error
-    studio.updateClip(id, { text });
+
+    const clip = studio.getClipById(id);
+    if (!clip) return;
+
+    const trackId = studio.findTrackIdByClipId(id);
+    if (!trackId) return;
+
+    const wordsInText: { text: string; start: number; end: number }[] = [];
+    const regex = /\S+/g;
+    let match;
+    while ((match = regex.exec(fullText)) !== null) {
+      wordsInText.push({
+        text: match[0],
+        start: match.index,
+        end: match.index + match[0].length,
+      });
+    }
+
+    let splitWordIndex = -1;
+    for (let i = 0; i < wordsInText.length; i++) {
+      if (cursorPosition <= wordsInText[i].start) {
+        splitWordIndex = i;
+        break;
+      }
+      if (cursorPosition < wordsInText[i].end) {
+        splitWordIndex = i;
+        break;
+      }
+    }
+
+    if (splitWordIndex <= 0) return;
+
+    const part1Text = wordsInText
+      .slice(0, splitWordIndex)
+      .map((w) => w.text)
+      .join(' ');
+    const part2Text = wordsInText
+      .slice(splitWordIndex)
+      .map((w) => w.text)
+      .join(' ');
+
+    const clipJson = (clip as any).toJSON ? (clip as any).toJSON() : { ...clip };
+    const caption = clipJson.caption || {};
+    const words = caption.words || [];
+
+    const part1Words = words.slice(0, splitWordIndex);
+    const part2Words = words.slice(splitWordIndex);
+
+    if (part1Words.length === 0 || part2Words.length === 0) return;
+
+    
+    const clip1Json = {
+      ...clipJson,
+      id: undefined,
+      text: part1Text,
+      caption: {
+        ...caption,
+        words: part1Words,
+      },
+      display: {
+        from: clipJson.display.from,
+        to: part1Words[part1Words.length - 1].to * 1000,
+      },
+      duration: part1Words[part1Words.length - 1].to * 1000 - clipJson.display.from,
+    };
+    
+    const firstWordPart2 = part2Words[0];
+    const lastWordPart1 = part1Words[part1Words.length - 1];
+
+    clip1Json.display.to = lastWordPart1.to * 1000; 
+    
+    const clip2Json = {
+      ...clipJson,
+      id: undefined,
+      text: part2Text,
+      caption: {
+        ...caption,
+        words: normalizeWordTimings(part2Words),
+      },
+      display: {
+        from: firstWordPart2.from * 1000,
+        to: clipJson.display.to,
+      },
+      duration: part2Words[part2Words.length - 1].to * 1000 - firstWordPart2.from * 1000,
+    };
+
+    try {
+      const clip1 = await jsonToClip(clip1Json as any);
+      const clip2 = await jsonToClip(clip2Json as any);
+
+      await studio.addClip([clip1, clip2], { trackId });
+      studio.removeClipById(id);
+    } catch (error) {
+      Log.error('Failed to split caption clip:', error);
+    }
+  };
+
+  const handleUpdateCaption = async (id: string, text: string) => {
+    if (!studio) return;
+
+    const clip = studio.getClipById(id);
+    if (!clip) return;
+
+    const tracks = studio.getTracks();
+    const track = tracks.find((t) => t.clipIds.includes(id));
+    if (!track) return;
+
+    const newWordsText = text.trim().split(/\s+/).filter(Boolean);
+    const clipJson = (clip as any).toJSON ? (clip as any).toJSON() : { ...clip };
+    const caption = clipJson.caption || {};
+    const oldWords = caption.words || [];
+
+    const isNewWordAdded = newWordsText.length > oldWords.length;
+    let updatedWords;
+
+    if (isNewWordAdded) {
+      const totalDurationMs = (clipJson.display.to - clipJson.display.from) / 1000;
+      const totalChars = newWordsText.reduce((acc, w) => acc + w.length, 0);
+      const durationPerChar = totalChars > 0 ? totalDurationMs / totalChars : 0;
+
+      let currentShift = 0;
+      updatedWords = newWordsText.map((wordText, index) => {
+        const wordDuration = wordText.length * durationPerChar;
+        const word = {
+          ...(oldWords[index] || { isKeyWord: false, paragraphIndex: '' }),
+          text: wordText,
+          from: currentShift,
+          to: currentShift + wordDuration,
+        };
+        currentShift += wordDuration;
+        return word;
+      });
+    } else {
+      updatedWords = newWordsText.map((wordText, index) => {
+        if (oldWords[index]) {
+          return {
+            ...oldWords[index],
+            text: wordText,
+          };
+        }
+        return {
+          text: wordText,
+          from: 0,
+          to: 0,
+          isKeyWord: false,
+        };
+      });
+    }
+
+    const newClipJson = {
+      ...clipJson,
+      text,
+      caption: {
+        ...caption,
+        words: updatedWords,
+      },
+      id: undefined,
+    } as any;
+
+    try {
+      const newClip = await jsonToClip(newClipJson);
+
+      await studio.addClip([newClip], { trackId: track.id });
+      studio.removeClipById(id);
+    } catch (error) {
+      Log.error('Failed to update caption clip:', error);
+    }
   };
 
   const handleDeleteCaption = (id: string) => {
@@ -274,6 +453,7 @@ export default function PanelCaptions() {
                         item={item}
                         isActive={item.id === activeCaptionId}
                         onUpdate={(text) => handleUpdateCaption(item.id, text)}
+                        onSplit={(pos, text) => handleSplitCaption(item.id, pos, text)}
                         onDelete={() => handleDeleteCaption(item.id)}
                         onSeek={() => handleSeek(item.display.from)}
                       />
@@ -315,12 +495,14 @@ function CaptionItem({
   item,
   isActive,
   onUpdate,
+  onSplit,
   onDelete,
   onSeek,
 }: {
   item: IClip;
   isActive: boolean;
   onUpdate: (text: string) => void;
+  onSplit: (cursorPosition: number, text: string) => void;
   onDelete: () => void;
   onSeek: () => void;
 }) {
@@ -344,7 +526,8 @@ function CaptionItem({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      textareaRef.current?.blur();
+      const cursorPosition = textareaRef.current?.selectionStart || 0;
+      onSplit(cursorPosition, text);
     }
   };
 
