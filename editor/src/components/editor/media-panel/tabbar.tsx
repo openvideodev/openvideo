@@ -41,9 +41,9 @@ export function TabBar() {
   }, []);
 
   return (
-    <div className="relative flex items-center py-2 px-2 bg-stone-800">
+    <div className="relative flex items-center py-2 px-2 bg-primary/7">
       {showLeftFade && (
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-stone-800 to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-card to-transparent z-10 pointer-events-none" />
       )}
       <div ref={scrollRef} className="overflow-x-auto scrollbar-hidden w-full">
         <div className="flex items-center gap-2 w-fit mx-auto px-4">
@@ -75,7 +75,7 @@ export function TabBar() {
         </div>
       </div>
       {showRightFade && (
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-stone-800 to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-card to-transparent z-10 pointer-events-none" />
       )}
     </div>
   );

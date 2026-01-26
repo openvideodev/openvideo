@@ -294,7 +294,7 @@ export function Timeline() {
   return (
     <div
       className={
-        'h-full flex flex-col transition-colors duration-200 relative bg-panel rounded-sm overflow-hidden'
+        'h-full flex flex-col transition-colors duration-200 relative bg-card rounded-sm overflow-hidden'
       }
       onMouseEnter={() => setIsInTimeline(true)}
       onMouseLeave={() => setIsInTimeline(false)}
@@ -310,7 +310,7 @@ export function Timeline() {
 
       {/* Timeline Container */}
       <div
-        className="flex-1 flex flex-col overflow-hidden relative bg-[#161412]"
+        className="flex-1 flex flex-col overflow-hidden relative bg-[#111111]"
         ref={timelineRef}
       >
         <TimelinePlayhead
@@ -333,7 +333,7 @@ export function Timeline() {
           className="flex sticky top-0"
         >
           {/* Track Labels Header */}
-          <div className="w-16 shrink-0 bg-panel border-r flex items-center justify-between h-6">
+          <div className="w-16 shrink-0 bg-card border-r flex items-center justify-between h-6">
             {/* Empty space */}
             <span className="text-sm font-medium text-muted-foreground opacity-0">
               .
@@ -388,7 +388,7 @@ export function Timeline() {
           {tracks.length > 0 && (
             <div
               ref={trackLabelsRef}
-              className="w-16 shrink-0 overflow-y-hidden z-100"
+              className="w-16 shrink-0 overflow-y-hidden z-10"
               data-track-labels
             >
               <div className="flex flex-col">
@@ -407,9 +407,7 @@ export function Timeline() {
                     )}
 
                     <div
-                      className={cn(
-                        'flex items-center px-3 group bg-stone-800'
-                      )}
+                      className={cn('flex items-center px-3 group bg-input/40')}
                       style={{ height: getTrackHeight(track.type as any) }}
                     >
                       <div className="flex items-center justify-center flex-1 min-w-0 gap-1">
@@ -419,7 +417,7 @@ export function Timeline() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-4 p-0 hover:bg-stone-700 h-6 w-4"
+                              className="size-4 p-0 h-6 w-4"
                             >
                               <Ellipsis className="size-3 text-muted-foreground" />
                             </Button>

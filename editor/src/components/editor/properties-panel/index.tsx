@@ -30,7 +30,7 @@ export function PropertiesPanel({ selectedClips }: { selectedClips: IClip[] }) {
 
   if (selectedClips.length > 1) {
     return (
-      <div className="bg-panel h-full p-4 flex flex-col items-center justify-center gap-3">
+      <div className="bg-card h-full p-4 flex flex-col items-center justify-center gap-3">
         <div className="text-lg font-medium">Group</div>
       </div>
     );

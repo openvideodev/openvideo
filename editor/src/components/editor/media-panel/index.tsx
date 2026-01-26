@@ -71,7 +71,7 @@ export function MediaPanel() {
   }, [activeTab]);
 
   return (
-    <div className="h-full flex flex-col bg-panel rounded-sm overflow-hidden w-full">
+    <div className="h-full flex flex-col bg-card rounded-sm overflow-hidden w-full">
       <div className="flex-none">
         <TabBar />
       </div>

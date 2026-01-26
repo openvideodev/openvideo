@@ -15,11 +15,10 @@ export class Track extends Rect {
     this.trackType = options.trackType;
     this.trackId = options.trackId;
 
-    // Set default styles for track background
     this.set({
-      fill: '#1c1917', // Subtle background
+      fill: '#202020',
       strokeWidth: 0,
-      selectable: false, // Tracks shouldn't be draggable themselves, effectively 'background'
+      selectable: false,
       hoverCursor: 'default',
     });
   }

@@ -28,7 +28,7 @@ export default function Editor() {
   const [isReady, setIsReady] = useState(false);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden space-y-1.5">
       {!isReady && (
         <div className="absolute inset-0 z-50">
           <Loading />
@@ -38,7 +38,7 @@ export default function Editor() {
       <div className="flex-1 min-h-0 min-w-0 px-2 pb-2">
         <ResizablePanelGroup
           direction="horizontal"
-          className="h-full w-full gap-1"
+          className="h-full w-full gap-0"
         >
           {/* Left Column: Media Panel */}
           <ResizablePanel
@@ -46,13 +46,13 @@ export default function Editor() {
             minSize={15}
             maxSize={40}
             onResize={setToolsPanel}
-            className="max-w-7xl rounded-sm relative overflow-visible! bg-panel min-w-0"
+            className="max-w-7xl relative overflow-visible! bg-card min-w-0"
           >
             <MediaPanel />
             <FloatingControl />
           </ResizablePanel>
 
-          <ResizableHandle className="bg-transparent" />
+          <ResizableHandle className="bg-transparent w-1.5" />
 
           {/* Middle Column: Preview + Timeline */}
           <ResizablePanel
@@ -62,7 +62,7 @@ export default function Editor() {
           >
             <ResizablePanelGroup
               direction="vertical"
-              className="h-full w-full gap-1"
+              className="h-full w-full gap-0"
             >
               {/* Preview Panel */}
               <ResizablePanel
@@ -75,7 +75,7 @@ export default function Editor() {
                 <PreviewPanel onReady={() => setIsReady(true)} />
               </ResizablePanel>
 
-              <ResizableHandle className="bg-transparent" />
+              <ResizableHandle className="bg-transparent !h-1.5" />
 
               {/* Timeline Panel */}
               <ResizablePanel

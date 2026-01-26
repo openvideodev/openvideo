@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 export function ChatPanel() {
   return (
-    <div className="flex flex-col h-full bg-panel">
+    <div className="flex flex-col h-full bg-card">
       <div className="rounded-xl h-full p-3 flex flex-col gap-2 shadow-sm">
         <div className="flex gap-2 h-full pt-2">
           <IconPlus className="size-5" />

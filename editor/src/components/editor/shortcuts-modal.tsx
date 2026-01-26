@@ -90,7 +90,7 @@ const SHORTCUTS: ShortcutCategory[] = [
 export function ShortcutsModal({ open, onOpenChange }: ShortcutsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="md:max-w-5xl w-full max-w-5xl border bg-stone-900 p-6 py-8 overflow-hidden">
+      <DialogContent className="md:max-w-5xl w-full max-w-5xl border bg-card p-6 py-8 overflow-hidden">
         <DialogHeader className="px-6">
           <DialogTitle className="text-lg font-semibold">Shortcuts</DialogTitle>
         </DialogHeader>

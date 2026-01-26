@@ -461,7 +461,7 @@ export default function PanelUploads() {
       </ScrollArea>
 
       {/* Storage stats footer */}
-      {storageStats && (
+      {/* {storageStats && (
         <div className="px-4 py-3 border-t border-border/50">
           <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
             <span className="flex items-center gap-1">
@@ -484,7 +484,7 @@ export default function PanelUploads() {
             />
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

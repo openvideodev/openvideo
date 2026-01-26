@@ -33,7 +33,7 @@ export function PreviewPanel({ onReady }: PreviewPanelProps) {
       width: defaultSize.width,
       height: defaultSize.height,
       fps: 30,
-      bgColor: '#1B1917',
+      bgColor: '#171717',
       canvas: previewCanvasRef.current,
       interactivity: true,
       spacing: 20,
@@ -67,7 +67,7 @@ export function PreviewPanel({ onReady }: PreviewPanelProps) {
   }, []);
 
   return (
-    <div className="h-full w-full flex flex-col min-h-0 min-w-0 bg-panel rounded-sm relative">
+    <div className="h-full w-full flex flex-col min-h-0 min-w-0 bg-card rounded-sm relative">
       <Player canvasRef={previewCanvasRef} />
     </div>
   );
