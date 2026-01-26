@@ -1,63 +1,26 @@
-# DesignCombo License
+# License
 
-DesignCombo is a framework-agnostic video editor SDK built on WebCodecs API, designed to make video editing accessible across different web frameworks and platforms.
+This project is licensed under a **dual license**:
 
----
+## Open Source License: GNU AGPL v3
 
-Depending on the type of your legal entity, you are granted permission to use DesignCombo for your project. Individuals and small companies are allowed to use DesignCombo to create videos for free (even commercial), while a company license is required for for-profit organizations of a certain size. This two-tier system was designed to ensure funding for this project while still allowing the source code to be available and the program to be free for most. Read below for the exact terms of use.
+Unless you have a separate commercial license from the copyright holder, the **GNU Affero General Public License v3 (AGPL-3.0)** applies by default.
 
-- [Free License](#free-license)
-- [Company License](#company-license)
+**Key Points:**
+- You are free to use, modify, and distribute this software
+- Network use (SaaS) triggers the obligation to provide the corresponding source code to users interacting with the software over a network
+- Any modifications must also be licensed under AGPL v3
+- See the full license text in [LICENSE-AGPL3.md](LICENSE-AGPL3.md)
 
-## Free License
+## Commercial License
 
-Copyright © 2025 DesignCombo
+For closed-source or commercial use without AGPL obligations, you must obtain a commercial license from the copyright holder.
 
-### Eligibility
-
-You are eligible to use DesignCombo for free if you are:
-
-- an individual
-- a for-profit organization with up to 3 employees
-- a non-profit or not-for-profit organization
-- evaluating whether DesignCombo is a good fit, and are not yet using it in a commercial way
-
-### Allowed use cases
-
-Permission is hereby granted, free of charge, to any person eligible for the "Free License", to use the software non-commercially or commercially for the purpose of creating videos and images and to modify the software to their own liking, for the purpose of fulfilling their custom use case or to contribute bug fixes or improvements back to DesignCombo.
-
-### Disallowed use cases
-
-It is not allowed to copy or modify DesignCombo code for the purpose of selling, renting, licensing, relicensing, or sublicensing your own derivative of DesignCombo.
-
-### Warranty notice
-
-The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the author or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
-
-### Support
-
-Support is provided on a best-we-can-do basis via GitHub Issues and community forums.
-
-## Company License
-
-You are required to obtain a Company License to use DesignCombo if you are not within the group of entities eligible for a Free License. This license will enable you to use DesignCombo for the allowed use cases specified in the Free License, and give you access to prioritized support.
-
-### License Benefits
-
-- Commercial use for organizations with more than 3 employees
-- Priority support and documentation
-- Access to premium features and components
-- Legal protection and indemnification
-- Direct access to the development team
-
-### Pricing
-
-Company licenses are available with flexible pricing based on your organization size and usage requirements. Contact us for custom pricing and enterprise solutions.
-
-### FAQs
-
-Are you not sure whether you need a Company License because of an edge case? Please contact us for clarification on specific use cases and licensing requirements.
+**Contact:**
+- cloud@designcombo.dev
 
 ---
 
-For more information about licensing, pricing, and support options, please visit our website or contact us directly.
+**Copyright (c) 2026 Combo**
+
+For the complete terms and conditions of the GNU AGPL v3 license, please refer to [LICENSE-AGPL3.md](LICENSE-AGPL3.md) or visit <https://www.gnu.org/licenses/agpl-3.0.html>.
