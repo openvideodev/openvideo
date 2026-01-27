@@ -321,7 +321,8 @@ export class Transformer extends Container {
     const pivotWorld = this.toGlobal(pivotLocal);
 
     // Check if we're transforming a Text or Caption (Fabric.js Textbox behavior)
-    const isTextClip = this.opts.clip && this.opts.clip.type === 'Text';
+    const isTextClip =
+      this.opts.clip && (this.opts.clip.type === 'Text' || this.opts.clip.type === 'Caption');
 
     if (isTextClip) {
       // For Text: Only adjust container width, text reflows naturally

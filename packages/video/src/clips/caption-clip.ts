@@ -204,6 +204,39 @@ export class Caption extends BaseClip implements IClip {
     return { ...this._meta };
   }
 
+  // Override width/height to trigger refreshCaptions when resized by transformer
+  // Use getters from BaseSprite but override setters
+  override get width(): number {
+    return (this as any)._width;
+  }
+
+  override set width(v: number) {
+    if (this.width === v) return;
+    (this as any)._width = v;
+    // Don't refresh if we are currently inside refreshCaptions (to avoid recursion)
+    if (!this.isRefreshing) {
+      this.refreshCaptions().then(() => {
+        this.emit('propsChange', { width: v } as any);
+      });
+    }
+  }
+
+  override get height(): number {
+    return (this as any)._height;
+  }
+
+  override set height(v: number) {
+    if (this.height === v) return;
+    (this as any)._height = v;
+    if (!this.isRefreshing) {
+      this.refreshCaptions().then(() => {
+        this.emit('propsChange', { height: v } as any);
+      });
+    }
+  }
+
+  private isRefreshing = false;
+
   /**
    * Caption text content (hybrid JSON structure)
    */
@@ -625,6 +658,9 @@ export class Caption extends BaseClip implements IClip {
       this.opts.letterSpacing = opts.letterSpacing;
     if (opts.lineHeight !== undefined) this.opts.lineHeight = opts.lineHeight;
     if (opts.textCase !== undefined) this.opts.textCase = opts.textCase;
+    if (opts.wordWrap !== undefined) this.opts.wordWrap = opts.wordWrap;
+    if (opts.wordWrapWidth !== undefined)
+      this.opts.wordWrapWidth = opts.wordWrapWidth;
 
     // Handle nested colors in opts.caption.colors
     if (opts.caption?.colors) {
@@ -678,8 +714,11 @@ export class Caption extends BaseClip implements IClip {
       styleOptions.fill = fillColor ?? 0xffffff;
     }
 
-    // Handle stroke
-    if (opts.stroke !== undefined || opts.strokeWidth !== undefined) {
+    // Handle stroke - ALWAYS preserve from originalOpts if it exists
+    // This ensures styles are not lost when only wordWrapWidth is passed (during resize)
+    const hasStroke = opts.stroke !== undefined || opts.strokeWidth !== undefined || 
+                      this.originalOpts.stroke || this.originalOpts.strokeWidth;
+    if (hasStroke) {
       if (
         this.originalOpts.stroke &&
         typeof this.originalOpts.stroke === 'object' &&
@@ -707,7 +746,7 @@ export class Caption extends BaseClip implements IClip {
       }
     }
 
-    // Handle dropShadow
+    // Handle dropShadow - ALWAYS preserve from originalOpts if it exists
     const dropShadow = opts.dropShadow ?? this.originalOpts.dropShadow;
     if (dropShadow) {
       const shadowColor = parseColor(dropShadow.color);
@@ -730,152 +769,207 @@ export class Caption extends BaseClip implements IClip {
   }
 
   private async refreshCaptions() {
-    if (!this.pixiTextContainer) {
-      this.pixiTextContainer = new Container();
-    } else {
-      // Clear existing children
-      this.pixiTextContainer.removeChildren();
-    }
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
 
-    const style = this.textStyle;
-
-    let currentX = 0;
-    let maxHeight = 0;
-    let totalWidth = 0;
-
-    const textCase = this.opts.textCase;
-    const metrics = CanvasTextMetrics.measureText(' ', this.textStyle);
-
-    this.wordTexts = this.opts.words.map((word) => {
-      let textToRender = word.text;
-
-      // Handle empty words by creating an empty container to keep indices aligned
-      if (!textToRender || textToRender.trim() === '') {
-        const empty = new Container();
-        empty.label = 'emptyWord';
-        this.pixiTextContainer!.addChild(empty);
-        return empty as any;
+    try {
+      // First, destroy all existing SplitBitmapText elements to free memory
+      // This is critical when resizing the bounding box - we need to delete
+      // old word elements and recreate them with the new layout
+      if (this.wordTexts.length > 0) {
+        for (const wordText of this.wordTexts) {
+          if (wordText != null && !(wordText as any).destroyed) {
+            try {
+              wordText.destroy({ children: true });
+            } catch (err) {
+              // Ignore errors during destroy
+            }
+          }
+        }
+        this.wordTexts = [];
       }
 
-      if (textCase === 'uppercase') {
-        textToRender = textToRender.toUpperCase();
-      } else if (textCase === 'lowercase') {
-        textToRender = textToRender.toLowerCase();
-      } else if (textCase === 'title') {
-        textToRender = textToRender.replace(
-          /\w\S*/g,
-          (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
-        );
+      if (!this.pixiTextContainer) {
+        this.pixiTextContainer = new Container();
+      } else {
+        // Clear existing children (background graphics, etc.)
+        this.pixiTextContainer.removeChildren();
       }
 
-      const wordText = new SplitBitmapText({
-        text: textToRender,
-        style,
+      const style = this.textStyle;
+      const textCase = this.opts.textCase;
+      const padding = 15;
+
+      // Determine wrap width: use explicit wordWrapWidth if set, otherwise fallback to current width
+      // IMPORTANT: The wordWrapWidth from updateStyle takes priority for resize operations
+      // Subtract padding to ensure content fits within the bounding box
+      let wrapWidth: number;
+      if (this.opts.wordWrapWidth && this.opts.wordWrapWidth > 0) {
+        wrapWidth = this.opts.wordWrapWidth - padding * 2;
+      } else if (this.width > 0) {
+        wrapWidth = this.width - padding * 2;
+      } else {
+        wrapWidth = (this.opts.videoWidth || 1280) * 0.8;
+      }
+
+      // Ensure wrapWidth is at least a minimum value to prevent negative or zero width
+      wrapWidth = Math.max(wrapWidth, 50);
+
+      const metrics = CanvasTextMetrics.measureText(' ', this.textStyle);
+      const spaceWidth = metrics.width;
+
+      const lines: Array<{
+        words: any[];
+        width: number;
+        height: number;
+      }> = [];
+
+      let currentLine: {
+        words: Array<{ wordText: SplitBitmapText; width: number; height: number }>;
+        width: number;
+        height: number;
+      } = { words: [], width: 0, height: 0 };
+
+      this.wordTexts = this.opts.words.map((word) => {
+        let textToRender = word.text;
+
+        // Handle empty words by creating an empty container to keep indices aligned
+        if (!textToRender || textToRender.trim() === '') {
+          const empty = new Container();
+          empty.label = 'emptyWord';
+          return empty as any;
+        }
+
+        if (textCase === 'uppercase') {
+          textToRender = textToRender.toUpperCase();
+        } else if (textCase === 'lowercase') {
+          textToRender = textToRender.toLowerCase();
+        } else if (textCase === 'title') {
+          textToRender = textToRender.replace(
+            /\w\S*/g,
+            (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+          );
+        }
+
+        const wordText = new SplitBitmapText({
+          text: textToRender,
+          style,
+        });
+
+        const bounds = wordText.getLocalBounds();
+        const wordWidth = Math.ceil(bounds.width || wordText.width);
+        const wordHeight = Math.ceil(bounds.height || wordText.height);
+
+        // If adding this word exceeds wrapWidth, start new line
+        if (
+          currentLine.width + wordWidth > wrapWidth &&
+          currentLine.words.length > 0
+        ) {
+          lines.push(currentLine);
+          currentLine = { words: [], width: 0, height: 0 };
+        }
+
+        currentLine.words.push({ wordText, width: wordWidth, height: wordHeight });
+        currentLine.width += wordWidth + spaceWidth;
+        currentLine.height = Math.max(currentLine.height, wordHeight);
+
+        return wordText;
       });
 
-      wordText.x = currentX;
-      wordText.y = 0;
+      if (currentLine.words.length > 0) {
+        lines.push(currentLine);
+      }
 
-      const bounds = wordText.getLocalBounds();
-      const wordWidth = Math.ceil(bounds.width || wordText.width);
-      const wordHeight = Math.ceil(bounds.height || wordText.height);
+      // Now position the words
+      let currentY = padding;
+      let actualMaxLineWidth = 0;
+      const lineHeightMultiplier = this.opts.lineHeight || 1.2;
 
-      maxHeight = Math.max(maxHeight, wordHeight);
+      lines.forEach((line) => {
+        const actualLineWidth = line.width - spaceWidth;
+        actualMaxLineWidth = Math.max(actualMaxLineWidth, actualLineWidth);
 
-      currentX += wordWidth + metrics.width;
-      totalWidth = currentX - metrics.width;
+        let x = padding;
+        // Handle alignment within the wrapWidth
+        if (this.opts.align === 'center') {
+          x = padding + (wrapWidth - actualLineWidth) / 2;
+        } else if (this.opts.align === 'right') {
+          x = padding + (wrapWidth - actualLineWidth);
+        }
 
-      this.pixiTextContainer!.addChild(wordText);
+        line.words.forEach((wObj) => {
+          const wordText = wObj.wordText;
+          wordText.x = x;
+          wordText.y = currentY;
 
-      const initialColor = parseColor(this.opts.fill);
-      wordText.tint = initialColor ?? 0xffffff;
+          x += wObj.width + spaceWidth;
+          this.pixiTextContainer!.addChild(wordText);
 
-      return wordText;
-    });
+          const initialColor = parseColor(this.opts.fill);
+          wordText.tint = initialColor ?? 0xffffff;
+        });
 
-    const width = totalWidth;
-    const height = maxHeight;
+        currentY += line.height * lineHeightMultiplier;
+      });
 
-    // Create semi-transparent background container
-    const bgGraphics = new Graphics();
-    bgGraphics.label = 'containerBackground';
+      const finalWidth = wrapWidth + padding * 2;
+      const finalHeight = currentY + padding;
 
-    const isTransparentBackground =
-      this.opts.background === 'transparent' || !this.opts.background;
+      // Create semi-transparent background container
+      const bgGraphics = new Graphics();
+      bgGraphics.label = 'containerBackground';
 
-    const bgColor = isTransparentBackground
-      ? 0x000000
-      : parseColor(this.opts.background);
+      const isTransparentBackground =
+        this.opts.background === 'transparent' || !this.opts.background;
 
-    const alpha = isTransparentBackground ? 0 : 1;
-    const padding = 15;
-    const cornerRadius = 10;
+      const bgColor = isTransparentBackground
+        ? 0x000000
+        : parseColor(this.opts.background);
 
-    bgGraphics.roundRect(
-      0,
-      0,
-      width + padding * 2,
-      height + padding * 2,
-      cornerRadius
-    );
-    bgGraphics.fill({ color: bgColor, alpha });
+      const alpha = isTransparentBackground ? 0 : 1;
+      const cornerRadius = 10;
 
-    this.wordTexts.forEach((w) => {
-      this.extraPadding = 0;
-      w.pivot.y = 0;
-      w.pivot.x = 0;
-      w.y = padding - this.extraPadding;
+      bgGraphics.roundRect(0, 0, finalWidth, finalHeight, cornerRadius);
+      bgGraphics.fill({ color: bgColor, alpha });
 
-      w.x += padding;
-    });
+      this.pixiTextContainer!.addChildAt(bgGraphics, 0);
 
-    this.pixiTextContainer.addChildAt(bgGraphics, 0);
+      // Reuse or recreate RenderTexture
+      if (this.renderTexture) {
+        this.renderTexture.resize(finalWidth, finalHeight);
+      } else {
+        this.renderTexture = RenderTexture.create({
+          width: finalWidth,
+          height: finalHeight,
+        });
+      }
 
-    const finalWidth = width + padding * 2;
-    const finalHeight = height + padding * 2;
 
-    // Reuse or recreate RenderTexture
-    if (this.renderTexture) {
-      this.renderTexture.resize(finalWidth, finalHeight);
-    } else {
-      this.renderTexture = RenderTexture.create({
+      // CRITICAL: Render content to the texture BEFORE updating clip dimensions.
+      try {
+        const renderer = await this.getRenderer();
+        renderer.render({
+          container: this.pixiTextContainer,
+          target: this.renderTexture,
+        });
+      } catch (err) {
+        Log.warn('CaptionClip: Could not render captions during refresh', err);
+      }
+
+      this._meta.width = finalWidth;
+      this._meta.height = finalHeight;
+      this._meta.duration = Infinity;
+
+
+      // Use atomic update to avoid multiple propsChange events and redundant renders
+      // Note: Do NOT overwrite wordWrapWidth here - it should retain the value set during resize
+      this.update({
         width: finalWidth,
         height: finalHeight,
-      });
+      } as any);
+    } finally {
+      this.isRefreshing = false;
     }
-
-    // CRITICAL: Render content to the texture BEFORE updating clip dimensions.
-    // This ensures that when PixiSpriteRenderer updates, it uses the correct texture size for scaling.
-    try {
-      const renderer = await this.getRenderer();
-      renderer.render({
-        container: this.pixiTextContainer,
-        target: this.renderTexture,
-      });
-    } catch (err) {
-      Log.warn('CaptionClip: Could not render captions during refresh', err);
-    }
-
-    this._meta.width = finalWidth;
-    this._meta.height = finalHeight;
-    this._meta.duration = Infinity;
-
-    const videoWidth = this.opts.videoWidth;
-    const videoHeight = this.opts.videoHeight;
-    const bottomOffset = this.opts.bottomOffset;
-
-    // Calculate new position
-    const newTop = videoHeight - finalHeight - bottomOffset;
-    const newLeft = (videoWidth - finalWidth) / 2;
-
-    // Always sync width and height with content to prevent stretching
-    // Use atomic update to avoid multiple propsChange events and redundant renders
-    this.update({
-      width: finalWidth,
-      height: finalHeight,
-      top: newTop,
-      left: newLeft,
-    } as any);
   }
 
   private lastLoggedTime = -1;
