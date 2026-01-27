@@ -34,6 +34,7 @@ import { TimelineToolbar } from './timeline-toolbar';
 import { TimelineCanvas } from './timeline';
 import { TimelineStudioSync } from './timeline-studio-sync';
 import { useEditorHotkeys } from '@/hooks/use-editor-hotkeys';
+import { TimelineContextMenu } from './timeline-context-menu';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -468,7 +469,9 @@ export function Timeline() {
 
           {/* Timeline Tracks Content */}
           <div className="flex-1 relative overflow-hidden">
-            <div id="timeline-canvas" className="w-full h-full" />
+            <TimelineContextMenu timelineCanvas={timelineCanvasRef.current}>
+              <div id="timeline-canvas" className="w-full h-full" />
+            </TimelineContextMenu>
           </div>
         </div>
       </div>

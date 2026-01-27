@@ -107,9 +107,38 @@ export function StudioContextMenu({
     });
   };
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!studio || !studio.pixiApp) return;
+
+    // Get the canvas element to calculate relative position
+    const canvas = studio.pixiApp.canvas || studio.pixiApp.view;
+    if (!canvas) return;
+
+    const rect = (canvas as HTMLCanvasElement).getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Use selection manager to find clip at this point
+    const clip = studio.selection.getTopmostClipAtPoint({ x, y });
+
+    if (clip) {
+      const currentSelection = studio.getSelectedClips();
+      // If the clip is not already selected, select only this clip
+      if (!currentSelection.find((c) => c.id === clip.id)) {
+        studio.selection.selectClip(clip);
+      }
+    } else {
+      // If no clip found and we right-clicked empty space, clear selection
+      studio.selection.clear();
+    }
+  };
+
   return (
     <ContextMenu>
-      <ContextMenuTrigger className="h-full w-full">
+      <ContextMenuTrigger
+        onContextMenu={handleContextMenu}
+        className="h-full w-full"
+      >
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent className="w-64">
