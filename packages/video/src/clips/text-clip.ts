@@ -1,11 +1,13 @@
 import {
   type Application,
-  Text as PixiText,
+  SplitBitmapText,
   TextStyle,
+  type LineJoin,
   RenderTexture,
   Color,
   FillGradient,
   type Texture,
+  Container,
   Graphics,
   CanvasTextMetrics,
 } from 'pixi.js';
@@ -313,8 +315,10 @@ export class Text extends BaseClip {
     this.updateStyle({ textCase: v });
   }
 
-  private pixiText: PixiText | null = null;
+  private pixiTextContainer: Container | null = null;
+  private wordTexts: SplitBitmapText[] = [];
   private textStyle: TextStyle;
+  private textStyleBase: TextStyle;
   private renderTexture: RenderTexture | null = null;
   // External renderer (preferred) - provided via constructor or setRenderer()
   // If not provided, Text will create its own minimal renderer as fallback
@@ -354,10 +358,14 @@ export class Text extends BaseClip {
     // Create PixiJS TextStyle from options
     // Build style object conditionally to avoid passing undefined values
     const styleOptions = this.createStyleFromOpts(opts);
+    const {wordWrap, wordWrapWidth,lineHeight,letterSpacing,fill, ...rest}=styleOptions
+
 
     const style = new TextStyle(styleOptions);
+    const styleBase = new TextStyle(rest)
 
     this.textStyle = style;
+    this.textStyleBase = styleBase;
 
     // Initialize Pixi Text to measure dimensions
     // Initialize Pixi Text to measure dimensions
@@ -405,7 +413,7 @@ export class Text extends BaseClip {
    * @returns The RenderTexture containing the rendered text, or null if not ready
    */
   async getTexture(): Promise<Texture | null> {
-    if (this.pixiText == null || this.renderTexture == null) {
+    if (this.pixiTextContainer == null || this.renderTexture == null) {
       return null;
     }
 
@@ -414,7 +422,7 @@ export class Text extends BaseClip {
 
     // Render the text to the render texture
     renderer.render({
-      container: this.pixiText,
+      container: this.pixiTextContainer,
       target: this.renderTexture,
     });
 
@@ -428,7 +436,7 @@ export class Text extends BaseClip {
   }> {
     await this.ready;
 
-    if (this.pixiText == null || this.renderTexture == null) {
+    if (this.pixiTextContainer == null || this.renderTexture == null) {
       throw new Error('Text not initialized');
     }
 
@@ -443,9 +451,8 @@ export class Text extends BaseClip {
     const renderer = await this.getRenderer();
 
     // Render Pixi Text to render texture
-    // PixiJS v8.0.0+ API: use options object instead of separate arguments
     renderer.render({
-      container: this.pixiText,
+      container: this.pixiTextContainer,
       target: this.renderTexture,
     });
 
@@ -660,10 +667,12 @@ export class Text extends BaseClip {
 
     // 2. Create new style options
     const styleOptions = this.createStyleFromOpts(this.originalOpts);
-
+    const {wordWrap, wordWrapWidth,lineHeight,letterSpacing,fill, ...rest}=styleOptions
+    const styleBase = new TextStyle(rest)
     // 3. Update TextStyle
     const style = new TextStyle(styleOptions);
     this.textStyle = style;
+    this.textStyleBase = styleBase;
 
     // 4. Refresh text and texture
     await this.refreshText();
@@ -675,6 +684,7 @@ export class Text extends BaseClip {
    */
   private async refreshText(): Promise<void> {
     const style = this.textStyle;
+    const styleBase = this.textStyleBase;
 
     let textToRender = this.text;
     const textCase = this.originalOpts.textCase;
@@ -690,155 +700,172 @@ export class Text extends BaseClip {
       );
     }
 
-    // Reuse Pixi Text object to avoid resource churn and potential v8 sync issues
-    if (!this.pixiText) {
-      this.pixiText = new PixiText({ text: textToRender, style });
+    if (!this.pixiTextContainer) {
+      this.pixiTextContainer = new Container();
     } else {
-      this.pixiText.text = textToRender;
-      this.pixiText.style = style;
-      // Remove old decoration graphics
-      this.pixiText.children.forEach((child) => {
-        if (child instanceof Graphics) {
-          child.destroy();
-        }
+      this.pixiTextContainer.removeChildren();
+    }
+
+    // Split text into words for SplitBitmapText
+    const words = textToRender.split(/\s+/).filter((v) => v.length > 0);
+    
+    // Cleanup old word texts
+    this.wordTexts.forEach(w => w.destroy());
+    this.wordTexts = words.map(wordStr => {
+      const wordText = new SplitBitmapText({
+        text: wordStr,
+        style: this.textStyle,
       });
-      this.pixiText.removeChildren();
+      this.pixiTextContainer!.addChild(wordText);
+      return wordText;
+    });
+
+    // 4. Calculate Layout (Lines) - mostly following CaptionClip logic
+    const decoration = this.originalOpts.textDecoration || (this.originalOpts as any).verticalAlign;
+    const lineHeightMultiplier = this.originalOpts.lineHeight ?? 1;
+    const fontSize = style.fontSize ?? 40;
+    const lineHeight = fontSize * lineHeightMultiplier;
+
+    // Heuristics for space width
+    const metrics = CanvasTextMetrics.measureText(' ', styleBase as TextStyle);
+    
+    const tempSpace = new SplitBitmapText({
+      text: ' ',
+      style: this.textStyleBase,
+    });
+    const spaceWidth = Math.ceil(
+      tempSpace.getLocalBounds().width || tempSpace.width || metrics.width
+    );
+    tempSpace.destroy();
+
+    const wrapWidth = (style.wordWrap && style.wordWrapWidth > 0) ? style.wordWrapWidth : 1e5;
+
+    const lines: { words: SplitBitmapText[], width: number, height: number }[] = [];
+    let currentLine: SplitBitmapText[] = [];
+    let currentLineWidth = 0;
+    let currentLineHeight = 0;
+
+    this.wordTexts.forEach((wordText) => {
+      const bounds = wordText.getLocalBounds();
+      const wordWidth = Math.ceil(bounds.width || wordText.width);
+      const wordHeight = Math.ceil(bounds.height || wordText.height);
+
+      const projectedWidth = currentLineWidth + (currentLineWidth > 0 ? spaceWidth : 0) + wordWidth;
+
+      if (projectedWidth <= wrapWidth || currentLine.length === 0) {
+        currentLine.push(wordText);
+        currentLineWidth = projectedWidth;
+        currentLineHeight = Math.max(currentLineHeight, wordHeight);
+      } else {
+        if (currentLine.length > 0) {
+          lines.push({
+            words: currentLine,
+            width: currentLineWidth,
+            height: Math.max(currentLineHeight, lineHeight)
+          });
+        }
+        currentLine = [wordText];
+        currentLineWidth = wordWidth;
+        currentLineHeight = wordHeight;
+      }
+    });
+
+    if (currentLine.length > 0) {
+      lines.push({
+        words: currentLine,
+        width: currentLineWidth,
+        height: Math.max(currentLineHeight, lineHeight)
+      });
     }
 
-    const decoration =
-      this.originalOpts.textDecoration ||
-      (this.originalOpts as any).verticalAlign;
-    if (
-      decoration &&
-      decoration !== 'none' &&
-      ['underline', 'overline', 'strikethrough', 'line-through'].includes(
-        decoration
-      )
-    ) {
-      const finalDecoration =
-        decoration === 'strikethrough' ? 'line-through' : decoration;
-      const metrics = CanvasTextMetrics.measureText(
-        textToRender,
-        style as TextStyle
-      );
-      const fontSize = style.fontSize ?? 40;
-      const lineThickness = Math.max(1, (fontSize as number) / 12);
+    // 5. Dimension Calculation
+    let maxLineWidth = 0;
+    let totalHeight = 0;
+    lines.forEach(line => {
+      maxLineWidth = Math.max(maxLineWidth, line.width);
+      totalHeight += line.height;
+    });
 
-      // Determine Line Color
-      let lineColor = 0xffffff;
-      if (typeof style.fill === 'number') {
-        lineColor = style.fill;
-      } else if (
-        style.fill &&
-        typeof style.fill === 'object' &&
-        'fill' in style.fill
-      ) {
-        // Default to white for gradients/patterns for now
-        lineColor = 0xffffff;
-      }
+    const textWidth = maxLineWidth;
+    const textHeight = totalHeight;
 
-      const graphics = new Graphics();
-      // Reset graphics to ensure clean state if reused (though we create new)
-
-      const lineHeight = style.lineHeight ?? metrics.lineHeight;
-
-      // Calculate total height to determine vertical start?
-      // Pixi Text draws from top-left (0,0).
-      // Lines are stacked.
-      // We need to iterate lines.
-
-      for (let i = 0; i < metrics.lines.length; i++) {
-        const lineWidth = metrics.lineWidths[i];
-
-        // Calculate X Position based on Alignment
-        let lineX = 0;
-        if (style.align === 'center') {
-          lineX = (metrics.maxLineWidth - lineWidth) / 2;
-        } else if (style.align === 'right') {
-          lineX = metrics.maxLineWidth - lineWidth;
-        }
-
-        // Calculate Y Position for this line
-        // Each line starts at i * lineHeight
-        const currentLineTop = i * lineHeight;
-
-        let yOffset = 0;
-        if (finalDecoration === 'underline') {
-          // Position near the bottom of the line box
-          // Using typical font metrics, underline is usually slightly above descent?
-          // Simple approx: lineHeight * 0.9 or just lineHeight.
-          yOffset = lineHeight;
-        } else if (finalDecoration === 'line-through') {
-          // Middle of the line
-          yOffset = lineHeight / 2;
-        } else if (finalDecoration === 'overline') {
-          // Top of the line
-          yOffset = 0;
-        }
-
-        const yPos = currentLineTop + yOffset;
-        // Draw the line for th is specific text line
-        graphics.rect(lineX, yPos, lineWidth, lineThickness);
-        graphics.fill(lineColor);
-      }
-
-      this.pixiText.addChild(graphics);
-    }
-
-    // Measure text dimensions (getLocalBounds works without a renderer)
-    const bounds = this.pixiText.getLocalBounds();
-
-    // Calculate content width: if wrapping is on, use the larger of wrap width or text width
-    const textWidth = Math.ceil(bounds.width || this.pixiText.width || 1);
-    const textHeight = Math.ceil(bounds.height || this.pixiText.height || 1);
-
-    // Support for alignment within container:
-    // 1. If we have a manually set width/height (from editor interaction), respect it
-    // 2. Otherwise, use content size
     let contentWidth = textWidth;
     if (style.wordWrap && style.wordWrapWidth > 0) {
       contentWidth = Math.max(contentWidth, style.wordWrapWidth);
     }
     const contentHeight = textHeight;
 
-    // Detect if we are in "Auto" mode (container matches last content size)
-    // If we are in Auto mode, we allow the container to shrink to match the content.
-    // If the user manually resized it to be larger, we keep it as a minimum.
-    const isAutoWidth =
-      this.width === 0 || Math.abs(this.width - this._lastContentWidth) < 0.1;
-    const isAutoHeight =
-      this.height === 0 ||
-      Math.abs(this.height - this._lastContentHeight) < 0.1;
+    const isAutoWidth = this.width === 0 || Math.abs(this.width - this._lastContentWidth) < 0.1;
+    const isAutoHeight = this.height === 0 || Math.abs(this.height - this._lastContentHeight) < 0.1;
 
-    const containerWidth = isAutoWidth
-      ? contentWidth
-      : Math.max(contentWidth, this.width || 0);
-    const containerHeight = isAutoHeight
-      ? contentHeight
-      : Math.max(contentHeight, this.height || 0);
+    const containerWidth = isAutoWidth ? contentWidth : Math.max(contentWidth, this.width || 0);
+    const containerHeight = isAutoHeight ? contentHeight : Math.max(contentHeight, this.height || 0);
 
-    // Save content-only dimensions for next comparison
     this._lastContentWidth = contentWidth;
     this._lastContentHeight = contentHeight;
 
-    // Apply Horizontal Alignment
-    const finalAlign = this.textAlign;
-    if (finalAlign === 'center') {
-      this.pixiText.x = (containerWidth - textWidth) / 2;
-    } else if (finalAlign === 'right') {
-      this.pixiText.x = containerWidth - textWidth;
-    } else {
-      this.pixiText.x = 0;
-    }
-
-    // Apply Vertical Alignment
+    // 6. Positioning words within the container
+    let startY = 0;
     const finalVAlign = (this.originalOpts as any).verticalAlign || 'top';
     if (finalVAlign === 'center') {
-      this.pixiText.y = (containerHeight - textHeight) / 2;
+      startY = (containerHeight - textHeight) / 2;
     } else if (finalVAlign === 'bottom') {
-      this.pixiText.y = containerHeight - textHeight;
-    } else {
-      this.pixiText.y = 0;
+      startY = containerHeight - textHeight;
+    }
+
+    let currentY = startY;
+    const graphics = new Graphics();
+    let hasDecoration = false;
+
+    lines.forEach(line => {
+      let currentX = 0;
+      const finalAlign = this.textAlign;
+      if (finalAlign === 'center') {
+        currentX = (containerWidth - line.width) / 2;
+      } else if (finalAlign === 'right') {
+        currentX = containerWidth - line.width;
+      }
+
+      const lineXStart = currentX;
+
+      line.words.forEach((wordText, wordIndex) => {
+        wordText.x = Math.round(currentX);
+        wordText.y = Math.round(currentY);
+        currentX += (wordText.getLocalBounds().width || wordText.width) + (wordIndex < line.words.length - 1 ? spaceWidth : 0);
+      });
+
+      // Handle Text Decoration
+      if (decoration && decoration !== 'none' && ['underline', 'overline', 'strikethrough', 'line-through'].includes(decoration)) {
+        hasDecoration = true;
+        const finalDecoration = decoration === 'strikethrough' ? 'line-through' : decoration;
+        const lineThickness = Math.max(1, fontSize / 12);
+        
+        // Determine Line Color
+        let lineColor = 0xffffff;
+        if (typeof style.fill === 'number') {
+          lineColor = style.fill;
+        } else if (style.fill && typeof style.fill === 'object' && 'fill' in style.fill) {
+          lineColor = 0xffffff;
+        }
+
+        let yOffset = 0;
+        if (finalDecoration === 'underline') {
+          yOffset = line.height;
+        } else if (finalDecoration === 'line-through') {
+          yOffset = line.height / 2;
+        } else if (finalDecoration === 'overline') {
+          yOffset = 0;
+        }
+
+        graphics.rect(lineXStart, currentY + yOffset, line.width, lineThickness);
+        graphics.fill(lineColor);
+      }
+
+      currentY += line.height;
+    });
+
+    if (hasDecoration) {
+      this.pixiTextContainer.addChild(graphics);
     }
 
     // Reuse or resize render texture efficiently
@@ -854,8 +881,6 @@ export class Text extends BaseClip {
     this._meta.width = containerWidth;
     this._meta.height = containerHeight;
 
-    // Update rect dimensions without triggering recursion if we ever add overrides
-    // We use the properties directly
     (this as any)._width = containerWidth;
     (this as any)._height = containerHeight;
 
@@ -875,7 +900,7 @@ export class Text extends BaseClip {
     const styleOptions: any = {
       fontSize,
       fontFamily: opts.fontFamily ?? 'Roboto',
-      fontWeight: opts.fontWeight ?? 'normal',
+      fontWeight: opts.fontWeight as any ?? 'normal',
       fontStyle: opts.fontStyle ?? 'normal',
       align: opts.align ?? 'left',
       wordWrap: opts.wordWrap ?? false,
@@ -923,16 +948,13 @@ export class Text extends BaseClip {
       // Advanced stroke object
       const strokeColor = parseColor(opts.stroke.color);
       if (strokeColor !== undefined) {
-        styleOptions.stroke = { color: strokeColor, width: opts.stroke.width };
-        if (opts.stroke.join) {
-          styleOptions.stroke.join = opts.stroke.join;
-        }
-        if (opts.stroke.cap) {
-          styleOptions.stroke.cap = opts.stroke.cap;
-        }
-        if (opts.stroke.miterLimit) {
-          styleOptions.stroke.miterLimit = opts.stroke.miterLimit;
-        }
+        styleOptions.stroke = { 
+          color: strokeColor, 
+          width: opts.stroke.width,
+          join: opts.stroke.join as LineJoin,
+          cap: opts.stroke.cap,
+          miterLimit: opts.stroke.miterLimit
+        };
       }
     } else {
       // Simple stroke color
@@ -967,22 +989,17 @@ export class Text extends BaseClip {
     if (this.destroyed) return;
     Log.info('Text destroy');
 
-    // Destroy pixiText first (must be destroyed before app)
-    // Note: pixiText is not added to stage, but may reference app internals
+    // Destroy pixiTextContainer first (must be destroyed before app)
     try {
-      if (this.pixiText != null) {
-        // Check if pixiText is still valid before destroying
-        const anyText = this.pixiText as any;
-        // Only destroy if it's not already destroyed
-        if (anyText.destroyed !== true) {
-          this.pixiText.destroy({ children: true });
+      if (this.pixiTextContainer != null) {
+        if (!this.pixiTextContainer.destroyed) {
+          this.pixiTextContainer.destroy({ children: true });
         }
       }
     } catch (err) {
-      // Ignore errors during destroy - object may already be destroyed
-      // Swallow error to prevent crashes during cleanup
+      // Ignore errors during destroy
     } finally {
-      this.pixiText = null;
+      this.pixiTextContainer = null;
     }
 
     // Destroy renderTexture (before app, as it may reference app's renderer)
