@@ -249,10 +249,11 @@ export class PixiSpriteRenderer {
     const textureWidth = this.pixiSprite.texture?.width ?? 1;
     const textureHeight = this.pixiSprite.texture?.height ?? 1;
 
+    const isCaption = (this.sprite as any).type === 'Caption';
     const baseScaleX =
-      width && width !== 0 ? Math.abs(width) / textureWidth : 1;
+      !isCaption && width && width !== 0 ? Math.abs(width) / textureWidth : 1;
     const baseScaleY =
-      height && height !== 0 ? Math.abs(height) / textureHeight : 1;
+      !isCaption && height && height !== 0 ? Math.abs(height) / textureHeight : 1;
 
     if (flip === 'horizontal') {
       this.pixiSprite.scale.x = -baseScaleX;
