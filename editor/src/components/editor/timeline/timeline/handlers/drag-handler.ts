@@ -7,6 +7,7 @@ import {
   drawGuides,
   clearAuxiliaryObjects,
 } from '../guidelines/utils';
+import { getSeparatorAtEvent } from '../utils/canvas';
 
 export function handleDragging(timeline: Timeline, options: any) {
   const target = options.target as FabricObject;
@@ -42,8 +43,10 @@ export function handleDragging(timeline: Timeline, options: any) {
   // ---------------------------
 
   // Get the pointer position (cursor position) instead of object center
-  const pointer = timeline.canvas.getPointer(options.e);
-  const cursorY = pointer.y;
+  const { cursorY, potentialSeparator } = getSeparatorAtEvent(
+    timeline,
+    options.e
+  );
 
   if (timeline.isOverTrack(cursorY)) {
     timeline.clearSeparatorHighlights();
@@ -51,8 +54,6 @@ export function handleDragging(timeline: Timeline, options: any) {
     timeline.canvas.requestRenderAll();
     return;
   }
-
-  const potentialSeparator = timeline.checkSeparatorIntersection(cursorY);
   timeline.clearSeparatorHighlights();
 
   if (potentialSeparator) {

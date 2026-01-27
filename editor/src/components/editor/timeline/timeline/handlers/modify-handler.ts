@@ -1,6 +1,11 @@
-import { type FabricObject } from 'fabric';
+import { ActiveSelection, type FabricObject } from 'fabric';
 import type Timeline from '../canvas';
-import { clearAuxiliaryObjects } from '../guidelines/utils';
+import {
+  clearAuxiliaryObjects,
+  getGuides,
+  getLineGuideStops,
+  getObjectSnappingEdges,
+} from '../guidelines/utils';
 import { generateUUID } from '@/utils/id';
 import {
   type ITimelineTrack,
@@ -8,6 +13,7 @@ import {
   type TrackType,
 } from '@/types/timeline';
 import { TIMELINE_CONSTANTS } from '../../timeline-constants';
+import { getHoveredObjects, getTrackAtEvent } from '../utils/canvas';
 
 /**
  * Helper to safely update the local clips map in Timeline to reflect the new visual state
@@ -46,10 +52,7 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
   // ---------------------------------------------------------
   if (timeline.activeSeparatorIndex !== null) {
     // If it's an active selection, we skip separator logic to avoid issues (as requested to remove 3)
-    if (
-      targetAny.type === 'activeSelection' ||
-      target.type === 'activeSelection'
-    ) {
+    if (target instanceof ActiveSelection) {
       timeline.clearSeparatorHighlights();
       timeline.setActiveSeparatorIndex(null);
       timeline.canvas.requestRenderAll();
@@ -313,15 +316,14 @@ export function handleClipModification(timeline: Timeline, options: any) {
   clearAuxiliaryObjects(timeline.canvas, timeline.canvas.getObjects());
 
   const targetAny = target as any;
-
-  if (targetAny.type === 'activeSelection' && targetAny._objects) {
+  if (target instanceof ActiveSelection) {
     const clips: Array<{ clipId: string; displayFrom: number }> = [];
 
     for (const obj of targetAny._objects) {
       const objAny = obj as any;
       if (!objAny.elementId) continue;
 
-      const left = (obj.left || 0) + (target.left || 0);
+      const left = (obj.left || 0) + (target.left || 0) + target.width / 2;
 
       let displayFrom = Math.round(
         (left / (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * timeline.timeScale)) *
@@ -340,6 +342,7 @@ export function handleClipModification(timeline: Timeline, options: any) {
       timeline.emit('clips:modified', { clips });
     }
   } else {
+    const track = getTrackAtEvent(options.hoveredTracks, options.e, timeline);
     const clipId = targetAny.elementId;
     if (!clipId) return;
 
@@ -366,11 +369,49 @@ export function handleClipModification(timeline: Timeline, options: any) {
 
     const trim = targetAny.trim;
 
+    const findClipsByTrack = timeline.tracks.find(
+      (t) => t.id === track?.trackId
+    );
+    if (findClipsByTrack) {
+      const clipObjects = timeline.canvas
+        .getObjects()
+        .filter(
+          (o: any) =>
+            findClipsByTrack.clipIds.includes(o.elementId) &&
+            o.elementId !== clipId
+        );
+      const objectsHovering = getHoveredObjects(clipObjects, target);
+      if (objectsHovering.length > 0) {
+        const prevTrack = timeline.tracks.find((t) =>
+          t.clipIds.includes(clipId)
+        );
+        const trackTop = timeline.trackRegions.find(
+          (t) => t.id === prevTrack?.id
+        )?.top;
+        const clipData = timeline.clipsMap[clipId];
+        const oldLeftUS = clipData.display.from;
+        const oldLeftPX =
+          (oldLeftUS / MICROSECONDS_PER_SECOND) *
+          (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * timeline.timeScale);
+
+        target.set({ left: oldLeftPX, top: trackTop });
+        target.setCoords();
+        return;
+      }
+    }
+
     timeline.emit('clip:modified', {
       clipId,
       displayFrom,
       duration,
       trim,
     });
+
+    if (track) {
+      timeline.emit('clip:movedToTrack', {
+        clipId: clipId,
+        trackId: track.trackId,
+      });
+    }
   }
 }

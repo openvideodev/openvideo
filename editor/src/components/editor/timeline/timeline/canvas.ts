@@ -28,6 +28,7 @@ import { makeMouseWheel } from './scrollbar/util';
 import type { ScrollbarsProps } from './scrollbar/types';
 import { getTrackHeight } from '@/components/editor/timeline/timeline-constants';
 import type { TMat2D, TPointerEventInfo } from 'fabric';
+import { getSeparatorAtEvent, getHoveredObjects } from './utils/canvas';
 
 export interface TimelineCanvasEvents {
   scroll: {
@@ -67,6 +68,7 @@ export interface TimelineCanvasEvents {
 }
 
 class Timeline extends EventEmitter<TimelineCanvasEvents> {
+  ___activeObjects: FabricObject[] = [];
   containerEl: HTMLDivElement;
   canvas: Canvas;
   #resizeObserver: ResizeObserver | null = null;
@@ -127,12 +129,25 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       DragHandlers.handleDragging(this, options);
     };
     this.#onTrackRelocation = (options) => {
+      const { potentialSeparator } = getSeparatorAtEvent(this, options.e);
+
+      if (!potentialSeparator) return;
       this.#stopDragAutoScroll();
       ModifyHandlers.handleTrackRelocation(this, options);
     };
     this.#onClipModification = (options) => {
+      const allObjects = this.canvas.getObjects();
+      const trackObjects = allObjects.filter((obj) => obj instanceof Track);
+      const hoveredTracks = getHoveredObjects(trackObjects, options.target);
+
+      if (hoveredTracks.length === 0) return;
+
       this.#stopDragAutoScroll();
-      ModifyHandlers.handleClipModification(this, options);
+      ModifyHandlers.handleClipModification(this, {
+        ...options,
+        hoveredTracks,
+        e: options.e,
+      });
     };
     this.#onSelectionCreate = (e) =>
       SelectionHandlers.handleSelectionCreate(this, e);
@@ -702,6 +717,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   public render() {
+    const activeSelection = this.canvas.getActiveObject();
+    const activeObjects = this.canvas.getActiveObjects();
+    const activeObjectIds =
+      activeObjects.length > 1
+        ? activeObjects.map((obj: any) => obj.elementId)
+        : [];
+    const trackWidthActiveSelectionIds = [] as string[];
     // We do NOT clear everything. We update existing objects.
     // However, separators and regions are cheap to rebuild for now,
     // or we can optimize them too. Let's start with Tracks and Clips which are heavy.
@@ -876,34 +898,62 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               studioClipId: clip.id,
             });
           } else {
-            timelineClip.set({
-              left: startX,
-              top: region.top,
-              width: width,
-              height: trackHeight,
-              text: clipName,
-              src: clip.src,
-              trim: clip.trim
-                ? { ...clip.trim }
-                : {
-                    from: 0,
-                    to:
-                      clip.sourceDuration ||
-                      clip.duration * (clip.playbackRate || 1),
-                  },
-              playbackRate: clip.playbackRate || 1,
-              timeScale: this.#timeScale,
-              duration: clip.duration * (clip.playbackRate || 1),
-              sourceDuration: clip.sourceDuration,
-              studioClipId: clip.id,
-            });
-            timelineClip.setCoords();
+            if (!activeObjectIds.includes(timelineClip.elementId)) {
+              timelineClip.set({
+                left: startX,
+                top: region.top,
+                width: width,
+                height: trackHeight,
+                text: clipName,
+                src: clip.src,
+                trim: clip.trim
+                  ? { ...clip.trim }
+                  : {
+                      from: 0,
+                      to:
+                        clip.sourceDuration ||
+                        clip.duration * (clip.playbackRate || 1),
+                    },
+                playbackRate: clip.playbackRate || 1,
+                timeScale: this.#timeScale,
+                duration: clip.duration * (clip.playbackRate || 1),
+                sourceDuration: clip.sourceDuration,
+                studioClipId: clip.id,
+              });
+              timelineClip.setCoords();
+            } else {
+              if (!trackWidthActiveSelectionIds.includes(trackData.id)) {
+                trackWidthActiveSelectionIds.push(trackData.id);
+              }
+            }
           }
           // (timelineClip as FabricObject).
           this.canvas.bringObjectToFront(timelineClip);
         }
       });
     });
+
+    if (
+      activeSelection instanceof ActiveSelection &&
+      trackWidthActiveSelectionIds.length > 0
+    ) {
+      const trackObjects = this.canvas
+        .getObjects()
+        .filter(
+          (obj) =>
+            obj instanceof Track &&
+            trackWidthActiveSelectionIds.includes(obj.trackId)
+        ) as Track[];
+
+      if (trackObjects.length > 0) {
+        const maxTrackTop =
+          trackObjects.reduce((highest, current) =>
+            (current.top || 0) > (highest.top || 0) ? highest : current
+          ).top || 0;
+
+        activeSelection.set({ top: maxTrackTop });
+      }
+    }
 
     // Cleanup Unused Objects
     // Tracks

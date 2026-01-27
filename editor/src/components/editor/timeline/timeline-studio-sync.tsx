@@ -411,12 +411,17 @@ export const TimelineStudioSync = ({
       const displayTo = displayFrom + duration;
       const display = { from: displayFrom, to: displayTo };
 
-      await studio.updateClip(clipId, {
+      const updates: any = {
         display,
         // We can redundant set duration for clarity, though our logic handles it
         duration,
-        trim,
-      });
+      };
+
+      if (trim !== undefined) {
+        updates.trim = trim;
+      }
+
+      await studio.updateClip(clipId, updates);
 
       // Update store duration (max duration might have changed)
       // Convert µs -> s
