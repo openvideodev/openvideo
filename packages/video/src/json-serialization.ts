@@ -87,20 +87,30 @@ export interface ImageJSON extends BaseClipJSON {
 export interface TextStyleJSON {
   fontSize?: number;
   fontFamily?: string;
-  fontWeight?: number;
+  fontWeight?: string | number;
   fontStyle?: string;
-  color?: string;
+  color?:
+    | string
+    | number
+    | {
+        type: 'gradient';
+        x0: number;
+        y0: number;
+        x1: number;
+        y1: number;
+        colors: Array<{ ratio: number; color: string | number }>;
+      };  
   align?: 'left' | 'center' | 'right';
   fontUrl?: string; // Font URL for custom fonts
   stroke?: {
-    color: string;
+    color: string | number;
     width: number;
     join?: 'miter' | 'round' | 'bevel';
     cap?: 'butt' | 'round' | 'square';
     miterLimit?: number;
   };
   shadow?: {
-    color: string;
+    color: string | number;
     alpha: number;
     blur: number;
     distance: number;
@@ -111,6 +121,7 @@ export interface TextStyleJSON {
   lineHeight?: number;
   letterSpacing?: number;
   textCase?: 'none' | 'uppercase' | 'lowercase' | 'title';
+  verticalAlign?: 'top' | 'center' | 'bottom';
 }
 
 // Text clip specific
@@ -329,7 +340,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
         throw new Error('Audio requires a valid source URL');
       }
       // Support both new flat structure and old options structure
-      const options: any = {};
+      const options: { loop?: boolean; volume?: number } = {};
       if (json.loop !== undefined) options.loop = json.loop;
       if (json.volume !== undefined) options.volume = json.volume;
       clip = await Audio.fromUrl(json.src, options);
@@ -368,7 +379,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
         };
       }
 
-      clip = new Text(text, textClipOpts);
+      clip = new Text(text, textClipOpts as any);
       break;
     }
     case 'Caption': {
@@ -380,7 +391,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       const captionClipOpts: any = {
         fontSize: style.fontSize,
         fontFamily: style.fontFamily,
-        fontWeight: style.fontWeight,
+        fontWeight: style.fontWeight as any,
         fontStyle: style.fontStyle,
         fill: style.color, // Map 'color' to 'fill'
         align: style.align,
@@ -499,6 +510,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       if (json.mediaId) {
         captionClipOpts.mediaId = json.mediaId;
       }
+      captionClipOpts.initialLayoutApplied = true;
       clip = new Caption(text, captionClipOpts);
       break;
     }

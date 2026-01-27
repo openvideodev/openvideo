@@ -34,8 +34,9 @@ export interface BaseSpriteEvents {
  *
  * @see {@link OffscreenSprite}
  */
-export abstract class BaseSprite extends EventEmitter<BaseSpriteEvents> {
-  /**
+export abstract class BaseSprite<
+  T extends BaseSpriteEvents = BaseSpriteEvents,
+> extends EventEmitter<T> {  /**
    * Unique identifier for the sprite/clip
    */
   id = '';
@@ -78,7 +79,7 @@ export abstract class BaseSprite extends EventEmitter<BaseSpriteEvents> {
   }
 
   // Spatial properties
-  private _left = 0;
+  protected _left = 0;
   /**
    * Left position (x coordinate)
    */
@@ -91,7 +92,7 @@ export abstract class BaseSprite extends EventEmitter<BaseSpriteEvents> {
     if (changed) this.emit('propsChange', { left: v });
   }
 
-  private _top = 0;
+  protected _top = 0;
   /**
    * Top position (y coordinate)
    */
@@ -104,7 +105,7 @@ export abstract class BaseSprite extends EventEmitter<BaseSpriteEvents> {
     if (changed) this.emit('propsChange', { top: v });
   }
 
-  private _width = 0;
+  protected _width = 0;
   /**
    * Width
    */
@@ -117,7 +118,7 @@ export abstract class BaseSprite extends EventEmitter<BaseSpriteEvents> {
     if (changed) this.emit('propsChange', { width: v });
   }
 
-  private _height = 0;
+  protected _height = 0;
   /**
    * Height
    */

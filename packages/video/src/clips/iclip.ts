@@ -1,4 +1,4 @@
-import type { BaseSprite } from '../sprite/base-sprite';
+import type { BaseSprite, BaseSpriteEvents } from '../sprite/base-sprite';
 import {
   getDefaultAudioCodec,
   getCachedAudioCodec,
@@ -30,7 +30,8 @@ export interface ITransitionInfo {
  * You only need to implement this interface to create custom clips, giving you maximum flexibility to generate video content such as animations and transition effects
  *
  */
-export interface IClip extends Omit<BaseSprite, 'destroy' | 'ready'> {
+export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
+  extends Omit<BaseSprite<T>, 'destroy' | 'ready'> {
   // Override destroy to be public (BaseSprite has it as protected)
   // Override ready to return IClipMeta instead of Promise<void>
   destroy: () => void;

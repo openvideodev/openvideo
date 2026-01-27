@@ -1,5 +1,5 @@
 import { Log } from '../utils/log';
-import { BaseSprite } from '../sprite/base-sprite';
+import { BaseSprite, BaseSpriteEvents } from '../sprite/base-sprite';
 import { changePCMPlaybackRate } from '../utils';
 import type { IClip, IClipMeta, ITransitionInfo } from './iclip';
 import type { ClipJSON } from '../json-serialization';
@@ -9,7 +9,10 @@ import type { ClipJSON } from '../json-serialization';
  * Provides common functionality for sprite operations (position, animation, timing)
  * and frame management
  */
-export abstract class BaseClip extends BaseSprite implements IClip {
+export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
+  extends BaseSprite<T>
+  implements IClip<T>
+{
   abstract readonly type: string;
   // Keep last frame, if clip has no data at current frame, render last frame
   // Store as ImageBitmap for reusability (VideoFrames can only be used once)

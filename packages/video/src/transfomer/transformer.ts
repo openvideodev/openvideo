@@ -380,8 +380,9 @@ export class Transformer extends Container {
 
     // Check if we're transforming a Text or Caption
     const isTextClip = this.opts.clip && this.opts.clip.type === 'Text';
+    const isCaptionClip = this.opts.clip && this.opts.clip.type === 'Caption';
 
-    if (isTextClip) {
+    if (isTextClip || isCaptionClip) {
       this.emit('textClipResize', {
         handle,
         newWidth: proposed.width,
