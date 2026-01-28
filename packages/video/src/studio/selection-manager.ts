@@ -582,11 +582,6 @@ export class SelectionManager {
         let logicalWidth = newWidth;
         let logicalHeight = newHeight;
 
-        if (clip instanceof Caption) {
-          logicalWidth = Math.max(1, newWidth - 30);
-          logicalHeight = Math.max(1, newHeight - 30);
-        }
-
         clip.left = root.x - logicalWidth / 2;
         clip.top = root.y - logicalHeight / 2;
         clip.width = logicalWidth;
@@ -625,12 +620,6 @@ export class SelectionManager {
         
         let logicalWidth = newWidth;
         let logicalHeight = newHeight;
-
-        if (clip instanceof Caption) {
-          // Subtract 30px (15px bleed on each side) to get logical dimensions
-          logicalWidth = Math.max(1, newWidth - 30);
-          logicalHeight = Math.max(1, newHeight - 30);
-        }
 
         const newLeft = root.x - logicalWidth / 2;
         const newTop = root.y - logicalHeight / 2;

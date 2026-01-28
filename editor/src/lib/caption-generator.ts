@@ -43,7 +43,7 @@ export async function generateCaptionClips(
     const toUs = chunkToMs * 1000;
     const durationUs = chunkDurationMs * 1000;
 
-    const captionWidth = Math.ceil(chunk.width) + 40; // Add padding
+    const captionWidth = Math.ceil(chunk.width) + 90; // Add padding
     const captionHeight = Math.ceil(chunk.height) + 20;
 
     clips.push({

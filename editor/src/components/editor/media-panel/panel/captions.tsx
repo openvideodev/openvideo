@@ -254,50 +254,67 @@ export default function PanelCaptions() {
 
     const part1Words = words.slice(0, splitWordIndex);
     const part2Words = words.slice(splitWordIndex);
+    console.log('part1Words', part1Words);
+    console.log('part2Words', part2Words);
+    console.log('clipJson', clipJson);
 
     if (part1Words.length === 0 || part2Words.length === 0) return;
+    const lastWordPart1 = part1Words[part1Words.length - 1];
 
     const clip1Json = {
       ...clipJson,
       id: undefined,
       text: part1Text,
+      width: 0,
+      height: 0,
+      wordWrapWidth: 0,
       caption: {
         ...caption,
         words: part1Words,
       },
       display: {
         from: clipJson.display.from,
-        to: part1Words[part1Words.length - 1].to * 1000,
+        to: lastWordPart1.to * 1000 + clipJson.display.from,
       },
       duration:
-        part1Words[part1Words.length - 1].to * 1000 - clipJson.display.from,
+        lastWordPart1.to * 1000
     };
-
-    const firstWordPart2 = part2Words[0];
-    const lastWordPart1 = part1Words[part1Words.length - 1];
-
-    clip1Json.display.to = lastWordPart1.to * 1000;
 
     const clip2Json = {
       ...clipJson,
       id: undefined,
       text: part2Text,
+      width: 0,
+      height: 0,
+      wordWrapWidth: 0,
       caption: {
         ...caption,
         words: normalizeWordTimings(part2Words),
       },
       display: {
-        from: firstWordPart2.from * 1000,
+        from: lastWordPart1.to * 1000 + clipJson.display.from,
         to: clipJson.display.to,
       },
       duration:
-        part2Words[part2Words.length - 1].to * 1000 -
-        firstWordPart2.from * 1000,
+        clipJson.display.to -
+        lastWordPart1.to * 1000 - clipJson.display.from,
     };
 
     try {
       const clip1 = await jsonToClip(clip1Json as any);
       const clip2 = await jsonToClip(clip2Json as any);
+
+      const videoWidth = (studio as any).opts.width || 1080;
+      
+      // Center clip 1
+      if (clip1.width > 0) {
+        clip1.left = (videoWidth - clip1.width) / 2;
+      }
+      
+      // Center clip 2
+      if (clip2.width > 0) {
+         clip2.left = (videoWidth - clip2.width) / 2;
+      }
 
       await studio.addClip([clip1, clip2], { trackId });
       studio.removeClipById(id);
@@ -306,80 +323,88 @@ export default function PanelCaptions() {
     }
   };
 
-  const handleUpdateCaption = async (id: string, text: string) => {
-    if (!studio) return;
+  // En PanelCaptions, modifica handleUpdateCaption:
+const handleUpdateCaption = async (id: string, text: string, fullUpdate = false) => {
+  if (!studio) return;
 
-    const clip = studio.getClipById(id);
-    if (!clip) return;
+  const clip = studio.getClipById(id);
+  if (!clip) return;
 
-    const tracks = studio.getTracks();
-    const track = tracks.find((t) => t.clipIds.includes(id));
-    if (!track) return;
+  const tracks = studio.getTracks();
+  const track = tracks.find((t) => t.clipIds.includes(id));
+  if (!track) return;
 
-    const newWordsText = text.trim().split(/\s+/).filter(Boolean);
-    const clipJson = (clip as any).toJSON
-      ? (clip as any).toJSON()
-      : { ...clip };
-    const caption = clipJson.caption || {};
-    const oldWords = caption.words || [];
+  if (!fullUpdate) {
+    // MODO RÁPIDO: solo actualizar text (para onChange)
+    const captionClip = clip as any;
+    captionClip.text = text;
+    captionClip.emit('propsChange', { text });
+    return;
+  }
 
-    const isNewWordAdded = newWordsText.length > oldWords.length;
-    let updatedWords;
+  // MODO COMPLETO: calcular words y timings (solo onBlur)
+  const newWordsText = text.trim().split(/\s+/).filter(Boolean);
+  const clipJson = (clip as any).toJSON ? (clip as any).toJSON() : { ...clip };
+  const caption = clipJson.caption || {};
+  const oldWords = caption.words || [];
+  const paragraphIndex = oldWords[0]?.paragraphIndex ?? '';
 
-    if (isNewWordAdded) {
-      const totalDurationMs =
-        (clipJson.display.to - clipJson.display.from) / 1000;
-      const totalChars = newWordsText.reduce((acc, w) => acc + w.length, 0);
-      const durationPerChar = totalChars > 0 ? totalDurationMs / totalChars : 0;
+  const isNewWordAdded = newWordsText.length > oldWords.length;
+  let updatedWords;
 
-      let currentShift = 0;
-      updatedWords = newWordsText.map((wordText, index) => {
-        const wordDuration = wordText.length * durationPerChar;
-        const word = {
-          ...(oldWords[index] || { isKeyWord: false, paragraphIndex: '' }),
-          text: wordText,
-          from: currentShift,
-          to: currentShift + wordDuration,
-        };
-        currentShift += wordDuration;
-        return word;
-      });
-    } else {
-      updatedWords = newWordsText.map((wordText, index) => {
-        if (oldWords[index]) {
-          return {
-            ...oldWords[index],
-            text: wordText,
-          };
-        }
+  if (isNewWordAdded) {
+    const totalDurationMs = (clipJson.display.to - clipJson.display.from) / 1000;
+    const totalChars = newWordsText.reduce((acc, w) => acc + w.length, 0);
+    const durationPerChar = totalChars > 0 ? totalDurationMs / totalChars : 0;
+
+    let currentShift = 0;
+    updatedWords = newWordsText.map((wordText, index) => {
+      const wordDuration = wordText.length * durationPerChar;
+      const word = {
+        ...(oldWords[index] || { isKeyWord: false, paragraphIndex }),
+        text: wordText,
+        from: currentShift,
+        to: currentShift + wordDuration,
+      };
+      currentShift += wordDuration;
+      return word;
+    });
+  } else {
+    updatedWords = newWordsText.map((wordText, index) => {
+      if (oldWords[index]) {
         return {
+          ...oldWords[index],
           text: wordText,
-          from: 0,
-          to: 0,
-          isKeyWord: false,
         };
-      });
-    }
+      }
+      return {
+        text: wordText,
+        from: 0,
+        to: 0,
+        isKeyWord: false,
+      };
+    });
+  }
 
-    const newClipJson = {
-      ...clipJson,
-      text,
-      caption: {
-        ...caption,
-        words: updatedWords,
-      },
-      id: undefined,
-    } as any;
+  const newClipJson = {
+    ...clipJson,
+    text,
+    caption: {
+      ...caption,
+      words: updatedWords,
+    },
+    id: undefined,
+  } as any;
 
-    try {
-      const newClip = await jsonToClip(newClipJson);
+  try {
+    const newClip = await jsonToClip(newClipJson);
+    await studio.addClip([newClip], { trackId: track.id });
+    studio.removeClipById(id);
+  } catch (error) {
+    Log.error('Failed to update caption clip:', error);
+  }
+};
 
-      await studio.addClip([newClip], { trackId: track.id });
-      studio.removeClipById(id);
-    } catch (error) {
-      Log.error('Failed to update caption clip:', error);
-    }
-  };
 
   const handleDeleteCaption = (id: string) => {
     if (!studio) return;
@@ -463,7 +488,7 @@ export default function PanelCaptions() {
                         key={item.id}
                         item={item}
                         isActive={item.id === activeCaptionId}
-                        onUpdate={(text) => handleUpdateCaption(item.id, text)}
+                        onUpdate={(text,fullUpdate) => handleUpdateCaption(item.id, text,fullUpdate)}
                         onSplit={(pos, text) =>
                           handleSplitCaption(item.id, pos, text)
                         }
@@ -514,7 +539,7 @@ function CaptionItem({
 }: {
   item: IClip;
   isActive: boolean;
-  onUpdate: (text: string) => void;
+  onUpdate: (text: string, fullUpdate?: boolean) => void;
   onSplit: (cursorPosition: number, text: string) => void;
   onDelete: () => void;
   onSeek: () => void;
@@ -528,11 +553,12 @@ function CaptionItem({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
+    onUpdate(e.target.value, false);
   };
 
   const handleBlur = () => {
     if (text !== (item as any).text) {
-      onUpdate(text);
+      onUpdate(text, true);
     }
   };
 
