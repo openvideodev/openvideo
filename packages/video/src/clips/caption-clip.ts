@@ -304,8 +304,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
   // Override width/height to trigger refreshCaptions when resized by transformer
   // Use getters from BaseSprite but override setters
-  private _visualPaddingX = 0;
-  private _visualPaddingY = 0;
+  private _visualPaddingX = 20; 
+  private _visualPaddingY = 15;
+  private _lastTickTime = 0;
 
   override get width(): number {
     return this._width;
@@ -316,8 +317,22 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this._width = v;
     if (v > 0) {
       this._isWidthConstrained = true;
+      // Use the manually set width as the persistent wrapping boundary
+      this.opts.wordWrapWidth = v;
+      this.opts.wordWrap = true;
+      // Also update originalOpts so it persists through serialization/syncs
+      if (this.originalOpts) {
+        this.originalOpts.wordWrapWidth = v;
+        this.originalOpts.wordWrap = true;
+      }
     } else {
       this._isWidthConstrained = false;
+      this.opts.wordWrapWidth = 0;
+      this.opts.wordWrap = false;
+      if (this.originalOpts) {
+        this.originalOpts.wordWrapWidth = 0;
+        this.originalOpts.wordWrap = false;
+      }
     }
     this.refreshCaptions();
     this.emit('propsChange', { width: v });
@@ -362,6 +377,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   private _isWidthConstrained = false;
   private _lastContentWidth = 0;
   private _lastContentHeight = 0;
+  private _lastProcessedText = '';
 
   private _text: string = '';
 
@@ -375,7 +391,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   set text(v: string) {
     if (this._text === v) return;
     this._text = v;
-    this._isWidthConstrained = false;
+    // Don't reset _isWidthConstrained here to allow persistent wrap limit
 
     // Check if the new text is already consistent with current words
     // (This prevents the 'sabotage' when words setter calls text setter)
@@ -742,8 +758,16 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       this._isXPositionedManually = true;
     }
 
+    // Initialize constrained state if we have a wrap limit
+    if (this.opts.wordWrapWidth > 0) {
+      this._isWidthConstrained = true;
+      this._width = this.opts.wordWrapWidth;
+      this.opts.wordWrap = true;
+    }
+
     // Now set the text, which will use this.opts.words if they exist
     this.text = text;
+    this._lastProcessedText = this._text;
 
     // Create PixiJS TextStyle from options (same pattern as TextClip)
     // Build style object conditionally to avoid passing undefined values
@@ -880,9 +904,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       this.opts.letterSpacing = opts.letterSpacing;
     if (opts.lineHeight !== undefined) this.opts.lineHeight = opts.lineHeight;
     if (opts.textCase !== undefined) this.opts.textCase = opts.textCase;
-    if (opts.wordWrap !== undefined) this.opts.wordWrap = opts.wordWrap;
-    if (opts.wordWrapWidth !== undefined)
+    if (opts.wordWrapWidth !== undefined) {
       this.opts.wordWrapWidth = opts.wordWrapWidth;
+      if (opts.wordWrapWidth > 0) {
+        this._isWidthConstrained = true;
+        this.opts.wordWrap = true;
+      }
+    }
 
     // Handle nested colors in opts.caption.colors
     if (opts.caption?.colors) {
@@ -1107,11 +1135,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       const videoWidth = this.opts.videoWidth || 1280;
 
       let wrapWidth = videoWidth - paddingX * 2;
-      if (this.opts.wordWrap && this.opts.wordWrapWidth > 0) {
-        wrapWidth = this.opts.wordWrapWidth;
+      if (this.opts.wordWrapWidth > 0) {
+        // Use the persistent wrap limit and subtract padding to keep text inside the box
+        wrapWidth = this.opts.wordWrapWidth - paddingX * 2;
       } else if (!isAutoWidthNow && this.width > 0) {
-        // If user resized manually, use that width as the hard limit (logical width)
-        // Add a 10px buffer to prevent sub-pixel differences from causing accidental wraps
+        // Fallback for manual resizes
         wrapWidth = this.width + 10;
       } else {
         // In auto mode, use a very generous width (5x video) to allow text to grow in one line
@@ -1190,7 +1218,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         });
       }
 
-      // 5. Dimension Calculation (Logical vs Visual)
+      // 6. Dimension Calculation (Logical vs Visual)
       let maxLineWidth = 0;
       let totalHeight = 0;
       lines.forEach((line) => {
@@ -1198,43 +1226,44 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         totalHeight += line.height;
       });
 
-      // Logical dimensions (pure text) - these define the SELECTION BOX (the blue box)
+      // logicalContentWidth is the tight width of the text lines
       const logicalContentWidth = maxLineWidth;
       const logicalContentHeight = totalHeight;
 
-      const isAutoWidth =
-        !this._isWidthConstrained &&
-        (this.width === 0 ||
-          this._lastContentWidth === 0 ||
-          Math.abs(this.width - this._lastContentWidth) < 2);
+      // Determine Target Width (Selection Box & Texture Size)
+      const textChanged = this._text !== this._lastProcessedText;
+      this._lastProcessedText = this._text;
 
-      const isAutoHeight =
-        this.height === 0 ||
-        this._lastContentHeight === 0 ||
-        Math.abs(this.height - this._lastContentHeight) < 2;
+      const contentWidthWithPadding = logicalContentWidth + paddingX * 2;
+      const contentHeightWithPadding = logicalContentHeight + paddingY * 2;
 
-      // The logical width we will report as the clip's width
-      const finalLogicalWidth = isAutoWidth ? logicalContentWidth : this.width;
-      const finalLogicalHeight = isAutoHeight
-        ? logicalContentHeight
-        : this.height;
+      let targetWidth = contentWidthWithPadding;
+      let targetHeight = contentHeightWithPadding;
 
-      // Visual dimensions (including background bleed) - for RenderTexture size
-      const containerWidth = finalLogicalWidth + paddingX * 2;
-      const containerHeight = finalLogicalHeight + paddingY * 2;
+      if (this._isWidthConstrained) {
+        if (textChanged) {
+          // Snap to content on text change
+          targetWidth = contentWidthWithPadding;
+        } else {
+          // Maintain manual stretch on move/sync/manual drag
+          targetWidth = Math.max(contentWidthWithPadding, oldWidth);
+        }
+        // Cap by user defined limit if wordWrapWidth is set
+        if (this.opts.wordWrapWidth > 0) {
+          targetWidth = Math.min(targetWidth, this.opts.wordWrapWidth);
+        }
+      }
+
+      // Sync selection box and texture dimensions EXACTLY
+      const containerWidth = targetWidth;
+      const containerHeight = targetHeight;
 
       // The area occupied by the text lines
-      // For alignment logic, 'content' is just the text block.
       const textBlockHeight = logicalContentHeight;
 
-      // Store old values for anchoring BEFORE updating
-      // const oldWidth = this._width; // Already defined above
-      // const oldHeight = this._height; // Already defined above
-
-      // 6. Positioning
+      // 7. Positioning
       // Apply Vertical Alignment for the block as a whole
       let startY = 0;
-      // const finalVAlign = this.originalOpts.verticalAlign || "center"; // Already defined above
       if (finalVAlign === 'top') {
         startY = paddingY;
       } else if (finalVAlign === 'bottom') {
@@ -1246,7 +1275,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       let currentY = startY;
 
       lines.forEach((line) => {
-        // Calculate X start based on alignment within the containerWidth
+        // Calculate X start based on alignment within the EXACT containerWidth
         let currentX = paddingX;
         if (this.opts.align === 'center') {
           currentX = (containerWidth - line.width) / 2;
@@ -1269,7 +1298,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         currentY += line.height;
       });
 
-      // 7. Background Graphics
+      // 8. Background Graphics
       // Create semi-transparent background graphics for the WHOLE visual area (including bleed)
       const bgGraphics = new Graphics();
       bgGraphics.label = 'containerBackground';
@@ -1292,8 +1321,8 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       // Reuse or recreate RenderTexture with container dimensions
       if (this.renderTexture) {
         if (
-          this.renderTexture.width !== containerWidth ||
-          this.renderTexture.height !== containerHeight
+          Math.abs(this.renderTexture.width - containerWidth) > 0.5 ||
+          Math.abs(this.renderTexture.height - containerHeight) > 0.5
         ) {
           this.renderTexture.destroy();
           this.renderTexture = RenderTexture.create({
@@ -1308,6 +1337,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         });
       }
 
+      // Apply active states before rendering to avoid flicker during editing
+      this.updateState(this._lastTickTime);
+
       // CRITICAL: Render content to the texture
       try {
         const renderer = await this.getRenderer();
@@ -1318,18 +1350,24 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       } catch (err) {
         Log.warn('CaptionClip: Could not render captions during refresh', err);
       }
-      // 8. Dimension Tracking & Anchoring
+
+      // 9. Dimension Tracking & Anchoring
+      const isAutoWidth = !this._isWidthConstrained;
+      const isAutoHeight =
+        this.height === 0 ||
+        this._lastContentHeight === 0 ||
+        Math.abs(this.height - this._lastContentHeight) < 2;
 
       if (
-        !this._isWidthConstrained &&
+        isAutoWidth &&
         this._initialLayoutApplied &&
         oldWidth > 0 &&
         oldHeight > 0
       ) {
         // ONLY keep the HORIZONTAL center stable if it's an AUTOMATIC change (not manual resize)
         // This prevents 'fighting' with the transformer during manual resize.
-        // We compare unpadded dimensions (logicalContentWidth vs oldWidth)
-        const dx = logicalContentWidth - oldWidth;
+        // We compare unpadded dimensions
+        const dx = targetWidth - oldWidth;
 
         if (
           Math.abs(dx) > 0.1 &&
@@ -1350,14 +1388,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       this._meta.height = logicalContentHeight;
       this._meta.duration = Infinity;
 
-      // Update clip dimensions for BaseSprite (This is the tight selection box)
-      if (this._isWidthConstrained) {
-        this._width = oldWidth;
-      } else {
-        this._width = logicalContentWidth;
-      }
-      this._height = logicalContentHeight;
+      // Update selection box dimensions
+      this._width = containerWidth;
+      this._height = containerHeight;
 
+      // Update tracking values
       this._lastContentWidth = this._width;
       this._lastContentHeight = this._height;
       // We don't automatically update top/left here to allow user positioning,
@@ -1465,6 +1500,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         );
 
         const padding = 15;
+        const paddingX = 40;
         if (existingBg) existingBg.visible = false;
         const bounds = wordText.getLocalBounds();
         if (existingBg) existingBg.visible = true;
@@ -1476,9 +1512,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         bg.clear();
 
         bg.roundRect(
-          bounds.x - padding / 2,
+          bounds.x - paddingX / 2,
           bounds.y - padding / 2, // extraPadding is already applied to wordText.y
-          bounds.width + padding,
+          bounds.width + paddingX,
           bounds.height + padding,
           cornerRadius
         );
@@ -1525,7 +1561,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     done: boolean;
   }> {
     const timestamp = time * this.playbackRate;
-    this.animate(timestamp);
+    // Store as microseconds for consistency with updateState and tick
+    this._lastTickTime = timestamp * 1e6;
+    this.animate(timestamp * 1e6);
     this._render(ctx); // Call BaseSprite's transform logic
     const { width: w, height: h } = this;
     const { video: imgSource, audio, done } = await this.getFrame(time);
@@ -1538,10 +1576,10 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
     if (imgSource != null) {
       ctx.save();
-      // Draw the image with BLEED (15px padding on each side)
-      // Since the texture IS ALREADY w+30 x h+30, and it's centered,
-      // we just draw it from -w/2 - 15 to w+30.
-      ctx.drawImage(imgSource, -w / 2 - 15, -h / 2 - 15, w + 30, h + 30);
+      // Draw the image matching our internal padding (bleed)
+      // Since the texture IS ALREADY w x h (finalLogicalWidth/Height),
+      // we draw it centered at the sprite's origin.
+      ctx.drawImage(imgSource, -w / 2, -h / 2, w, h);
       ctx.restore();
     }
 
@@ -1573,6 +1611,8 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     if (this.pixiTextContainer == null || this.renderTexture == null) {
       throw new Error('CaptionClip not initialized');
     }
+
+    this._lastTickTime = time;
 
     // Update internal state based on current time (in microseconds)
     this.updateState(time);
@@ -1749,6 +1789,10 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       if (opts.fontUrl !== undefined) style.fontUrl = opts.fontUrl;
       if (opts.verticalAlign !== undefined)
         style.verticalAlign = opts.verticalAlign;
+      if (opts.wordWrapWidth !== undefined)
+        style.wordWrapWidth = opts.wordWrapWidth;
+      if (opts.wordWrap !== undefined)
+        style.wordWrap = opts.wordWrap;
 
       // Handle stroke
       if (opts.stroke) {
@@ -1883,6 +1927,10 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     if (style.textCase !== undefined) captionOpts.textCase = style.textCase;
     if (style.verticalAlign !== undefined)
       captionOpts.verticalAlign = style.verticalAlign;
+    if (style.wordWrapWidth !== undefined)
+      captionOpts.wordWrapWidth = style.wordWrapWidth;
+    if (style.wordWrap !== undefined)
+      captionOpts.wordWrap = style.wordWrap;
 
     // Handle fontUrl from style (new) or top-level (old)
     if (style.fontUrl !== undefined) {
