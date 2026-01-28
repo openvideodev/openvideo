@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Player } from './player';
-import { Studio, Compositor, fontManager } from '@designcombo/video';
+import { Studio, fontManager } from '@designcombo/video';
 import { useStudioStore } from '@/stores/studio-store';
 import { editorFont } from './constants';
+import { StudioContextMenu } from './studio-context-menu';
 
 // Canvas configuration constants
 const DEFAULT_CANVAS_SIZE = {
@@ -16,6 +17,7 @@ const STUDIO_CONFIG = {
   interactivity: true,
   spacing: 20,
 } as const;
+
 interface CanvasPanelProps {
   onReady?: () => void;
 }
@@ -46,10 +48,10 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
       canvas: canvasRef.current,
     });
 
+    const studio = studioRef.current;
+
     // Initialize fonts and notify when ready
     const initializeStudio = async () => {
-      if (!studioRef.current) return;
-
       try {
         await Promise.all([
           fontManager.loadFonts([
@@ -58,7 +60,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
               url: editorFont.fontUrl,
             },
           ]),
-          studioRef.current.ready,
+          studio.ready,
         ]);
         onReadyRef.current?.();
       } catch (error) {
@@ -69,7 +71,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     initializeStudio();
 
     // Update global store
-    setStudio(studioRef.current);
+    setStudio(studio);
 
     // Setup ResizeObserver for responsive layout
     const canvas = canvasRef.current;
@@ -78,11 +80,8 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
 
     if (parentElement) {
       resizeObserver = new ResizeObserver(() => {
-        if (
-          studioRef.current &&
-          (studioRef.current as any).updateArtboardLayout
-        ) {
-          (studioRef.current as any).updateArtboardLayout();
+        if (studio && (studio as any).updateArtboardLayout) {
+          (studio as any).updateArtboardLayout();
         }
       });
       resizeObserver.observe(parentElement);
@@ -90,25 +89,23 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
 
     // Cleanup function
     return () => {
-      // Disconnect ResizeObserver
       if (resizeObserver && parentElement) {
         resizeObserver.unobserve(parentElement);
         resizeObserver.disconnect();
       }
 
-      // Destroy Studio instance
-      if (studioRef.current) {
-        studioRef.current.destroy();
-        studioRef.current = null;
-        setStudio(null);
-      }
+      studio.destroy();
+      studioRef.current = null;
+      setStudio(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
   return (
     <div className="h-full w-full flex flex-col min-h-0 min-w-0 bg-card rounded-sm relative">
-      <Player canvasRef={canvasRef} />
+      <StudioContextMenu studio={studioRef.current}>
+        <Player canvasRef={canvasRef} />
+      </StudioContextMenu>
     </div>
   );
 }
