@@ -1438,19 +1438,6 @@ export class TimelineModel {
   ): Promise<void> {
     if (this.studio.pixiApp == null) return;
     if (!this.isPlaybackCapable(clip)) {
-      // Fallback logic
-      if (
-        this.studio.pixiApp != null &&
-        (await clip.ready).width > 0 &&
-        (await clip.ready).height > 0
-      ) {
-        const renderer = new PixiSpriteRenderer(
-          this.studio.pixiApp,
-          clip,
-          this.studio.clipsNormalContainer!
-        );
-        this.studio.spriteRenderers.set(clip, renderer);
-      }
       return;
     }
 
@@ -1483,19 +1470,6 @@ export class TimelineModel {
         `Failed to setup playback for ${clip.constructor.name}`,
         err
       );
-      // Fallback logic duplicated
-      if (
-        this.studio.pixiApp != null &&
-        (await clip.ready).width > 0 &&
-        (await clip.ready).height > 0
-      ) {
-        const renderer = new PixiSpriteRenderer(
-          this.studio.pixiApp,
-          clip,
-          this.studio.artboard!
-        ); // Fallback to artboard if clipsNormalContainer null?
-        this.studio.spriteRenderers.set(clip, renderer);
-      }
     }
   }
 
