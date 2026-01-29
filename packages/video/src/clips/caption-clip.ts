@@ -2083,7 +2083,6 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     }
 
     await clip.ready;
-    console.log("clip",clip);
     return clip;
   }
 

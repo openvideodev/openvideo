@@ -46,6 +46,8 @@ const GROUPED_FONTS = getGroupedFonts();
 interface CaptionPropertiesProps {
   clip: IClip;
 }
+type VerticalAlignMode = 'top' | 'center' | 'bottom';
+type WordsPerLineMode = 'single' | 'multiple';
 
 export function CaptionProperties({ clip }: CaptionPropertiesProps) {
   const captionClip = clip as any;
@@ -113,19 +115,164 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
       url: font.url,
     });
 
-    // Directly update font properties
     (captionClip as any).opts.fontFamily = font.postScriptName;
     (captionClip as any).opts.fontUrl = font.url;
 
-    // Update originalOpts for serialization
     if (captionClip.originalOpts) {
       captionClip.originalOpts.fontFamily = font.postScriptName;
       captionClip.originalOpts.fontUrl = font.url;
     }
 
-    // Trigger re-render
     captionClip.emit('propsChange', {});
   };
+
+
+  async function changeWordsPerLine(
+    v: string,
+    captionClip: any,
+    opts: any
+  ) {
+    const val = v as WordsPerLineMode;
+    if (!studio || !captionClip?.mediaId) return;
+
+    const mediaId = captionClip.mediaId;
+    const tracks = studio.getTracks();
+    const siblingClips: any[] = [];
+
+    tracks.forEach((track: any) => {
+      track.clipIds.forEach((id: string) => {
+        const c = studio.getClipById(id);
+        if (c && c.type === 'Caption' && (c as any).opts.mediaId === mediaId) {
+          siblingClips.push(c);
+        }
+      });
+    });
+
+    siblingClips.sort((a, b) => a.display.from - b.display.from);
+
+    if (siblingClips.length === 0) return;
+
+    const uniformTop = captionClip.top ?? 0;
+
+    const mediaClip = studio.getClipById(mediaId);
+    if (!mediaClip) return;
+
+    const mediaStartUs = mediaClip.display.from;
+    const allWords: any[] = [];
+
+    siblingClips.forEach((c) => {
+      const clipStartUs = c.display.from;
+      const words = c.words || [];
+      words.forEach((w: any) => {
+        allWords.push({
+          ...w,
+          start: (clipStartUs + w.from * 1000 - mediaStartUs) / 1000000,
+          end: (clipStartUs + w.to * 1000 - mediaStartUs) / 1000000,
+        });
+      });
+    });
+
+    if (allWords.length === 0) return;
+
+    const newClipsJSON = await generateCaptionClips({
+      videoWidth: (studio as any).opts.width,
+      videoHeight: (studio as any).opts.height,
+      words: allWords,
+      mode: val,
+      fontSize: opts.fontSize || 80,
+      fontFamily: opts.fontFamily || 'Bangers-Regular',
+      fontUrl: opts.fontUrl,
+      style: captionClip.style,
+    });
+
+    const trackId = studio.findTrackIdByClipId(captionClip.id);
+    if (!trackId) return;
+
+    siblingClips.forEach((c) => {
+      try {
+        (c as any).wordsPerLine = val;
+        if ((c as any).opts) (c as any).opts.wordsPerLine = val;
+        if ((c as any).originalOpts) (c as any).originalOpts.wordsPerLine = val;
+        (c as any).emit && (c as any).emit('propsChange', {});
+      } catch (e) {
+        // ignore
+      }
+    });
+
+    const clipsToAdd: IClip[] = [];
+
+    for (const json of newClipsJSON) {
+      const enrichedJson = {
+        ...json,
+        mediaId,
+        wordsPerLine: val,
+        top: uniformTop,
+        originalOpts: {
+          ...(json.originalOpts || {}),
+          wordsPerLine: val,
+        },
+        opts: {
+          ...(json.opts || {}),
+          wordsPerLine: val,
+        },
+        display: {
+          from: json.display.from + mediaStartUs,
+          to: json.display.to + mediaStartUs,
+        },
+      };
+
+      const clip = await jsonToClip(enrichedJson);
+      clipsToAdd.push(clip);
+    }
+
+    siblingClips.forEach((c) => studio.removeClipById(c.id));
+
+    await studio.addClip(clipsToAdd, { trackId });
+
+    try {
+      (captionClip as any).wordsPerLine = val;
+      if ((captionClip as any).opts) (captionClip as any).opts.wordsPerLine = val;
+      if ((captionClip as any).originalOpts)
+        (captionClip as any).originalOpts.wordsPerLine = val;
+      captionClip.emit && captionClip.emit('propsChange', {});
+    } catch (e) {
+      // ignore
+    }
+  }
+
+
+  function updateVerticalAlign(
+    v: string,
+    captionClip: any,
+    handleUpdate: (updates: { top: number }) => void
+  ) {
+    if (!studio) return;
+    
+    const videoHeight = (studio as any).opts.height || 1080;
+    const clipHeight = captionClip.height || 0;
+    let newTop = captionClip.top;
+
+    if (v === 'top') {
+      newTop = 80;
+    } else if (v === 'center') {
+      newTop = (videoHeight - clipHeight) / 2;
+    } else if (v === 'bottom') {
+      newTop = videoHeight - clipHeight - 80;
+    }
+
+    handleUpdate({ top: newTop });
+
+    if (captionClip.originalOpts) {
+      captionClip.originalOpts.verticalAlign = v as VerticalAlignMode;
+    }
+    if (captionClip.opts) {
+      captionClip.opts.verticalAlign = v as VerticalAlignMode;
+    }
+
+    captionClip.emit && captionClip.emit('propsChange', {});
+  }
+
+
 
   const currentFont =
     getFontByPostScriptName(opts.fontFamily) || GROUPED_FONTS[0].mainFont;
@@ -226,34 +373,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         </label>
         <Select
           value={opts.verticalAlign || 'bottom'}
-          onValueChange={(v) => {
-            if (!studio) return;
-            const videoHeight = (studio as any).opts.height || 1080;
-            const clipHeight = captionClip.height || 0;
-            let newTop = captionClip.top;
-
-            if (v === 'top') {
-              newTop = 80; // Margin from top
-            } else if (v === 'center') {
-              newTop = (videoHeight - clipHeight) / 2;
-            } else if (v === 'bottom') {
-              newTop = videoHeight - clipHeight - 80; // Margin from bottom
-            }
-
-            // Update position
-            handleUpdate({ top: newTop });
-
-            // Update style property for vertical alignment consistency
-            if (captionClip.originalOpts) {
-              captionClip.originalOpts.verticalAlign = v;
-            }
-            if (captionClip.opts) {
-              captionClip.opts.verticalAlign = v;
-            }
-
-            // Trigger re-render for style change
-            captionClip.emit('propsChange', {});
-          }}
+          onValueChange={(v) => updateVerticalAlign(v, captionClip, handleUpdate)}
         >
           <SelectTrigger className="w-full h-9">
             <SelectValue placeholder="Vertical Position" />
@@ -273,122 +393,9 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         </label>
         <Select
           value={captionClip.wordsPerLine || 'multiple'}
-          onValueChange={async (v) => {
-            const val = v as 'single' | 'multiple';
-            if (!studio || !captionClip.mediaId) return;
-
-            // 1. Find all sibling captions
-            const mediaId = captionClip.mediaId;
-            const tracks = studio.getTracks();
-            const siblingClips: any[] = [];
-            tracks.forEach((track) => {
-              track.clipIds.forEach((id) => {
-                const c = studio.getClipById(id);
-                if (c && c.type === 'Caption' && (c as any).opts.mediaId === mediaId) {
-                  siblingClips.push(c);
-                }
-              });
-            });
-
-            // Sort by time
-            siblingClips.sort((a, b) => a.display.from - b.display.from);
-
-            // If there are no sibling clips, nothing to do
-            if (siblingClips.length === 0) return;
-
-            // Use the current caption top as the uniform top for all regenerated clips
-            const uniformTop = (captionClip.top ?? 0);
-
-            // 2. Extract all words with absolute timings (relative to media start)
-            const mediaClip = studio.getClipById(mediaId);
-            if (!mediaClip) return;
-            const mediaStartUs = mediaClip.display.from;
-
-            const allWords: any[] = [];
-            siblingClips.forEach((c) => {
-              const clipStartUs = c.display.from;
-              const words = c.words || [];
-              words.forEach((w: any) => {
-                allWords.push({
-                  ...w,
-                  start: (clipStartUs + w.from * 1000 - mediaStartUs) / 1000000,
-                  end: (clipStartUs + w.to * 1000 - mediaStartUs) / 1000000,
-                });
-              });
-            });
-
-            if (allWords.length === 0) return;
-
-            // 3. Generate new clips JSON
-            const newClipsJSON = await generateCaptionClips({
-              videoWidth: (studio as any).opts.width,
-              videoHeight: (studio as any).opts.height,
-              words: allWords,
-              mode: val,
-              fontSize: opts.fontSize || 80,
-              fontFamily: opts.fontFamily || 'Bangers-Regular',
-              fontUrl: opts.fontUrl,
-              style: captionClip.style,
-            });
-
-
-            // 4. Remove old clips and add new ones
-            const trackId = studio.findTrackIdByClipId(captionClip.id);
-            if (!trackId) return;
-
-            // Update existing sibling clips' metadata so the UI reflects the new mode
-            siblingClips.forEach((c) => {
-              try {
-                (c as any).wordsPerLine = val;
-                if ((c as any).opts) (c as any).opts.wordsPerLine = val;
-                if ((c as any).originalOpts) (c as any).originalOpts.wordsPerLine = val;
-                (c as any).emit && (c as any).emit('propsChange', {});
-              } catch (e) {
-                // ignore
-              }
-            });
-
-            const clipsToAdd: IClip[] = [];
-            for (const json of newClipsJSON) {
-              const enrichedJson = {
-                ...json,
-                mediaId: mediaId,
-                wordsPerLine: val,
-                // ensure new clips use the same top (uniform vertical position)
-                top: uniformTop,
-                originalOpts: {
-                  ...(json.originalOpts || {}),
-                  wordsPerLine: val,
-                },
-                opts: {
-                  ...(json.opts || {}),
-                  wordsPerLine: val,
-                },
-                display: {
-                  from: json.display.from + mediaStartUs,
-                  to: json.display.to + mediaStartUs,
-                },
-              };
-              const clip = await jsonToClip(enrichedJson);
-              console.log("clip",clip);
-              clipsToAdd.push(clip);
-            }
-
-            // Batch delete and add: remove old caption clips
-            siblingClips.forEach((c) => studio.removeClipById(c.id));
-
-            await studio.addClip(clipsToAdd, { trackId });
-
-            // Ensure UI dropdown reflects the new state
-            try {
-              (captionClip as any).wordsPerLine = val;
-              if ((captionClip as any).opts) (captionClip as any).opts.wordsPerLine = val;
-              if ((captionClip as any).originalOpts) (captionClip as any).originalOpts.wordsPerLine = val;
-              captionClip.emit && captionClip.emit('propsChange', {});
-            } catch (e) {
-              // ignore
-            }
-          }}
+          onValueChange={(v) =>
+            changeWordsPerLine(v, captionClip, opts)
+          }
         >
           <SelectTrigger className="w-full h-9">
             <SelectValue placeholder="Words per line" />
