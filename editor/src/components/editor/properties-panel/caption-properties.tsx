@@ -249,27 +249,54 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
     if (!studio) return;
     
     const videoHeight = (studio as any).opts.height || 1080;
-    const clipHeight = captionClip.height || 0;
-    let newTop = captionClip.top;
+    const mediaId = captionClip.mediaId;
 
-    if (v === 'top') {
-      newTop = 80;
-    } else if (v === 'center') {
-      newTop = (videoHeight - clipHeight) / 2;
-    } else if (v === 'bottom') {
-      newTop = videoHeight - clipHeight - 80;
+    // Find siblings if part of a group
+    let clipsToUpdate: any[] = [captionClip];
+    
+    if (mediaId) {
+      const tracks = studio.getTracks();
+      const siblingClips: any[] = [];
+      tracks.forEach((track: any) => {
+        track.clipIds.forEach((id: string) => {
+          const c = studio.getClipById(id);
+          if (c && c.type === 'Caption' && (c as any).opts.mediaId === mediaId) {
+            siblingClips.push(c);
+          }
+        });
+      });
+      if (siblingClips.length > 0) {
+        clipsToUpdate = siblingClips;
+      }
     }
 
-    handleUpdate({ top: newTop });
+    // Apply updates
+    clipsToUpdate.forEach((clip) => {
+      const clipHeight = clip.height || 0;
+      let newTop = clip.top;
 
-    if (captionClip.originalOpts) {
-      captionClip.originalOpts.verticalAlign = v as VerticalAlignMode;
-    }
-    if (captionClip.opts) {
-      captionClip.opts.verticalAlign = v as VerticalAlignMode;
-    }
+      if (v === 'top') {
+        newTop = 80;
+      } else if (v === 'center') {
+        newTop = (videoHeight - clipHeight) / 2;
+      } else if (v === 'bottom') {
+        newTop = videoHeight - clipHeight - 80;
+      }
 
-    captionClip.emit && captionClip.emit('propsChange', {});
+      if (clip.id === captionClip.id) {
+        handleUpdate({ top: newTop });
+      } else {
+        clip.top = newTop;
+        clip.emit && clip.emit('propsChange', { top: newTop });
+      }
+
+      if (clip.originalOpts) {
+        clip.originalOpts.verticalAlign = v as VerticalAlignMode;
+      }
+      if (clip.opts) {
+        clip.opts.verticalAlign = v as VerticalAlignMode;
+      }
+    });
   }
 
 
