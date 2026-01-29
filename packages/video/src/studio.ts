@@ -937,6 +937,10 @@ export class Studio extends EventEmitter<StudioEvents> {
     return this.timeline.getClipById(id);
   }
 
+  findClip(id: string): IClip | undefined {
+    return this.timeline.getClipById(id);
+  }
+
   /**
    * Setup sprite interactivity for click selection
    * Delegated to SelectionManager
@@ -952,7 +956,15 @@ export class Studio extends EventEmitter<StudioEvents> {
   /**
    * Remove a clip from the studio
    */
-  async removeClip(clip: IClip): Promise<void> {
+  async removeClip(clipOrId: IClip | string): Promise<void> {
+    const clip =
+      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+
+    if (!clip) {
+      console.warn(`[Studio] removeClip: Clip not found`, clipOrId);
+      return;
+    }
+
     this.beginHistoryGroup();
     try {
       this.clipCache.set(clip.id, clip);
