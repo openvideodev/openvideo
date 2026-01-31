@@ -975,11 +975,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       );
       styleOptions.fill = { fill: gradient };
     } else {
-      const fillColor =
-        typeof this.opts.fill === 'string' || typeof this.opts.fill === 'number'
-          ? parseColor(this.opts.fill)
-          : undefined;
-      styleOptions.fill = fillColor ?? 0xffffff;
+      styleOptions.fill = 0xffffff;
     }
 
     // Handle stroke
@@ -1110,7 +1106,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           }) as unknown as CaptionSplitBitmapText;
           wordText.segmentIndex = segmentIndex;
 
-          const fill = this.opts.fill;
+          const fill = "#ffffff";
           const fillToParse =
             typeof fill === 'object' && fill !== null && 'type' in fill
               ? 0xffffff

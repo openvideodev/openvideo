@@ -23,6 +23,7 @@ import {
 import { jsonToClip } from '@designcombo/video';
 import { generateCaptionClips } from '@/lib/caption-generator';
 import { IconTextSize, IconRotate, IconCircle } from '@tabler/icons-react';
+import { cn } from '@/lib/utils';
 import {
   InputGroup,
   InputGroupAddon,
@@ -533,6 +534,82 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
             <InputGroupAddon align="inline-end">
               <IconTextSize className="size-4" />
             </InputGroupAddon>
+          </InputGroup>
+        </div>
+      </div>
+
+      {/* Style Section */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Style
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex bg-secondary/30 rounded-md p-1 gap-1">
+            {[
+              { label: 'aA', value: 'none' },
+              { label: 'AA', value: 'uppercase' },
+              { label: 'aa', value: 'lowercase' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                onClick={() => handleUpdate({ textCase: item.value })}
+                className={cn(
+                  'flex-1 text-[10px] font-medium flex items-center justify-center rounded-sm py-1 transition-colors',
+                  (captionClip.textCase || 'none') === item.value
+                    ? 'bg-white/10 text-white'
+                    : 'text-muted-foreground hover:bg-white/5'
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <InputGroup className="flex-1">
+            <InputGroupAddon align="inline-start" className="relative p-0">
+              <Popover modal={true}>
+                <PopoverTrigger asChild>
+                  <InputGroupButton
+                    variant="ghost"
+                    size="icon-xs"
+                    className="h-full w-8"
+                  >
+                    <div
+                      className="h-4 w-4 border border-white/10 shadow-sm"
+                      style={{
+                        backgroundColor: (opts.fill as string) || '#ffffff',
+                      }}
+                    />
+                  </InputGroupButton>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3" align="start">
+                  <ColorPicker
+                    onChange={(colorValue) => {
+                      const hexColor = color.rgb(colorValue).hex();
+                      handleUpdate({ fill: hexColor });
+                    }}
+                    className="w-72 h-72 rounded-md border bg-background p-4 shadow-sm"
+                  >
+                    <ColorPickerSelection />
+                    <div className="flex items-center gap-4">
+                      <ColorPickerEyeDropper />
+                      <div className="grid w-full gap-1">
+                        <ColorPickerHue />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ColorPickerOutput />
+                      <ColorPickerFormat />
+                    </div>
+                  </ColorPicker>
+                </PopoverContent>
+              </Popover>
+            </InputGroupAddon>
+            <InputGroupInput
+              value={opts.fill?.toUpperCase() || '#FFFFFF'}
+              onChange={(e) => handleUpdate({ fill: e.target.value })}
+              className="text-sm p-0 text-[10px] font-mono"
+            />
           </InputGroup>
         </div>
       </div>
