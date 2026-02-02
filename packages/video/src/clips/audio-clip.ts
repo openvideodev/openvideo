@@ -7,6 +7,7 @@ import {
 import { BaseClip } from './base-clip';
 import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
 import type { AudioJSON } from '../json-serialization';
+import { AssetManager } from '../utils/asset-manager';
 
 interface IAudioOpts {
   loop?: boolean;
@@ -84,14 +85,36 @@ export class Audio extends BaseClip implements IPlaybackCapable {
    * });
    */
   static async fromUrl(url: string, opts: IAudioOpts = {}): Promise<Audio> {
+    const cachedFile = await AssetManager.get(url);
+    if (cachedFile) {
+      const originFile = await cachedFile.getOriginFile();
+      if (originFile) {
+        const clip = new Audio(originFile.stream(), opts, url);
+        await clip.ready;
+        return clip;
+      }
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(
         `Failed to fetch audio from ${url}: ${response.status} ${response.statusText}`
       );
     }
-    const clip = new Audio(response.body!, opts, url);
-    await clip.ready;
+
+    // Store in OPFS while loading
+    const stream = response.body!;
+    const [s1, s2] = stream.tee();
+
+    const clipPromise = (async () => {
+      const clip = new Audio(s1, opts, url);
+      await clip.ready;
+      return clip;
+    })();
+
+    const cachePromise = AssetManager.put(url, s2);
+
+    const [clip] = await Promise.all([clipPromise, cachePromise]);
     return clip;
   }
 

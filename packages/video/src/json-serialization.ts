@@ -10,6 +10,7 @@ import {
   type IClip,
   type ITransitionInfo,
 } from './clips';
+import { AssetManager } from './utils/asset-manager';
 
 // Base interface for all clips
 interface BaseClipJSON {
@@ -323,29 +324,46 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   // Create clip based on type
   switch (json.type) {
     case 'Video': {
-      const response = await fetch(json.src);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch video from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
-        );
-      }
+      const cachedFile = await AssetManager.get(json.src);
       // Support both new flat structure and old options structure
       const options =
         json.audio !== undefined
           ? { audio: json.audio, volume: json.volume }
           : { volume: json.volume };
-      clip = new Video(response.body!, options as any, json.src);
+
+      if (cachedFile) {
+        clip = new Video(cachedFile, options as any, json.src);
+      } else {
+        const response = await fetch(json.src);
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch video from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
+          );
+        }
+        clip = new Video(response.body!, options as any, json.src);
+      }
       break;
     }
     case 'Audio': {
       if (!json.src || json.src.trim() === '') {
         throw new Error('Audio requires a valid source URL');
       }
-      // Support both new flat structure and old options structure
+
+      const cachedFile = await AssetManager.get(json.src);
       const options: { loop?: boolean; volume?: number } = {};
       if (json.loop !== undefined) options.loop = json.loop;
       if (json.volume !== undefined) options.volume = json.volume;
-      clip = await Audio.fromUrl(json.src, options);
+
+      if (cachedFile) {
+        const originFile = await cachedFile.getOriginFile();
+        if (originFile) {
+          clip = new Audio(originFile.stream(), options, json.src);
+        } else {
+          clip = await Audio.fromUrl(json.src, options);
+        }
+      } else {
+        clip = await Audio.fromUrl(json.src, options);
+      }
       break;
     }
     // Image is handled via fromObject

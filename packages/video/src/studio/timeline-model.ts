@@ -944,6 +944,12 @@ export class TimelineModel {
       // 1. Load Fonts First
       await this.ensureFontsForClips(json.clips);
 
+      // 2. Preload Resources (Video, Audio, Image)
+      const urlsToPreload = json.clips
+        .map((clip) => clip.src)
+        .filter((src) => src && src.trim() !== '');
+      await this.studio.resourceManager.preload(urlsToPreload);
+
       // Build map of ClipID -> TrackID from json.tracks
       const clipToTrackId = new Map<string, string>();
       if (json.tracks) {

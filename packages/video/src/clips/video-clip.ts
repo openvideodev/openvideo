@@ -716,19 +716,40 @@ export class Video extends BaseClip implements IPlaybackCapable {
       throw new Error(`Expected Video, got ${json.type}`);
     }
 
-    const response = await fetch(json.src);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch video from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
-      );
-    }
+    const cachedFile = await AssetManager.get(json.src);
+
     // Support both new flat structure and old options structure
     const options =
       json.audio !== undefined
         ? { audio: json.audio, volume: json.volume }
         : { volume: json.volume };
-    const clip = new Video(response.body!, options as any, json.src);
-    await clip.ready;
+
+    let clip: Video;
+    if (cachedFile) {
+      clip = new Video(cachedFile, options as any, json.src);
+    } else {
+      const response = await fetch(json.src);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch video from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
+        );
+      }
+
+      // Store in OPFS while loading
+      const stream = response.body!;
+      const [s1, s2] = stream.tee();
+
+      const clipPromise = (async () => {
+        const clip = new Video(s1, options as any, json.src);
+        await clip.ready;
+        return clip;
+      })();
+
+      const cachePromise = AssetManager.put(json.src, s2);
+
+      const [c] = await Promise.all([clipPromise, cachePromise]);
+      clip = c;
+    }
 
     // Apply properties
     clip.left = json.left;

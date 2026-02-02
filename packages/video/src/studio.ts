@@ -105,6 +105,7 @@ import { SelectionManager } from './studio/selection-manager';
 import { Transport } from './studio/transport';
 import { TimelineModel } from './studio/timeline-model';
 import { HistoryManager, HistoryState } from './studio/history-manager';
+import { ResourceManager } from './studio/resource-manager';
 import { jsonToClip } from './json-serialization';
 import { Difference } from 'microdiff';
 
@@ -113,6 +114,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   public transport: Transport;
   public timeline: TimelineModel;
   public history: HistoryManager;
+  public resourceManager: ResourceManager;
   public pixiApp: Application | null = null;
   public get tracks() {
     return this.timeline.tracks;
@@ -240,6 +242,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.transport = new Transport(this);
     this.timeline = new TimelineModel(this);
     this.history = new HistoryManager();
+    this.resourceManager = new ResourceManager();
 
     this.ready = this.initPixiApp().then(() => {
       // Initialize history with initial state after Pixi is ready and dimensions are set correctly
