@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { useTimelineStore } from '@/stores/timeline-store';
-import { useStudioStore } from '@/stores/studio-store';
-import { usePlaybackStore } from '@/stores/playback-store';
-import type { ITimelineTrack, IClip, TrackType } from '@/types/timeline';
-import type { TimelineCanvas } from './timeline';
-import { generateUUID } from '@/utils/id';
-import { clipToJSON, type IClip as StudioClip } from 'openvideo';
+import { useEffect } from "react";
+import { useTimelineStore } from "@/stores/timeline-store";
+import { useStudioStore } from "@/stores/studio-store";
+import { usePlaybackStore } from "@/stores/playback-store";
+import type { ITimelineTrack, IClip, TrackType } from "@/types/timeline";
+import type { TimelineCanvas } from "./timeline";
+import { generateUUID } from "@/utils/id";
+import { clipToJSON, type IClip as StudioClip } from "openvideo";
 
 interface TimelineStudioSyncProps {
   timelineCanvas?: TimelineCanvas | null;
@@ -146,7 +146,7 @@ export const TimelineStudioSync = ({
         if (state._tracks.find((t) => t.id === track.id)) return state;
         const updatedTracks = [...state._tracks];
 
-        if (typeof index === 'number') {
+        if (typeof index === "number") {
           updatedTracks.splice(index, 0, track);
         } else {
           updatedTracks.unshift(track);
@@ -256,7 +256,7 @@ export const TimelineStudioSync = ({
           if (t.id === trackId || (t.id === trackId && trackId)) {
             // Check which clips are not already in track
             const uniqueNewIds = clipsToAdd.filter(
-              (id) => !t.clipIds.includes(id)
+              (id) => !t.clipIds.includes(id),
             );
             if (uniqueNewIds.length > 0) {
               return { ...t, clipIds: [...t.clipIds, ...uniqueNewIds] };
@@ -340,20 +340,20 @@ export const TimelineStudioSync = ({
       });
     };
 
-    studio.on('clip:added', handleClipAdded);
-    studio.on('clips:added', handleClipsAdded);
-    studio.on('clip:removed', handleClipRemoved);
-    studio.on('clips:removed', handleClipsRemoved);
-    studio.on('clip:updated', handleClipUpdated);
-    studio.on('clip:replaced', handleClipReplaced);
-    studio.on('track:added', handleTrackAdded as any);
-    studio.on('track:order-changed', handleTrackOrderChanged as any);
-    studio.on('track:removed', handleTrackRemoved);
-    studio.on('studio:restored', handleStudioRestored as any);
+    studio.on("clip:added", handleClipAdded);
+    studio.on("clips:added", handleClipsAdded);
+    studio.on("clip:removed", handleClipRemoved);
+    studio.on("clips:removed", handleClipsRemoved);
+    studio.on("clip:updated", handleClipUpdated);
+    studio.on("clip:replaced", handleClipReplaced);
+    studio.on("track:added", handleTrackAdded as any);
+    studio.on("track:order-changed", handleTrackOrderChanged as any);
+    studio.on("track:removed", handleTrackRemoved);
+    studio.on("studio:restored", handleStudioRestored as any);
 
-    studio.on('currentTime', handleTimeUpdate);
-    studio.on('play', handlePlay);
-    studio.on('pause', handlePause);
+    studio.on("currentTime", handleTimeUpdate);
+    studio.on("play", handlePlay);
+    studio.on("pause", handlePause);
 
     // Initial sync
     // Studio uses microseconds, PlaybackStore uses seconds
@@ -366,20 +366,20 @@ export const TimelineStudioSync = ({
     usePlaybackStore.getState().setIsPlaying(studio.getIsPlaying());
 
     return () => {
-      studio.off('clip:added', handleClipAdded);
-      studio.off('clips:added', handleClipsAdded);
-      studio.off('clip:removed', handleClipRemoved);
-      studio.off('clips:removed', handleClipsRemoved);
-      studio.off('clip:updated', handleClipUpdated);
-      studio.off('clip:replaced', handleClipReplaced);
-      studio.off('track:added', handleTrackAdded);
-      studio.off('track:order-changed', handleTrackOrderChanged as any);
-      studio.off('track:removed', handleTrackRemoved);
-      studio.off('studio:restored', handleStudioRestored as any);
+      studio.off("clip:added", handleClipAdded);
+      studio.off("clips:added", handleClipsAdded);
+      studio.off("clip:removed", handleClipRemoved);
+      studio.off("clips:removed", handleClipsRemoved);
+      studio.off("clip:updated", handleClipUpdated);
+      studio.off("clip:replaced", handleClipReplaced);
+      studio.off("track:added", handleTrackAdded);
+      studio.off("track:order-changed", handleTrackOrderChanged as any);
+      studio.off("track:removed", handleTrackRemoved);
+      studio.off("studio:restored", handleStudioRestored as any);
 
-      studio.off('currentTime', handleTimeUpdate);
-      studio.off('play', handlePlay);
-      studio.off('pause', handlePause);
+      studio.off("currentTime", handleTimeUpdate);
+      studio.off("play", handlePlay);
+      studio.off("pause", handlePause);
     };
   }, [studio]);
 
@@ -476,7 +476,7 @@ export const TimelineStudioSync = ({
             updates.trim = clip.trim;
           }
           await studio.updateClip(clip.clipId, updates);
-        })
+        }),
       );
 
       // Update store duration (max duration might have changed)
@@ -538,13 +538,13 @@ export const TimelineStudioSync = ({
       if (!clip) return;
 
       const newTrackId = generateUUID();
-      let newTrackType: TrackType = 'Video';
-      if (clip.type === 'Audio') newTrackType = 'Audio';
-      else if (clip.type === 'Text' || clip.type === 'Caption')
-        newTrackType = 'Text';
-      else if (clip.type === 'Effect') newTrackType = 'Effect';
-      else if (clip.type === 'Video' || clip.type === 'Image')
-        newTrackType = 'Video';
+      let newTrackType: TrackType = "Video";
+      if (clip.type === "Audio") newTrackType = "Audio";
+      else if (clip.type === "Text" || clip.type === "Caption")
+        newTrackType = "Text";
+      else if (clip.type === "Effect") newTrackType = "Effect";
+      else if (clip.type === "Video" || clip.type === "Image")
+        newTrackType = "Video";
 
       const newTrack: ITimelineTrack = {
         id: newTrackId,
@@ -626,7 +626,18 @@ export const TimelineStudioSync = ({
       toClipId: string;
     }) => {
       if (!studio) return;
-      await studio.addTransition('GridFlip', 2_000_000, fromClipId, toClipId);
+      const fromClip = studio.timeline.getClipById(fromClipId);
+      const toClip = studio.timeline.getClipById(toClipId);
+
+      const minDuration = Math.min(
+        fromClip?.duration ?? Infinity,
+        toClip?.duration ?? Infinity,
+      );
+
+      const duration =
+        minDuration === Infinity ? 2_000_000 : minDuration * 0.25;
+
+      await studio.addTransition("GridFlip", duration, fromClipId, toClipId);
     };
 
     const handleSelectionDelete = async () => {
@@ -634,28 +645,28 @@ export const TimelineStudioSync = ({
       await studio.deleteSelected();
     };
 
-    timelineCanvas.on('clip:modified', handleClipModified);
-    timelineCanvas.on('clips:modified', handleClipsModified);
-    timelineCanvas.on('clip:movedToTrack', handleClipMovedToTrack);
-    timelineCanvas.on('clip:movedToNewTrack', handleClipMovedToNewTrack);
-    timelineCanvas.on('timeline:updated', handleTimelineUpdated);
-    timelineCanvas.on('clips:removed', handleClipsRemoved);
-    timelineCanvas.on('selection:delete', handleSelectionDelete);
-    timelineCanvas.on('selection:duplicated', handleSelectionDuplicated);
-    timelineCanvas.on('selection:split', handleSelectionSplit);
-    timelineCanvas.on('transition:add', handleTransitionAdd);
+    timelineCanvas.on("clip:modified", handleClipModified);
+    timelineCanvas.on("clips:modified", handleClipsModified);
+    timelineCanvas.on("clip:movedToTrack", handleClipMovedToTrack);
+    timelineCanvas.on("clip:movedToNewTrack", handleClipMovedToNewTrack);
+    timelineCanvas.on("timeline:updated", handleTimelineUpdated);
+    timelineCanvas.on("clips:removed", handleClipsRemoved);
+    timelineCanvas.on("selection:delete", handleSelectionDelete);
+    timelineCanvas.on("selection:duplicated", handleSelectionDuplicated);
+    timelineCanvas.on("selection:split", handleSelectionSplit);
+    timelineCanvas.on("transition:add", handleTransitionAdd);
 
     return () => {
-      timelineCanvas.off('clip:modified', handleClipModified);
-      timelineCanvas.off('clips:modified', handleClipsModified);
-      timelineCanvas.off('clip:movedToTrack', handleClipMovedToTrack);
-      timelineCanvas.off('clip:movedToNewTrack', handleClipMovedToNewTrack);
-      timelineCanvas.off('timeline:updated', handleTimelineUpdated);
-      timelineCanvas.off('clips:removed', handleClipsRemoved);
-      timelineCanvas.off('selection:delete', handleSelectionDelete);
-      timelineCanvas.off('selection:duplicated', handleSelectionDuplicated);
-      timelineCanvas.off('selection:split', handleSelectionSplit);
-      timelineCanvas.off('transition:add', handleTransitionAdd);
+      timelineCanvas.off("clip:modified", handleClipModified);
+      timelineCanvas.off("clips:modified", handleClipsModified);
+      timelineCanvas.off("clip:movedToTrack", handleClipMovedToTrack);
+      timelineCanvas.off("clip:movedToNewTrack", handleClipMovedToNewTrack);
+      timelineCanvas.off("timeline:updated", handleTimelineUpdated);
+      timelineCanvas.off("clips:removed", handleClipsRemoved);
+      timelineCanvas.off("selection:delete", handleSelectionDelete);
+      timelineCanvas.off("selection:duplicated", handleSelectionDuplicated);
+      timelineCanvas.off("selection:split", handleSelectionSplit);
+      timelineCanvas.off("transition:add", handleTransitionAdd);
     };
   }, [timelineCanvas, updateClip, updateClips, setTracks, studio]);
 
@@ -720,26 +731,26 @@ export const TimelineStudioSync = ({
       studio.selectClipsByIds(selectedIds);
     };
 
-    studio.on('selection:created', handleStudioSelection);
-    studio.on('selection:updated', handleStudioSelection);
-    studio.on('selection:cleared', handleStudioSelectionCleared);
+    studio.on("selection:created", handleStudioSelection);
+    studio.on("selection:updated", handleStudioSelection);
+    studio.on("selection:cleared", handleStudioSelectionCleared);
 
     // Listen for studio reset (e.g. New Project)
     const handleStudioReset = () => {
       useTimelineStore.getState().setTracks([]);
       useTimelineStore.getState().setClips({});
     };
-    studio.on('reset', handleStudioReset);
+    studio.on("reset", handleStudioReset);
 
-    timelineCanvas.on('selection:changed', handleTimelineSelection);
+    timelineCanvas.on("selection:changed", handleTimelineSelection);
 
     return () => {
-      studio.off('selection:created', handleStudioSelection);
-      studio.off('selection:updated', handleStudioSelection);
-      studio.off('selection:cleared', handleStudioSelectionCleared);
-      studio.off('reset', handleStudioReset);
+      studio.off("selection:created", handleStudioSelection);
+      studio.off("selection:updated", handleStudioSelection);
+      studio.off("selection:cleared", handleStudioSelectionCleared);
+      studio.off("reset", handleStudioReset);
 
-      timelineCanvas.off('selection:changed', handleTimelineSelection);
+      timelineCanvas.off("selection:changed", handleTimelineSelection);
     };
   }, [studio, timelineCanvas]);
 

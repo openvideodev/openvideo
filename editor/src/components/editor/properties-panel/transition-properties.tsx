@@ -1,66 +1,170 @@
-import * as React from 'react';
-import { IClip } from 'openvideo';
-import { IconVolume, IconGauge, IconMusic } from '@tabler/icons-react';
+import * as React from "react";
+import { IClip } from "openvideo";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '@/components/ui/input-group';
-import { Slider } from '@/components/ui/slider';
-import { GL_TRANSITION_OPTIONS, Transition } from 'openvideo';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useStudioStore } from '@/stores/studio-store';
-import { Loader2 } from 'lucide-react';
+} from "@/components/ui/input-group";
+import { Slider } from "@/components/ui/slider";
+import { GL_TRANSITION_OPTIONS, Transition } from "openvideo";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useStudioStore } from "@/stores/studio-store";
+import { Loader2, Timer } from "lucide-react";
 interface TransitionPropertiesProps {
   clip: IClip;
 }
 
+const LOADED_CACHE: Record<string, { static: boolean; dynamic: boolean }> = {};
+let LAST_SCROLL_POS = 0;
+
 export function TransitionProperties({ clip }: TransitionPropertiesProps) {
   const transitionClip = clip as any;
   const { studio, selectedClips } = useStudioStore();
-  const TRANSITION_DURATION_DEFAULT = 2_000_000;
+  const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  const [loaded, setLoaded] = React.useState<
-    Record<string, { static: boolean; dynamic: boolean }>
-  >({});
+  const [loaded, setLoaded] = React.useState(LOADED_CACHE);
+  const [localDuration, setLocalDuration] = React.useState(
+    transitionClip.duration / 1_000_000,
+  );
 
-  const markLoaded = (key: string, type: 'static' | 'dynamic') => {
-    setLoaded((prev) => ({
-      ...prev,
-      [key]: {
-        static: type === 'static' ? true : (prev[key]?.static ?? false),
-        dynamic: type === 'dynamic' ? true : (prev[key]?.dynamic ?? false),
-      },
-    }));
+  React.useEffect(() => {
+    setLocalDuration(transitionClip.duration / 1_000_000);
+  }, [transitionClip.duration]);
+
+  React.useLayoutEffect(() => {
+    const viewport = scrollRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (viewport) {
+      viewport.scrollTop = LAST_SCROLL_POS;
+    }
+  }, []);
+
+  const markLoaded = (key: string, type: "static" | "dynamic") => {
+    if (LOADED_CACHE[key]?.[type]) return;
+    LOADED_CACHE[key] = {
+      ...LOADED_CACHE[key],
+      [type]: true,
+    };
+    setLoaded({ ...LOADED_CACHE });
   };
 
-  const handleUpdate = (updates: any) => {
-    // audioClip.update(updates);
+  const fromClip = studio?.timeline.getClipById(transitionClip.fromClipId);
+  const toClip = studio?.timeline.getClipById(transitionClip.toClipId);
+
+  const minFromToDuration = Math.min(
+    fromClip?.duration ?? Infinity,
+    toClip?.duration ?? Infinity,
+  );
+
+  const maxDurationMicro =
+    minFromToDuration === Infinity ? 10_000_000 : minFromToDuration * 0.25;
+  const minDurationMicro = 100_000; // 0.1s
+
+  const handleUpdate = async (updates: any) => {
+    if (!studio || !transitionClip.fromClipId || !transitionClip.toClipId)
+      return;
+
+    let newDuration = updates.duration ?? transitionClip.duration;
+    const newKey = updates.key ?? transitionClip.transitionEffect.key;
+
+    if (newDuration !== undefined || updates.key !== undefined) {
+      newDuration = Math.max(
+        minDurationMicro,
+        Math.min(maxDurationMicro, newDuration),
+      );
+
+      const transitionStart = toClip!.display.from - newDuration / 2;
+      const transitionEnd = transitionStart + newDuration;
+      const transitionMeta = {
+        key: newKey,
+        name: newKey,
+        duration: newDuration,
+        fromClipId: transitionClip.fromClipId,
+        toClipId: transitionClip.toClipId,
+        start: Math.max(0, transitionStart),
+        end: transitionEnd,
+      };
+
+      // Clear cached transition renderers if the key or duration changed
+      if (
+        newKey !== transitionClip.transitionEffect.key ||
+        newDuration !== transitionClip.duration
+      ) {
+        if (
+          (studio as any).transitionRenderers.has(transitionClip.fromClipId)
+        ) {
+          (studio as any).transitionRenderers
+            .get(transitionClip.fromClipId)
+            ?.destroy();
+          (studio as any).transitionRenderers.delete(transitionClip.fromClipId);
+        }
+        if ((studio as any).transitionRenderers.has(transitionClip.toClipId)) {
+          (studio as any).transitionRenderers
+            .get(transitionClip.toClipId)
+            ?.destroy();
+          (studio as any).transitionRenderers.delete(transitionClip.toClipId);
+        }
+      }
+
+      // Update the transition clip itself
+      const clipUpdates: any = {
+        duration: newDuration,
+        display: { from: Math.max(0, transitionStart), to: transitionEnd },
+      };
+
+      if (updates.key) {
+        clipUpdates.transitionEffect = {
+          id: transitionClip.transitionEffect.id,
+          key: newKey,
+          name: newKey,
+        };
+      }
+
+      await studio.updateClip(transitionClip.id, clipUpdates);
+
+      // Update transition info in related clips
+      if (fromClip)
+        await studio.updateClip(fromClip.id, { transition: transitionMeta });
+      if (toClip)
+        await studio.updateClip(toClip.id, { transition: transitionMeta });
+
+      studio.seek(studio.currentTime);
+    }
   };
+
+  const maxDurationInSeconds = maxDurationMicro / 1_000_000;
+  const minDurationInSeconds = minDurationMicro / 1_000_000;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Volume Section */}
+      {/* Duration Section */}
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
           Duration
         </label>
         <div className="flex items-center gap-4">
-          <IconVolume className="size-4 text-muted-foreground" />
+          <Timer className="size-4 text-muted-foreground" />
           <Slider
-            value={[50]}
-            onValueChange={(v) => handleUpdate({ volume: v[0] / 100 })}
-            max={100}
-            step={1}
+            value={[localDuration]}
+            onValueChange={(v) => setLocalDuration(v[0])}
+            onValueCommit={(v) => handleUpdate({ duration: v[0] * 1_000_000 })}
+            max={maxDurationInSeconds}
+            min={minDurationInSeconds}
+            step={0.1}
             className="flex-1"
           />
           <InputGroup className="w-20">
             <InputGroupInput
               type="number"
-              value={50}
-              onChange={(e) =>
-                handleUpdate({ volume: (parseInt(e.target.value) || 0) / 100 })
-              }
+              value={localDuration.toFixed(1)}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value) || 0;
+                setLocalDuration(val);
+                handleUpdate({
+                  duration: val * 1_000_000,
+                });
+              }}
               className="text-sm p-0 text-center"
             />
             <InputGroupAddon align="inline-end" className="p-0 pr-2">
@@ -69,7 +173,18 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
           </InputGroup>
         </div>
       </div>
-      <ScrollArea className="h-full">
+      <ScrollArea
+        ref={scrollRef}
+        onScrollCapture={() => {
+          const viewport = scrollRef.current?.querySelector(
+            "[data-radix-scroll-area-viewport]",
+          );
+          if (viewport) {
+            LAST_SCROLL_POS = viewport.scrollTop;
+          }
+        }}
+        className="h-full"
+      >
         <div className="grid grid-cols-[repeat(auto-fill,minmax(92px,1fr))] gap-2.5 justify-items-center">
           {GL_TRANSITION_OPTIONS.map((effect) => {
             const isReady =
@@ -81,13 +196,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
                 className="flex w-full items-center gap-2 flex-col group cursor-pointer"
                 onClick={() => {
                   if (!studio) return;
-
-                  studio.addTransition(
-                    effect.key,
-                    TRANSITION_DURATION_DEFAULT,
-                    transitionClip.fromClipId,
-                    transitionClip.toClipId
-                  );
+                  handleUpdate({ key: effect.key });
                 }}
               >
                 <div className="relative w-full aspect-video rounded-md bg-input/30 border overflow-hidden">
@@ -99,7 +208,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
                   <img
                     src={effect.previewStatic}
-                    onLoad={() => markLoaded(effect.key, 'static')}
+                    onLoad={() => markLoaded(effect.key, "static")}
                     loading="lazy"
                     className="
                       absolute inset-0 w-full h-full object-cover rounded-sm
@@ -110,7 +219,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
                   <img
                     src={effect.previewDynamic}
-                    onLoad={() => markLoaded(effect.key, 'dynamic')}
+                    onLoad={() => markLoaded(effect.key, "dynamic")}
                     loading="lazy"
                     className="
                       absolute inset-0 w-full h-full object-cover rounded-sm
