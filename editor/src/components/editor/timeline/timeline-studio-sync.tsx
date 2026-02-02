@@ -626,7 +626,18 @@ export const TimelineStudioSync = ({
       toClipId: string;
     }) => {
       if (!studio) return;
-      await studio.addTransition('GridFlip', 2_000_000, fromClipId, toClipId);
+      const fromClip = studio.timeline.getClipById(fromClipId);
+      const toClip = studio.timeline.getClipById(toClipId);
+
+      const minDuration = Math.min(
+        fromClip?.duration ?? Infinity,
+        toClip?.duration ?? Infinity
+      );
+
+      const duration =
+        minDuration === Infinity ? 2_000_000 : minDuration * 0.25;
+
+      await studio.addTransition('GridFlip', duration, fromClipId, toClipId);
     };
 
     const handleSelectionDelete = async () => {

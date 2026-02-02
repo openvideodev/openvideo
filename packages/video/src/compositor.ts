@@ -901,120 +901,125 @@ function createSpritesRender(opts: {
 
       // Handle video rendering if we have a Pixi app
       if (hasVideoTrack && pixiApp != null && clipsNormalContainer != null) {
-        if (sprite instanceof Transition) {
-          const fromClip = sprites.find((s) => s.id === sprite.fromClipId);
-          const toClip = sprites.find((s) => s.id === sprite.toClipId);
+  if (sprite instanceof Transition) {
+    const fromClip = sprites.find((s) => s.id === sprite.fromClipId);
+    const toClip = sprites.find((s) => s.id === sprite.toClipId);
 
-          if (fromClip && toClip) {
-            const fromFrame = await getClipFrameAtTimestamp(
-              fromClip,
-              timestamp,
-              getFrameCached
-            );
-            const toFrame = await getClipFrameAtTimestamp(
-              toClip,
-              timestamp,
-              getFrameCached
-            );
+    if (fromClip && toClip) {
+      const relativeTime = timestamp - sprite.display.from;
 
-            if (fromFrame && toFrame) {
-              const progress = relativeTime / sprite.duration;
+      if (relativeTime >= sprite.duration) {
+        sprite.expired = true;
 
-              // Render BOTH frames to their respective composite textures (with background)
-              renderClipToTransitionTexture(
-                fromClip,
-                fromFrame,
-                transFromTexture
-              );
-              renderClipToTransitionTexture(toClip, toFrame, transToTexture);
-
-              let transRenderer = transitionRenderers.get(sprite.id);
-              if (!transRenderer) {
-                transRenderer = makeTransition({
-                  name: sprite.transitionEffect.key,
-                  renderer: pixiApp.renderer,
-                });
-                transitionRenderers.set(sprite.id, transRenderer);
-              }
-
-              const transTexture = transRenderer.render({
-                width: pixiApp.renderer.width,
-                height: pixiApp.renderer.height,
-                from: transFromTexture,
-                to: transToTexture,
-                progress,
-              });
-
-              // Display the transition using a per-clip transition sprite
-              let transSprite = transitionSprites.get(sprite.id);
-              if (!transSprite) {
-                transSprite = new Sprite();
-                transSprite.label = `TransitionSprite_${sprite.id}`;
-                transitionSprites.set(sprite.id, transSprite);
-                clipsNormalContainer.addChild(transSprite);
-              }
-
-              transSprite.texture = transTexture;
-              transSprite.visible = true;
-              transSprite.x = 0;
-              transSprite.y = 0;
-              transSprite.width = pixiApp.renderer.width;
-              transSprite.height = pixiApp.renderer.height;
-              transSprite.anchor.set(0, 0);
-              transSprite.zIndex = sprite.zIndex;
-
-              hasVideo = true;
-
-              // Force hide participants during transition
-              const fromRenderer = spriteRenderers.get(
-                fromClip as IClip & { main: boolean; expired: boolean }
-              );
-              if (fromRenderer) {
-                const root = fromRenderer.getRoot();
-                if (root) root.visible = false;
-              }
-              const toRenderer = spriteRenderers.get(
-                toClip as IClip & { main: boolean; expired: boolean }
-              );
-              if (toRenderer) {
-                const root = toRenderer.getRoot();
-                if (root) root.visible = false;
-              }
-
-              continue;
-            }
-          }
+        const transSprite = transitionSprites.get(sprite.id);
+        if (transSprite) {
+          transSprite.visible = false;
         }
 
-        // Get or create PixiSpriteRenderer for this sprite
-        let renderer = spriteRenderers.get(sprite);
-        if (renderer == null && video != null) {
-          // Only create renderer if we have a video frame
-          // Pass clipsNormalContainer as default target
-          renderer = new PixiSpriteRenderer(
-            pixiApp,
-            sprite,
-            clipsNormalContainer
+      } else {
+        const fromFrame = await getClipFrameAtTimestamp(
+          fromClip,
+          timestamp,
+          getFrameCached
+        );
+        const toFrame = await getClipFrameAtTimestamp(
+          toClip,
+          timestamp,
+          getFrameCached
+        );
+
+        if (fromFrame && toFrame) {
+          const progress = Math.min(
+            Math.max(relativeTime / sprite.duration, 0),
+            1
           );
-          spriteRenderers.set(sprite, renderer);
-        }
 
-        if (renderer != null) {
-          if (video != null) {
-            hasVideo = true;
-            // Update Pixi sprite with video frame
-            await renderer.updateFrame(video);
-          } else {
-            // If we had a renderer but no video frame, hide it
-            await renderer.updateFrame(null);
+          renderClipToTransitionTexture(
+            fromClip,
+            fromFrame,
+            transFromTexture
+          );
+          renderClipToTransitionTexture(
+            toClip,
+            toFrame,
+            transToTexture
+          );
+
+          let transRenderer = transitionRenderers.get(sprite.id);
+          if (!transRenderer) {
+            transRenderer = makeTransition({
+              name: sprite.transitionEffect.key,
+              renderer: pixiApp.renderer,
+            });
+            transitionRenderers.set(sprite.id, transRenderer);
           }
-        }
 
-        // CRITICAL: Always update transforms AFTER animation
-        if (renderer != null) {
-          renderer.updateTransforms();
+          const transTexture = transRenderer.render({
+            width: pixiApp.renderer.width,
+            height: pixiApp.renderer.height,
+            from: transFromTexture,
+            to: transToTexture,
+            progress,
+          });
+
+          let transSprite = transitionSprites.get(sprite.id);
+          if (!transSprite) {
+            transSprite = new Sprite();
+            transSprite.label = `TransitionSprite_${sprite.id}`;
+            transitionSprites.set(sprite.id, transSprite);
+            clipsNormalContainer.addChild(transSprite);
+          }
+
+          transSprite.texture = transTexture;
+          transSprite.visible = true;
+          transSprite.x = 0;
+          transSprite.y = 0;
+          transSprite.width = pixiApp.renderer.width;
+          transSprite.height = pixiApp.renderer.height;
+          transSprite.anchor.set(0, 0);
+          transSprite.zIndex = sprite.zIndex;
+
+          hasVideo = true;
+
+          const fromRenderer = spriteRenderers.get(fromClip as any);
+          if (fromRenderer) {
+            const root = fromRenderer.getRoot();
+            if (root) root.visible = false;
+          }
+
+          const toRenderer = spriteRenderers.get(toClip as any);
+          if (toRenderer) {
+            const root = toRenderer.getRoot();
+            if (root) root.visible = false;
+          }
+          continue;
         }
       }
+    }
+  }
+
+  let renderer = spriteRenderers.get(sprite);
+  if (renderer == null && video != null) {
+    renderer = new PixiSpriteRenderer(
+      pixiApp,
+      sprite,
+      clipsNormalContainer
+    );
+    spriteRenderers.set(sprite, renderer);
+  }
+
+  if (renderer != null) {
+    if (video != null) {
+      hasVideo = true;
+      await renderer.updateFrame(video);
+    } else {
+      await renderer.updateFrame(null);
+    }
+
+    renderer.updateTransforms();
+  }
+}
+
 
       // Check if sprite is done or expired
       if (
