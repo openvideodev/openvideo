@@ -194,6 +194,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   private processingHistory = false;
   private historyGroupDepth = 0;
   private clipCache = new Map<string, IClip>();
+  private _isUpdatingLayout = false;
 
   // Effect system
   public globalEffects = new Map<string, GlobalEffectInfo>();
@@ -646,67 +647,59 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   private handleResize = () => {
-    if (this.destroyed || !this.pixiApp) return;
+    if (this.destroyed || !this.pixiApp || this._isUpdatingLayout) return;
     this.updateArtboardLayout();
   };
 
-  private updateArtboardLayout() {
-    if (!this.pixiApp || !this.artboard) return;
+  public updateArtboardLayout() {
+    if (!this.pixiApp || !this.artboard || this._isUpdatingLayout) return;
+    this._isUpdatingLayout = true;
 
-    // Canvas size (container size)
-    const canvasWidth = this.pixiApp.canvas.width;
-    const canvasHeight = this.pixiApp.canvas.height; // Use clientHeight/width? pixiApp.canvas should mirror it if resizeTo is set?
-    // Wait, pixiApp init with explicit width/height initially.
-    // We want the canvas to be responsive. Player component will make it responsive.
-    // AND pixiApp should verify the canvas size.
-    // If Player uses explicit size, we need to respect that.
-    // BUT we want 'canvas should take full size of preview container'.
-    // AND 'artboard should be centered... zoom in the canvas'.
-    // Ideally, Player CSS makes canvas 100% 100%. Pixi App resizing logic:
+    try {
+      // Force PIXI to resize its renderer to match its container (if resizeTo is set)
+      this.pixiApp.resize();
 
-    // We manually calculate scale
-    // Artboard logical size
-    const artboardWidth = this.opts.width;
-    const artboardHeight = this.opts.height;
+      const canvas = this.pixiApp.canvas as HTMLCanvasElement;
+      const parent = canvas.parentElement;
 
-    // Available space
-    // NOTE: pixiApp.canvas might not report the CSS size immediately correctly if not using resizeTo?
-    // Let's rely on the canvas element's clientWidth/Height
-    const containerWidth =
-      (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientWidth ||
-      canvasWidth;
-    const containerHeight =
-      (this.pixiApp.canvas as HTMLCanvasElement).parentElement?.clientHeight ||
-      canvasHeight;
+      // Use the parent's bounding rect if available, as clientWidth/Height might be 0 during initial mount or reflow
+      const containerWidth = parent
+        ? parent.getBoundingClientRect().width
+        : this.pixiApp.screen.width;
+      const containerHeight = parent
+        ? parent.getBoundingClientRect().height
+        : this.pixiApp.screen.height;
 
-    const spacing = this.opts.spacing || 0;
-    const containerWidthWithSpacing = Math.max(0, containerWidth - spacing * 2);
-    const containerHeightWithSpacing = Math.max(
-      0,
-      containerHeight - spacing * 2
-    );
+      // Artboard logical size (the "true" size of our project)
+      const artboardWidth = this.opts.width;
+      const artboardHeight = this.opts.height;
 
-    // Calculate scale to fit artboard in container with spacing
-    const scaleX = containerWidthWithSpacing / artboardWidth;
-    const scaleY = containerHeightWithSpacing / artboardHeight;
-    const scale = Math.min(scaleX, scaleY);
-    // User said: 'instead of apply transfrom scale ... it should apply some zoom in the canvas and center it'
-    // AND 'canvas should take full size of preview container'
-    // So yes, scale Artboard to fit (or maybe margin?). Let's stick to fit.
+      const spacing = this.opts.spacing || 0;
+      const containerWidthWithSpacing = Math.max(
+        0,
+        containerWidth - spacing * 2
+      );
+      const containerHeightWithSpacing = Math.max(
+        0,
+        containerHeight - spacing * 2
+      );
 
-    // Apply scale and center
-    this.artboard.scale.set(scale);
+      // Calculate scale to fit artboard in container with spacing
+      const scaleX = containerWidthWithSpacing / artboardWidth;
+      const scaleY = containerHeightWithSpacing / artboardHeight;
+      const scale = Math.min(scaleX, scaleY);
 
-    // Center logic
-    // (containerWidth - artboardWidth * scale) / 2
-    this.artboard.x = (containerWidth - artboardWidth * scale) / 2;
-    this.artboard.y = (containerHeight - artboardHeight * scale) / 2;
+      // Apply scale and center
+      this.artboard.scale.set(scale);
 
-    // Ensure mask is correct scale/pos?
-    // Mask is child of artboard, so it scales with it.
-    // But mask should match Artboard LOGICAL size.
-    // width/height passed to graphics.rect was opts.width/opts.height. Correct.
+      // Center the artboard within the updated container dimensions
+      this.artboard.x = (containerWidth - artboardWidth * scale) / 2;
+      this.artboard.y = (containerHeight - artboardHeight * scale) / 2;
+    } finally {
+      this._isUpdatingLayout = false;
+    }
   }
+
 
   /**
    * Get the canvas element (creates one if not provided)

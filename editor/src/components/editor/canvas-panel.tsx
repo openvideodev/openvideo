@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Player } from './player';
-import { Studio, Compositor, fontManager } from '@designcombo/video';
+import { Studio, fontManager } from '@designcombo/video';
 import { useStudioStore } from '@/stores/studio-store';
 import { editorFont } from './constants';
 
@@ -108,7 +107,22 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
 
   return (
     <div className="h-full w-full flex flex-col min-h-0 min-w-0 bg-card rounded-sm relative">
-      <Player canvasRef={canvasRef} />
+      <div
+        style={{
+          flex: 1,
+          position: 'relative', // Ensure relative positioning for absolute children if needed
+          overflow: 'hidden', // Hide anything outside (though canvas masks it too)
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          style={{
+            display: 'block',
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      </div>
     </div>
   );
 }
