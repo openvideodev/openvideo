@@ -1,15 +1,15 @@
-import * as React from 'react';
-import { IClip } from 'openvideo';
+import * as React from "react";
+import { IClip } from "openvideo";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '@/components/ui/input-group';
-import { Slider } from '@/components/ui/slider';
-import { GL_TRANSITION_OPTIONS, Transition } from 'openvideo';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useStudioStore } from '@/stores/studio-store';
-import { Loader2, Timer } from 'lucide-react';
+} from "@/components/ui/input-group";
+import { Slider } from "@/components/ui/slider";
+import { GL_TRANSITION_OPTIONS, Transition } from "openvideo";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useStudioStore } from "@/stores/studio-store";
+import { Loader2, Timer } from "lucide-react";
 interface TransitionPropertiesProps {
   clip: IClip;
 }
@@ -24,7 +24,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
   const [loaded, setLoaded] = React.useState(LOADED_CACHE);
   const [localDuration, setLocalDuration] = React.useState(
-    transitionClip.duration / 1_000_000
+    transitionClip.duration / 1_000_000,
   );
 
   React.useEffect(() => {
@@ -33,14 +33,14 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
   React.useLayoutEffect(() => {
     const viewport = scrollRef.current?.querySelector(
-      '[data-radix-scroll-area-viewport]'
+      "[data-radix-scroll-area-viewport]",
     );
     if (viewport) {
       viewport.scrollTop = LAST_SCROLL_POS;
     }
   }, []);
 
-  const markLoaded = (key: string, type: 'static' | 'dynamic') => {
+  const markLoaded = (key: string, type: "static" | "dynamic") => {
     if (LOADED_CACHE[key]?.[type]) return;
     LOADED_CACHE[key] = {
       ...LOADED_CACHE[key],
@@ -54,7 +54,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
   const minFromToDuration = Math.min(
     fromClip?.duration ?? Infinity,
-    toClip?.duration ?? Infinity
+    toClip?.duration ?? Infinity,
   );
 
   const maxDurationMicro =
@@ -71,7 +71,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
     if (newDuration !== undefined || updates.key !== undefined) {
       newDuration = Math.max(
         minDurationMicro,
-        Math.min(maxDurationMicro, newDuration)
+        Math.min(maxDurationMicro, newDuration),
       );
 
       const transitionStart = toClip!.display.from - newDuration / 2;
@@ -91,23 +91,14 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
         newKey !== transitionClip.transitionEffect.key ||
         newDuration !== transitionClip.duration
       ) {
-        if (
-          (studio as any).transitionRenderers.has(transitionClip.fromClipId)
-        ) {
-          (studio as any).transitionRenderers
-            .get(transitionClip.fromClipId)
-            ?.destroy();
-          (studio as any).transitionRenderers.delete(transitionClip.fromClipId);
-        }
-        if ((studio as any).transitionRenderers.has(transitionClip.toClipId)) {
-          (studio as any).transitionRenderers
-            .get(transitionClip.toClipId)
-            ?.destroy();
-          (studio as any).transitionRenderers.delete(transitionClip.toClipId);
+        const transKey = `${transitionClip.fromClipId}_${transitionClip.toClipId}`;
+        if ((studio as any).transitionRenderers.has(transKey)) {
+          (studio as any).transitionRenderers.get(transKey)?.destroy();
+          (studio as any).transitionRenderers.delete(transKey);
         }
       }
 
-      // Update the transition clip itself
+      // Update the transition clip and related clips in a single batch
       const clipUpdates: any = {
         duration: newDuration,
         display: { from: Math.max(0, transitionStart), to: transitionEnd },
@@ -121,13 +112,27 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
         };
       }
 
-      await studio.updateClip(transitionClip.id, clipUpdates);
+      const updatesList = [
+        {
+          id: transitionClip.id,
+          updates: clipUpdates,
+        },
+      ];
 
-      // Update transition info in related clips
-      if (fromClip)
-        await studio.updateClip(fromClip.id, { transition: transitionMeta });
-      if (toClip)
-        await studio.updateClip(toClip.id, { transition: transitionMeta });
+      if (fromClip) {
+        updatesList.push({
+          id: fromClip.id,
+          updates: { transition: transitionMeta } as any,
+        });
+      }
+      if (toClip) {
+        updatesList.push({
+          id: toClip.id,
+          updates: { transition: transitionMeta } as any,
+        });
+      }
+
+      await studio.updateClips(updatesList);
 
       studio.seek(studio.currentTime);
     }
@@ -177,7 +182,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
         ref={scrollRef}
         onScrollCapture={() => {
           const viewport = scrollRef.current?.querySelector(
-            '[data-radix-scroll-area-viewport]'
+            "[data-radix-scroll-area-viewport]",
           );
           if (viewport) {
             LAST_SCROLL_POS = viewport.scrollTop;
@@ -208,7 +213,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
                   <img
                     src={effect.previewStatic}
-                    onLoad={() => markLoaded(effect.key, 'static')}
+                    onLoad={() => markLoaded(effect.key, "static")}
                     loading="lazy"
                     className="
                       absolute inset-0 w-full h-full object-cover rounded-sm
@@ -219,7 +224,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
                   <img
                     src={effect.previewDynamic}
-                    onLoad={() => markLoaded(effect.key, 'dynamic')}
+                    onLoad={() => markLoaded(effect.key, "dynamic")}
                     loading="lazy"
                     className="
                       absolute inset-0 w-full h-full object-cover rounded-sm

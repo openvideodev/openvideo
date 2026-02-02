@@ -190,13 +190,10 @@ export class TimelineModel {
     }
 
     // Clear cached transition renderers to ensure new transition type is used
-    if (this.studio.transitionRenderers.has(clipA.id)) {
-      this.studio.transitionRenderers.get(clipA.id)?.destroy();
-      this.studio.transitionRenderers.delete(clipA.id);
-    }
-    if (this.studio.transitionRenderers.has(clipB.id)) {
-      this.studio.transitionRenderers.get(clipB.id)?.destroy();
-      this.studio.transitionRenderers.delete(clipB.id);
+    const transKey = `${clipA.id}_${clipB.id}`;
+    if (this.studio.transitionRenderers.has(transKey)) {
+      this.studio.transitionRenderers.get(transKey)?.destroy();
+      this.studio.transitionRenderers.delete(transKey);
     }
 
     // Force set transition property

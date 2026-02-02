@@ -1055,6 +1055,10 @@ export class Studio extends EventEmitter<StudioEvents> {
       this.transBgGraphics.destroy(true);
       this.transBgGraphics = null;
     }
+    this.transitionRenderers.forEach((r: any) => r.destroy());
+    this.transitionRenderers.clear();
+    this.transitionSprites.forEach((s) => s.destroy());
+    this.transitionSprites.clear();
 
     this.emit('reset');
   }
@@ -1155,9 +1159,9 @@ export class Studio extends EventEmitter<StudioEvents> {
       return;
     this.updateActiveGlobalEffect(timestamp);
 
-    // We will reset visibility only for sprites that are NOT used this frame
-    // to avoid flickering due to async gaps.
     const usedTransitionSprites = new Set<string>();
+    const renderedTransitions = new Set<string>();
+
     // Apply Z-index based on track order
     // Track 0 (Top) should have highest Z-index
     // This ensures correct visual stacking even when clips are re-parented
@@ -1295,6 +1299,22 @@ export class Studio extends EventEmitter<StudioEvents> {
       }
 
       if (inTransition) {
+        const fromClipId = clip?.transition?.fromClipId;
+        const toClipId = clip?.transition?.toClipId;
+        const transKey = `${fromClipId}_${toClipId}`;
+
+        // Ensure we only render this transition ONCE per frame
+        if (renderedTransitions.has(transKey)) {
+          // Hide this clip's own renderer/sprite if it's the one currently being updated
+          const renderer = this.spriteRenderers.get(clip);
+          if (renderer?.getRoot()) renderer.getRoot()!.visible = false;
+          const videoSprite = this.videoSprites.get(clip);
+          if (videoSprite) videoSprite.visible = false;
+          continue;
+        }
+
+        renderedTransitions.add(transKey);
+
         // Inicialización lazy de texturas
         if (!this.transFromTexture) {
           this.transFromTexture = RenderTexture.create({
@@ -1315,8 +1335,8 @@ export class Studio extends EventEmitter<StudioEvents> {
             .fill({ color: 0x000000, alpha: 0 }); // fondo default
         }
 
-        const fromClip = this.getClipById(clip?.transition?.fromClipId!);
-        const toClip = this.getClipById(clip?.transition?.toClipId!);
+        const fromClip = fromClipId ? this.getClipById(fromClipId) : null;
+        const toClip = toClipId ? this.getClipById(toClipId) : null;
 
         let fromFrame: ImageBitmap | Texture | null = null;
         let toFrame: ImageBitmap | Texture | null = null;
@@ -1391,14 +1411,15 @@ export class Studio extends EventEmitter<StudioEvents> {
           }
 
           // Crear o reutilizar renderer de transición
-          let transRenderer = this.transitionRenderers.get(clip.id);
+          // Use shared transKey for the cache!
+          let transRenderer = this.transitionRenderers.get(transKey);
           if (!transRenderer) {
             try {
               transRenderer = makeTransition({
                 name: clip?.transition?.name as any,
                 renderer: this.pixiApp.renderer,
               });
-              this.transitionRenderers.set(clip.id, transRenderer);
+              this.transitionRenderers.set(transKey, transRenderer);
             } catch (err) {
               console.error(
                 `[Studio] Failed to create transition renderer:`,
@@ -1417,11 +1438,11 @@ export class Studio extends EventEmitter<StudioEvents> {
             });
 
             // Mostrar transición
-            let transSprite = this.transitionSprites.get(clip.id);
+            let transSprite = this.transitionSprites.get(transKey);
             if (!transSprite) {
               transSprite = new Sprite();
-              transSprite.label = `TransitionSprite_${clip.id}`;
-              this.transitionSprites.set(clip.id, transSprite);
+              transSprite.label = `TransitionSprite_${transKey}`;
+              this.transitionSprites.set(transKey, transSprite);
               if (this.clipsNormalContainer) {
                 this.clipsNormalContainer.addChild(transSprite);
               }
@@ -1435,7 +1456,7 @@ export class Studio extends EventEmitter<StudioEvents> {
             transSprite.height = this.opts.height;
             transSprite.anchor.set(0, 0);
             transSprite.zIndex = clip.zIndex;
-            usedTransitionSprites.add(clip.id);
+            usedTransitionSprites.add(transKey);
 
             // Ocultar clips reales durante la transición
             const renderer = this.spriteRenderers.get(clip);
@@ -1449,6 +1470,14 @@ export class Studio extends EventEmitter<StudioEvents> {
                 prevRenderer.getRoot()!.visible = false;
               const prevVideoSprite = this.videoSprites.get(fromClip);
               if (prevVideoSprite) prevVideoSprite.visible = false;
+            }
+
+            if (toClip) {
+              const nextRenderer = this.spriteRenderers.get(toClip);
+              if (nextRenderer?.getRoot())
+                nextRenderer.getRoot()!.visible = false;
+              const nextVideoSprite = this.videoSprites.get(toClip);
+              if (nextVideoSprite) nextVideoSprite.visible = false;
             }
 
             continue;
