@@ -10,8 +10,6 @@ import {
   type IClip,
   type ITransitionInfo,
 } from './clips';
-import { AssetManager } from './utils/asset-manager';
-
 // Base interface for all clips
 interface BaseClipJSON {
   id?: string;
@@ -320,53 +318,8 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
     return await ClipClass.fromObject(json);
   }
 
-  // Fallback to manual construction
-  // Create clip based on type
+  // Fallback to manual construction (mostly for non-media clips like Text/Caption that don't need resource management)
   switch (json.type) {
-    case 'Video': {
-      const cachedFile = await AssetManager.get(json.src);
-      // Support both new flat structure and old options structure
-      const options =
-        json.audio !== undefined
-          ? { audio: json.audio, volume: json.volume }
-          : { volume: json.volume };
-
-      if (cachedFile) {
-        clip = new Video(cachedFile, options as any, json.src);
-      } else {
-        const response = await fetch(json.src);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch video from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
-          );
-        }
-        clip = new Video(response.body!, options as any, json.src);
-      }
-      break;
-    }
-    case 'Audio': {
-      if (!json.src || json.src.trim() === '') {
-        throw new Error('Audio requires a valid source URL');
-      }
-
-      const cachedFile = await AssetManager.get(json.src);
-      const options: { loop?: boolean; volume?: number } = {};
-      if (json.loop !== undefined) options.loop = json.loop;
-      if (json.volume !== undefined) options.volume = json.volume;
-
-      if (cachedFile) {
-        const originFile = await cachedFile.getOriginFile();
-        if (originFile) {
-          clip = new Audio(originFile.stream(), options, json.src);
-        } else {
-          clip = await Audio.fromUrl(json.src, options);
-        }
-      } else {
-        clip = await Audio.fromUrl(json.src, options);
-      }
-      break;
-    }
-    // Image is handled via fromObject
     case 'Text': {
       // Read from new hybrid structure
       const text = json.text || '';

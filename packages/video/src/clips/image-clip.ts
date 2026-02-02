@@ -1,10 +1,10 @@
-import { Assets, Texture } from 'pixi.js';
+import { Texture } from 'pixi.js';
 import { Log } from '../utils/log';
 import { decodeImg } from '../utils';
 import { BaseClip } from './base-clip';
 import { type IClip } from './iclip';
 import { type ClipJSON, type ImageJSON } from '../json-serialization';
-import { AssetManager } from '../utils/asset-manager';
+import { ResourceManager } from '../studio/resource-manager';
 
 type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
 
@@ -88,7 +88,7 @@ export class Image extends BaseClip implements IClip {
    */
   static async fromUrl(url: string, src?: string): Promise<Image> {
     let texture: Texture | null = null;
-    let imageBitmap: ImageBitmap | null = null;
+    let imageBitmap: ImageBitmap | undefined;
 
     // Optimized handling for blob URLs to avoid PixiJS warnings about unknown extensions
     if (url.startsWith('blob:')) {
@@ -112,81 +112,11 @@ export class Image extends BaseClip implements IClip {
         throw err;
       }
     } else {
-      // Check OPFS cache first
-      const cachedFile = await AssetManager.get(url);
-      if (cachedFile) {
-        const originFile = await cachedFile.getOriginFile();
-        if (originFile) {
-          imageBitmap = await createImageBitmap(originFile);
-          try {
-            texture = Texture.from(imageBitmap);
-          } catch (e) {
-            Log.warn('Failed to create Pixi texture from cached bitmap:', e);
-          }
-        }
-      }
+      imageBitmap = await ResourceManager.getImageBitmap(url);
+    }
 
-      // Use PixiJS Assets.load() for optimized loading if not in cache
-      if (!imageBitmap) {
-        try {
-          texture = await Assets.load<Texture>(url);
-
-          if (texture) {
-            // Extract ImageBitmap from Texture for compatibility with Compositor
-            const source = texture.source?.resource?.source;
-
-            if (
-              source instanceof HTMLCanvasElement ||
-              source instanceof OffscreenCanvas
-            ) {
-              imageBitmap = await createImageBitmap(source);
-            } else if (source instanceof HTMLImageElement) {
-              const canvas = new OffscreenCanvas(source.width, source.height);
-              const ctx = canvas.getContext('2d');
-              if (ctx == null) {
-                throw new Error('Failed to create 2d context');
-              }
-              ctx.drawImage(source, 0, 0);
-              imageBitmap = await createImageBitmap(canvas);
-            } else if (source instanceof ImageBitmap) {
-              imageBitmap = await createImageBitmap(source);
-            }
-          }
-        } catch (err) {
-          Log.warn(
-            `Failed to load texture via Assets.load for ${url}, using fallback`,
-            err
-          );
-        }
-      }
-
-      // Fallback for regular URLs if Assets.load failed
-      if (!imageBitmap) {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(
-              `Failed to fetch image: ${response.status} ${response.statusText}`
-            );
-          }
-          
-          const stream = response.body!;
-          const [s1, s2] = stream.tee();
-          
-          const bitmapPromise = (async () => {
-            const blob = await new Response(s1).blob();
-            return await createImageBitmap(blob);
-          })();
-
-          const cachePromise = AssetManager.put(url, s2);
-
-          const [bitmap] = await Promise.all([bitmapPromise, cachePromise]);
-          imageBitmap = bitmap;
-        } catch (err) {
-          Log.error(`Failed to load image from ${url}`, err);
-          throw err;
-        }
-      }
+    if (!imageBitmap) {
+      throw new Error(`Failed to load image from ${url}`);
     }
 
     const clip = new Image(imageBitmap, src || url);
@@ -461,40 +391,8 @@ export class Image extends BaseClip implements IClip {
 
     let clip: Image;
     try {
-      const cachedFile = await AssetManager.get(json.src);
-      if (cachedFile) {
-        const originFile = await cachedFile.getOriginFile();
-        if (originFile) {
-          clip = new Image(await createImageBitmap(originFile), json.src);
-        } else {
-          throw new Error('Cached file is invalid');
-        }
-      } else {
-        const response = await fetch(json.src);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch image from ${json.src}: ${response.status} ${response.statusText}. Make sure the file exists in the public directory.`
-          );
-        }
-
-        const stream = response.body!;
-        const [s1, s2] = stream.tee();
-
-        const bitmapPromise = (async () => {
-          const blob = await new Response(s1).blob();
-          if (!blob.type.startsWith('image/')) {
-            Log.warn(
-              `Image blob has unexpected type: ${blob.type}. Attempting to load anyway.`
-            );
-          }
-          return await createImageBitmap(blob);
-        })();
-
-        const cachePromise = AssetManager.put(json.src, s2);
-
-        const [bitmap] = await Promise.all([bitmapPromise, cachePromise]);
-        clip = new Image(bitmap, json.src);
-      }
+      const bitmap = await ResourceManager.getImageBitmap(json.src);
+      clip = new Image(bitmap, json.src);
     } catch (error) {
       if (
         error instanceof Error &&

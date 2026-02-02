@@ -38,6 +38,86 @@ export class ResourceManager {
   }
 
   /**
+   * Get a ReadableStream for the given URL, with transparent caching.
+   * @param url URL to fetch
+   */
+  static async getReadableStream(
+    url: string
+  ): Promise<ReadableStream<Uint8Array>> {
+    const cachedFile = await AssetManager.get(url);
+    if (cachedFile) {
+      const originFile = await cachedFile.getOriginFile();
+      if (originFile) return originFile.stream();
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const stream = response.body;
+    if (!stream) throw new Error('Response body is null');
+
+    // Skip caching for data/blob URLs
+    if (url.startsWith('data:') || url.startsWith('blob:')) {
+      return stream;
+    }
+
+    const [s1, s2] = stream.tee();
+
+    // Background cache
+    AssetManager.put(url, s2).catch((err) => {
+      console.error(`ResourceManager: Failed to cache ${url}`, err);
+    });
+
+    return s1;
+  }
+
+  /**
+   * Get an ImageBitmap for the given URL, with transparent caching.
+   */
+  static async getImageBitmap(url: string): Promise<ImageBitmap> {
+    const cachedFile = await AssetManager.get(url);
+    if (cachedFile) {
+      const originFile = await cachedFile.getOriginFile();
+      if (originFile) return await createImageBitmap(originFile);
+    }
+
+    if (url.startsWith('data:') || url.startsWith('blob:')) {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return await createImageBitmap(blob);
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const stream = response.body;
+    if (!stream) throw new Error('Response body is null');
+
+    const [s1, s2] = stream.tee();
+
+    const bitmapPromise = (async () => {
+      const resp = new Response(s1);
+      const blob = await resp.blob();
+      return await createImageBitmap(blob);
+    })();
+
+    // Background cache
+    AssetManager.put(url, s2).catch((err) => {
+      console.error(`ResourceManager: Failed to cache ${url}`, err);
+    });
+
+    return await bitmapPromise;
+  }
+
+  /**
    * Load a single resource, using cache if available.
    * @param url URL to load
    */
@@ -56,34 +136,30 @@ export class ResourceManager {
       this.resources.set(url, item);
 
       try {
-        // 1. Check OPFS cache
-        const cachedFile = await AssetManager.get(url);
-        if (cachedFile) {
+        const localFile = await AssetManager.get(url);
+        if (localFile) {
           item.status = ResourceStatus.COMPLETED;
-          item.localFile = cachedFile;
+          item.localFile = localFile;
           return item;
         }
 
-        // 2. Fetch from remote
+        // Fetch and cache in background
         const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
 
-        // 3. Save to OPFS while streaming? 
-        // AssetManager.put takes a stream.
         const stream = response.body;
-        if (!stream) throw new Error('Response body is null');
+        if (!stream) throw new Error('No body');
 
-        const localFile = await AssetManager.put(url, stream);
-        
+        // We can't easily tee here if we want to return a completed status immediately...
+        // but loadResource is mostly for PRELOADING, so it's okay if it takes a bit.
+        const file = await AssetManager.put(url, stream);
+
         item.status = ResourceStatus.COMPLETED;
-        item.localFile = localFile;
+        item.localFile = file;
         return item;
       } catch (err) {
         item.status = ResourceStatus.FAILED;
         item.error = err instanceof Error ? err : new Error(String(err));
-        console.error(`ResourceManager: Failed to load ${url}`, err);
         return item;
       } finally {
         this.loadingPromises.delete(url);

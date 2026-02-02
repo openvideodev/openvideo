@@ -18,11 +18,14 @@ describe('ResourceManager', () => {
   });
 
   it('should-preload-multiple-urls-in-parallel', async () => {
-    const urls = ['https://cdn.scenify.io/test-video-1.mp4', 'https://cdn.scenify.io/test-video-2.mp4'];
-    
+    const urls = [
+      'https://cdn.scenify.io/test-video-1.mp4',
+      'https://cdn.scenify.io/test-video-2.mp4',
+    ];
+
     // Mock AssetManager.get to return null (not in cache)
     (AssetManager.get as any).mockResolvedValue(null);
-    
+
     // Mock global fetch
     const mockResponse = {
       ok: true,
@@ -41,10 +44,10 @@ describe('ResourceManager', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(AssetManager.put).toHaveBeenCalledTimes(2);
-    
+
     const statusA = resourceManager.getStatus(urls[0]);
     const statusB = resourceManager.getStatus(urls[1]);
-    
+
     expect(statusA?.status).toBe(ResourceStatus.COMPLETED);
     expect(statusB?.status).toBe(ResourceStatus.COMPLETED);
   });
@@ -52,10 +55,10 @@ describe('ResourceManager', () => {
   it('should-reuse-cached-assets-from-opfs', async () => {
     const url = 'https://cdn.scenify.io/test-video-1.mp4';
     const mockFile = { kind: 'file' };
-    
+
     // Mock AssetManager.get to return the file (in cache)
     (AssetManager.get as any).mockResolvedValue(mockFile);
-    
+
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
@@ -68,7 +71,7 @@ describe('ResourceManager', () => {
 
   it('should-handle-failed-downloads-gracefully', async () => {
     const url = 'http://example.com/fail.mp4';
-    
+
     (AssetManager.get as any).mockResolvedValue(null);
     const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404 });
     vi.stubGlobal('fetch', fetchMock);
