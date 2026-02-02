@@ -1,4 +1,4 @@
-import transitions from 'gl-transitions';
+import transitions from "gl-transitions";
 import {
   Filter,
   GlProgram,
@@ -6,18 +6,18 @@ import {
   Texture,
   ImageSource,
   RenderTexture,
-} from 'pixi.js';
+} from "pixi.js";
 
-import { vertex } from './vertex';
-import { uniforms } from './uniforms';
-import { fragment } from './fragment';
+import { vertex } from "./vertex";
+import { uniforms } from "./uniforms";
+import { fragment } from "./fragment";
 
-import { GL_TRANSITIONS } from './glsl/gl-transition';
+import { GL_TRANSITIONS } from "./glsl/gl-transition";
 import type {
   GLTransition,
   TransitionOptions,
   TransitionRendererOptions,
-} from './types';
+} from "./types";
 import {
   BOW_TIE_HORIZONTAL_FRAGMENT,
   CANNABISLEAF_FRAGMENT,
@@ -67,20 +67,20 @@ import {
   STEREOVIEWER_UNIFORMS,
   UNDULATING_BURN_OUT_FRAGMENT,
   UNDULATING_BURN_OUT_UNIFORMS,
-} from './glsl/custom-glsl';
+} from "./glsl/custom-glsl";
 import {
   PIXELATE_FRAGMENT,
   PIXELATE_UNIFORMS,
-} from '../effect/glsl/custom-glsl';
+} from "../effect/glsl/custom-glsl";
 
 export function makeTransition({ name, renderer }: TransitionOptions) {
   let transition: GLTransition | undefined = transitions.find(
-    (t: GLTransition) => t.name === name
+    (t: GLTransition) => t.name === name,
   );
 
   if (!transition) {
     const localKey = Object.keys(GL_TRANSITIONS).find(
-      (key) => key.toLowerCase() === name.toLowerCase()
+      (key) => key.toLowerCase() === name.toLowerCase(),
     ) as keyof typeof GL_TRANSITIONS | undefined;
     if (localKey) {
       transition = GL_TRANSITIONS[localKey] as unknown as GLTransition;
@@ -89,7 +89,7 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
 
   if (!transition) {
     transition = transitions.find(
-      (t: GLTransition) => t.name.toLowerCase() === name.toLowerCase()
+      (t: GLTransition) => t.name.toLowerCase() === name.toLowerCase(),
     );
   }
 
@@ -99,21 +99,21 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
       name.toLowerCase(),
       name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
       name
-        .replace(/([A-Z])/g, '_$1')
+        .replace(/([A-Z])/g, "_$1")
         .toLowerCase()
-        .replace(/^_/, ''),
-      name.replace(/_/g, ''),
+        .replace(/^_/, ""),
+      name.replace(/_/g, ""),
     ];
 
     for (const variant of variants) {
       transition = transitions.find(
-        (t: GLTransition) => t.name.toLowerCase() === variant.toLowerCase()
+        (t: GLTransition) => t.name.toLowerCase() === variant.toLowerCase(),
       );
       if (transition) break;
 
       // Also check local definitions with variants
       const localKey = Object.keys(GL_TRANSITIONS).find(
-        (key) => key.toLowerCase() === variant.toLowerCase()
+        (key) => key.toLowerCase() === variant.toLowerCase(),
       ) as keyof typeof GL_TRANSITIONS | undefined;
       if (localKey) {
         transition = GL_TRANSITIONS[localKey] as unknown as GLTransition;
@@ -127,15 +127,15 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
     const availableNames = transitions
       .slice(0, 5)
       .map((t: GLTransition) => t.name)
-      .join(', ');
-    const localNames = Object.keys(GL_TRANSITIONS).slice(0, 3).join(', ');
+      .join(", ");
+    const localNames = Object.keys(GL_TRANSITIONS).slice(0, 3).join(", ");
     console.error(
       `Transition not found: "${name}". Available in gl-transitions (${availableCount} total):`,
-      availableNames + '...'
+      availableNames + "...",
     );
-    console.error(`Available locally:`, localNames + '...');
+    console.error(`Available locally:`, localNames + "...");
     throw new Error(
-      `Transition "${name}" not found in gl-transitions library or local definitions`
+      `Transition "${name}" not found in gl-transitions library or local definitions`,
     );
   }
 
@@ -147,9 +147,9 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
   const sourceFrom = new ImageSource({});
   const sourceTo = new ImageSource({});
   const isDisplacementTransition =
-    transition.name === 'displacement' ||
-    name.toLowerCase() === 'displacement' ||
-    transition.label === 'displacement';
+    transition.name === "displacement" ||
+    name.toLowerCase() === "displacement" ||
+    transition.label === "displacement";
 
   const sourceDisplacement = isDisplacementTransition
     ? new ImageSource({})
@@ -157,10 +157,10 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
   let defaultDisplacementTexture: HTMLCanvasElement | null = null;
 
   if (isDisplacementTransition) {
-    defaultDisplacementTexture = document.createElement('canvas');
+    defaultDisplacementTexture = document.createElement("canvas");
     defaultDisplacementTexture.width = 256;
     defaultDisplacementTexture.height = 256;
-    const ctx = defaultDisplacementTexture.getContext('2d');
+    const ctx = defaultDisplacementTexture.getContext("2d");
     if (ctx) {
       const imageData = ctx.createImageData(256, 256);
       for (let i = 0; i < imageData.data.length; i += 4) {
@@ -186,158 +186,158 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
   };
 
   Object.entries(transitionUniforms).forEach(([, uniform]) => {
-    if (uniform.type === 'int<f32>') {
-      uniform.type = 'i32';
+    if (uniform.type === "int<f32>") {
+      uniform.type = "i32";
 
-      if (typeof uniform.value === 'number') {
+      if (typeof uniform.value === "number") {
         uniform.value = Math.trunc(uniform.value);
       }
     }
-    if (uniform.type === 'ivec2<f32>') {
-      uniform.type = 'vec2<f32>';
+    if (uniform.type === "ivec2<f32>") {
+      uniform.type = "vec2<f32>";
     }
   });
 
   const transitionGridFlip =
-    transition.name === 'GridFlip' ||
-    name.toLowerCase() === 'gridflip' ||
-    transition.label === 'gridflip';
+    transition.name === "GridFlip" ||
+    name.toLowerCase() === "gridflip" ||
+    transition.label === "gridflip";
 
   const transitionCircle =
-    transition.name === 'circle' ||
-    name.toLowerCase() === 'circle' ||
-    transition.label === 'circle';
+    transition.name === "circle" ||
+    name.toLowerCase() === "circle" ||
+    transition.label === "circle";
 
   const transitionDirectional =
-    transition.name === 'directional' ||
-    name.toLowerCase() === 'directional' ||
-    transition.label === 'directional';
+    transition.name === "directional" ||
+    name.toLowerCase() === "directional" ||
+    transition.label === "directional";
 
   const transitionUndulatingBurnOut =
-    transition.name === 'UndulatingBurnOut' ||
-    name.toLowerCase() === 'undulatingburnout' ||
-    transition.label === 'undulatingBurnOut';
+    transition.name === "UndulatingBurnOut" ||
+    name.toLowerCase() === "undulatingburnout" ||
+    transition.label === "undulatingBurnOut";
 
   const transitionSquaresWire =
-    transition.name === 'SquaresWire' ||
-    name.toLowerCase() === 'squareswire' ||
-    transition.label === 'squaresWire';
+    transition.name === "SquaresWire" ||
+    name.toLowerCase() === "squareswire" ||
+    transition.label === "squaresWire";
 
   const transitionRotateScaleFade =
-    transition.name === 'rotate_scale_fade' ||
-    name.toLowerCase() === 'rotatescalefade' ||
-    transition.label === 'rotateScaleFade';
+    transition.name === "rotate_scale_fade" ||
+    name.toLowerCase() === "rotatescalefade" ||
+    transition.label === "rotateScaleFade";
 
   const transitionRandomSquares =
-    transition.name === 'RandomSquares' ||
-    name.toLowerCase() === 'randomsquares' ||
-    transition.label === 'randomSquares';
+    transition.name === "RandomSquares" ||
+    name.toLowerCase() === "randomsquares" ||
+    transition.label === "randomSquares";
 
   const transitionPolarFunction =
-    transition.name === 'polar_function' ||
-    name.toLowerCase() === 'polar_function' ||
-    transition.label === 'polar_function';
+    transition.name === "polar_function" ||
+    name.toLowerCase() === "polar_function" ||
+    transition.label === "polar_function";
 
   const transitionPixelate =
-    transition.name === 'pixelate' ||
-    name.toLowerCase() === 'pixelate' ||
-    transition.label === 'pixelate';
+    transition.name === "pixelate" ||
+    name.toLowerCase() === "pixelate" ||
+    transition.label === "pixelate";
 
   const transitionPerlin =
-    transition.name === 'perlin' ||
-    name.toLowerCase() === 'perlin' ||
-    transition.label === 'perlin';
+    transition.name === "perlin" ||
+    name.toLowerCase() === "perlin" ||
+    transition.label === "perlin";
 
   const transitionLuma =
-    transition.name === 'luma' ||
-    name.toLowerCase() === 'luma' ||
-    transition.label === 'luma';
+    transition.name === "luma" ||
+    name.toLowerCase() === "luma" ||
+    transition.label === "luma";
 
   const transitionLuminanceMelt =
-    transition.name === 'luminance_melt' ||
-    name.toLowerCase() === 'luminance_melt' ||
-    name.toLowerCase() === 'luminancemelt' ||
-    transition.label === 'luminance_melt';
+    transition.name === "luminance_melt" ||
+    name.toLowerCase() === "luminance_melt" ||
+    name.toLowerCase() === "luminancemelt" ||
+    transition.label === "luminance_melt";
 
   const transitionHexagonalize =
-    transition.name === 'hexagonalize' ||
-    name.toLowerCase() === 'hexagonalize' ||
-    transition.label === 'hexagonalize';
+    transition.name === "hexagonalize" ||
+    name.toLowerCase() === "hexagonalize" ||
+    transition.label === "hexagonalize";
 
   const transitionHeart =
-    transition.name === 'heart' ||
-    name.toLowerCase() === 'heart' ||
-    transition.label === 'heart';
+    transition.name === "heart" ||
+    name.toLowerCase() === "heart" ||
+    transition.label === "heart";
 
   const transitionDisplacement =
-    transition.name === 'displacement' ||
-    name.toLowerCase() === 'displacement' ||
-    transition.label === 'displacement';
+    transition.name === "displacement" ||
+    name.toLowerCase() === "displacement" ||
+    transition.label === "displacement";
 
   const transitionDirectionalWipe =
-    transition.name === 'directionalwipe' ||
-    name.toLowerCase() === 'directionalwipe' ||
-    name.toLowerCase() === 'directional_wipe' ||
-    transition.label === 'directionalwipe';
+    transition.name === "directionalwipe" ||
+    name.toLowerCase() === "directionalwipe" ||
+    name.toLowerCase() === "directional_wipe" ||
+    transition.label === "directionalwipe";
 
   const transitionDirectionalWarp =
-    transition.name === 'directionalwarp' ||
-    name.toLowerCase() === 'directionalwarp' ||
-    name.toLowerCase() === 'directional_warp' ||
-    transition.label === 'directionalwarp';
+    transition.name === "directionalwarp" ||
+    name.toLowerCase() === "directionalwarp" ||
+    name.toLowerCase() === "directional_warp" ||
+    transition.label === "directionalwarp";
 
   const transitionCrosshatch =
-    transition.name === 'crosshatch' ||
-    name.toLowerCase() === 'crosshatch' ||
-    transition.label === 'crosshatch';
+    transition.name === "crosshatch" ||
+    name.toLowerCase() === "crosshatch" ||
+    transition.label === "crosshatch";
 
   const transitionCircleOpen =
-    transition.name === 'circleopen' ||
-    name.toLowerCase() === 'circleopen' ||
-    name.toLowerCase() === 'circle_open' ||
-    transition.label === 'circleopen';
+    transition.name === "circleopen" ||
+    name.toLowerCase() === "circleopen" ||
+    name.toLowerCase() === "circle_open" ||
+    transition.label === "circleopen";
 
   const transitionCannabisLeaf =
-    transition.name === 'cannabisleaf' ||
-    name.toLowerCase() === 'cannabisleaf' ||
-    name.toLowerCase() === 'cannabis_leaf' ||
-    transition.label === 'cannabisleaf';
+    transition.name === "cannabisleaf" ||
+    name.toLowerCase() === "cannabisleaf" ||
+    name.toLowerCase() === "cannabis_leaf" ||
+    transition.label === "cannabisleaf";
 
   const transitionStereoViewer =
-    transition.name === 'StereoViewer' ||
-    name.toLowerCase() === 'stereoviewer' ||
-    name.toLowerCase() === 'stereo_viewer' ||
-    transition.label === 'StereoViewer';
+    transition.name === "StereoViewer" ||
+    name.toLowerCase() === "stereoviewer" ||
+    name.toLowerCase() === "stereo_viewer" ||
+    transition.label === "StereoViewer";
 
   const transitionGlitchDisplace =
-    transition.name === 'GlitchDisplace' ||
-    name.toLowerCase() === 'glitchDisplace' ||
-    transition.label === 'GlitchDisplace';
+    transition.name === "GlitchDisplace" ||
+    name.toLowerCase() === "glitchDisplace" ||
+    transition.label === "GlitchDisplace";
 
   const transitionCrossZoom =
-    transition.name === 'CrossZoom' ||
-    name.toLowerCase() === 'crosszoom' ||
-    transition.label === 'CrossZoom';
+    transition.name === "CrossZoom" ||
+    name.toLowerCase() === "crosszoom" ||
+    transition.label === "CrossZoom";
 
   const transitionCrazyParametricFun =
-    transition.name === 'CrazyParametricFun' ||
-    name.toLowerCase() === 'crazyparametricfun' ||
-    transition.label === 'CrazyParametricFun';
+    transition.name === "CrazyParametricFun" ||
+    name.toLowerCase() === "crazyparametricfun" ||
+    transition.label === "CrazyParametricFun";
 
   const transitionBowTieHorizontal =
-    transition.name === 'BowTieHorizontal' ||
-    name.toLowerCase() === 'bowtiehorizontal' ||
-    transition.label === 'BowTieHorizontal';
+    transition.name === "BowTieHorizontal" ||
+    name.toLowerCase() === "bowtiehorizontal" ||
+    transition.label === "BowTieHorizontal";
 
   const transitionPolkaDotsCurtain =
-    transition.name === 'PolkaDotsCurtain' ||
-    name.toLowerCase() === 'polkadotscurtain' ||
-    transition.label === 'PolkaDotsCurtain';
+    transition.name === "PolkaDotsCurtain" ||
+    name.toLowerCase() === "polkadotscurtain" ||
+    transition.label === "PolkaDotsCurtain";
 
   const transitionPixelize =
-    transition.name === 'Pixelize' ||
-    name.toLowerCase() === 'pixelize' ||
-    transition.label === 'Pixelize';
+    transition.name === "Pixelize" ||
+    name.toLowerCase() === "pixelize" ||
+    transition.label === "Pixelize";
 
   if (transitionGridFlip) {
     transitionGlsl = GRIDFLIP_FRAGMENT;
@@ -598,7 +598,7 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
         ) {
           defaultDisplacementTexture.width = width;
           defaultDisplacementTexture.height = height;
-          const ctx = defaultDisplacementTexture.getContext('2d');
+          const ctx = defaultDisplacementTexture.getContext("2d");
           if (ctx) {
             // Create a simple noise pattern for displacement
             const imageData = ctx.createImageData(width, height);
@@ -621,7 +621,7 @@ export function makeTransition({ name, renderer }: TransitionOptions) {
       renderer.render({
         container: transitionSprite,
         target: transitionTexture,
-        clear: false,
+        clear: true,
         width,
         height,
       });
