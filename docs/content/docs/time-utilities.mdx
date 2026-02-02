@@ -1,0 +1,327 @@
+---
+title: Time Utilities
+description: Helper utilities for working with time values in OpenVideo.
+---
+
+OpenVideo uses **microseconds** internally for precision, but the `Time` utility class makes it easy to work with more human-friendly time formats.
+
+## Why Time Utilities?
+
+Working directly with microseconds can be error-prone:
+
+```ts
+// ❌ Hard to read and error-prone
+clip.display = {
+  from: 0,
+  to: 10000000  // Is this 10 seconds? Easy to miss a zero!
+};
+
+// ✅ Clear and readable
+import { Time } from "openvideo";
+
+clip.display = {
+  from: Time.from(0, 's'),
+  to: Time.from(10, 's')
+};
+```
+
+## Converting to Microseconds
+
+Use `Time.from()` to convert various time formats to microseconds:
+
+### Numeric Values with Units
+
+```ts
+import { Time } from "openvideo";
+
+// Seconds (default)
+Time.from(5, 's')      // 5000000 μs
+
+// Milliseconds
+Time.from(500, 'ms')   // 500000 μs
+
+// Minutes
+Time.from(2, 'm')      // 120000000 μs
+
+// Hours
+Time.from(1, 'h')      // 3600000000 μs
+
+// Decimals work too
+Time.from(2.5, 'm')    // 150000000 μs (2 minutes 30 seconds)
+```
+
+### String Formats
+
+```ts
+// Unit suffixes
+Time.from('5s')        // 5000000 μs
+Time.from('500ms')     // 500000 μs
+Time.from('2.5m')      // 150000000 μs
+
+// Timestamp format (mm:ss)
+Time.from('1:30')      // 90000000 μs (1 min 30 sec)
+Time.from('0:05')      // 5000000 μs (5 seconds)
+
+// Timestamp format (hh:mm:ss)
+Time.from('1:23:45')   // 5025000000 μs (1 hr 23 min 45 sec)
+Time.from('0:01:30')   // 90000000 μs (1 min 30 sec)
+```
+
+## Formatting Microseconds
+
+Use `Time.format()` to convert microseconds back to human-readable strings:
+
+```ts
+const duration = Time.from(90, 's'); // 90 seconds
+
+// Default: hh:mm:ss or mm:ss format
+Time.format(duration)         // "1:30"
+
+// Explicit formats
+Time.format(duration, 'hms')  // "1:30"
+Time.format(duration, 's')    // "90s"
+Time.format(duration, 'ms')   // "90000ms"
+
+// Long durations include hours
+const longDuration = Time.from(3665, 's'); // 1 hour 1 minute 5 seconds
+Time.format(longDuration)     // "1:01:05"
+```
+
+## Time Arithmetic
+
+### Addition
+
+```ts
+const start = Time.from(5, 's');
+const duration = Time.from(10, 's');
+const end = Time.add(start, duration); // 15000000 μs (15 seconds)
+```
+
+### Subtraction
+
+```ts
+const end = Time.from(15, 's');
+const start = Time.from(5, 's');
+const duration = Time.subtract(end, start); // 10000000 μs (10 seconds)
+```
+
+### Clamping
+
+```ts
+const clamped = Time.clamp(
+  Time.from(100, 's'),  // value
+  Time.from(0, 's'),    // min
+  Time.from(60, 's')    // max
+); // Returns 60000000 μs (clamped to max)
+```
+
+## Conversion Helpers
+
+### To Seconds
+
+```ts
+const us = Time.from(5, 's');
+const seconds = Time.toSeconds(us); // 5
+```
+
+### To Milliseconds
+
+```ts
+const us = Time.from(5, 's');
+const ms = Time.toMilliseconds(us); // 5000
+```
+
+## Range Checking
+
+```ts
+const currentTime = Time.from(5, 's');
+const isActive = Time.inRange(
+  currentTime,
+  Time.from(0, 's'),
+  Time.from(10, 's')
+); // true
+```
+
+## Current Time
+
+```ts
+const start = Time.now();
+// ... do work ...
+const elapsed = Time.now() - start;
+console.log(`Elapsed: ${Time.format(elapsed)}`);
+```
+
+## Practical Examples
+
+### Setting Clip Display Time
+
+```ts
+import { Time, Video } from "openvideo";
+
+const video = await Video.fromUrl("video.mp4");
+
+// Clear and readable
+video.display = {
+  from: Time.from(0, 's'),
+  to: Time.from(10, 's')
+};
+
+// Or use string format
+video.display = {
+  from: Time.from('0:00'),
+  to: Time.from('0:10')
+};
+```
+
+### Trimming Clips
+
+```ts
+const video = await Video.fromUrl("video.mp4");
+
+video.trim = {
+  from: Time.from('0:05'),  // Start 5 seconds in
+  to: Time.from('0:15')     // End at 15 seconds
+};
+```
+
+### Seeking
+
+```ts
+// Seek to 1 minute 30 seconds
+await studio.seek(Time.from('1:30'));
+
+// Or use numeric format
+await studio.seek(Time.from(90, 's'));
+```
+
+### Animations
+
+```ts
+const text = new Text("Hello");
+
+text.setAnimation(
+  { opacity: [0, 1] },
+  { 
+    duration: Time.toMilliseconds(Time.from(2, 's')) // 2000ms
+  }
+);
+```
+
+### Logging
+
+```ts
+const clip = await Video.fromUrl("video.mp4");
+
+console.log(`Duration: ${Time.format(clip.display.to)}`);
+// Output: "Duration: 0:10"
+
+console.log(`Duration: ${Time.format(clip.display.to, 's')}`);
+// Output: "Duration: 10s"
+```
+
+### Working with Transitions
+
+```ts
+await studio.addTransition(
+  'fade',
+  Time.from(1, 's'),  // 1 second transition
+  fromClipId,
+  toClipId
+);
+```
+
+## Best Practices
+
+1. **Use Time utilities for all time values** - It makes your code more readable and less error-prone
+2. **Prefer string formats for constants** - `Time.from('1:30')` is clearer than `Time.from(90, 's')`
+3. **Use numeric formats for calculations** - Easier to work with variables
+4. **Format for logging** - Always use `Time.format()` when displaying time to users
+
+## Migration from Raw Microseconds
+
+The Time utilities are **non-breaking** - you can gradually adopt them:
+
+```ts
+// Old way (still works)
+clip.display = { from: 0, to: 10000000 };
+
+// New way (recommended)
+clip.display = { 
+  from: Time.from(0, 's'), 
+  to: Time.from(10, 's') 
+};
+
+// Both produce the same result
+```
+
+## API Reference
+
+### `Time.from(value, unit?)`
+
+Convert time to microseconds.
+
+- **value**: `number | string` - Time value or string format
+- **unit**: `'ms' | 's' | 'm' | 'h'` - Unit of time (default: `'s'`)
+- **Returns**: `number` - Time in microseconds
+
+### `Time.format(us, format?)`
+
+Format microseconds to human-readable string.
+
+- **us**: `number` - Time in microseconds
+- **format**: `'hms' | 's' | 'ms'` - Output format (default: `'hms'`)
+- **Returns**: `string` - Formatted time string
+
+### `Time.add(a, b)`
+
+Add two time values.
+
+- **a**: `number` - First time in microseconds
+- **b**: `number` - Second time in microseconds
+- **Returns**: `number` - Sum in microseconds
+
+### `Time.subtract(a, b)`
+
+Subtract time values.
+
+- **a**: `number` - First time in microseconds
+- **b**: `number` - Second time in microseconds (subtracted from a)
+- **Returns**: `number` - Difference in microseconds
+
+### `Time.clamp(value, min, max)`
+
+Clamp time value within range.
+
+- **value**: `number` - Time to clamp
+- **min**: `number` - Minimum value
+- **max**: `number` - Maximum value
+- **Returns**: `number` - Clamped value
+
+### `Time.toSeconds(us)`
+
+Convert microseconds to seconds.
+
+- **us**: `number` - Time in microseconds
+- **Returns**: `number` - Time in seconds
+
+### `Time.toMilliseconds(us)`
+
+Convert microseconds to milliseconds.
+
+- **us**: `number` - Time in microseconds
+- **Returns**: `number` - Time in milliseconds
+
+### `Time.inRange(value, start, end)`
+
+Check if time is within range.
+
+- **value**: `number` - Time to check
+- **start**: `number` - Range start (inclusive)
+- **end**: `number` - Range end (inclusive)
+- **Returns**: `boolean` - True if within range
+
+### `Time.now()`
+
+Get current timestamp.
+
+- **Returns**: `number` - Current time in microseconds

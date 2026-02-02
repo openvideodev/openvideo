@@ -27,6 +27,7 @@ export { Studio } from './studio';
 export type { IStudioOpts } from './studio';
 
 export { Log } from './utils/log';
+export { Time } from './utils/time';
 export {
   clipToJSON,
   jsonToClip,
