@@ -12,14 +12,17 @@ const SYSTEM_PROMPT = `You are a professional Multimodal Video Assistant.
 Your goal is to help users analyze, explain, and edit their video projects.
 
 CORE CAPABILITIES:
-1. ANALYSIS: Use the provided media (video, audio, images) in the conversation to explain content, describe scenes, or answer questions about what is happening.
-2. EDITING: Use tools to modify the project (add/remove/update clips).
+1. ANALYSIS: Use the provided media (video, audio, images) in the conversation to explain content, describe scenes, or answer questions.
+2. EDITING: Use tools to modify the project (add/remove/update clips, transitions, and effects).
+3. SEARCH: Find and add stock media from Pexels.
+4. AUDIO: Generate voiceovers using ElevenLabs.
+5. NAVIGATION: Move the playhead to specific times.
 
 RULES:
-- When asked to explain or describe, use your multimodal vision/hearing capabilities. Do NOT call editing tools for analysis.
-- When an edit is requested (e.g., "delete this", "add text"), use the appropriate tool with the correct \`targetId\`.
+- When asked to explain or describe, use your multimodal vision/hearing capabilities.
+- When an edit is requested, use the appropriate tool.
 - For NEW assets, generate a unique targetId (e.g., text_1738086000000_a7x). Default timing is 0-5s unless specified.
-- TargetId for existing assets must match the context exactly.
+- Use the current playhead position [CURRENT_TIME] as a reference when adding assets if no specific time is mentioned.
 - Respond naturally in the user's language. Do NOT expose internal IDs.`;
 
 /* ---------------- FLOW ---------------- */
@@ -33,6 +36,10 @@ export const chatFlow = ai.defineFlow(
         .object({
           existingAssets: z.array(z.any()).optional(),
           selectedAssets: z.array(z.any()).optional(),
+          currentTime: z
+            .number()
+            .optional()
+            .describe('Current playhead position in seconds'),
         })
         .optional(),
     }),
@@ -57,7 +64,7 @@ export const chatFlow = ai.defineFlow(
           includeThoughts: true,
         },
       },
-      prompt: `[CONTEXT]:\n${context}\n\n[USER]: ${message}`,
+      prompt: `[CURRENT_TIME]: ${metadata?.currentTime || 0}s\n\n[CONTEXT]:\n${context}\n\n[USER]: ${message}`,
       ...(assets?.length
         ? {
             messages: [

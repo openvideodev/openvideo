@@ -16,6 +16,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { usePlaybackStore } from '@/stores/playback-store';
 import { useTimelineStore } from '@/stores/timeline-store';
 import { IClip } from '@/types/timeline';
 import { chatFlow } from '@/genkit/chat-flow';
@@ -33,18 +34,11 @@ interface Suggestion {
 }
 
 const SUGGESTIONS: Suggestion[] = [
-  {
-    text: 'Make 20 sound effects that match my video',
-  },
-  {
-    text: 'Make a storyboard for my music video',
-  },
-  {
-    text: 'Animate this uploaded clip 10 different ways',
-  },
-  {
-    text: 'Add some crazy effects throughout my video',
-  },
+  { text: 'Search and add futurist city video' },
+  { text: 'Generate voiceover "Welcome"' },
+  { text: 'Auto-caption video' },
+  { text: 'Make text yellow and bigger' },
+  { text: 'Split clip at 5s' },
 ];
 
 export default function Assistant() {
@@ -131,7 +125,6 @@ export default function Assistant() {
       status: 'running',
     };
     setMessages((prev) => [...prev, assistantMessage]);
-    console.log({ existingAssets, selectedAssets });
     try {
       const flow = streamFlow<typeof chatFlow>({
         url: '/api/chat/editor',
@@ -140,6 +133,7 @@ export default function Assistant() {
           metadata: {
             existingAssets,
             selectedAssets,
+            currentTime: usePlaybackStore.getState().currentTime / 1000,
           },
         },
       });
@@ -222,6 +216,18 @@ export default function Assistant() {
         case 'duplicate_asset':
           await ToolHandlers.handleDuplicateClip(input, studio);
           break;
+        case 'search_and_add_media':
+          await ToolHandlers.handleSearchAndAddMedia(input, studio);
+          break;
+        case 'generate_voiceover':
+          await ToolHandlers.handleGenerateVoiceover(input, studio);
+          break;
+        case 'seek_to_time':
+          await ToolHandlers.handleSeekToTime(input, studio);
+          break;
+        case 'generate_captions':
+          await ToolHandlers.handleGenerateCaptions(input, studio);
+          break;
         default:
           console.log('Unhandled tool action:', action);
       }
@@ -231,7 +237,7 @@ export default function Assistant() {
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
-    handleSubmit(suggestion.text);
+    setInput(suggestion.text);
   };
 
   return (

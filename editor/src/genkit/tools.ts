@@ -134,6 +134,15 @@ export function getTools() {
         width: z.number().optional(),
         height: z.number().optional(),
         start: z.number().optional().describe('Start time in seconds'),
+        fontSize: z.number().optional().describe('Font size for text clips'),
+        fontFamily: z
+          .string()
+          .optional()
+          .describe('Font family for text clips'),
+        fill: z.string().optional().describe('Text color in hex format'),
+        opacity: z.number().optional().describe('Opacity from 0 to 1'),
+        volume: z.number().optional().describe('Volume from 0 to 1'),
+        playbackRate: z.number().optional().describe('Playback rate'),
       }),
       outputSchema: z.object({
         targetId: z.string(),
@@ -283,6 +292,82 @@ export function getTools() {
     }
   );
 
+  const search_and_add_media = ai.defineTool(
+    {
+      name: 'search_and_add_media',
+      description: 'Search for and add stock media (video/image) from Pexels',
+      inputSchema: z.object({
+        query: z.string().describe('Search terms for the media'),
+        type: z
+          .enum(['video', 'image'])
+          .default('video')
+          .describe('Type of media'),
+        targetId: z.string().optional().describe('Unique ID for the new clip'),
+        from: z.number().optional().describe('Start time in seconds'),
+      }),
+      outputSchema: z.object({
+        message: z.string(),
+      }),
+    },
+    async ({ query, type }) => {
+      return { message: `Searching for ${type} with query "${query}"` };
+    }
+  );
+
+  const generate_voiceover = ai.defineTool(
+    {
+      name: 'generate_voiceover',
+      description: 'Generate a voiceover using ElevenLabs',
+      inputSchema: z.object({
+        text: z.string().describe('Text to convert to speech'),
+        voiceId: z.string().optional().describe('Optional voice ID to use'),
+        targetId: z.string().optional().describe('Unique ID for the new clip'),
+        from: z.number().optional().describe('Start time in seconds'),
+      }),
+      outputSchema: z.object({
+        message: z.string(),
+      }),
+    },
+    async ({ text }) => {
+      return { message: `Generating voiceover for: "${text}"` };
+    }
+  );
+
+  const seek_to_time = ai.defineTool(
+    {
+      name: 'seek_to_time',
+      description: 'Move the playhead to a specific time',
+      inputSchema: z.object({
+        time: z.number().describe('Time in seconds to seek to'),
+      }),
+      outputSchema: z.object({
+        message: z.string(),
+      }),
+    },
+    async ({ time }) => {
+      return { message: `Seeking to ${time} seconds` };
+    }
+  );
+
+  const generate_captions = ai.defineTool(
+    {
+      name: 'generate_captions',
+      description: 'Generate captions for the video or specific clips',
+      inputSchema: z.object({
+        clipIds: z
+          .array(z.string())
+          .optional()
+          .describe('Specific clips to transcribe'),
+      }),
+      outputSchema: z.object({
+        message: z.string(),
+      }),
+    },
+    async () => {
+      return { message: 'Generating captions' };
+    }
+  );
+
   const fallback = ai.defineTool(
     {
       name: 'fallback',
@@ -316,6 +401,10 @@ export function getTools() {
     duplicate_clip,
     add_transition,
     add_effect,
+    search_and_add_media,
+    generate_voiceover,
+    seek_to_time,
+    generate_captions,
     fallback,
   ];
 

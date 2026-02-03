@@ -1,7 +1,18 @@
 import { usePlaybackStore } from '@/stores/playback-store';
-import { Video, Image, Text, Audio, Studio, Effect } from 'openvideo';
+import {
+  Video,
+  Image,
+  Text,
+  Audio,
+  Studio,
+  Effect,
+  IClip,
+  fontManager,
+  jsonToClip,
+} from 'openvideo';
 import { duplicateClip, splitClip, trimClip } from './action-handlers';
 import { useTimelineStore } from '@/stores/timeline-store';
+import { generateCaptionClips } from '@/lib/caption-generator';
 
 export const handleAddClip = async (input: any, studio: Studio) => {
   const {
@@ -76,7 +87,21 @@ export const handleAddClip = async (input: any, studio: Studio) => {
 };
 
 export const handleUpdateClip = async (input: any, studio: Studio) => {
-  const { left, top, width, height, start, targetId, clipId } = input;
+  const {
+    left,
+    top,
+    width,
+    height,
+    start,
+    targetId,
+    clipId,
+    fontSize,
+    fontFamily,
+    fill,
+    opacity,
+    volume,
+    playbackRate,
+  } = input;
   const id = targetId || clipId;
   if (!id) return;
 
@@ -87,6 +112,12 @@ export const handleUpdateClip = async (input: any, studio: Studio) => {
   if (height !== undefined) updates.height = height;
   if (start !== undefined)
     updates.display = { ...updates.display, from: start * 1000000 };
+  if (fontSize !== undefined) updates.fontSize = fontSize;
+  if (fontFamily !== undefined) updates.fontFamily = fontFamily;
+  if (fill !== undefined) updates.fill = fill;
+  if (opacity !== undefined) updates.opacity = opacity;
+  if (volume !== undefined) updates.volume = volume;
+  if (playbackRate !== undefined) updates.playbackRate = playbackRate;
 
   await studio.updateClip(id, updates);
 };
@@ -169,5 +200,153 @@ export const handleDuplicateClip = async (input: any, studio: Studio) => {
     await duplicateClip(id, studio, useTimelineStore);
   } else {
     await studio.duplicateSelected();
+  }
+};
+
+export const handleSearchAndAddMedia = async (input: any, studio: Studio) => {
+  const { query, type, targetId, from: fromTime } = input;
+  const from = fromTime ?? usePlaybackStore.getState().currentTime / 1000;
+  console.log({ input });
+  try {
+    const response = await fetch(
+      `/api/pexels?query=${encodeURIComponent(query)}&type=${type || 'video'}`
+    );
+    const data = await response.json();
+
+    let clip;
+    if (type === 'image') {
+      const imageUrl = data.photos?.[0]?.src?.large;
+      if (imageUrl) {
+        clip = await Image.fromUrl(imageUrl);
+      }
+    } else {
+      const videoUrl = data.videos?.[0]?.video_files?.[0]?.link;
+      if (videoUrl) {
+        clip = await Video.fromUrl(videoUrl);
+      }
+    }
+
+    if (clip) {
+      if (targetId) (clip as any).id = targetId;
+      // clip.update({
+      //   display: {
+      //     from: from * 1000000,
+      //     to: (from + 5) * 1000000,
+      //   },
+      // });
+      await studio.scaleToFit(clip);
+      await studio.centerClip(clip);
+      studio.addClip(clip);
+    }
+  } catch (error) {
+    console.error('Failed to search and add media:', error);
+  }
+};
+
+export const handleGenerateVoiceover = async (input: any, studio: Studio) => {
+  const { text, voiceId, targetId, from: fromTime } = input;
+  const from = fromTime ?? usePlaybackStore.getState().currentTime / 1000;
+
+  try {
+    const response = await fetch('/api/elevenlabs/voiceover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voiceId }),
+    });
+    const data = await response.json();
+
+    if (data.url) {
+      const clip = await Audio.fromUrl(data.url);
+      if (targetId) (clip as any).id = targetId;
+      clip.update({
+        display: {
+          from: from * 1000000,
+          to: (from + clip.duration / 1000000) * 1000000,
+        },
+      });
+      studio.addClip(clip);
+    }
+  } catch (error) {
+    console.error('Failed to generate voiceover:', error);
+  }
+};
+
+export const handleSeekToTime = async (input: any, studio: Studio) => {
+  const { time } = input;
+  usePlaybackStore.getState().seek(time * 1000); // seeks uses ms
+};
+
+export const handleGenerateCaptions = async (input: any, studio: Studio) => {
+  const { clipIds } = input;
+  const targetIds =
+    clipIds ||
+    studio.clips
+      .filter((c: IClip) => c.type === 'video' || c.type === 'audio')
+      .map((c: IClip) => c.id);
+
+  console.log({ clipIds, targetIds });
+
+  try {
+    const fontName = 'Bangers-Regular';
+    const fontUrl =
+      'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf';
+
+    await fontManager.addFont({
+      name: fontName,
+      url: fontUrl,
+    });
+
+    const captionTrackId = `track_captions_${Date.now()}`;
+    const clipsToAdd: IClip[] = [];
+
+    for (const id of targetIds) {
+      const clip = studio.getClipById(id);
+      console.log({ clip });
+      if (!clip || !clip.src) continue;
+
+      try {
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: clip.src }),
+        });
+        const data = await response.json();
+
+        const words = data.results?.main?.words || data.words || [];
+
+        if (words.length > 0) {
+          const captionClipsJSON = await generateCaptionClips({
+            videoWidth: (studio as any).opts.width,
+            videoHeight: (studio as any).opts.height,
+            words,
+          });
+
+          for (const json of captionClipsJSON) {
+            const enrichedJson = {
+              ...json,
+              mediaId: clip.id,
+              metadata: {
+                ...json.metadata,
+                sourceClipId: clip.id,
+              },
+              display: {
+                from: json.display.from + clip.display.from,
+                to: json.display.to + clip.display.from,
+              },
+            };
+            const captionClip = await jsonToClip(enrichedJson);
+            clipsToAdd.push(captionClip);
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to generate captions for clip ${id}:`, error);
+      }
+    }
+
+    if (clipsToAdd.length > 0) {
+      await studio.addClip(clipsToAdd, { trackId: captionTrackId });
+    }
+  } catch (error) {
+    console.error('Failed to generate captions:', error);
   }
 };
