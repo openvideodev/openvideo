@@ -1,15 +1,15 @@
-import * as React from "react";
-import { IClip } from "openvideo";
+import * as React from 'react';
+import { IClip } from 'openvideo';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from "@/components/ui/input-group";
-import { Slider } from "@/components/ui/slider";
-import { GL_TRANSITION_OPTIONS, Transition } from "openvideo";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useStudioStore } from "@/stores/studio-store";
-import { Loader2, Timer } from "lucide-react";
+} from '@/components/ui/input-group';
+import { Slider } from '@/components/ui/slider';
+import { GL_TRANSITION_OPTIONS, Transition } from 'openvideo';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useStudioStore } from '@/stores/studio-store';
+import { Loader2, Timer } from 'lucide-react';
 interface TransitionPropertiesProps {
   clip: IClip;
 }
@@ -24,7 +24,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
   const [loaded, setLoaded] = React.useState(LOADED_CACHE);
   const [localDuration, setLocalDuration] = React.useState(
-    transitionClip.duration / 1_000_000,
+    transitionClip.duration / 1_000_000
   );
 
   React.useEffect(() => {
@@ -33,14 +33,14 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
   React.useLayoutEffect(() => {
     const viewport = scrollRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]",
+      '[data-radix-scroll-area-viewport]'
     );
     if (viewport) {
       viewport.scrollTop = LAST_SCROLL_POS;
     }
   }, []);
 
-  const markLoaded = (key: string, type: "static" | "dynamic") => {
+  const markLoaded = (key: string, type: 'static' | 'dynamic') => {
     if (LOADED_CACHE[key]?.[type]) return;
     LOADED_CACHE[key] = {
       ...LOADED_CACHE[key],
@@ -54,7 +54,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
   const minFromToDuration = Math.min(
     fromClip?.duration ?? Infinity,
-    toClip?.duration ?? Infinity,
+    toClip?.duration ?? Infinity
   );
 
   const maxDurationMicro =
@@ -71,7 +71,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
     if (newDuration !== undefined || updates.key !== undefined) {
       newDuration = Math.max(
         minDurationMicro,
-        Math.min(maxDurationMicro, newDuration),
+        Math.min(maxDurationMicro, newDuration)
       );
 
       const transitionStart = toClip!.display.from - newDuration / 2;
@@ -182,7 +182,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
         ref={scrollRef}
         onScrollCapture={() => {
           const viewport = scrollRef.current?.querySelector(
-            "[data-radix-scroll-area-viewport]",
+            '[data-radix-scroll-area-viewport]'
           );
           if (viewport) {
             LAST_SCROLL_POS = viewport.scrollTop;
@@ -213,7 +213,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
                   <img
                     src={effect.previewStatic}
-                    onLoad={() => markLoaded(effect.key, "static")}
+                    onLoad={() => markLoaded(effect.key, 'static')}
                     loading="lazy"
                     className="
                       absolute inset-0 w-full h-full object-cover rounded-sm
@@ -224,7 +224,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
 
                   <img
                     src={effect.previewDynamic}
-                    onLoad={() => markLoaded(effect.key, "dynamic")}
+                    onLoad={() => markLoaded(effect.key, 'dynamic')}
                     loading="lazy"
                     className="
                       absolute inset-0 w-full h-full object-cover rounded-sm

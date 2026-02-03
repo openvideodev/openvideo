@@ -2,7 +2,7 @@
 
 Node.js video renderer for Combo using Playwright and WebCodecs.
 
-Render videos server-side with the same powerful `@designcombo/video` compositor used in the browser. Perfect for automated video generation, batch processing, and server-side rendering.
+Render videos server-side with the same powerful `openvideo` compositor used in the browser. Perfect for automated video generation, batch processing, and server-side rendering.
 
 ## Features
 
@@ -15,7 +15,7 @@ Render videos server-side with the same powerful `@designcombo/video` compositor
 ## Installation
 
 ```bash
-pnpm add @designcombo/node @designcombo/video
+pnpm add @openvideo/node openvideo
 ```
 
 ## Quick Start
@@ -56,7 +56,7 @@ console.log('Video rendered successfully!');
 The renderer is **completely self-contained**:
 
 1. 🚀 Automatically starts a local Express server
-2. 📄 Serves the embedded HTML template and `@designcombo/video` files
+2. 📄 Serves the embedded HTML template and `openvideo` files
 3. 🌐 Launches a headless Chromium browser via Playwright
 4. 🎬 Renders the video using WebCodecs in the browser
 5. 💾 Saves the rendered video to your specified path
@@ -205,8 +205,8 @@ await renderer.render();
 
 3. **Build the packages:**
    ```bash
-   # Build @designcombo/video first
-   pnpm --filter @designcombo/video build
+   # Build openvideo first
+   pnpm --filter openvideo build
    
    # Build @combo/node
    pnpm --filter @combo/node build
@@ -282,9 +282,9 @@ packages/node/
 ### Modifying the HTML Template
 
 The HTML template is located at `src/template.html`. It uses:
-- **Import maps** to resolve `@designcombo/video` package
+- **Import maps** to resolve `openvideo` package
 - **WebCodecs API** for video encoding
-- **Compositor** from `@designcombo/video` for rendering
+- **Compositor** from `openvideo` for rendering
 
 After modifying the template, rebuild the package to copy it to `dist/`.
 
@@ -292,7 +292,7 @@ After modifying the template, rebuild the package to copy it to `dist/`.
 
 - **Node.js** >= 18
 - **Playwright** (installs Chromium automatically)
-- **@designcombo/video** package
+- **openvideo** package
 
 ## Troubleshooting
 
@@ -305,9 +305,9 @@ npx playwright install chromium
 
 ### Module Resolution Errors
 
-Ensure `@designcombo/video` is built:
+Ensure `openvideo` is built:
 ```bash
-pnpm --filter @designcombo/video build
+pnpm --filter openvideo build
 ```
 
 ### Timeout Errors
