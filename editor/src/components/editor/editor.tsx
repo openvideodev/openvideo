@@ -1,6 +1,4 @@
 'use client';
-// import * as Sentry from '@sentry/nextjs';
-// import { usePostHog } from 'posthog-js/react';
 import { useState, useEffect } from 'react';
 import { MediaPanel } from '@/components/editor/media-panel';
 import { CanvasPanel } from '@/components/editor/canvas-panel';
@@ -31,22 +29,9 @@ export default function Editor() {
     isCopilotVisible,
   } = usePanelStore();
 
-  // const { studio } = useStudioStore();
   const [isReady, setIsReady] = useState(false);
   const [isWebCodecsSupported, setIsWebCodecsSupported] = useState(true);
-  // const posthog = usePostHog();
 
-  // // Sentry and PostHog tracking for Editor mount
-  // useEffect(() => {
-  //   Sentry.addBreadcrumb({
-  //     category: 'editor',
-  //     message: 'Editor component mounted',
-  //     level: 'info',
-  //   });
-  //   posthog.capture('editor_viewed', { schemaId, projectId });
-  // }, [posthog, schemaId, projectId]);
-
-  // Check WebCodecs support on mount
   useEffect(() => {
     const checkSupport = async () => {
       const isSupported = await Compositor.isSupported();
@@ -54,61 +39,6 @@ export default function Editor() {
     };
     checkSupport();
   }, []);
-
-  // useEffect(() => {
-  //   if (!studio) return;
-  //   if (design) {
-  //     studio.loadFromJSON(design);
-  //   }
-  // }, [design]);
-
-  // useEffect(() => {
-  //   if (!studio || !schemaId || !projectId) return;
-
-  //   const saveScene = debounce(async () => {
-  //     try {
-  //       const json = studio.exportToJSON();
-  //       await fetch('/api/scenes', {
-  //         method: 'POST',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //         },
-  //         body: JSON.stringify({
-  //           schemaId,
-  //           projectId,
-  //           sceneData: json,
-  //         }),
-  //       });
-  //       console.log('Scene saved automatically');
-  //     } catch (error) {
-  //       console.error('Failed to auto-save scene:', error);
-  //     }
-  //   }, 1000); // Debounce for 1 second
-
-  //   // Listen to changes that should trigger a save
-  //   const eventsToListen = [
-  //     'history:changed',
-  //     'clip:added',
-  //     'clip:removed',
-  //     'clip:updated',
-  //     'clip:moved',
-  //     'track:added',
-  //     'track:removed',
-  //     'clips:removed',
-  //     'clip:replaced',
-  //   ];
-
-  //   eventsToListen.forEach((event) => {
-  //     studio.on(event, saveScene);
-  //   });
-
-  //   return () => {
-  //     saveScene.cancel();
-  //     eventsToListen.forEach((event) => {
-  //       studio.off(event, saveScene);
-  //     });
-  //   };
-  // }, [studio, schemaId, projectId]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden space-y-1.5">
