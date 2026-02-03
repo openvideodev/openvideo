@@ -1,5 +1,6 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import * as React from "react";
+import { AnimationProperties } from "./animation-properties";
+import { useEffect, useState } from "react";
 import {
   ColorPicker,
   ColorPickerAlpha,
@@ -8,13 +9,13 @@ import {
   ColorPickerHue,
   ColorPickerOutput,
   ColorPickerSelection,
-} from '@/components/ui/color-picker';
+} from "@/components/ui/color-picker";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { IClip } from 'openvideo';
+} from "@/components/ui/popover";
+import { IClip } from "openvideo";
 import {
   IconMinus,
   IconBlur,
@@ -23,17 +24,17 @@ import {
   IconCircle,
   IconLineHeight,
   IconSquare,
-} from '@tabler/icons-react';
-import { cn } from '@/lib/utils';
+} from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from '@/components/ui/input-group';
-import { Slider } from '@/components/ui/slider';
-import color from 'color';
-import { NumberInput } from '@/components/ui/number-input';
+} from "@/components/ui/input-group";
+import { Slider } from "@/components/ui/slider";
+import color from "color";
+import { NumberInput } from "@/components/ui/number-input";
 
 interface ImagePropertiesProps {
   clip: IClip;
@@ -52,16 +53,16 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
       setTick((t) => t + 1);
     };
 
-    imageClip.on?.('propsChange', onPropsChange);
-    imageClip.on?.('moving', onPropsChange);
-    imageClip.on?.('scaling', onPropsChange);
-    imageClip.on?.('rotating', onPropsChange);
+    imageClip.on?.("propsChange", onPropsChange);
+    imageClip.on?.("moving", onPropsChange);
+    imageClip.on?.("scaling", onPropsChange);
+    imageClip.on?.("rotating", onPropsChange);
 
     return () => {
-      imageClip.off?.('propsChange', onPropsChange);
-      imageClip.off?.('moving', onPropsChange);
-      imageClip.off?.('scaling', onPropsChange);
-      imageClip.off?.('rotating', onPropsChange);
+      imageClip.off?.("propsChange", onPropsChange);
+      imageClip.off?.("moving", onPropsChange);
+      imageClip.off?.("scaling", onPropsChange);
+      imageClip.off?.("rotating", onPropsChange);
     };
   }, [imageClip]);
 
@@ -83,7 +84,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
       style: {
         ...style,
         stroke: {
-          ...(style.stroke || { color: '#ffffff', width: 0 }),
+          ...(style.stroke || { color: "#ffffff", width: 0 }),
           ...strokeUpdates,
         },
       },
@@ -92,7 +93,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
 
   const handleShadowUpdate = (shadowUpdates: any) => {
     const currentShadow = style.dropShadow || {
-      color: '#000000',
+      color: "#000000",
       alpha: 1,
       blur: 0,
       distance: 0,
@@ -287,7 +288,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
                       className="h-4 w-4 rounded-full border border-white/10 shadow-sm"
                       style={{
                         backgroundColor:
-                          (style.stroke?.color as string) || '#000000',
+                          (style.stroke?.color as string) || "#000000",
                       }}
                     />
                   </InputGroupButton>
@@ -316,7 +317,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
               </Popover>
             </InputGroupAddon>
             <InputGroupInput
-              value={style.stroke?.color?.toUpperCase() || '#000000'}
+              value={style.stroke?.color?.toUpperCase() || "#000000"}
               onChange={(e) => handleStrokeUpdate({ color: e.target.value })}
               className="text-sm p-0 text-[10px] font-mono"
             />
@@ -367,7 +368,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
             </InputGroupAddon>
             <NumberInput
               value={Math.round(
-                ((style.dropShadow?.angle || 0) * 180) / Math.PI
+                ((style.dropShadow?.angle || 0) * 180) / Math.PI,
               )}
               onChange={(val) => handleShadowUpdate({ angle: val })}
               className="p-0"
@@ -399,7 +400,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
                     <div
                       className="h-4 w-4 border border-white/10 shadow-sm"
                       style={{
-                        backgroundColor: style.dropShadow?.color || '#000000',
+                        backgroundColor: style.dropShadow?.color || "#000000",
                       }}
                     />
                   </InputGroupButton>
@@ -428,12 +429,16 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
               </Popover>
             </InputGroupAddon>
             <InputGroupInput
-              value={style.dropShadow?.color?.toUpperCase() || '#000000'}
+              value={style.dropShadow?.color?.toUpperCase() || "#000000"}
               onChange={(e) => handleShadowUpdate({ color: e.target.value })}
               className="text-sm p-0 text-[10px] font-mono"
             />
           </InputGroup>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <AnimationProperties clip={clip} />
       </div>
     </div>
   );

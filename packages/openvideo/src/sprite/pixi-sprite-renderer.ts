@@ -5,10 +5,12 @@ import {
   Container,
   Graphics,
   BlurFilter,
-} from 'pixi.js';
+} from "pixi.js";
 
-import type { IClip } from '../clips/iclip';
-import { parseColor } from '../utils/color';
+import type { IClip } from "../clips/iclip";
+import { parseColor } from "../utils/color";
+
+import { getAnimationOffset } from "../animation/animator";
 
 /**
  * Update sprite transform based on clip properties
@@ -34,9 +36,9 @@ export function updateSpriteTransform(clip: IClip, sprite: Sprite): void {
   sprite.zIndex = zIndex;
 
   // Flip
-  if (flip === 'horizontal') {
+  if (flip === "horizontal") {
     sprite.scale.x = -Math.abs(sprite.scale.x);
-  } else if (flip === 'vertical') {
+  } else if (flip === "vertical") {
     sprite.scale.y = -Math.abs(sprite.scale.y);
   }
 }
@@ -52,17 +54,19 @@ export class PixiSpriteRenderer {
   private canvas: OffscreenCanvas;
   private context: OffscreenCanvasRenderingContext2D;
   private root: Container | null = null;
+  private animContainer: Container | null = null;
   private strokeGraphics: Graphics | null = null;
   private maskGraphics: Graphics | null = null;
   private shadowGraphics: Graphics | null = null;
   private shadowContainer: Container | null = null;
   private resolution = 1;
   private destroyed = false;
+  private lastTime = 0;
 
   constructor(
     _pixiApp: Application | null,
     private sprite: IClip,
-    private targetContainer: Container | null = null
+    private targetContainer: Container | null = null,
   ) {
     // If targetContainer is not provided, try to use pixiApp.stage (fallback/legacy)
     if (!targetContainer && _pixiApp) {
@@ -75,15 +79,22 @@ export class PixiSpriteRenderer {
     // Create a canvas for drawing video frames
     // We'll initialize it when we get the first frame
     this.canvas = new OffscreenCanvas(1, 1);
-    const ctx = this.canvas.getContext('2d');
+    const ctx = this.canvas.getContext("2d");
     if (ctx == null) {
-      throw new Error('Failed to create 2d context for PixiSpriteRenderer');
+      throw new Error("Failed to create 2d context for PixiSpriteRenderer");
     }
     this.context = ctx;
 
     // Initialize Root Container immediately
     this.root = new Container();
     this.root.visible = false; // Hidden until first frame
+    this.root.label = "ClipRoot";
+
+    // Initialize Animation Container
+    this.animContainer = new Container();
+    this.animContainer.label = "AnimContainer";
+    this.root.addChild(this.animContainer);
+
     // If we have a target container, add root to it
     if (this.targetContainer) {
       this.targetContainer.addChild(this.root);
@@ -94,9 +105,14 @@ export class PixiSpriteRenderer {
    * Update the sprite with a new video frame or Texture
    * @param frame ImageBitmap, Texture, or null to render
    *              (VideoFrames are converted to ImageBitmap in getFrame)
+   * @param clipTime Relative time in the clip (microseconds)
    */
-  async updateFrame(frame: ImageBitmap | Texture | null): Promise<void> {
+  async updateFrame(
+    frame: ImageBitmap | Texture | null,
+    clipTime: number = 0,
+  ): Promise<void> {
     if (this.destroyed) return;
+    this.lastTime = clipTime;
 
     if (frame == null) {
       // Hide sprite if no frame, but still apply transforms in case animation is running
@@ -112,24 +128,24 @@ export class PixiSpriteRenderer {
     // This is critical because sometimes RenderTexture instance checks fail across module boundaries
     const isTexture =
       frame instanceof Texture ||
-      (frame && typeof (frame as any).source !== 'undefined');
+      (frame && typeof (frame as any).source !== "undefined");
 
     if (isTexture) {
       // Validate texture dimensions
       if (frame.width === 0 || frame.height === 0) {
         console.warn(
-          'PixiSpriteRenderer: Texture has zero dimensions',
+          "PixiSpriteRenderer: Texture has zero dimensions",
           frame.width,
-          frame.height
+          frame.height,
         );
         return;
       }
 
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(frame as Texture);
-        this.pixiSprite.label = 'MainSprite';
-        // this.root is already created in constructor
-        this.root!.addChild(this.pixiSprite);
+        this.pixiSprite.label = "MainSprite";
+        // Parent to animContainer instead of root
+        this.animContainer!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
         this.pixiSprite.texture = frame as Texture;
@@ -149,15 +165,15 @@ export class PixiSpriteRenderer {
     const height = (frame as any).height;
 
     if (
-      typeof width !== 'number' ||
-      typeof height !== 'number' ||
+      typeof width !== "number" ||
+      typeof height !== "number" ||
       width <= 0 ||
       height <= 0
     ) {
       console.warn(
-        'PixiSpriteRenderer: Invalid frame dimensions',
+        "PixiSpriteRenderer: Invalid frame dimensions",
         width,
-        height
+        height,
       );
       return;
     }
@@ -187,14 +203,14 @@ export class PixiSpriteRenderer {
       // Validate texture was created successfully
       // Use Texture.source instead of baseTexture (PixiJS v8.0.0+)
       if (!this.texture || !this.texture.source) {
-        console.error('PixiSpriteRenderer: Failed to create valid texture');
+        console.error("PixiSpriteRenderer: Failed to create valid texture");
         return;
       }
 
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(this.texture);
-        this.pixiSprite.label = 'MainSprite';
-        this.root!.addChild(this.pixiSprite);
+        this.pixiSprite.label = "MainSprite";
+        this.animContainer!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
         this.pixiSprite.texture = this.texture;
@@ -215,7 +231,7 @@ export class PixiSpriteRenderer {
         }
       }
 
-      if (typeof source.update === 'function') {
+      if (typeof source.update === "function") {
         source.update();
       }
     }
@@ -226,30 +242,87 @@ export class PixiSpriteRenderer {
     }
   }
 
-  /**
-   * Apply sprite transformations to the Pixi Sprite
-   */
   private applySpriteTransforms(): void {
     if (this.pixiSprite == null || this.root == null || this.destroyed) return;
 
-    const { flip, center, width, height, angle, opacity, zIndex } = this.sprite;
+    const { flip, center, width, height, angle, opacity, zIndex, duration } =
+      this.sprite;
 
-    // Apply global transforms to root container
-    this.root.x = center.x;
-    this.root.y = center.y;
-    this.root.angle = (flip == null ? 1 : -1) * angle;
-    this.root.alpha = opacity;
-    this.root.zIndex = zIndex;
-    this.root.scale.set(1, 1);
+    // 1. BASE TRANSFORMS (ROOT)
+    // These reflect the Transformer's view of the clip.
+    // They should NOT include temporary animation offsets.
+    const rootX = center.x;
+    const rootY = center.y;
+    const rootAngle = (flip == null ? 1 : -1) * angle;
+    // Opacity is applied to root, but animation opacity will be applied to animContainer
+    const rootAlpha = opacity;
+    const rootZIndex = zIndex;
 
-    // Apply local transforms to sprite
+    this.root.x = rootX;
+    this.root.y = rootY;
+    this.root.angle = rootAngle;
+    this.root.alpha = rootAlpha;
+    this.root.zIndex = rootZIndex;
+    this.root.scale.set(1, 1); // Root always 1, handling via children
+
+    // 2. ANIMATION TRANSFORMS (ANIM CONTAINER)
+    // Initialize with identity values
+    let animX = 0;
+    let animY = 0;
+    let animAngle = 0;
+    let animAlpha = 1;
+    let animScaleX = 1;
+    let animScaleY = 1;
+
+    // --- Animation Logic ---
+    if (this.sprite.animations && this.sprite.animations.length > 0) {
+      // Heuristic to handle microseconds vs milliseconds
+      // If > 100,000, likely microseconds (0.1s).
+      // If < 100,000, likely milliseconds (or very start of clip, but <100ms is rare for full clip duration)
+      // This ensures compatibility whether lastTime/duration are passed as us or ms
+      const clipTimeMsRaw =
+        this.lastTime > 100000 ? this.lastTime / 1000 : this.lastTime;
+
+      // Ensure clipDurationMsFromSprite is in ms
+      const clipDurationMsRaw = duration > 100000 ? duration / 1000 : duration;
+
+      for (const anim of this.sprite.animations) {
+        // Skip text animations here (handled by TextClip usually, unless scope is 'element')
+        if (anim.scope && anim.scope !== "element") continue;
+
+        const offset = getAnimationOffset(
+          anim,
+          clipTimeMsRaw,
+          clipDurationMsRaw,
+          width,
+          height,
+        );
+
+        animX += offset.x;
+        animY += offset.y;
+        animAngle += offset.rotation;
+        animAlpha *= offset.alpha;
+        animScaleX *= offset.scaleX;
+        animScaleY *= offset.scaleY;
+      }
+    }
+
+    if (this.animContainer) {
+      this.animContainer.x = animX;
+      this.animContainer.y = animY;
+      this.animContainer.angle = animAngle;
+      this.animContainer.alpha = animAlpha;
+      this.animContainer.scale.set(animScaleX, animScaleY);
+    }
+
+    // 3. CONTENT TRANSFORMS (SPRITE)
     this.pixiSprite.anchor.set(0.5, 0.5);
     this.pixiSprite.position.set(0, 0);
 
     const textureWidth = this.pixiSprite.texture?.width ?? 1;
     const textureHeight = this.pixiSprite.texture?.height ?? 1;
 
-    const isCaption = (this.sprite as any).type === 'Caption';
+    const isCaption = (this.sprite as any).type === "Caption";
     const baseScaleX =
       !isCaption && width && width !== 0 ? Math.abs(width) / textureWidth : 1;
     const baseScaleY =
@@ -257,10 +330,10 @@ export class PixiSpriteRenderer {
         ? Math.abs(height) / textureHeight
         : 1;
 
-    if (flip === 'horizontal') {
+    if (flip === "horizontal") {
       this.pixiSprite.scale.x = -baseScaleX;
       this.pixiSprite.scale.y = baseScaleY;
-    } else if (flip === 'vertical') {
+    } else if (flip === "vertical") {
       this.pixiSprite.scale.x = baseScaleX;
       this.pixiSprite.scale.y = -baseScaleY;
     } else {
@@ -297,7 +370,7 @@ export class PixiSpriteRenderer {
         -textureHeight / 2,
         textureWidth,
         textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2)
+        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
       );
       this.maskGraphics.fill({ color: 0xffffff, alpha: 1 });
       this.maskGraphics.visible = true;
@@ -308,14 +381,14 @@ export class PixiSpriteRenderer {
       }
     }
 
-    if (this.sprite.type !== 'Text' && this.sprite.type !== 'Caption') {
+    if (this.sprite.type !== "Text" && this.sprite.type !== "Caption") {
       this.applyStroke(style, textureWidth, textureHeight);
     } else if (this.strokeGraphics) {
       this.strokeGraphics.visible = false;
     }
 
     // 3. Apply Drop Shadow (Media only)
-    if (this.sprite.type !== 'Text' && this.sprite.type !== 'Caption') {
+    if (this.sprite.type !== "Text" && this.sprite.type !== "Caption") {
       this.applyShadow(style);
     } else if (this.shadowContainer) {
       this.shadowContainer.visible = false;
@@ -326,7 +399,7 @@ export class PixiSpriteRenderer {
   private applyStroke(
     style: any,
     textureWidth: number,
-    textureHeight: number
+    textureHeight: number,
   ): void {
     const stroke = style.stroke;
     if (stroke && stroke.width > 0) {
@@ -353,14 +426,14 @@ export class PixiSpriteRenderer {
           -textureHeight / 2,
           textureWidth,
           textureHeight,
-          r
+          r,
         );
       } else {
         this.strokeGraphics.rect(
           -textureWidth / 2,
           -textureHeight / 2,
           textureWidth,
-          textureHeight
+          textureHeight,
         );
       }
 
@@ -384,11 +457,16 @@ export class PixiSpriteRenderer {
     ) {
       if (this.shadowContainer == null) {
         this.shadowContainer = new Container();
-        this.shadowContainer.label = 'ShadowContainer';
+        this.shadowContainer.label = "ShadowContainer";
         this.shadowGraphics = new Graphics();
         this.shadowContainer.addChild(this.shadowGraphics);
-        // Add shadow container to root at index 0 so it's behind everything else
-        this.root!.addChildAt(this.shadowContainer, 0);
+        // Add shadow container to animContainer so it moves with the animation
+        this.animContainer!.addChildAt(this.shadowContainer, 0);
+      } else {
+        // Ensure it's in the right place if already created
+        if (this.shadowContainer.parent !== this.animContainer) {
+          this.animContainer!.addChildAt(this.shadowContainer, 0);
+        }
       }
 
       const color = parseColor(shadow.color) ?? 0x000000;
@@ -413,7 +491,7 @@ export class PixiSpriteRenderer {
           -height / 2,
           width,
           height,
-          r
+          r,
         );
       } else {
         this.shadowGraphics!.rect(-width / 2, -height / 2, width, height);
@@ -435,7 +513,7 @@ export class PixiSpriteRenderer {
         // Use worldTransform to get the effective scale on screen
         const worldScale = this.root
           ? Math.sqrt(
-              this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2
+              this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2,
             )
           : 1;
 
@@ -484,6 +562,7 @@ export class PixiSpriteRenderer {
       this.root.destroy({ children: true });
       this.root = null;
       this.pixiSprite = null; // pixiSprite is a child of root
+      this.animContainer = null;
     }
 
     if (this.strokeGraphics != null) {
