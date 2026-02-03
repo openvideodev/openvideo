@@ -116,6 +116,7 @@ export default function PanelText() {
         wordWrapWidth: 800,
         fontUrl: (preset?.style as any)?.fontUrl,
       });
+      textClip.name = preset ? preset.name : 'Text';
       await textClip.ready;
       textClip.display.from = 0;
       textClip.duration = 5e6;

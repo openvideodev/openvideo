@@ -79,6 +79,7 @@ export default function PanelImages() {
 
     try {
       const imageClip = await Image.fromUrl(asset.src.large2x);
+      imageClip.name = `Photo by ${asset.photographer}`;
       imageClip.display = { from: 0, to: 5 * 1e6 };
       imageClip.duration = 5 * 1e6;
 

@@ -241,7 +241,7 @@ export default function Assistant() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-card text-foreground text-sm overflow-hidden border-l">
+    <div className="flex flex-col h-full bg-card text-foreground text-sm overflow-hidden">
       <ScrollArea className="flex-1 min-h-0 h-full">
         <div
           ref={scrollRef}

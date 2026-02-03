@@ -303,6 +303,8 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
 
     return {
       type: this.constructor.name as ClipJSON['type'],
+      id: this.id,
+      name: this.name,
       src: this.src,
       display: {
         from: this.display.from,

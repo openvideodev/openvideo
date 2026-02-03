@@ -13,6 +13,7 @@ import {
 // Base interface for all clips
 interface BaseClipJSON {
   id?: string;
+  name?: string;
   effects?: Array<{
     id: string;
     key: string;
@@ -535,6 +536,9 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   // Apply id and effects (needed for Compositor)
   if (json.id) {
     clip.id = json.id;
+  }
+  if (json.name) {
+    clip.name = json.name;
   }
   if (json.effects) {
     (clip as any).effects = json.effects;

@@ -41,6 +41,10 @@ export abstract class BaseSprite<
    * Unique identifier for the sprite/clip
    */
   id = '';
+  /**
+   * Name of the sprite/clip
+   */
+  name = '';
 
   /**
    * Control display time range of clips, commonly used in editing scenario timeline (track) module

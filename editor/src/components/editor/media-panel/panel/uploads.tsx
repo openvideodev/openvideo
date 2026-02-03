@@ -80,6 +80,14 @@ function detectFileType(file: File): MediaType {
 //   return JSON.parse(updated);
 // }
 
+// Helper to format duration like 00:00
+function formatDuration(seconds?: number) {
+  if (!seconds) return '';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
 // Asset card component
 function AssetCard({
   asset,
@@ -92,47 +100,64 @@ function AssetCard({
 }) {
   return (
     <div
-      className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
+      className="flex flex-col gap-1.5 group cursor-pointer"
       onClick={() => onAdd(asset)}
     >
-      {asset.type === 'image' ? (
-        <img
-          src={asset.src}
-          alt={asset.name}
-          className="w-full h-full object-cover"
-        />
-      ) : asset.type === 'audio' ? (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-          <Music className="text-white/70 drop-shadow-md" size={24} />
-        </div>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-black/20">
-          <video
+      <div className="relative aspect-square rounded-sm overflow-hidden bg-foreground/20 border border-transparent group-hover:border-primary/50 transition-all flex items-center justify-center">
+        {asset.type === 'image' ? (
+          <img
             src={asset.src}
-            className="w-full h-full object-cover pointer-events-none"
+            alt={asset.name}
+            className="max-w-full max-h-full object-contain"
           />
-          <Film className="absolute text-white/70 drop-shadow-md" size={24} />
-        </div>
-      )}
+        ) : asset.type === 'audio' ? (
+          <div className="w-full h-full flex items-center justify-center relative">
+            <Music
+              className="text-[#2dc28c]"
+              size={32}
+              fill="#2dc28c"
+              fillOpacity={0.2}
+            />
+          </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-black/40 relative">
+            <video
+              src={asset.src}
+              className="max-w-full max-h-full object-contain pointer-events-none"
+              muted
+              onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play()}
+              onMouseOut={(e) => {
+                (e.currentTarget as HTMLVideoElement).pause();
+                (e.currentTarget as HTMLVideoElement).currentTime = 0;
+              }}
+            />
+          </div>
+        )}
 
-      {/* Delete button */}
-      <button
-        type="button"
-        className="absolute top-1 right-1 p-1 rounded bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(asset.id);
-        }}
-      >
-        <Trash2 size={12} className="text-white" />
-      </button>
+        {/* Duration Overlay (Bottom Left) */}
+        {asset.duration && (
+          <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-medium">
+            {formatDuration(asset.duration)}
+          </div>
+        )}
 
-      {/* Name overlay */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <p className="text-[10px] text-white truncate font-medium">
-          {asset.name}
-        </p>
+        {/* Remove Button (Minimalist on Hover) */}
+        <button
+          type="button"
+          className="absolute top-1 right-1 p-1 rounded bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(asset.id);
+          }}
+        >
+          <Trash2 size={12} className="text-white" />
+        </button>
       </div>
+
+      {/* Label (External) */}
+      <p className="text-[10px] text-muted-foreground group-hover:text-foreground truncate transition-colors px-0.5">
+        {asset.name}
+      </p>
     </div>
   );
 }
@@ -349,6 +374,7 @@ export default function PanelUploads() {
     try {
       if (asset.type === 'image') {
         const imageClip = await Image.fromUrl(asset.src);
+        imageClip.name = asset.name;
         imageClip.display = { from: 0, to: 5 * 1e6 };
         imageClip.duration = 5 * 1e6;
         await imageClip.scaleToFit(1080, 1920);
@@ -356,9 +382,11 @@ export default function PanelUploads() {
         await studio.addClip(imageClip);
       } else if (asset.type === 'audio') {
         const audioClip = await Audio.fromUrl(asset.src);
+        audioClip.name = asset.name;
         await studio.addClip(audioClip);
       } else {
         const videoClip = await Video.fromUrl(asset.src);
+        videoClip.name = asset.name;
         await videoClip.scaleToFit(1080, 1920);
         videoClip.centerInScene(1080, 1920);
         await studio.addClip(videoClip);
@@ -442,7 +470,7 @@ export default function PanelUploads() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-x-3 gap-y-4">
               {filteredAssets.map((asset) => (
                 <AssetCard
                   key={asset.id}
@@ -452,39 +480,9 @@ export default function PanelUploads() {
                 />
               ))}
             </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-3 mb-2">
-              {uploads.length} upload{uploads.length !== 1 ? 's' : ''}
-              {searchQuery && ` (showing ${filteredAssets.length})`}
-            </p>
           </>
         )}
       </ScrollArea>
-
-      {/* Storage stats footer */}
-      {/* {storageStats && (
-        <div className="px-4 py-3 border-t border-border/50">
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
-            <span className="flex items-center gap-1">
-              <HardDrive size={10} />
-              Local Storage
-            </span>
-            <span>
-              {storageStats.usedMB} MB /{' '}
-              {storageStats.quotaMB > 1000
-                ? `${(storageStats.quotaMB / 1024).toFixed(1)} GB`
-                : `${storageStats.quotaMB} MB`}
-            </span>
-          </div>
-          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary/70 rounded-full transition-all"
-              style={{
-                width: `${Math.min(storageStats.percentUsed, 100)}%`,
-              }}
-            />
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }

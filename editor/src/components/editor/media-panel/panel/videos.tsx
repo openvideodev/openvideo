@@ -85,6 +85,8 @@ export default function PanelVideos() {
       if (!videoFile) throw new Error('No video file found');
 
       const src = videoFile.link;
+      const clipName = `Video by ${asset.user.name}`;
+
       // 1. Create and add placeholder immediately
       const placeholder = new Placeholder(
         src,
@@ -95,6 +97,7 @@ export default function PanelVideos() {
         },
         'Video'
       );
+      placeholder.name = clipName;
 
       // Scale to fit and center in scene (1080x1920)
       await placeholder.scaleToFit(1080, 1920);
@@ -105,11 +108,14 @@ export default function PanelVideos() {
       // 2. Load the real clip in the background
       Video.fromUrl(src)
         .then(async (videoClip) => {
+          videoClip.name = clipName;
+
           // 3. Replace all placeholders with this source once loaded
           await studio.timeline.replaceClipsBySource(src, async (oldClip) => {
             const clone = await videoClip.clone();
             // Copy state from placeholder (user might have moved/resized/split it)
             clone.id = oldClip.id; // Keep the same ID if possible, or replaceClipsBySource handles it
+            clone.name = oldClip.name; // Keep the name from placeholder
             clone.left = oldClip.left;
             clone.top = oldClip.top;
             clone.width = oldClip.width;

@@ -19,7 +19,7 @@ export class Text extends BaseTimelineClip {
     borderColor: 'transparent',
     stroke: 'transparent',
     strokeWidth: 0,
-    fill: '#166534',
+    fill: '#134e4a',
     borderOpacityWhenMoving: 1,
     hoverCursor: 'default',
   };
@@ -64,7 +64,7 @@ export class Text extends BaseTimelineClip {
   }
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected ? '#22c55e' : '#15803d';
+    const borderColor = this.isSelected ? '#0f766e' : '#115e59';
     const borderWidth = 2;
     const radius = 10;
 

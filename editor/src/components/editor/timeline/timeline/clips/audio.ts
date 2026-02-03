@@ -24,6 +24,7 @@ export class Audio extends BaseTimelineClip {
   constructor(options: BaseClipProps) {
     super(options);
     Object.assign(this, Audio.ownDefaults);
+    this.text = options.text;
     this.set({
       // fill: options.fill || TRACK_COLORS.audio.solid,
       fill: '#1e3a8a',
@@ -48,7 +49,7 @@ export class Audio extends BaseTimelineClip {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
     ctx.textAlign = 'left';
     ctx.clip();
-    ctx.fillText(this.src || '', 36, 12);
+    ctx.fillText(this.text || '', 36, 12);
 
     ctx.translate(8, 1);
 

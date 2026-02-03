@@ -43,6 +43,11 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   readonly type: string;
 
   /**
+   * Name of this clip
+   */
+  name: string;
+
+  /**
    * Source URL or identifier for this clip
    */
   src: string;

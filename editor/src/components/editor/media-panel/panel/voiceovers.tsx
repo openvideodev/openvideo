@@ -13,11 +13,12 @@ export default function PanelVoiceovers() {
   const { voiceovers } = useGeneratedStore();
   const [playingId, setPlayingId] = useState<string | null>(null);
 
-  const handleAddAudio = async (url: string) => {
+  const handleAddAudio = async (url: string, name: string) => {
     if (!studio) return;
     try {
       const audioClip = await Audio.fromUrl(url);
-      await studio.addClip(audioClip, url);
+      audioClip.name = name;
+      await studio.addClip(audioClip);
     } catch (error) {
       Log.error('Failed to add audio:', error);
     }

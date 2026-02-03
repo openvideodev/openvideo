@@ -829,9 +829,30 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
             clip.type === 'Video' ||
             clip.type === 'Image' ||
             clip.type === 'Audio';
-          const clipName = isMedia
-            ? clip.src || clip.name || clip.type
-            : clip.text || clip.name || clip.type;
+
+          const isTextual = clip.type === 'Text' || clip.type === 'Caption';
+
+          let clipName = isTextual
+            ? clip.text || clip.name || clip.type
+            : clip.name || (isMedia ? clip.src : clip.text) || clip.type;
+
+          // If it's a media URL and we still have a long URL, try to extract the filename
+          if (
+            isMedia &&
+            clipName &&
+            (clipName.startsWith('http') || clipName.startsWith('blob:'))
+          ) {
+            try {
+              const url = new URL(clipName);
+              const pathname = url.pathname;
+              const filename = pathname.split('/').pop();
+              if (filename) {
+                clipName = decodeURIComponent(filename);
+              }
+            } catch (e) {
+              // Not a valid URL, keep as is
+            }
+          }
 
           if (!timelineClip) {
             const commonProps = {
@@ -843,6 +864,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
               text: clipName,
               src: clip.src,
             };
+            console.log({ commonProps });
 
             if (clip.type === 'Audio') {
               timelineClip = new Audio(commonProps);
