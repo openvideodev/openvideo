@@ -43,12 +43,9 @@ export class Renderer extends EventEmitter {
   }> {
     const app: Express = express();
 
-    // Serve @designcombo/video dist files at /core (legacy route)
+    // Serve openvideo dist files at /core (legacy route)
     const currentFileDir = dirname(fileURLToPath(import.meta.url));
-    const coreDistPath = join(
-      currentFileDir,
-      '../node_modules/@designcombo/video/dist'
-    );
+    const coreDistPath = join(currentFileDir, '../node_modules/openvideo/dist');
     app.use('/core', express.static(coreDistPath));
 
     // Serve node_modules for package imports
