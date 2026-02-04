@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import * as React from "react";
+import { useEffect, useState } from "react";
 import {
   ColorPicker,
   ColorPickerAlpha,
@@ -8,13 +8,13 @@ import {
   ColorPickerHue,
   ColorPickerOutput,
   ColorPickerSelection,
-} from '@/components/ui/color-picker';
+} from "@/components/ui/color-picker";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { IClip } from 'openvideo';
+} from "@/components/ui/popover";
+import { IClip, AnimationOptions, KeyframeData } from "openvideo";
 import {
   IconAlignLeft,
   IconAlignCenter,
@@ -34,17 +34,19 @@ import {
   IconTrash,
   IconSquare,
   IconVolume,
-} from '@tabler/icons-react';
-import { cn } from '@/lib/utils';
+  IconEdit,
+} from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from '@/components/ui/input-group';
-import { Slider } from '@/components/ui/slider';
-import color from 'color';
-import { NumberInput } from '@/components/ui/number-input';
+} from "@/components/ui/input-group";
+import { Slider } from "@/components/ui/slider";
+import color from "color";
+import { NumberInput } from "@/components/ui/number-input";
+import { AnimationEditor } from "./AnimationEditor";
 
 interface VideoPropertiesProps {
   clip: IClip;
@@ -63,16 +65,16 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
       setTick((t) => t + 1);
     };
 
-    videoClip.on?.('propsChange', onPropsChange);
-    videoClip.on?.('moving', onPropsChange);
-    videoClip.on?.('scaling', onPropsChange);
-    videoClip.on?.('rotating', onPropsChange);
+    videoClip.on?.("propsChange", onPropsChange);
+    videoClip.on?.("moving", onPropsChange);
+    videoClip.on?.("scaling", onPropsChange);
+    videoClip.on?.("rotating", onPropsChange);
 
     return () => {
-      videoClip.off?.('propsChange', onPropsChange);
-      videoClip.off?.('moving', onPropsChange);
-      videoClip.off?.('scaling', onPropsChange);
-      videoClip.off?.('rotating', onPropsChange);
+      videoClip.off?.("propsChange", onPropsChange);
+      videoClip.off?.("moving", onPropsChange);
+      videoClip.off?.("scaling", onPropsChange);
+      videoClip.off?.("rotating", onPropsChange);
     };
   }, [videoClip]);
 
@@ -94,7 +96,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
       style: {
         ...style,
         stroke: {
-          ...(style.stroke || { color: '#ffffff', width: 0 }),
+          ...(style.stroke || { color: "#ffffff", width: 0 }),
           ...strokeUpdates,
         },
       },
@@ -103,7 +105,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
 
   const handleShadowUpdate = (shadowUpdates: any) => {
     const currentShadow = style.dropShadow || {
-      color: '#000000',
+      color: "#000000",
       alpha: 1,
       blur: 0,
       distance: 0,
@@ -131,21 +133,27 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
     });
   };
 
-  const handleAnimationAdd = (type: string) => {
-    // Default options for new animations
-    const opts = {
-      duration: 1000 * 1000, // 1 second in microseconds
-      delay: 0,
-      iterCount: 1,
-    };
+  const [showAnimationEditor, setShowAnimationEditor] = useState(false);
+  const [editingAnimation, setEditingAnimation] = useState<any | null>(null);
 
-    let params = {};
-    if (type === 'slideIn' || type === 'slideOut') {
-      params = { direction: 'left' };
+  const handleAnimationSave = (
+    type: string,
+    opts: AnimationOptions,
+    params: KeyframeData,
+  ) => {
+    if (editingAnimation) {
+      videoClip.updateAnimation(editingAnimation.id, type, opts, params);
+    } else {
+      videoClip.addAnimation(type, opts, params);
     }
-
-    videoClip.addAnimation(type, opts, params);
+    setShowAnimationEditor(false);
+    setEditingAnimation(null);
     setTick((t) => t + 1);
+  };
+
+  const handleAnimationEdit = (anim: any) => {
+    setEditingAnimation(anim);
+    setShowAnimationEditor(true);
   };
 
   const handleAnimationRemove = (id: string) => {
@@ -303,29 +311,33 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
           <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
             Animations
           </label>
-          <Popover modal={true}>
+          <Popover
+            modal={true}
+            open={showAnimationEditor}
+            onOpenChange={setShowAnimationEditor}
+          >
             <PopoverTrigger asChild>
-              <button className="text-muted-foreground hover:text-white transition-colors">
+              <button
+                onClick={() => {
+                  setEditingAnimation(null);
+                  setShowAnimationEditor(true);
+                }}
+                className="text-muted-foreground hover:text-white transition-colors"
+              >
                 <IconPlus className="size-3.5" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-48 p-2" align="end">
-              <div className="flex flex-col gap-1">
-                {[
-                  { label: 'Fade In', value: 'fadeIn' },
-                  { label: 'Fade Out', value: 'fadeOut' },
-                  { label: 'Slide In', value: 'slideIn' },
-                  { label: 'Slide Out', value: 'slideOut' },
-                ].map((item) => (
-                  <button
-                    key={item.value}
-                    onClick={() => handleAnimationAdd(item.value)}
-                    className="flex items-center w-full px-2 py-1.5 text-xs text-left rounded-md hover:bg-white/10"
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+            <PopoverContent className="w-[400px] p-0" align="end">
+              <AnimationEditor
+                mode={editingAnimation ? "edit" : "add"}
+                clipDuration={videoClip.duration}
+                animation={editingAnimation}
+                onSave={handleAnimationSave}
+                onCancel={() => {
+                  setShowAnimationEditor(false);
+                  setEditingAnimation(null);
+                }}
+              />
             </PopoverContent>
           </Popover>
         </div>
@@ -342,7 +354,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
                 key={anim.id}
                 className="flex items-center justify-between p-2 bg-secondary/30 rounded-md group"
               >
-                <div className="flex flex-col">
+                <div className="flex flex-col flex-1">
                   <span className="text-xs font-medium capitalize">
                     {anim.type}
                   </span>
@@ -350,12 +362,20 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
                     {Math.round(anim.options.duration / 1e6)}s duration
                   </span>
                 </div>
-                <button
-                  onClick={() => handleAnimationRemove(anim.id)}
-                  className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"
-                >
-                  <IconTrash className="size-3.5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleAnimationEdit(anim)}
+                    className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-white transition-all"
+                  >
+                    <IconEdit className="size-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleAnimationRemove(anim.id)}
+                    className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"
+                  >
+                    <IconTrash className="size-3.5" />
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -414,7 +434,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
                       className="h-4 w-4 rounded-full border border-white/10 shadow-sm"
                       style={{
                         backgroundColor:
-                          (style.stroke?.color as string) || '#000000',
+                          (style.stroke?.color as string) || "#000000",
                       }}
                     />
                   </InputGroupButton>
@@ -443,7 +463,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               </Popover>
             </InputGroupAddon>
             <InputGroupInput
-              value={style.stroke?.color?.toUpperCase() || '#000000'}
+              value={style.stroke?.color?.toUpperCase() || "#000000"}
               onChange={(e) => handleStrokeUpdate({ color: e.target.value })}
               className="text-sm p-0 text-[10px] font-mono"
             />
@@ -494,7 +514,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
             </InputGroupAddon>
             <NumberInput
               value={Math.round(
-                ((style.dropShadow?.angle || 0) * 180) / Math.PI
+                ((style.dropShadow?.angle || 0) * 180) / Math.PI,
               )}
               onChange={(val) => handleShadowUpdate({ angle: val })}
               className="p-0"
@@ -526,7 +546,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
                     <div
                       className="h-4 w-4 border border-white/10 shadow-sm"
                       style={{
-                        backgroundColor: style.dropShadow?.color || '#000000',
+                        backgroundColor: style.dropShadow?.color || "#000000",
                       }}
                     />
                   </InputGroupButton>
@@ -555,7 +575,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               </Popover>
             </InputGroupAddon>
             <InputGroupInput
-              value={style.dropShadow?.color?.toUpperCase() || '#000000'}
+              value={style.dropShadow?.color?.toUpperCase() || "#000000"}
               onChange={(e) => handleShadowUpdate({ color: e.target.value })}
               className="text-sm p-0 text-[10px] font-mono"
             />
