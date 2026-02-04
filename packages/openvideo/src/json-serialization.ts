@@ -9,7 +9,7 @@ import {
   Placeholder,
   type IClip,
   type ITransitionInfo,
-} from './clips';
+} from "./clips";
 // Base interface for all clips
 interface BaseClipJSON {
   id?: string;
@@ -35,7 +35,7 @@ interface BaseClipJSON {
   angle: number;
   zIndex: number;
   opacity: number;
-  flip: 'horizontal' | 'vertical' | null;
+  flip: "horizontal" | "vertical" | null;
   trim?: {
     from: number;
     to: number;
@@ -66,21 +66,21 @@ interface BaseClipJSON {
 
 // Video clip specific
 export interface VideoJSON extends BaseClipJSON {
-  type: 'Video';
+  type: "Video";
   audio?: boolean;
   volume?: number;
 }
 
 // Audio clip specific
 export interface AudioJSON extends BaseClipJSON {
-  type: 'Audio';
+  type: "Audio";
   loop?: boolean;
   volume?: number;
 }
 
 // Image clip specific
 export interface ImageJSON extends BaseClipJSON {
-  type: 'Image';
+  type: "Image";
 }
 
 // Text style interface
@@ -93,20 +93,20 @@ export interface TextStyleJSON {
     | string
     | number
     | {
-        type: 'gradient';
+        type: "gradient";
         x0: number;
         y0: number;
         x1: number;
         y1: number;
         colors: Array<{ ratio: number; color: string | number }>;
       };
-  align?: 'left' | 'center' | 'right';
+  align?: "left" | "center" | "right";
   fontUrl?: string; // Font URL for custom fonts
   stroke?: {
     color: string | number;
     width: number;
-    join?: 'miter' | 'round' | 'bevel';
-    cap?: 'butt' | 'round' | 'square';
+    join?: "miter" | "round" | "bevel";
+    cap?: "butt" | "round" | "square";
     miterLimit?: number;
   };
   shadow?: {
@@ -120,14 +120,14 @@ export interface TextStyleJSON {
   wordWrapWidth?: number;
   lineHeight?: number;
   letterSpacing?: number;
-  textCase?: 'none' | 'uppercase' | 'lowercase' | 'title';
-  verticalAlign?: 'top' | 'center' | 'bottom';
-  wordsPerLine?: 'single' | 'multiple';
+  textCase?: "none" | "uppercase" | "lowercase" | "title";
+  verticalAlign?: "top" | "center" | "bottom";
+  wordsPerLine?: "single" | "multiple";
 }
 
 // Text clip specific
 export interface TextJSON extends BaseClipJSON {
-  type: 'Text';
+  type: "Text";
   text: string;
   style?: TextStyleJSON;
 }
@@ -164,7 +164,7 @@ export interface CaptionDataJSON {
 
 // Caption clip specific
 export interface CaptionJSON extends BaseClipJSON {
-  type: 'Caption';
+  type: "Caption";
   text: string;
   style?: TextStyleJSON;
   // New nested structure
@@ -188,12 +188,12 @@ export interface CaptionJSON extends BaseClipJSON {
   videoHeight?: number;
   fontUrl?: string;
   mediaId?: string;
-  wordsPerLine?: 'single' | 'multiple';
+  wordsPerLine?: "single" | "multiple";
 }
 
 // Effect clip specific
 export interface EffectJSON extends BaseClipJSON {
-  type: 'Effect';
+  type: "Effect";
   effect: {
     id: string;
     key: string;
@@ -203,7 +203,7 @@ export interface EffectJSON extends BaseClipJSON {
 
 // Transition clip specific
 export interface TransitionJSON extends BaseClipJSON {
-  type: 'Transition';
+  type: "Transition";
   transitionEffect: {
     id: string;
     key: string;
@@ -215,7 +215,7 @@ export interface TransitionJSON extends BaseClipJSON {
 
 // Placeholder clip specific
 export interface PlaceholderJSON extends BaseClipJSON {
-  type: 'Placeholder';
+  type: "Placeholder";
 }
 
 // Global Transition interface (applied between clips)
@@ -288,42 +288,51 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   // Try to use fromObject static method if available (fabric.js pattern)
   let ClipClass: any = null;
   switch (json.type) {
-    case 'Video':
+    case "Video":
       ClipClass = Video;
       break;
-    case 'Audio':
+    case "Audio":
       ClipClass = Audio;
       break;
-    case 'Image': {
+    case "Image": {
       clip = await Image.fromObject(json);
+      // Restore animations for Image clips
+      if ((json as any).animations) {
+        (clip as any).animations = (json as any).animations;
+      }
       return clip; // Return immediately after reconstructing Image clip
     }
-    case 'Text':
+    case "Text":
       ClipClass = Text;
       break;
-    case 'Caption':
+    case "Caption":
       ClipClass = Caption;
       break;
-    case 'Effect':
+    case "Effect":
       ClipClass = Effect;
       break;
-    case 'Transition':
+    case "Transition":
       ClipClass = Transition;
       break;
-    case 'Placeholder':
+    case "Placeholder":
       ClipClass = Placeholder;
       break;
   }
 
-  if (ClipClass && typeof ClipClass.fromObject === 'function') {
-    return await ClipClass.fromObject(json);
+  if (ClipClass && typeof ClipClass.fromObject === "function") {
+    const fromObjClip = await ClipClass.fromObject(json);
+    // Restore animations for clips created via fromObject
+    if ((json as any).animations) {
+      (fromObjClip as any).animations = (json as any).animations;
+    }
+    return fromObjClip;
   }
 
   // Fallback to manual construction (mostly for non-media clips like Text/Caption that don't need resource management)
   switch (json.type) {
-    case 'Text': {
+    case "Text": {
       // Read from new hybrid structure
-      const text = json.text || '';
+      const text = json.text || "";
       const style = json.style || {};
 
       // Build options object from style
@@ -356,9 +365,9 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       clip = new Text(text, textClipOpts as any);
       break;
     }
-    case 'Caption': {
+    case "Caption": {
       // Read from new hybrid structure
-      const text = json.text || '';
+      const text = json.text || "";
       const style = json.style || {};
 
       // Build options object from style
@@ -498,7 +507,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
       clip = new Caption(text, captionClipOpts);
       break;
     }
-    case 'Effect': {
+    case "Effect": {
       clip = new Effect((json as EffectJSON).effect.key as any);
       (clip as Effect).effect = (json as EffectJSON).effect;
       break;
@@ -542,6 +551,11 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   }
   if (json.effects) {
     (clip as any).effects = json.effects;
+  }
+
+  // Apply animations array (using any because imports might be circular/tricky)
+  if ((json as any).animations) {
+    (clip as any).animations = (json as any).animations;
   }
 
   // Apply trim if present

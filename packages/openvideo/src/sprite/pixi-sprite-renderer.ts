@@ -276,15 +276,12 @@ export class PixiSpriteRenderer {
 
     // --- Animation Logic ---
     if (this.sprite.animations && this.sprite.animations.length > 0) {
-      // Heuristic to handle microseconds vs milliseconds
-      // If > 100,000, likely microseconds (0.1s).
-      // If < 100,000, likely milliseconds (or very start of clip, but <100ms is rare for full clip duration)
-      // This ensures compatibility whether lastTime/duration are passed as us or ms
-      const clipTimeMsRaw =
-        this.lastTime > 100000 ? this.lastTime / 1000 : this.lastTime;
+      // PixiSpriteRenderer received time in Microseconds (from Studio/Compositor)
+      // Animation system works in Milliseconds
+      const clipTimeMsRaw = this.lastTime / 1000;
 
       // Ensure clipDurationMsFromSprite is in ms
-      const clipDurationMsRaw = duration > 100000 ? duration / 1000 : duration;
+      const clipDurationMsRaw = duration / 1000;
 
       for (const anim of this.sprite.animations) {
         // Skip text animations here (handled by TextClip usually, unless scope is 'element')

@@ -331,8 +331,22 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
         to: this.trim.to,
       },
       ...(animation && { animation }),
+      ...(this.animations && { animations: this.animations }),
       ...(main && { main: true }),
     } as ClipJSON;
+  }
+
+  override copyStateTo<T extends BaseSprite>(target: T) {
+    super.copyStateTo(target);
+    // Copy animations if present
+    if (this.animations) {
+      // Deep copy animations to prevent shared reference issues
+      (target as any).animations = JSON.parse(JSON.stringify(this.animations));
+    }
+    // Copy transition if present
+    if (this.transition) {
+      (target as any).transition = { ...this.transition };
+    }
   }
 
   /**
