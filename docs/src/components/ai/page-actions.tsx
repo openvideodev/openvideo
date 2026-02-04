@@ -85,7 +85,7 @@ export function ViewOptions({
     const fullMarkdownUrl =
       typeof window !== 'undefined'
         ? new URL(markdownUrl, window.location.origin).toString()
-        : `https://docs.combo.sh${markdownUrl}`;
+        : `https://docs.openvideo.dev${markdownUrl}`;
     const q = `Read ${fullMarkdownUrl}, I want to ask questions about it.`;
 
     return [
@@ -205,7 +205,7 @@ export function ViewOptions({
       },
       {
         title: 'Official Website',
-        href: 'https://combo.sh/',
+        href: 'https://openvideo.dev/',
         icon: <ExternalLinkIcon />,
       },
     ];

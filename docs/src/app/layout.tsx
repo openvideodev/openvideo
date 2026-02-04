@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'OpenVideo | The Video SDK for Modern Web',
     description: 'Build professional video editing experiences in the browser.',
-    url: 'https://docs.combo.sh',
+    url: 'https://docs.openvideo.dev',
     siteName: 'OpenVideo',
     type: 'website',
   },

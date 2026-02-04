@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://docs.combo.sh/sitemap.xml',
+    sitemap: 'https://docs.openvideo.dev/sitemap.xml',
   };
 }
