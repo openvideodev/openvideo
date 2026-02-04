@@ -16,14 +16,24 @@ import {
 } from '@/components/ui/popover';
 import { IClip } from 'openvideo';
 import {
+  IconAlignLeft,
+  IconAlignCenter,
+  IconAlignRight,
+  IconTextSize,
+  IconLineHeight,
   IconMinus,
   IconBlur,
   IconRotate,
   IconRuler2,
-  IconVolume,
+  IconOverline,
+  IconUnderline,
+  IconStrikethrough,
   IconCircle,
-  IconLineHeight,
+  IconMovie,
+  IconPlus,
+  IconTrash,
   IconSquare,
+  IconVolume,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import {
@@ -120,6 +130,30 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
       },
     });
   };
+
+  const handleAnimationAdd = (type: string) => {
+    // Default options for new animations
+    const opts = {
+      duration: 1000 * 1000, // 1 second in microseconds
+      delay: 0,
+      iterCount: 1,
+    };
+
+    let params = {};
+    if (type === 'slideIn' || type === 'slideOut') {
+      params = { direction: 'left' };
+    }
+
+    videoClip.addAnimation(type, opts, params);
+    setTick((t) => t + 1);
+  };
+
+  const handleAnimationRemove = (id: string) => {
+    videoClip.removeAnimation(id);
+    setTick((t) => t + 1);
+  };
+
+  const animations = videoClip.animations || [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -263,6 +297,71 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
         </div>
       </div>
 
+      {/* Animations Section */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Animations
+          </label>
+          <Popover modal={true}>
+            <PopoverTrigger asChild>
+              <button className="text-muted-foreground hover:text-white transition-colors">
+                <IconPlus className="size-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="end">
+              <div className="flex flex-col gap-1">
+                {[
+                  { label: 'Fade In', value: 'fadeIn' },
+                  { label: 'Fade Out', value: 'fadeOut' },
+                  { label: 'Slide In', value: 'slideIn' },
+                  { label: 'Slide Out', value: 'slideOut' },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    onClick={() => handleAnimationAdd(item.value)}
+                    className="flex items-center w-full px-2 py-1.5 text-xs text-left rounded-md hover:bg-white/10"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {animations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-4 border border-dashed rounded-md bg-white/5 opacity-50">
+              <IconMovie className="size-6 mb-1" />
+              <span className="text-[10px]">No animations applied</span>
+            </div>
+          ) : (
+            animations.map((anim: any) => (
+              <div
+                key={anim.id}
+                className="flex items-center justify-between p-2 bg-secondary/30 rounded-md group"
+              >
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium capitalize">
+                    {anim.type}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {Math.round(anim.options.duration / 1e6)}s duration
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleAnimationRemove(anim.id)}
+                  className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"
+                >
+                  <IconTrash className="size-3.5" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* Radius Section */}
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -302,7 +401,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
         </div>
 
         <div className="flex gap-2">
-          <InputGroup className="flex-[2]">
+          <InputGroup className="flex-2">
             <InputGroupAddon align="inline-start" className="relative p-0">
               <Popover modal={true}>
                 <PopoverTrigger asChild>

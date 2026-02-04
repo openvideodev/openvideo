@@ -56,6 +56,7 @@ export class PixiSpriteRenderer {
   private maskGraphics: Graphics | null = null;
   private shadowGraphics: Graphics | null = null;
   private shadowContainer: Container | null = null;
+  private animationContainer: Container | null = null;
   private resolution = 1;
   private destroyed = false;
 
@@ -83,7 +84,14 @@ export class PixiSpriteRenderer {
 
     // Initialize Root Container immediately
     this.root = new Container();
+    this.root.label = 'RootContainer';
     this.root.visible = false; // Hidden until first frame
+
+    // Initialize Animation Container (isolation layer for animations)
+    this.animationContainer = new Container();
+    this.animationContainer.label = 'AnimationContainer';
+    this.root.addChild(this.animationContainer);
+
     // If we have a target container, add root to it
     if (this.targetContainer) {
       this.targetContainer.addChild(this.root);
@@ -128,8 +136,8 @@ export class PixiSpriteRenderer {
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(frame as Texture);
         this.pixiSprite.label = 'MainSprite';
-        // this.root is already created in constructor
-        this.root!.addChild(this.pixiSprite);
+        // Add to animationContainer instead of root directly
+        this.animationContainer!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
         this.pixiSprite.texture = frame as Texture;
@@ -194,7 +202,7 @@ export class PixiSpriteRenderer {
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(this.texture);
         this.pixiSprite.label = 'MainSprite';
-        this.root!.addChild(this.pixiSprite);
+        this.animationContainer!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
         this.pixiSprite.texture = this.texture;
@@ -232,9 +240,25 @@ export class PixiSpriteRenderer {
   private applySpriteTransforms(): void {
     if (this.pixiSprite == null || this.root == null || this.destroyed) return;
 
-    const { flip, center, width, height, angle, opacity, zIndex } = this.sprite;
+    const {
+      flip,
+      center,
+      width,
+      height,
+      angle,
+      opacity,
+      zIndex,
+      renderTransform,
+    } = this.sprite;
 
-    // Apply global transforms to root container
+    const xOffset = renderTransform?.x ?? 0;
+    const yOffset = renderTransform?.y ?? 0;
+    const angleOffset = renderTransform?.angle ?? 0;
+    const scaleMultiplier = renderTransform?.scale ?? 1;
+    const opacityMultiplier = renderTransform?.opacity ?? 1;
+
+    // 1. Root container stays at the stable "Anchor" position
+    // This ensures the wireframe/transformer remains stationary during animation
     this.root.x = center.x;
     this.root.y = center.y;
     this.root.angle = (flip == null ? 1 : -1) * angle;
@@ -242,7 +266,16 @@ export class PixiSpriteRenderer {
     this.root.zIndex = zIndex;
     this.root.scale.set(1, 1);
 
-    // Apply local transforms to sprite
+    // 2. Apply animation transforms to the internal animationContainer
+    if (this.animationContainer) {
+      this.animationContainer.x = xOffset;
+      this.animationContainer.y = yOffset;
+      this.animationContainer.angle = (flip == null ? 1 : -1) * angleOffset;
+      this.animationContainer.alpha = opacityMultiplier;
+      this.animationContainer.scale.set(scaleMultiplier, scaleMultiplier);
+    }
+
+    // 3. Local transforms for the sprite (center it within animationRoot)
     this.pixiSprite.anchor.set(0.5, 0.5);
     this.pixiSprite.position.set(0, 0);
 
@@ -250,6 +283,10 @@ export class PixiSpriteRenderer {
     const textureHeight = this.pixiSprite.texture?.height ?? 1;
 
     const isCaption = (this.sprite as any).type === 'Caption';
+
+    // Base scale to fit texture into clip dimensions
+    // For width/height in renderTransform, we follow BaseSprite._render logic (not currently using them for scale)
+    // but they are available if needed.
     const baseScaleX =
       !isCaption && width && width !== 0 ? Math.abs(width) / textureWidth : 1;
     const baseScaleY =
@@ -288,7 +325,7 @@ export class PixiSpriteRenderer {
     if (borderRadius > 0) {
       if (this.maskGraphics == null) {
         this.maskGraphics = new Graphics();
-        this.pixiSprite.addChild(this.maskGraphics);
+        this.animationContainer!.addChild(this.maskGraphics);
         this.pixiSprite.mask = this.maskGraphics;
       }
       this.maskGraphics.clear();
@@ -332,7 +369,7 @@ export class PixiSpriteRenderer {
     if (stroke && stroke.width > 0) {
       if (this.strokeGraphics == null) {
         this.strokeGraphics = new Graphics();
-        this.pixiSprite!.addChild(this.strokeGraphics);
+        this.animationContainer!.addChild(this.strokeGraphics);
       }
 
       this.strokeGraphics.clear();
@@ -387,8 +424,8 @@ export class PixiSpriteRenderer {
         this.shadowContainer.label = 'ShadowContainer';
         this.shadowGraphics = new Graphics();
         this.shadowContainer.addChild(this.shadowGraphics);
-        // Add shadow container to root at index 0 so it's behind everything else
-        this.root!.addChildAt(this.shadowContainer, 0);
+        // Add shadow container to animationContainer at index 0
+        this.animationContainer!.addChildAt(this.shadowContainer, 0);
       }
 
       const color = parseColor(shadow.color) ?? 0x000000;

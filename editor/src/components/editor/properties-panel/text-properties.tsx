@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { IClip } from 'openvideo';
+import { IClip, AnimationOptions, KeyframeData } from 'openvideo';
 import {
   Select,
   SelectContent,
@@ -36,6 +36,10 @@ import {
   IconUnderline,
   IconStrikethrough,
   IconCircle,
+  IconMovie,
+  IconPlus,
+  IconTrash,
+  IconEdit,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import {
@@ -51,6 +55,7 @@ import color from 'color';
 import { fontManager } from 'openvideo';
 import { getGroupedFonts, getFontByPostScriptName } from '@/utils/font-utils';
 import { NumberInput } from '@/components/ui/number-input';
+import { AnimationEditor } from './AnimationEditor';
 
 const GROUPED_FONTS = getGroupedFonts();
 
@@ -219,6 +224,32 @@ export function TextProperties({ clip }: TextPropertiesProps) {
       },
     });
   };
+
+  const [showAnimationEditor, setShowAnimationEditor] = useState(false);
+  const [editingAnimation, setEditingAnimation] = useState<any | null>(null);
+
+  const handleAnimationSave = (type: string, opts: AnimationOptions, params: KeyframeData) => {
+    if (editingAnimation) {
+      textClip.updateAnimation(editingAnimation.id, type, opts, params);
+    } else {
+      textClip.addAnimation(type, opts, params);
+    }
+    setShowAnimationEditor(false);
+    setEditingAnimation(null);
+    setTick((t) => t + 1);
+  };
+
+  const handleAnimationEdit = (anim: any) => {
+    setEditingAnimation(anim);
+    setShowAnimationEditor(true);
+  };
+
+  const handleAnimationRemove = (id: string) => {
+    textClip.removeAnimation(id);
+    setTick((t) => t + 1);
+  };
+
+  const animations = textClip.animations || [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -513,6 +544,78 @@ export function TextProperties({ clip }: TextPropertiesProps) {
         </div>
       </div>
 
+      {/* Animations Section */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Animations
+          </label>
+          <Popover modal={true} open={showAnimationEditor} onOpenChange={setShowAnimationEditor}>
+            <PopoverTrigger asChild>
+              <button
+                onClick={() => {
+                  setEditingAnimation(null);
+                  setShowAnimationEditor(true);
+                }}
+                className="text-muted-foreground hover:text-white transition-colors"
+              >
+                <IconPlus className="size-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0" align="end">
+              <AnimationEditor
+                mode={editingAnimation ? 'edit' : 'add'}
+                animation={editingAnimation}
+                onSave={handleAnimationSave}
+                onCancel={() => {
+                  setShowAnimationEditor(false);
+                  setEditingAnimation(null);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {animations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-4 border border-dashed rounded-md bg-white/5 opacity-50">
+              <IconMovie className="size-6 mb-1" />
+              <span className="text-[10px]">No animations applied</span>
+            </div>
+          ) : (
+            animations.map((anim: any) => (
+              <div
+                key={anim.id}
+                className="flex items-center justify-between p-2 bg-secondary/30 rounded-md group"
+              >
+                <div className="flex flex-col flex-1">
+                  <span className="text-xs font-medium capitalize">
+                    {anim.type}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {Math.round(anim.options.duration / 1e6)}s duration
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleAnimationEdit(anim)}
+                    className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-white transition-all"
+                  >
+                    <IconEdit className="size-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleAnimationRemove(anim.id)}
+                    className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"
+                  >
+                    <IconTrash className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* Stroke Section */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
@@ -525,7 +628,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
         </div>
 
         <div className="flex gap-2">
-          <InputGroup className="flex-[2]">
+          <InputGroup className="flex-2">
             <InputGroupAddon align="inline-start" className="relative p-0">
               <Popover modal={true}>
                 <PopoverTrigger asChild>

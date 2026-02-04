@@ -6,6 +6,7 @@ import {
   Matrix,
   Ticker,
   Graphics,
+  Sprite,
 } from 'pixi.js';
 
 import { Wireframe } from './parts/wireframe';
@@ -202,24 +203,43 @@ export class Transformer extends Container {
   /**
    * Helper to compute bounds of a container excluding children labeled "ShadowContainer"
    */
+  /**
+   * Helper to compute bounds of a container excluding children labeled "ShadowContainer"
+   * Modified to handle nested AnimationContainer for stable wireframe rendering
+   */
   #getContentBounds(container: Container): Rectangle {
-    // Collect all children except the shadow container
-    const contentChildren = container.children.filter(
-      (child) => child.label !== 'ShadowContainer'
-    );
+    // 1. Try to find the MainSprite recursively or in known locations
+    let mainSprite: Sprite | null = null;
 
-    if (contentChildren.length === 0) {
-      const b = container.getLocalBounds();
-      return new Rectangle(b.minX, b.minY, b.maxX - b.minX, b.maxY - b.minY);
-    }
+    const findMainSprite = (c: Container): Sprite | null => {
+      if (c.label === 'MainSprite' && c instanceof Sprite) return c;
+      for (const child of c.children) {
+        if (child instanceof Container) {
+          const found = findMainSprite(child);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
 
-    // Since our roots are centered, the content bounds should ideally match the main sprite
-    const mainSprite = contentChildren.find((c) => c.label === 'MainSprite');
+    mainSprite = findMainSprite(container);
+
     if (mainSprite) {
       const b = mainSprite.getLocalBounds();
-      const t = mainSprite.localTransform;
-
-      // Transform all 4 corners of the local bounds to parent space
+      // We want the bounds of the sprite relative to the Root container (container)
+      // but WITHOUT any animation transforms applied.
+      // Since our new structure is Root -> AnimationContainer -> MainSprite,
+      // and Root.pivot is (0,0), and AnimationContainer.pivot is (0,0),
+      // the "Stable" position of MainSprite relative to Root is just its local position
+      // as if AnimationContainer had identity transform.
+      
+      const t = mainSprite.localTransform.clone();
+      
+      // If the parent is AnimationContainer, we ignore the parent's transform
+      // to get the "Reference" position.
+      // Actually, in our case, MainSprite's localTransform is already relative to AnimationContainer.
+      // And we want it relative to Root.
+      // If we assume AnimationContainer is at (0,0) in reference state:
       const p1 = t.apply(new Point(b.x, b.y));
       const p2 = t.apply(new Point(b.x + b.width, b.y));
       const p3 = t.apply(new Point(b.x + b.width, b.y + b.height));
@@ -233,15 +253,30 @@ export class Transformer extends Container {
       return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
-    // Fallback: manual calculation for remaining content children
+    // Fallback: manual calculation for remaining content children, ignoring containers specifically
     let minX = Infinity,
       minY = Infinity,
       maxX = -Infinity,
       maxY = -Infinity;
 
+    const contentChildren = container.children.filter(
+      (child) =>
+        child.label !== 'ShadowContainer' && child.label !== 'AnimationContainer'
+    );
+
+    if (contentChildren.length === 0 && container.children.length > 0) {
+      // If all filtered out, look inside AnimationContainer for raw bounds
+      const animContainer = container.children.find(
+        (c) => c.label === 'AnimationContainer'
+      ) as Container;
+      if (animContainer) {
+        const b = animContainer.getLocalBounds();
+        return new Rectangle(b.minX, b.minY, b.maxX - b.minX, b.maxY - b.minY);
+      }
+    }
+
     for (const child of contentChildren) {
-      const b = child.getBounds(); // Global bounds
-      // Convert to container local space
+      const b = child.getBounds();
       const tl = container.toLocal(new Point(b.minX, b.minY));
       const br = container.toLocal(new Point(b.maxX, b.maxY));
 
@@ -249,6 +284,11 @@ export class Transformer extends Container {
       minY = Math.min(minY, tl.y, br.y);
       maxX = Math.max(maxX, tl.x, br.x);
       maxY = Math.max(maxY, tl.y, br.y);
+    }
+
+    if (minX === Infinity) {
+      const b = container.getLocalBounds();
+      return new Rectangle(b.minX, b.minY, b.maxX - b.minX, b.maxY - b.minY);
     }
 
     return new Rectangle(minX, minY, maxX - minX, maxY - minY);

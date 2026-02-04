@@ -280,7 +280,6 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * @param main Whether this is the main clip (for Compositor)
    */
   toJSON(main: boolean = false): ClipJSON {
-    // Extract animation if present
     const animation =
       (this as any).animatKeyFrame && (this as any).animatOpts
         ? {
@@ -300,6 +299,13 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
             opts: (this as any).animatOpts,
           }
         : undefined;
+
+    // Extract new modular animations
+    const animations = this.animations.map((a) => ({
+      type: a.type,
+      opts: a.options,
+      params: a.params || {},
+    }));
 
     return {
       type: this.constructor.name as ClipJSON['type'],
@@ -326,6 +332,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
         to: this.trim.to,
       },
       ...(animation && { animation }),
+      ...(animations.length > 0 && { animations }),
       ...(main && { main: true }),
     } as ClipJSON;
   }

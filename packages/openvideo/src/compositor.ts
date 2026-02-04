@@ -663,6 +663,10 @@ function createSpritesRender(opts: {
       0,
       Math.min(timestamp - clip.display.from, clip.duration)
     );
+    // Ensure animation state is updated for the sampled timestamp
+    // This is critical for modular animations during transitions
+    clip.animate(relTime * clip.playbackRate);
+
     const { video } = await getFrameCached(clip, relTime);
     return video;
   };
@@ -687,8 +691,15 @@ function createSpritesRender(opts: {
       frame instanceof Texture ? frame : Texture.from(frame)
     );
 
-    tempSprite.x = clip.center.x;
-    tempSprite.y = clip.center.y;
+    const { renderTransform } = clip;
+    const xOffset = renderTransform?.x ?? 0;
+    const yOffset = renderTransform?.y ?? 0;
+    const angleOffset = renderTransform?.angle ?? 0;
+    const scaleMultiplier = renderTransform?.scale ?? 1;
+    const opacityMultiplier = renderTransform?.opacity ?? 1;
+
+    tempSprite.x = clip.center.x + xOffset;
+    tempSprite.y = clip.center.y + yOffset;
     tempSprite.anchor.set(0.5, 0.5);
 
     const textureWidth = tempSprite.texture.width || 1;
@@ -702,18 +713,20 @@ function createSpritesRender(opts: {
         : 1;
 
     if (clip.flip === 'horizontal') {
-      tempSprite.scale.x = -baseScaleX;
-      tempSprite.scale.y = baseScaleY;
+      tempSprite.scale.x = -baseScaleX * scaleMultiplier;
+      tempSprite.scale.y = baseScaleY * scaleMultiplier;
     } else if (clip.flip === 'vertical') {
-      tempSprite.scale.x = baseScaleX;
-      tempSprite.scale.y = -baseScaleY;
+      tempSprite.scale.x = baseScaleX * scaleMultiplier;
+      tempSprite.scale.y = -baseScaleY * scaleMultiplier;
     } else {
-      tempSprite.scale.x = baseScaleX;
-      tempSprite.scale.y = baseScaleY;
+      tempSprite.scale.x = baseScaleX * scaleMultiplier;
+      tempSprite.scale.y = baseScaleY * scaleMultiplier;
     }
 
-    tempSprite.rotation = (clip.flip == null ? 1 : -1) * clip.angle;
-    tempSprite.alpha = clip.opacity;
+    tempSprite.rotation =
+      (clip.flip == null ? 1 : -1) * ((clip.angle + angleOffset) * Math.PI) /
+      180;
+    tempSprite.alpha = clip.opacity * opacityMultiplier;
 
     const style = (clip as any).style || {};
 

@@ -1,4 +1,9 @@
 import EventEmitter from '../event-emitter';
+import {
+  IAnimation,
+  AnimationTransform,
+  animationRegistry,
+} from '../animation';
 type IRectBaseProps = any;
 interface IAnimationOpts {
   duration: number;
@@ -231,11 +236,28 @@ export abstract class BaseSprite<
   private animatOpts: Required<IAnimationOpts> | null = null;
 
   /**
+   * List of active animations
+   */
+  public animations: IAnimation[] = [];
+
+  /**
+   * Current transform offsets/multipliers from animations
+   * Resets every frame in animate()
+   */
+  public renderTransform: AnimationTransform = {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    scale: 1,
+    opacity: 1,
+    angle: 0,
+  };
+
+  /**
    * @see {@link IClip.ready}
    * For clips, this should be Promise<IClipMeta>, but for BaseSprite it's just Promise<void>
    */
-  ready: Promise<any> = Promise.resolve();
-
   protected _render(
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
   ): void {
@@ -251,12 +273,17 @@ export abstract class BaseSprite<
       center.x,
       center.y
     );
-    // Convert degrees to radians for Canvas API
-    const angleInRadians = (this.angle * Math.PI) / 180;
-    // For any flip direction, rotation angle becomes negative to sync with control points
-    ctx.rotate((this.flip == null ? 1 : -1) * angleInRadians);
 
-    ctx.globalAlpha = this.opacity;
+    ctx.globalAlpha = this.opacity * (this.renderTransform.opacity ?? 1);
+
+    const x = this.renderTransform.x ?? 0;
+    const y = this.renderTransform.y ?? 0;
+    const angleOffset = this.renderTransform.angle ?? 0;
+    const scale = this.renderTransform.scale ?? 1;
+
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.rotate((this.flip == null ? 1 : -1) * (angleOffset * Math.PI) / 180);
   }
 
   /**
@@ -294,12 +321,37 @@ export abstract class BaseSprite<
    * If current sprite has animation set, set sprite's animation properties to state at specified time
    */
   animate(time: number): void {
+    // Reset render transforms
+    this.renderTransform = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      scale: 1,
+      opacity: 1,
+      angle: 0,
+    };
+
+    // 1. Process new modular animations
+    for (const anim of this.animations) {
+      const transform = anim.getTransform(time);
+      if (transform.x !== undefined) this.renderTransform.x! += transform.x;
+      if (transform.y !== undefined) this.renderTransform.y! += transform.y;
+      if (transform.width !== undefined) this.renderTransform.width! += transform.width;
+      if (transform.height !== undefined) this.renderTransform.height! += transform.height;
+      if (transform.angle !== undefined) this.renderTransform.angle! += transform.angle;
+      if (transform.scale !== undefined) this.renderTransform.scale! *= transform.scale;
+      if (transform.opacity !== undefined) this.renderTransform.opacity! *= transform.opacity;
+    }
+
+    // 2. Process legacy keyframe animation (for backward compatibility)
     if (
       this.animatKeyFrame == null ||
       this.animatOpts == null ||
       time < this.animatOpts.delay
     )
       return;
+
     const updateProps = linearTimeFn(
       time,
       this.animatKeyFrame,
@@ -332,6 +384,47 @@ export abstract class BaseSprite<
   }
 
   /**
+   * Add a modular animation to the clip
+   * @param name Preset name or 'keyframes'
+   * @param opts Animation options (duration, delay, etc.)
+   * @param params Preset-specific parameters or KeyframeData
+   */
+  addAnimation(name: string, opts: any, params?: any): string {
+    const anim = animationRegistry.create(name, opts, params);
+    this.animations.push(anim);
+    return anim.id;
+  }
+
+  /**
+   * Remove an animation by ID
+   */
+  removeAnimation(id: string): void {
+    this.animations = this.animations.filter((a) => a.id !== id);
+  }
+
+  /**
+   * Clear all modular animations
+   */
+  clearAnimations(): void {
+    this.animations = [];
+  }
+
+  /**
+   * Update an existing animation by ID
+   * @param id Animation ID to update
+   * @param type Animation type (preset name or 'keyframes')
+   * @param opts Animation options
+   * @param params Preset-specific parameters or KeyframeData
+   */
+  updateAnimation(id: string, type: string, opts: any, params?: any): void {
+    const index = this.animations.findIndex((a) => a.id === id);
+    if (index === -1) return;
+
+    const newAnim = animationRegistry.create(type, { ...opts, id }, params);
+    this.animations[index] = newAnim;
+  }
+
+  /**
    * Copy current sprite's properties to target
    *
    * Used for cloning or copying state between {@link OffscreenSprite} instances
@@ -353,6 +446,7 @@ export abstract class BaseSprite<
     target.playbackRate = this.playbackRate;
     target.trim = { ...this.trim };
     target.style = JSON.parse(JSON.stringify(this.style || {}));
+    target.animations = [...this.animations];
     // Copy src if target is a BaseClip
     if ('src' in this && 'src' in target) {
       (target as any).src = (this as any).src;
