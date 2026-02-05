@@ -373,7 +373,7 @@ export class Text extends BaseClip<ITextEvents> {
   constructor(
     text: string,
     opts: ITextOpts = {},
-    renderer?: Application["renderer"]
+    renderer?: Application["renderer"],
   ) {
     super();
     // Store original options for serialization (shallow copy is fine since options are primitives)
@@ -432,7 +432,7 @@ export class Text extends BaseClip<ITextEvents> {
 
     if (this.pixiApp?.renderer == null) {
       throw new Error(
-        "TextClip: Failed to create renderer. Please provide a renderer via constructor or setRenderer() method."
+        "TextClip: Failed to create renderer. Please provide a renderer via constructor or setRenderer() method.",
       );
     }
 
@@ -476,7 +476,7 @@ export class Text extends BaseClip<ITextEvents> {
     // Validate RenderTexture dimensions before rendering
     if (this.renderTexture.width <= 0 || this.renderTexture.height <= 0) {
       throw new Error(
-        `Invalid RenderTexture dimensions: ${this.renderTexture.width}x${this.renderTexture.height}`
+        `Invalid RenderTexture dimensions: ${this.renderTexture.width}x${this.renderTexture.height}`,
       );
     }
 
@@ -561,7 +561,7 @@ export class Text extends BaseClip<ITextEvents> {
       key: string;
       startTime: number;
       duration: number;
-    }>
+    }>,
   ) {
     const effect = this.effects.find((e) => e.id === effectId);
     if (effect) {
@@ -599,8 +599,8 @@ export class Text extends BaseClip<ITextEvents> {
         (Array.isArray(style.fontFamily)
           ? style.fontFamily[0]
           : typeof style.fontFamily === "string"
-          ? style.fontFamily
-          : "Roboto"),
+            ? style.fontFamily
+            : "Roboto"),
       fontWeight: originalOpts.fontWeight ?? style.fontWeight,
       fontStyle: originalOpts.fontStyle ?? style.fontStyle,
       align:
@@ -748,7 +748,7 @@ export class Text extends BaseClip<ITextEvents> {
     } else if (textCase === "title") {
       textToRender = textToRender.replace(
         /\w\S*/g,
-        (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+        (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
       );
     }
 
@@ -792,7 +792,7 @@ export class Text extends BaseClip<ITextEvents> {
       style: this.textStyleBase,
     });
     const spaceWidth = Math.ceil(
-      tempSpace.getLocalBounds().width || tempSpace.width || metrics.width
+      tempSpace.getLocalBounds().width || tempSpace.width || metrics.width,
     );
     tempSpace.destroy();
 
@@ -909,7 +909,7 @@ export class Text extends BaseClip<ITextEvents> {
         decoration &&
         decoration !== "none" &&
         ["underline", "overline", "strikethrough", "line-through"].includes(
-          decoration
+          decoration,
         )
       ) {
         hasDecoration = true;
@@ -942,7 +942,7 @@ export class Text extends BaseClip<ITextEvents> {
           lineXStart,
           currentY + yOffset,
           line.width,
-          lineThickness
+          lineThickness,
         );
         graphics.fill(lineColor);
       }
@@ -1006,18 +1006,18 @@ export class Text extends BaseClip<ITextEvents> {
         opts.fill.x0,
         opts.fill.y0,
         opts.fill.x1,
-        opts.fill.y1
+        opts.fill.y1,
       );
       opts.fill.colors.forEach(({ ratio, color }) => {
         const colorNumber =
-          typeof color === "number" ? color : parseColor(color) ?? 0xffffff;
+          typeof color === "number" ? color : (parseColor(color) ?? 0xffffff);
         gradient.addColorStop(ratio, colorNumber);
       });
       styleOptions.fill = { fill: gradient };
     } else {
       // Simple color fill
       const { color: fillColor, alpha: fillAlpha } = resolveColor(
-        opts.fill as string
+        opts.fill as string,
       );
       styleOptions.fill = fillColor;
       if (fillAlpha < 1) {

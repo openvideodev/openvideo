@@ -242,7 +242,15 @@ export function AnimationPropertiesPicker() {
 
     const finalParams = { ...keyframes };
     if (preset !== "custom") {
-      (finalParams as any).presetParams = presetParams;
+      // Filter presetParams to only include relevant values
+      const filteredParams: any = {};
+      if (preset === "slideIn" || preset === "slideOut") {
+        filteredParams.direction = presetParams.direction;
+        filteredParams.distance = presetParams.distance;
+      } else if (preset.startsWith("char")) {
+        filteredParams.stagger = presetParams.stagger;
+      }
+      (finalParams as any).presetParams = filteredParams;
     }
 
     const type = preset === "custom" ? "keyframes" : preset;
