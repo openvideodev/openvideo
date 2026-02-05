@@ -2,3 +2,4 @@ packages:
   - "editor"
   - "packages/*"
   - "docs"
+  - "vue-video-editor"
