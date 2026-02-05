@@ -1,13 +1,16 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface LayoutStore {
   floatingControl: string;
-  setFloatingControl: (control: string) => void;
+  floatingControlData: any;
+  setFloatingControl: (control: string, data?: any) => void;
 }
 
 const useLayoutStore = create<LayoutStore>((set) => ({
-  floatingControl: '',
-  setFloatingControl: (control: string) => set({ floatingControl: control }),
+  floatingControl: "",
+  floatingControlData: null,
+  setFloatingControl: (control: string, data: any = null) =>
+    set({ floatingControl: control, floatingControlData: data }),
 }));
 
 export default useLayoutStore;

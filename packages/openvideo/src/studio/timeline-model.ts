@@ -1,17 +1,16 @@
-import { Texture, Sprite } from 'pixi.js';
-import type { Studio, StudioTrack } from '../studio';
-import type { IClip, IPlaybackCapable } from '../clips/iclip';
-import { Text } from '../clips/text-clip';
-import { Transition } from '../clips/transition-clip';
-import { PixiSpriteRenderer } from '../sprite/pixi-sprite-renderer';
+import { Texture, Sprite } from "pixi.js";
+import type { Studio, StudioTrack } from "../studio";
+import type { IClip, IPlaybackCapable } from "../clips/iclip";
+import { Transition } from "../clips/transition-clip";
+import { PixiSpriteRenderer } from "../sprite/pixi-sprite-renderer";
 import {
   clipToJSON,
   jsonToClip,
   ProjectJSON,
   ClipJSON,
   GlobalTransitionJSON as TransitionJSON,
-} from '../json-serialization';
-import { fontManager, IFont } from '../utils/fonts';
+} from "../json-serialization";
+import { fontManager, IFont } from "../utils/fonts";
 
 export class TimelineModel {
   public tracks: StudioTrack[] = [];
@@ -43,7 +42,7 @@ export class TimelineModel {
    */
   addTrack(
     track: { name: string; type: string; id?: string },
-    index?: number
+    index?: number,
   ): StudioTrack {
     const newTrack: StudioTrack = {
       id:
@@ -54,15 +53,15 @@ export class TimelineModel {
       clipIds: [],
     };
 
-    if (typeof index === 'number') {
+    if (typeof index === "number") {
       this.tracks.splice(index, 0, newTrack);
     } else {
       // Default to unshift (front/top) for new tracks if no index provided
       this.tracks.unshift(newTrack);
     }
 
-    this.studio.emit('track:added', { track: newTrack, index: index ?? 0 });
-    this.studio.emit('track:order-changed', { tracks: this.tracks });
+    this.studio.emit("track:added", { track: newTrack, index: index ?? 0 });
+    this.studio.emit("track:order-changed", { tracks: this.tracks });
     return newTrack;
   }
 
@@ -81,8 +80,8 @@ export class TimelineModel {
     }
 
     this.tracks.splice(index, 1);
-    this.studio.emit('track:removed', { trackId });
-    this.studio.emit('track:order-changed', { tracks: this.tracks });
+    this.studio.emit("track:removed", { trackId });
+    this.studio.emit("track:order-changed", { tracks: this.tracks });
   }
 
   /**
@@ -96,7 +95,7 @@ export class TimelineModel {
     this.tracks.splice(currentIndex, 1);
     this.tracks.splice(newIndex, 0, track);
 
-    this.studio.emit('track:order-changed', { tracks: this.tracks });
+    this.studio.emit("track:order-changed", { tracks: this.tracks });
     await this.studio.updateFrame(this.studio.currentTime);
   }
 
@@ -117,12 +116,12 @@ export class TimelineModel {
     // Basic validation: ensure we didn't lose any tracks
     if (newTracks.length !== this.tracks.length) {
       console.warn(
-        '[Studio] setTrackOrder: invalid track IDs provided, order not updated fully'
+        "[Studio] setTrackOrder: invalid track IDs provided, order not updated fully",
       );
     }
 
     this.tracks = newTracks;
-    this.studio.emit('track:order-changed', { tracks: this.tracks });
+    this.studio.emit("track:order-changed", { tracks: this.tracks });
     await this.studio.updateFrame(this.studio.currentTime);
   }
 
@@ -133,7 +132,7 @@ export class TimelineModel {
     transitionKey: string,
     duration: number = 2000000,
     fromClipId?: string | null,
-    toClipId?: string | null
+    toClipId?: string | null,
   ): Promise<void> {
     if (this.studio.destroyed) return;
 
@@ -145,7 +144,7 @@ export class TimelineModel {
     }
 
     if (!clipA || !clipB) {
-      console.warn('[Studio] Invalid fromClipId or toClipId', {
+      console.warn("[Studio] Invalid fromClipId or toClipId", {
         fromClipId,
         toClipId,
       });
@@ -178,7 +177,7 @@ export class TimelineModel {
         const existingTransitions = track.clipIds
           .map((id) => this.getClipById(id))
           .filter((c): c is IClip => {
-            if (!c || c.type !== 'Transition') return false;
+            if (!c || c.type !== "Transition") return false;
             const tc = c as any;
             return tc.fromClipId === clipA!.id && tc.toClipId === clipB!.id;
           });
@@ -229,7 +228,7 @@ export class TimelineModel {
         }
       | string
       | File
-      | Blob
+      | Blob,
   ): Promise<void> {
     const clips = Array.isArray(clipOrClips) ? clipOrClips : [clipOrClips];
     if (clips.length === 0) return;
@@ -240,7 +239,7 @@ export class TimelineModel {
     // 2. Validate Context
     if (this.studio.destroyed) return;
     if (this.studio.pixiApp == null) {
-      throw new Error('Failed to initialize Pixi.js Application');
+      throw new Error("Failed to initialize Pixi.js Application");
     }
 
     // 3. Prepare Internal Logic (IDs, Tracks, Listeners)
@@ -270,22 +269,22 @@ export class TimelineModel {
       | { trackId?: string; audioSource?: string | File | Blob }
       | string
       | File
-      | Blob
+      | Blob,
   ) {
     let audioSource: string | File | Blob | undefined;
     let trackId: string | undefined;
 
     if (
       options &&
-      (typeof options === 'string' ||
+      (typeof options === "string" ||
         options instanceof File ||
         options instanceof Blob)
     ) {
       audioSource = options;
     } else if (
-      typeof options === 'object' &&
+      typeof options === "object" &&
       options !== null &&
-      !('size' in options)
+      !("size" in options)
     ) {
       const opts = options as {
         trackId?: string;
@@ -321,16 +320,16 @@ export class TimelineModel {
         interactionManager.activeTransformer != null &&
         interactionManager.selectedClips.has(clip) &&
         typeof (interactionManager.activeTransformer as any).updateBounds ===
-          'function'
+          "function"
       ) {
         (interactionManager.activeTransformer as any).updateBounds();
       }
     };
-    clip.on('propsChange', onPropsChange);
+    clip.on("propsChange", onPropsChange);
     this.studio.clipListeners.set(clip, onPropsChange);
 
     // E. Link Renderer
-    if (this.studio.pixiApp != null && typeof clip.setRenderer === 'function') {
+    if (this.studio.pixiApp != null && typeof clip.setRenderer === "function") {
       clip.setRenderer(this.studio.pixiApp.renderer);
     }
 
@@ -355,8 +354,8 @@ export class TimelineModel {
           clipIds: [clip.id],
         };
         this.tracks.unshift(newTrack);
-        this.studio.emit('track:added', { track: newTrack, index: 0 });
-        this.studio.emit('track:order-changed', { tracks: this.tracks });
+        this.studio.emit("track:added", { track: newTrack, index: 0 });
+        this.studio.emit("track:order-changed", { tracks: this.tracks });
       }
     } else {
       // Auto-create new track
@@ -370,14 +369,14 @@ export class TimelineModel {
         clipIds: [clip.id],
       };
       this.tracks.unshift(newTrack);
-      this.studio.emit('track:added', { track: newTrack, index: 0 });
-      this.studio.emit('track:order-changed', { tracks: this.tracks });
+      this.studio.emit("track:added", { track: newTrack, index: 0 });
+      this.studio.emit("track:order-changed", { tracks: this.tracks });
     }
   }
 
   private async setupClipVisuals(
     clip: IClip,
-    audioSource?: string | File | Blob
+    audioSource?: string | File | Blob,
   ) {
     // If we've already set up visuals (from cache), check if we need to re-add to container
     const existingRenderer = this.studio.spriteRenderers.get(clip);
@@ -399,12 +398,12 @@ export class TimelineModel {
     if (meta.width > 0 && meta.height > 0) {
       const container = this.studio.clipsNormalContainer!;
       // Simple logic as both branches did the same thing in previous code
-      const isVideo = clip.type === 'Video' && this.isPlaybackCapable(clip);
+      const isVideo = clip.type === "Video" && this.isPlaybackCapable(clip);
       if (!isVideo || (isVideo && (clip as any).tickInterceptor != null)) {
         const renderer = new PixiSpriteRenderer(
           this.studio.pixiApp!,
           clip,
-          container
+          container,
         );
         this.studio.spriteRenderers.set(clip, renderer);
       }
@@ -424,14 +423,14 @@ export class TimelineModel {
       const actualTrackId =
         trackId ||
         this.tracks.find((t) => t.clipIds.includes(clip.id))?.id ||
-        '';
+        "";
 
-      this.studio.emit('clip:added', {
+      this.studio.emit("clip:added", {
         clip,
         trackId: actualTrackId,
       });
     } else {
-      this.studio.emit('clips:added', {
+      this.studio.emit("clips:added", {
         clips: addedClips,
         trackId,
       });
@@ -440,7 +439,7 @@ export class TimelineModel {
 
   async removeClip(
     clip: IClip,
-    options: { permanent: boolean } = { permanent: true }
+    options: { permanent: boolean } = { permanent: true },
   ): Promise<void> {
     const { permanent } = options;
     const index = this.clips.findIndex((c) => c === clip);
@@ -450,13 +449,13 @@ export class TimelineModel {
     if (clip instanceof Transition) {
       if (clip.fromClipId) {
         const fromClip = this.getClipById(clip.fromClipId);
-        if (fromClip && 'transition' in fromClip) {
+        if (fromClip && "transition" in fromClip) {
           delete (fromClip as any).transition;
         }
       }
       if (clip.toClipId) {
         const toClip = this.getClipById(clip.toClipId);
-        if (toClip && 'transition' in toClip) {
+        if (toClip && "transition" in toClip) {
           delete (toClip as any).transition;
         }
       }
@@ -485,7 +484,7 @@ export class TimelineModel {
       const trackIndex = this.tracks.findIndex((t) => t.id === trackId);
       if (trackIndex !== -1 && this.tracks[trackIndex].clipIds.length === 0) {
         this.tracks.splice(trackIndex, 1);
-        this.studio.emit('track:removed', { trackId });
+        this.studio.emit("track:removed", { trackId });
       }
     }
 
@@ -495,7 +494,7 @@ export class TimelineModel {
     // Clean up listener
     const onPropsChange = this.studio.clipListeners.get(clip);
     if (onPropsChange) {
-      clip.off('propsChange', onPropsChange);
+      clip.off("propsChange", onPropsChange);
       this.studio.clipListeners.delete(clip);
     }
 
@@ -538,7 +537,7 @@ export class TimelineModel {
     // Recalculate max duration
     await this.recalculateMaxDuration();
 
-    this.studio.emit('clip:removed', { clipId: clip.id });
+    this.studio.emit("clip:removed", { clipId: clip.id });
   }
 
   /**
@@ -546,7 +545,7 @@ export class TimelineModel {
    */
   async removeClips(
     clips: IClip[],
-    options: { permanent: boolean } = { permanent: true }
+    options: { permanent: boolean } = { permanent: true },
   ): Promise<void> {
     if (clips.length === 0) return;
 
@@ -558,13 +557,13 @@ export class TimelineModel {
       if (clip instanceof Transition) {
         if (clip.fromClipId) {
           const fromClip = this.getClipById(clip.fromClipId);
-          if (fromClip && 'transition' in fromClip) {
+          if (fromClip && "transition" in fromClip) {
             delete (fromClip as any).transition;
           }
         }
         if (clip.toClipId) {
           const toClip = this.getClipById(clip.toClipId);
-          if (toClip && 'transition' in toClip) {
+          if (toClip && "transition" in toClip) {
             delete (toClip as any).transition;
           }
         }
@@ -592,7 +591,7 @@ export class TimelineModel {
       // Clean up listener
       const onPropsChange = this.studio.clipListeners.get(clip);
       if (onPropsChange) {
-        clip.off('propsChange', onPropsChange);
+        clip.off("propsChange", onPropsChange);
         this.studio.clipListeners.delete(clip);
       }
 
@@ -637,14 +636,14 @@ export class TimelineModel {
       if (this.tracks[i].clipIds.length === 0) {
         const trackId = this.tracks[i].id;
         this.tracks.splice(i, 1);
-        this.studio.emit('track:removed', { trackId });
+        this.studio.emit("track:removed", { trackId });
       }
     }
 
     // Batch updates
     await this.recalculateMaxDuration();
 
-    this.studio.emit('clips:removed', {
+    this.studio.emit("clips:removed", {
       clipIds: clips.map((c) => c.id),
     });
   }
@@ -671,11 +670,11 @@ export class TimelineModel {
     // Update transformer if selected
     this.updateTransformer(clip);
 
-    this.studio.emit('clip:updated', { clip });
+    this.studio.emit("clip:updated", { clip });
   }
 
   async updateClips(
-    updates: { id: string; updates: Partial<IClip> }[]
+    updates: { id: string; updates: Partial<IClip> }[],
   ): Promise<void> {
     const updatedClips: IClip[] = [];
 
@@ -698,7 +697,7 @@ export class TimelineModel {
     // Update transformer for any selected clips
     for (const clip of updatedClips) {
       this.updateTransformer(clip);
-      this.studio.emit('clip:updated', { clip });
+      this.studio.emit("clip:updated", { clip });
     }
   }
 
@@ -708,7 +707,7 @@ export class TimelineModel {
    */
   async replaceClipsBySource(
     src: string,
-    newClipFactory: (oldClip: IClip) => Promise<IClip>
+    newClipFactory: (oldClip: IClip) => Promise<IClip>,
   ): Promise<void> {
     // Collect all clips that match the source first to avoid issues with array modification
     const toReplace = this.clips.filter((c) => c.src === src);
@@ -733,12 +732,12 @@ export class TimelineModel {
         await this.studio.updateFrame(this.studio.currentTime);
         this.updateTransformer(newClip);
       };
-      newClip.on('propsChange', onPropsChange);
+      newClip.on("propsChange", onPropsChange);
       this.studio.clipListeners.set(newClip, onPropsChange);
 
       if (
         this.studio.pixiApp != null &&
-        typeof (newClip as any).setRenderer === 'function'
+        typeof (newClip as any).setRenderer === "function"
       ) {
         (newClip as any).setRenderer(this.studio.pixiApp.renderer);
       }
@@ -780,7 +779,7 @@ export class TimelineModel {
 
       const oldListener = this.studio.clipListeners.get(oldClip);
       if (oldListener) {
-        oldClip.off('propsChange', oldListener);
+        oldClip.off("propsChange", oldListener);
         this.studio.clipListeners.delete(oldClip);
       }
 
@@ -791,7 +790,7 @@ export class TimelineModel {
       }
 
       // 8. Emit event to sync with editor store
-      this.studio.emit('clip:replaced', { oldClip, newClip, trackId });
+      this.studio.emit("clip:replaced", { oldClip, newClip, trackId });
     }
 
     await this.recalculateMaxDuration();
@@ -800,11 +799,15 @@ export class TimelineModel {
   }
 
   private async applyClipUpdate(clip: IClip, updates: Partial<IClip>) {
-    // Special handling for TextClip style updates
-    if (clip instanceof Text) {
-      await (clip as Text).updateStyle(updates as any);
-      // Remove 'style' from updates to prevent "Cannot set property style of #<TextClip> which has only a getter"
-      if ('style' in updates) {
+    // Special handling for TextClip and CaptionClip style updates
+    if (clip.type === "Text" || clip.type === "Caption") {
+      const textOrCaption = clip as any;
+      if (typeof textOrCaption.updateStyle === "function") {
+        await textOrCaption.updateStyle(updates);
+      }
+
+      // Remove 'style' from updates to prevent setter/getter conflicts
+      if ("style" in updates) {
         delete (updates as any).style;
       }
     }
@@ -944,7 +947,7 @@ export class TimelineModel {
       // 2. Preload Resources (Video, Audio, Image)
       const urlsToPreload = json.clips
         .map((clip) => clip.src)
-        .filter((src) => src && src.trim() !== '');
+        .filter((src) => src && src.trim() !== "");
       await this.studio.resourceManager.preload(urlsToPreload);
 
       // Build map of ClipID -> TrackID from json.tracks
@@ -981,7 +984,7 @@ export class TimelineModel {
                 : undefined;
 
               // Inference for Transitions without top-level ID
-              if (clipJSON.type === 'Transition') {
+              if (clipJSON.type === "Transition") {
                 const transJSON = clipJSON as any;
                 const targetId = transJSON.toClipId || transJSON.fromClipId;
                 if (targetId) {
@@ -991,15 +994,15 @@ export class TimelineModel {
 
               // Pre-validation for empty sources
               if (
-                clipJSON.type !== 'Text' &&
-                clipJSON.type !== 'Caption' &&
-                clipJSON.type !== 'Effect' &&
-                clipJSON.type !== 'Transition' &&
-                (!clipJSON.src || clipJSON.src.trim() === '')
+                clipJSON.type !== "Text" &&
+                clipJSON.type !== "Caption" &&
+                clipJSON.type !== "Effect" &&
+                clipJSON.type !== "Transition" &&
+                (!clipJSON.src || clipJSON.src.trim() === "")
               ) {
                 console.warn(
                   `Skipping clip ${clipJSON.type} with empty source`,
-                  clipJSON
+                  clipJSON,
                 );
                 return { clip: null };
               }
@@ -1008,7 +1011,7 @@ export class TimelineModel {
 
               // If scaling needed (Video/Image)
               if (
-                (clip.type === 'Video' || clip.type === 'Image') &&
+                (clip.type === "Video" || clip.type === "Image") &&
                 (!clipJSON.width || !clipJSON.height)
               ) {
                 // We defer scaling to after we have the clip ready,
@@ -1016,16 +1019,16 @@ export class TimelineModel {
                 // jsonToClip returns fully constructed clip, but 'ready' promise might not be awaited inside it fully?
                 // Actually jsonToClip awaits fetch and createImageBitmap, so basic dimensions should be known.
                 if (this.studio.opts.width && this.studio.opts.height) {
-                  if (typeof (clip as any).scaleToFit === 'function') {
+                  if (typeof (clip as any).scaleToFit === "function") {
                     await (clip as any).scaleToFit(
                       this.studio.opts.width,
-                      this.studio.opts.height
+                      this.studio.opts.height,
                     );
                   }
-                  if (typeof (clip as any).centerInScene === 'function') {
+                  if (typeof (clip as any).centerInScene === "function") {
                     (clip as any).centerInScene(
                       this.studio.opts.width,
-                      this.studio.opts.height
+                      this.studio.opts.height,
                     );
                   }
                 }
@@ -1039,12 +1042,12 @@ export class TimelineModel {
               return { clip, intendedTrackId };
             } catch (err) {
               console.error(
-                `Failed to load clip ${clipJSON.id || 'unknown'}:`,
-                err
+                `Failed to load clip ${clipJSON.id || "unknown"}:`,
+                err,
               );
               return { clip: null };
             }
-          })()
+          })(),
         );
       }
 
@@ -1078,16 +1081,16 @@ export class TimelineModel {
               interactionManager.activeTransformer != null &&
               interactionManager.selectedClips.has(clip) &&
               typeof (interactionManager.activeTransformer as any)
-                .updateBounds === 'function'
+                .updateBounds === "function"
             ) {
               (interactionManager.activeTransformer as any).updateBounds();
             }
           };
-          clip.on('propsChange', onPropsChange);
+          clip.on("propsChange", onPropsChange);
           this.studio.clipListeners.set(clip, onPropsChange);
 
           // B. Link Renderer
-          if (typeof clip.setRenderer === 'function') {
+          if (typeof clip.setRenderer === "function") {
             clip.setRenderer(this.studio.pixiApp!.renderer);
           }
 
@@ -1099,7 +1102,7 @@ export class TimelineModel {
           // setupClipVisuals just sets up renderer and playback.
           // It creates new PixiSpriteRenderer.
           await this.setupClipVisuals(clip);
-        })
+        }),
       );
     }
 
@@ -1158,11 +1161,11 @@ export class TimelineModel {
     try {
       await this.studio.updateFrame(this.studio.currentTime);
     } catch (err) {
-      console.error('[Studio] Failed to update initial frame:', err);
+      console.error("[Studio] Failed to update initial frame:", err);
     }
 
     // Emit single restore event
-    this.studio.emit('studio:restored', {
+    this.studio.emit("studio:restored", {
       clips: this.clips,
       tracks: this.tracks,
       settings: this.studio.opts,
@@ -1233,7 +1236,7 @@ export class TimelineModel {
   async splitSelected(splitTime?: number): Promise<void> {
     const selected = Array.from(this.studio.selection.selectedClips);
     if (selected.length !== 1) {
-      console.warn('[Studio] Split requires exactly one selected clip');
+      console.warn("[Studio] Split requires exactly one selected clip");
       return;
     }
 
@@ -1244,7 +1247,7 @@ export class TimelineModel {
       time <= clip.display.from ||
       (clip.display.to > 0 && time >= clip.display.to)
     ) {
-      console.warn('[Studio] Split time is outside clip bounds');
+      console.warn("[Studio] Split time is outside clip bounds");
       return;
     }
 
@@ -1305,7 +1308,7 @@ export class TimelineModel {
   async trimSelected(trimFromSeconds: number): Promise<void> {
     const selected = Array.from(this.studio.selection.selectedClips);
     if (selected.length !== 1) {
-      console.warn('[Studio] Trim requires exactly one selected clip');
+      console.warn("[Studio] Trim requires exactly one selected clip");
       return;
     }
 
@@ -1320,7 +1323,7 @@ export class TimelineModel {
 
     // Validate trim amount doesn't exceed clip duration
     if (trimFromUs >= clip.duration) {
-      console.warn('[Studio] Trim amount exceeds clip duration');
+      console.warn("[Studio] Trim amount exceeds clip duration");
       return;
     }
 
@@ -1375,28 +1378,28 @@ export class TimelineModel {
     const fontsToLoad = new Map<string, IFont>();
     for (const clip of clips) {
       // Check TextClip style
-      if (clip.type === 'Text') {
+      if (clip.type === "Text") {
         const fontUrl = clip.style?.fontUrl || (clip as any).fontUrl;
         if (fontUrl) {
           fontsToLoad.set(fontUrl, {
             name:
               clip.style?.fontFamily ||
               (clip as any).fontFamily ||
-              'CustomFont',
+              "CustomFont",
             url: fontUrl,
           });
         }
       }
 
       // Check Caption style
-      if (clip.type === 'Caption') {
+      if (clip.type === "Caption") {
         const fontUrl = clip.style?.fontUrl || (clip as any).fontUrl;
         if (fontUrl) {
           fontsToLoad.set(fontUrl, {
             name:
               clip.style?.fontFamily ||
               (clip as any).fontFamily ||
-              'CustomFont',
+              "CustomFont",
             url: fontUrl,
           });
         }
@@ -1407,7 +1410,7 @@ export class TimelineModel {
       try {
         await fontManager.loadFonts(Array.from(fontsToLoad.values()));
       } catch (err) {
-        console.warn('Failed to load some fonts:', err);
+        console.warn("Failed to load some fonts:", err);
       }
     }
   }
@@ -1437,7 +1440,7 @@ export class TimelineModel {
 
   private async setupPlaybackForClip(
     clip: IClip,
-    audioSource?: string | File | Blob
+    audioSource?: string | File | Blob,
   ): Promise<void> {
     if (this.studio.pixiApp == null) return;
     if (!this.isPlaybackCapable(clip)) {
@@ -1447,9 +1450,9 @@ export class TimelineModel {
     try {
       const playbackClip = clip as IPlaybackCapable;
       if (
-        clip.type === 'Audio' &&
+        clip.type === "Audio" &&
         audioSource &&
-        typeof audioSource !== 'string'
+        typeof audioSource !== "string"
       ) {
         const objectUrl = URL.createObjectURL(audioSource);
         (clip as any).src = objectUrl;
@@ -1457,7 +1460,7 @@ export class TimelineModel {
 
       const { element, objectUrl } = await playbackClip.createPlaybackElement();
 
-      if (clip.type === 'Video') {
+      if (clip.type === "Video") {
         const texture = Texture.from(element as HTMLVideoElement);
         const sprite = new Sprite(texture);
         sprite.visible = false;
@@ -1471,19 +1474,19 @@ export class TimelineModel {
     } catch (err) {
       console.warn(
         `Failed to setup playback for ${clip.constructor.name}`,
-        err
+        err,
       );
     }
   }
 
   private isPlaybackCapable(clip: IClip): clip is IClip & IPlaybackCapable {
     return (
-      'createPlaybackElement' in clip &&
-      'play' in clip &&
-      'pause' in clip &&
-      'seek' in clip &&
-      'syncPlayback' in clip &&
-      'cleanupPlayback' in clip
+      "createPlaybackElement" in clip &&
+      "play" in clip &&
+      "pause" in clip &&
+      "seek" in clip &&
+      "syncPlayback" in clip &&
+      "cleanupPlayback" in clip
     );
   }
 
@@ -1493,7 +1496,7 @@ export class TimelineModel {
 
     // Clear listeners
     for (const [clip, listener] of this.studio.clipListeners) {
-      clip.off('propsChange', listener);
+      clip.off("propsChange", listener);
     }
     this.studio.clipListeners.clear();
 
@@ -1534,7 +1537,7 @@ export class TimelineModel {
     this.studio.maxDuration = 0;
     this.studio.currentTime = 0;
 
-    this.studio.emit('reset');
+    this.studio.emit("reset");
   }
 
   /**

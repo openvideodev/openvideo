@@ -45,3 +45,6 @@ export { GL_EFFECT_OPTIONS } from './effect/glsl/gl-effect';
 export { makeTransition } from './transition/transition';
 export type { TransitionKey } from './transition/glsl/gl-transition';
 export { GL_TRANSITION_OPTIONS } from './transition/glsl/gl-transition';
+
+// Animations
+export * from './animation';

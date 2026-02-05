@@ -54,6 +54,7 @@
   "dependencies": {
     "@pixi/layout": "^3.2.0",
     "gl-transitions": "^1.43.0",
+    "gsap": "^3.12.7",
     "microdiff": "^1.4.0",
     "opfs-tools": "^0.7.2",
     "pixi.js": "^8.14.3",

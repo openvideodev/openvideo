@@ -3,90 +3,146 @@ title: Animations
 description: Create dynamic motion by changing properties over time.
 ---
 
-Animations allow you to create dynamic effects by changing clip properties over time. All clips (text, images, videos, shapes) can be animated.
+Animations allow you to create dynamic effects by changing clip properties over time. All clips (text, images, videos, captions) can be animated using both predefined presets and custom keyframes.
 
-## Basic Animation
+## Modular Animation System
+
+OpenVideo uses a modular animation system that allows you to stack multiple animations on a single clip.
+
+### Adding Animations
+
+Use `addAnimation` to apply a preset or a custom keyframe animation.
 
 ```ts
-import { Studio, Text } from "openvideo";
+import { Image } from "openvideo";
 
-const text = new Text("Hello");
+const image = await Image.fromUrl("photo.jpg");
 
-// Animate a property (keyframe-based)
-text.setAnimation({
-  '0%': { left: 0, opacity: 0 },
-  '100%': { left: 500, opacity: 1 },
-}, {
-  duration: 1e6, // 1 second in microseconds
-  easing: 'easeOut'
+// Add a built-in preset
+image.addAnimation("fadeIn", {
+  duration: 1000 * 1000, // 1 second in microseconds
+  easing: "easeOutQuad",
 });
+
+// Add a custom keyframe animation
+image.addAnimation(
+  "keyframes",
+  {
+    duration: 2000 * 1000,
+    delay: 500 * 1000, // Start after 0.5s
+  },
+  {
+    "0%": { opacity: 0, scale: 0.5 },
+    "50%": { opacity: 1, scale: 1.2 },
+    "100%": { scale: 1 },
+  },
+);
 ```
 
-Control animation timing with easing functions:
+### Managing Animations
+
+You can update or remove animations using their unique IDs.
 
 ```ts
-text.animate({
-  property: "left",
-  fromValue: 0,
-  toValue: 1920,
-  startFrame: 0,
-  duration: 120,
-  easing: "easeInOut", // smooth acceleration and deceleration
-});
-```
+const animId = image.addAnimation("slideIn", { duration: 1e6 });
 
-### Available Easing Options
+// Update an existing animation
+image.updateAnimation(
+  animId,
+  "slideIn",
+  {
+    duration: 2e6,
+    easing: "easeInBack",
+  },
+  {
+    direction: "right", // Preset parameter
+    distance: 500,
+  },
+);
 
-- `linear` - Constant speed
-- `easeIn` - Slow start, fast end
-- `easeOut` - Fast start, slow end
-- `easeInOut` - Slow start and end, fast middle
-- `easeInQuad`, `easeOutQuad`, `easeInOutQuad`
-- `easeInCubic`, `easeOutCubic`, `easeInOutCubic`
+// Remove an animation
+image.removeAnimation(animId);
 
-## Multi-Property Animations
-
-Animate multiple properties with synchronized keyframes:
-
-```ts
-const imageClip = await Image.fromUrl("photo.jpg");
-
-// Animate position with keyframes
-imageClip.animate({
-  property: "left",
-  keyframes: [
-    { frame: 0, value: 0 },
-    { frame: 45, value: 960 },
-    { frame: 90, value: 1920 },
-  ],
-});
-
-// Animate opacity in sync
-imageClip.animate({
-  property: "opacity",
-  keyframes: [
-    { frame: 0, value: 0 },
-    { frame: 30, value: 1 },
-    { frame: 60, value: 1 },
-    { frame: 90, value: 0 },
-  ],
-});
+// Clear all animations
+image.clearAnimations();
 ```
 
 ## Animation Presets
 
-OpenVideo includes various presets for common animations like fades, slides, and zooms.
+Built-in presets simplify common transitions. Most presets support additional parameters.
+
+| Preset     | Description                   | Parameters                                                  |
+| :--------- | :---------------------------- | :---------------------------------------------------------- |
+| `fadeIn`   | Gradually increases opacity   | -                                                           |
+| `fadeOut`  | Gradually decreases opacity   | -                                                           |
+| `zoomIn`   | Scales up from a smaller size | -                                                           |
+| `zoomOut`  | Scales down to a smaller size | -                                                           |
+| `slideIn`  | Enters from a direction       | `direction` (left, right, top, bottom), `distance` (pixels) |
+| `slideOut` | Exits to a direction          | `direction`, `distance`                                     |
+
+### Using Preset Parameters
 
 ```ts
-const imageClip = await Image.fromUrl("photo.jpg");
-
-// Enter with fade and zoom
-imageClip.setAnimation("fadeIn", {
-  duration: 1e6,
-});
-
-imageClip.setAnimation("zoomIn", {
-  duration: 1e6,
-  delay: 0.5e6, // Delay by 0.5 seconds
-});
+image.addAnimation(
+  "slideIn",
+  { duration: 1e6 },
+  {
+    direction: "bottom",
+    distance: 200,
+  },
+);
 ```
+
+## Easing Functions
+
+Control the flow of motion with easing. All standard easing functions are supported:
+
+- `linear` - Constant speed
+- `easeInQuad`, `easeOutQuad`, `easeInOutQuad`
+- `easeInCubic`, `easeOutCubic`, `easeInOutCubic`
+- `easeInQuart`, `easeOutQuart`, `easeInOutQuart`
+- `easeInExpo`, `easeOutExpo`, `easeInOutExpo`
+- `easeInBack`, `easeOutBack`, `easeInOutBack`
+
+## Keyframe Specification
+
+Custom keyframes allow full control over any animatable property.
+
+```ts
+image.addAnimation(
+  "keyframes",
+  { duration: 1e6 },
+  {
+    "0%": {
+      left: 0,
+      top: 0,
+      opacity: 0,
+    },
+    "100%": {
+      left: 1920,
+      top: 1080,
+      opacity: 1,
+    },
+  },
+);
+```
+
+### Animatable Properties
+
+The following properties can be animated across most clip types:
+
+- `left`, `top` (Position)
+- `width`, `height` (Dimensions)
+- `scale` (Size multiplier)
+- `angle` (Rotation in degrees)
+- `opacity` (Transparency 0-1)
+- `zIndex` (Depth)
+- `volume` (Audio level for video/audio clips)
+
+## UI Editor
+
+In the Combo Editor UI, you can manage animations using tabs:
+
+- **In**: Quickly add entry transitions (Fade In, Zoom In, etc.).
+- **Out**: Add exit transitions. The editor automatically calculates the `delay` based on your clip duration so the transition finishes exactly at the end.
+- **Custom**: Full control over keyframes and multi-step animations.

@@ -93,4 +93,43 @@ export class Placeholder extends BaseClip {
 
     return [pre, post];
   }
+
+  /**
+   * Create a Placeholder instance from a JSON object
+   */
+  static async fromObject(json: any): Promise<Placeholder> {
+    if (json.type !== 'Placeholder') {
+      throw new Error(`Expected Placeholder, got ${json.type}`);
+    }
+
+    const clip = new Placeholder(json.src, {
+      width: json.width,
+      height: json.height,
+      duration: json.duration,
+    });
+
+    // Apply base properties
+    clip.left = json.left;
+    clip.top = json.top;
+    clip.width = json.width;
+    clip.height = json.height;
+    clip.angle = json.angle;
+
+    clip.display.from = json.display.from;
+    clip.display.to = json.display.to;
+    clip.duration = json.duration;
+    clip.playbackRate = json.playbackRate;
+
+    clip.zIndex = json.zIndex;
+    clip.opacity = json.opacity;
+    clip.flip = json.flip;
+
+    // Restore id if present
+    if (json.id) {
+      clip.id = json.id;
+    }
+
+    await clip.ready;
+    return clip;
+  }
 }

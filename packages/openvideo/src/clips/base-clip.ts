@@ -1,8 +1,8 @@
-import { Log } from '../utils/log';
-import { BaseSprite, BaseSpriteEvents } from '../sprite/base-sprite';
-import { changePCMPlaybackRate } from '../utils';
-import type { IClip, IClipMeta, ITransitionInfo } from './iclip';
-import type { ClipJSON } from '../json-serialization';
+import { Log } from "../utils/log";
+import { BaseSprite, BaseSpriteEvents } from "../sprite/base-sprite";
+import { changePCMPlaybackRate } from "../utils";
+import type { IClip, IClipMeta, ITransitionInfo } from "./iclip";
+import type { ClipJSON } from "../json-serialization";
 
 /**
  * Base class for all clips that extends BaseSprite
@@ -24,7 +24,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * Source URL or identifier for this clip
    * Used for serialization and reloading from JSON
    */
-  src: string = '';
+  src: string = "";
 
   /**
    * Transition info (optional)
@@ -34,7 +34,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   abstract tick(time: number): Promise<{
     video?: VideoFrame | ImageBitmap | null;
     audio?: Float32Array[];
-    state: 'done' | 'success';
+    state: "done" | "success";
   }>;
 
   // Override ready from BaseSprite to return IClipMeta instead of void
@@ -97,7 +97,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     return {
       video: imgSource,
       audio: outAudio,
-      done: state === 'done',
+      done: state === "done",
     };
   }
 
@@ -124,7 +124,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       );
     }
 
-    if (state === 'done') {
+    if (state === "done") {
       return {
         audio: outAudio,
         done: true,
@@ -143,7 +143,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       if (shadow && (shadow.blur > 0 || shadow.distance > 0)) {
         const distance = shadow.distance ?? 0;
         const angle = shadow.angle ?? 0;
-        ctx.shadowColor = shadow.color || '#000000';
+        ctx.shadowColor = shadow.color || "#000000";
         ctx.shadowBlur = shadow.blur || 0;
         ctx.shadowOffsetX = Math.cos(angle) * distance;
         ctx.shadowOffsetY = Math.sin(angle) * distance;
@@ -280,7 +280,6 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * @param main Whether this is the main clip (for Compositor)
    */
   toJSON(main: boolean = false): ClipJSON {
-    // Extract animation if present
     const animation =
       (this as any).animatKeyFrame && (this as any).animatOpts
         ? {
@@ -288,10 +287,10 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
               (acc: any, [progress, props]: [number, any]) => {
                 const key =
                   progress === 0
-                    ? 'from'
+                    ? "from"
                     : progress === 1
-                      ? 'to'
-                      : `${Math.round(progress * 100)}%`;
+                    ? "to"
+                    : `${Math.round(progress * 100)}%`;
                 acc[key] = props;
                 return acc;
               },
@@ -301,8 +300,15 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
           }
         : undefined;
 
+    // Extract new modular animations
+    const animations = this.animations.map((a) => ({
+      type: a.type,
+      opts: a.options,
+      params: a.params || {},
+    }));
+
     return {
-      type: this.constructor.name as ClipJSON['type'],
+      type: this.constructor.name as ClipJSON["type"],
       id: this.id,
       name: this.name,
       src: this.src,
@@ -326,6 +332,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
         to: this.trim.to,
       },
       ...(animation && { animation }),
+      ...(animations.length > 0 && { animations }),
       ...(main && { main: true }),
     } as ClipJSON;
   }
@@ -336,9 +343,9 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * Override in subclasses to customize handle visibility (e.g., TextClip)
    */
   getVisibleHandles(): Array<
-    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
+    "tl" | "tr" | "bl" | "br" | "ml" | "mr" | "mt" | "mb" | "rot"
   > {
-    return ['tl', 'tr', 'bl', 'br', 'ml', 'mr', 'mt', 'mb', 'rot'];
+    return ["tl", "tr", "bl", "br", "ml", "mr", "mt", "mb", "rot"];
   }
 
   /**
@@ -386,7 +393,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     if (this.destroyed) return;
     this.destroyed = true;
 
-    Log.info('BaseClip destroy');
+    Log.info("BaseClip destroy");
     super.destroy();
     this.lastVf?.close();
     this.lastVf = null;
