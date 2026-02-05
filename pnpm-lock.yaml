@@ -352,6 +352,9 @@ importers:
       '@deepgram/sdk':
         specifier: ^4.11.3
         version: 4.11.3
+      '@tabler/icons-vue':
+        specifier: ^3.36.1
+        version: 3.36.1(vue@3.5.27(typescript@5.9.3))
       '@vueuse/core':
         specifier: ^14.2.0
         version: 14.2.0(vue@3.5.27(typescript@5.9.3))
@@ -4391,8 +4394,16 @@ packages:
     peerDependencies:
       react: '>= 16'
 
+  '@tabler/icons-vue@3.36.1':
+    resolution: {integrity: sha512-ssIu0KSmGFKvvoC5PJhSYAj/J2kTEbIVIix0528zdRKfN6yohUlQt014tGnDDdJ/MyyG/xRXsKD1U6dyQY8rrg==}
+    peerDependencies:
+      vue: '>=3.0.1'
+
   '@tabler/icons@3.36.0':
     resolution: {integrity: sha512-z9OfTEG6QbaQWM9KBOxxUdpgvMUn0atageXyiaSc2gmYm51ORO8Ua7eUcjlks+Dc0YMK4rrodAFdK9SfjJ4ZcA==}
+
+  '@tabler/icons@3.36.1':
+    resolution: {integrity: sha512-f4Jg3Fof/Vru5ioix/UO4GX+sdDsF9wQo47FbtvG+utIYYVQ/QVAC0QYgcBbAjQGfbdOh2CCf0BgiFOF9Ixtjw==}
 
   '@tailwindcss/node@4.1.17':
     resolution: {integrity: sha512-csIkHIgLb3JisEFQ0vxr2Y57GUNYh447C8xzwj89U/8fdW8LhProdxvnVH6U8M2Y73QKiTIH+LWbK3V2BBZsAg==}
@@ -15105,7 +15116,14 @@ snapshots:
       '@tabler/icons': 3.36.0
       react: 19.2.0
 
+  '@tabler/icons-vue@3.36.1(vue@3.5.27(typescript@5.9.3))':
+    dependencies:
+      '@tabler/icons': 3.36.1
+      vue: 3.5.27(typescript@5.9.3)
+
   '@tabler/icons@3.36.0': {}
+
+  '@tabler/icons@3.36.1': {}
 
   '@tailwindcss/node@4.1.17':
     dependencies:

@@ -13,6 +13,7 @@
     "@aws-sdk/client-s3": "^3.983.0",
     "@aws-sdk/s3-request-presigner": "^3.983.0",
     "@deepgram/sdk": "^4.11.3",
+    "@tabler/icons-vue": "^3.36.1",
     "@vueuse/core": "^14.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
