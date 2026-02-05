@@ -19,6 +19,14 @@ export default defineNuxtConfig({
     plugins: [tailwindcss() as any],
   },
 
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        verbatimModuleSyntax: false,
+      },
+    },
+  },
+
   modules: ['shadcn-nuxt'],
   shadcn: {
     /**

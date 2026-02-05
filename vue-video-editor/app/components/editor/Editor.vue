@@ -8,6 +8,7 @@ import { ref } from 'vue';
 import Header from '@/components/editor/Header.vue';
 import CanvasPanel from '@/components/editor/CanvasPanel.vue';
 import MediaPanel from '@/components/editor/media-panel/MediaPanel.vue';
+import Timeline from '@/components/editor/timeline/Timeline.vue';
 
 // State for panel sizes
 const toolsPanelSize = ref(30);
@@ -75,7 +76,6 @@ const setTimeline = (size: number) => {
 
             <ResizableHandle class="bg-transparent !h-1.5" />
 
-            <!-- Timeline Panel -->
             <ResizablePanel
               :default-size="timelineSize"
               :min-size="15"
@@ -83,9 +83,7 @@ const setTimeline = (size: number) => {
               @resize="setTimeline"
               class="min-h-0"
             >
-              <div class="h-full w-full p-4">
-                Timeline Panel
-              </div>
+              <Timeline />
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>

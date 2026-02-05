@@ -1,6 +1,3 @@
-import { MediaType } from '@/types/media';
-import { generateUUID } from '@/utils/id';
-
 export type TrackType =
   | 'Video'
   | 'Audio'

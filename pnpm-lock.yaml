@@ -364,6 +364,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      fabric:
+        specifier: ^6.9.0
+        version: 6.9.0
       lucide-vue-next:
         specifier: ^0.563.0
         version: 0.563.0(vue@3.5.27(typescript@5.9.3))

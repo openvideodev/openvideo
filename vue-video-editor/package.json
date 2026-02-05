@@ -17,6 +17,7 @@
     "@vueuse/core": "^14.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+        "fabric": "^6.9.0",
     "lucide-vue-next": "^0.563.0",
     "mime": "^4.1.0",
     "nuxt": "4.2.2",
