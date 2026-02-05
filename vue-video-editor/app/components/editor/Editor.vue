@@ -7,6 +7,7 @@ import {
 import { ref } from 'vue';
 import Header from '@/components/editor/Header.vue';
 import CanvasPanel from '@/components/editor/CanvasPanel.vue';
+import MediaPanel from '@/components/editor/media-panel/MediaPanel.vue';
 
 // State for panel sizes
 const toolsPanelSize = ref(15);
@@ -48,9 +49,7 @@ const setTimeline = (size: number) => {
           @resize="setToolsPanel"
           class="max-w-7xl relative overflow-visible! bg-card min-w-0 border-r"
         >
-          <div class="h-full w-full p-4">
-            Media Panel
-          </div>
+          <MediaPanel />
         </ResizablePanel>
 
         <ResizableHandle class="bg-transparent w-1.5" />

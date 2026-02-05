@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/tailwind.css'],
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss() as any],
   },
 
   alias: {
