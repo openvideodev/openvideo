@@ -19,10 +19,6 @@ export default defineNuxtConfig({
     plugins: [tailwindcss() as any],
   },
 
-  alias: {
-    openvideo: '../../packages/openvideo/src/index.ts',
-  },
-
   modules: ['shadcn-nuxt'],
   shadcn: {
     /**

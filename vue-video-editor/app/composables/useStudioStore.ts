@@ -12,7 +12,7 @@ export const useStudioStore = () => {
   }));
 
   const setStudio = (studio: Studio | null) => {
-    state.value.studio = studio;
+    state.value.studio = studio ? markRaw(studio) : null;
   };
 
   const setSelectedClips = (clips: IClip[]) => {

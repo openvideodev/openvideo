@@ -10,9 +10,8 @@ import CanvasPanel from '@/components/editor/CanvasPanel.vue';
 import MediaPanel from '@/components/editor/media-panel/MediaPanel.vue';
 
 // State for panel sizes
-const toolsPanelSize = ref(15);
-const copilotPanelSize = ref(0);
-const mainContentSize = ref(75);
+const toolsPanelSize = ref(30);
+const mainContentSize = ref(70);
 const timelineSize = ref(25);
 const isCopilotVisible = ref(false); // Default to hidden for now
 
@@ -21,7 +20,6 @@ const setToolsPanel = (size: number) => {
   toolsPanelSize.value = size;
 };
 const setCopilotPanel = (size: number) => {
-  copilotPanelSize.value = size;
 };
 const setMainContent = (size: number) => {
   mainContentSize.value = size;
@@ -47,7 +45,7 @@ const setTimeline = (size: number) => {
           :min-size="15"
           :max-size="40"
           @resize="setToolsPanel"
-          class="max-w-7xl relative overflow-visible! bg-card min-w-0 border-r"
+          class="relative overflow-visible! bg-card min-w-0 border-r"
         >
           <MediaPanel />
         </ResizablePanel>
@@ -56,7 +54,7 @@ const setTimeline = (size: number) => {
 
         <!-- Middle Column: Preview + Timeline -->
         <ResizablePanel
-          :default-size="isCopilotVisible ? 100 - copilotPanelSize - toolsPanelSize : 100 - toolsPanelSize"
+          :default-size="isCopilotVisible ? 100 - toolsPanelSize : 100 - toolsPanelSize"
           :min-size="40"
           class="min-w-0 min-h-0"
         >
@@ -91,22 +89,6 @@ const setTimeline = (size: number) => {
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
-
-        <template v-if="isCopilotVisible">
-          <ResizableHandle class="bg-transparent w-1.5" />
-          <!-- Right Column: Chat Copilot -->
-          <ResizablePanel
-            :default-size="copilotPanelSize"
-            :min-size="15"
-            :max-size="40"
-            @resize="setCopilotPanel"
-            class="max-w-7xl relative overflow-visible! bg-card min-w-0 border-l"
-          >
-             <div class="h-full w-full p-4">
-               Copilot Panel
-             </div>
-          </ResizablePanel>
-        </template>
       </ResizablePanelGroup>
     </div>
   </div>

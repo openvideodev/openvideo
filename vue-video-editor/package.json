@@ -19,7 +19,7 @@
     "lucide-vue-next": "^0.563.0",
     "mime": "^4.1.0",
     "nuxt": "4.2.2",
-    "openvideo": "workspace:*",
+    "openvideo": "0.0.4",
     "reka-ui": "^2.8.0",
     "shadcn-nuxt": "2.4.3",
     "tailwind-merge": "^3.4.0",

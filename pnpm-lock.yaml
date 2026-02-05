@@ -371,8 +371,8 @@ importers:
         specifier: 4.2.2
         version: 4.2.2(@biomejs/biome@2.3.8)(@parcel/watcher@2.5.6)(@types/node@25.0.8)(@vue/compiler-sfc@3.5.27)(cac@6.7.14)(db0@0.3.4)(ioredis@5.9.2)(lightningcss@1.30.2)(magicast@0.5.2)(rollup@4.57.1)(terser@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(yaml@2.8.2))(yaml@2.8.2)
       openvideo:
-        specifier: workspace:*
-        version: link:../packages/openvideo
+        specifier: 0.0.4
+        version: 0.0.4(yoga-layout@3.2.1)
       reka-ui:
         specifier: ^2.8.0
         version: 2.8.0(vue@3.5.27(typescript@5.9.3))
@@ -7550,6 +7550,9 @@ packages:
   opentracing@0.14.7:
     resolution: {integrity: sha512-vz9iS7MJ5+Bp1URw8Khvdyw1H/hGvzHWlKQ7eRrQojSCDL1/SrWfrY9QebLw97n2deyRtzHRC3MkQfVNUCo91Q==}
     engines: {node: '>=0.10'}
+
+  openvideo@0.0.4:
+    resolution: {integrity: sha512-tH+jokQc/x4/95deME/nUbaMNOeXt/8d4SuKj8ra6dOpMMvIWp2E/Iaz7iMn6jBXJbv8OnL8407zp31gDTHeEw==}
 
   opfs-tools@0.7.4:
     resolution: {integrity: sha512-DJgQnXyPcCj3q8pKa8SjP4HfNBPffj8kO6W1nc2zQydTqu5G/AxOuIjmWnRxZ84nE1EOpzZzhj8MYCZP1jRR9A==}
@@ -19127,6 +19130,20 @@ snapshots:
       is-wsl: 2.2.0
 
   opentracing@0.14.7: {}
+
+  openvideo@0.0.4(yoga-layout@3.2.1):
+    dependencies:
+      '@pixi/layout': 3.2.0(@types/react@19.2.8)(pixi.js@8.14.3)(react@19.2.3)(yoga-layout@3.2.1)
+      gl-transitions: 1.43.0
+      microdiff: 1.5.0
+      opfs-tools: 0.7.4
+      pixi.js: 8.14.3
+      wave-resampler: 1.0.0
+      wrapbox: 0.0.2
+    transitivePeerDependencies:
+      - '@types/react'
+      - react
+      - yoga-layout
 
   opfs-tools@0.7.4: {}
 
