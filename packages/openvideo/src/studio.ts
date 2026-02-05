@@ -5,25 +5,25 @@ import {
   Container,
   Graphics,
   RenderTexture,
-} from 'pixi.js';
+} from "pixi.js";
 
-import { Caption } from './clips/caption-clip';
-import { Image } from './clips/image-clip';
-import type { IClip, IPlaybackCapable } from './clips/iclip';
-import { Text } from './clips/text-clip';
-import { Video } from './clips/video-clip';
-import { Effect } from './clips/effect-clip';
+import { Caption } from "./clips/caption-clip";
+import { Image } from "./clips/image-clip";
+import type { IClip, IPlaybackCapable } from "./clips/iclip";
+import { Text } from "./clips/text-clip";
+import { Video } from "./clips/video-clip";
+import { Effect } from "./clips/effect-clip";
 import {
   PixiSpriteRenderer,
   updateSpriteTransform,
-} from './sprite/pixi-sprite-renderer';
-import { type ProjectJSON } from './json-serialization';
-import { Transformer } from './transfomer/transformer';
-import type { EffectKey } from './effect/glsl/gl-effect';
-import { makeEffect } from './effect/effect';
-import { makeTransition } from './transition/transition';
+} from "./sprite/pixi-sprite-renderer";
+import { type ProjectJSON } from "./json-serialization";
+import { Transformer } from "./transfomer/transformer";
+import type { EffectKey } from "./effect/glsl/gl-effect";
+import { makeEffect } from "./effect/effect";
+import { makeTransition } from "./transition/transition";
 
-import EventEmitter from './event-emitter';
+import EventEmitter from "./event-emitter";
 
 export interface IStudioOpts {
   width: number;
@@ -50,18 +50,18 @@ interface GlobalEffectInfo {
 }
 
 export interface StudioEvents {
-  'selection:created': { selected: IClip[] };
-  'selection:updated': { selected: IClip[] };
-  'selection:cleared': { deselected: IClip[] };
-  'track:added': { track: StudioTrack; index?: number };
-  'track:order-changed': { tracks: StudioTrack[] };
-  'track:removed': { trackId: string };
-  'clip:added': { clip: IClip; trackId: string };
-  'clips:added': { clips: IClip[]; trackId?: string }; // Batch event
-  'clip:removed': { clipId: string };
-  'clip:updated': { clip: IClip };
-  'clip:replaced': { oldClip: IClip; newClip: IClip; trackId: string };
-  'studio:restored': {
+  "selection:created": { selected: IClip[] };
+  "selection:updated": { selected: IClip[] };
+  "selection:cleared": { deselected: IClip[] };
+  "track:added": { track: StudioTrack; index?: number };
+  "track:order-changed": { tracks: StudioTrack[] };
+  "track:removed": { trackId: string };
+  "clip:added": { clip: IClip; trackId: string };
+  "clips:added": { clips: IClip[]; trackId?: string }; // Batch event
+  "clip:removed": { clipId: string };
+  "clip:updated": { clip: IClip };
+  "clip:replaced": { oldClip: IClip; newClip: IClip; trackId: string };
+  "studio:restored": {
     clips: IClip[];
     tracks: StudioTrack[];
     settings: IStudioOpts;
@@ -69,7 +69,7 @@ export interface StudioEvents {
   currentTime: { currentTime: number };
   play: { isPlaying: boolean };
   pause: { isPlaying: boolean };
-  'history:changed': { canUndo: boolean; canRedo: boolean };
+  "history:changed": { canUndo: boolean; canRedo: boolean };
   [key: string]: any;
   [key: symbol]: any;
 }
@@ -101,13 +101,13 @@ export interface StudioTrack {
  *   console.log('Selection created', selected);
  * });
  */
-import { SelectionManager } from './studio/selection-manager';
-import { Transport } from './studio/transport';
-import { TimelineModel } from './studio/timeline-model';
-import { HistoryManager, HistoryState } from './studio/history-manager';
-import { ResourceManager } from './studio/resource-manager';
-import { jsonToClip } from './json-serialization';
-import { Difference } from 'microdiff';
+import { SelectionManager } from "./studio/selection-manager";
+import { Transport } from "./studio/transport";
+import { TimelineModel } from "./studio/timeline-model";
+import { HistoryManager, HistoryState } from "./studio/history-manager";
+import { ResourceManager } from "./studio/resource-manager";
+import { jsonToClip } from "./json-serialization";
+import { Difference } from "microdiff";
 
 export class Studio extends EventEmitter<StudioEvents> {
   public selection: SelectionManager;
@@ -185,7 +185,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.transport.maxDuration = val;
   }
 
-  public opts: Required<Omit<IStudioOpts, 'canvas'>> & {
+  public opts: Required<Omit<IStudioOpts, "canvas">> & {
     canvas?: HTMLCanvasElement;
   };
   public destroyed = false;
@@ -198,7 +198,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
   // Effect system
   public globalEffects = new Map<string, GlobalEffectInfo>();
-  public activeGlobalEffect: ActiveGlobalEffect | null = null;
+  public activeGlobalEffects: ActiveGlobalEffect[] = [];
   // private postProcessContainer: Container; // Removed
   public currentGlobalEffectSprite: Sprite | null = null;
   public effectFilters = new Map<string, ReturnType<typeof makeEffect>>();
@@ -220,7 +220,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   private hexToNumber(hex: string): number {
     // Remove # if present
-    const hexStr = hex.startsWith('#') ? hex.slice(1) : hex;
+    const hexStr = hex.startsWith("#") ? hex.slice(1) : hex;
     return parseInt(hexStr, 16);
   }
 
@@ -233,7 +233,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     // this.postProcessContainer = new Container(); // Removed
     this.opts = {
       fps: 30,
-      bgColor: '#000000',
+      bgColor: "#000000",
       interactivity: true,
       spacing: 0,
       ...opts,
@@ -250,13 +250,13 @@ export class Studio extends EventEmitter<StudioEvents> {
       this.history.init(this.exportToJSON());
     });
 
-    this.on('clip:removed', this.handleClipRemoved);
-    this.on('clips:removed', this.handleClipsRemoved);
-    this.on('clip:updated', this.handleTimelineChange);
-    this.on('clip:added', this.handleTimelineChange);
-    this.on('clips:added', this.handleTimelineChange);
-    this.on('track:removed', this.handleTimelineChange);
-    this.on('track:added', this.handleTimelineChange);
+    this.on("clip:removed", this.handleClipRemoved);
+    this.on("clips:removed", this.handleClipsRemoved);
+    this.on("clip:updated", this.handleTimelineChange);
+    this.on("clip:added", this.handleTimelineChange);
+    this.on("clips:added", this.handleTimelineChange);
+    this.on("track:removed", this.handleTimelineChange);
+    this.on("track:added", this.handleTimelineChange);
   }
 
   private handleTimelineChange = () => {
@@ -268,7 +268,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   private saveHistory() {
     if (this.historyPaused || this.processingHistory) return;
     this.history.push(this.exportToJSON());
-    this.emit('history:changed', {
+    this.emit("history:changed", {
       canUndo: this.history.canUndo(),
       canRedo: this.history.canRedo(),
     });
@@ -292,7 +292,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     for (let i = 0; i < path.length - 1; i++) {
       const key = path[i];
       if (!target[key]) {
-        target[key] = typeof path[i + 1] === 'number' ? [] : {};
+        target[key] = typeof path[i + 1] === "number" ? [] : {};
       }
       target = target[key];
     }
@@ -302,7 +302,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   private async applyHistoryPatches(
     patches: Difference[],
     state: HistoryState,
-    reverse: boolean
+    reverse: boolean,
   ) {
     const clipChanges = new Map<string, any>();
     const clipsToAdd = new Map<string, any>();
@@ -313,37 +313,37 @@ export class Studio extends EventEmitter<StudioEvents> {
       const value = (patch as any).value;
       const oldValue = (patch as any).oldValue;
 
-      if (path[0] === 'clips') {
+      if (path[0] === "clips") {
         const clipId = path[1] as string;
         if (reverse) {
-          if (type === 'CREATE') clipsToRemove.add(clipId);
-          else if (type === 'REMOVE') clipsToAdd.set(clipId, oldValue);
-          else if (type === 'CHANGE') {
+          if (type === "CREATE") clipsToRemove.add(clipId);
+          else if (type === "REMOVE") clipsToAdd.set(clipId, oldValue);
+          else if (type === "CHANGE") {
             if (!clipChanges.has(clipId)) clipChanges.set(clipId, {});
             this.setPath(
               clipChanges.get(clipId),
               path.slice(2) as (string | number)[],
-              oldValue
+              oldValue,
             );
           }
         } else {
-          if (type === 'CREATE') clipsToAdd.set(clipId, value);
-          else if (type === 'REMOVE') clipsToRemove.add(clipId);
-          else if (type === 'CHANGE') {
+          if (type === "CREATE") clipsToAdd.set(clipId, value);
+          else if (type === "REMOVE") clipsToRemove.add(clipId);
+          else if (type === "CHANGE") {
             if (!clipChanges.has(clipId)) clipChanges.set(clipId, {});
             this.setPath(
               clipChanges.get(clipId),
               path.slice(2) as (string | number)[],
-              value
+              value,
             );
           }
         }
-      } else if (path[0] === 'settings') {
+      } else if (path[0] === "settings") {
         if (reverse) {
           this.setPath(
             this.opts,
             path.slice(1) as (string | number)[],
-            oldValue
+            oldValue,
           );
         } else {
           this.setPath(this.opts, path.slice(1) as (string | number)[], value);
@@ -387,7 +387,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     // Emit single restore event to sync UI (e.g. Timeline Store)
     // This ensures tracks and clips are perfectly in sync with the engine state
-    this.emit('studio:restored', {
+    this.emit("studio:restored", {
       clips: this.clips,
       tracks: this.tracks,
       settings: this.opts,
@@ -403,7 +403,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       if (result) {
         await this.applyHistoryPatches(result.patches, result.state, true);
       }
-      this.emit('history:changed', {
+      this.emit("history:changed", {
         canUndo: this.history.canUndo(),
         canRedo: this.history.canRedo(),
       });
@@ -422,7 +422,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       if (result) {
         await this.applyHistoryPatches(result.patches, result.state, false);
       }
-      this.emit('history:changed', {
+      this.emit("history:changed", {
         canUndo: this.history.canUndo(),
         canRedo: this.history.canRedo(),
       });
@@ -502,7 +502,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   private async initPixiApp(): Promise<void> {
     if (this.destroyed) return;
 
-    const canvas = this.opts.canvas || document.createElement('canvas');
+    const canvas = this.opts.canvas || document.createElement("canvas");
     canvas.width = this.opts.width;
     canvas.height = this.opts.height;
 
@@ -523,12 +523,12 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.pixiApp = app;
 
     // Make stage interactive to handle clicks on empty space
-    app.stage.eventMode = 'static';
+    app.stage.eventMode = "static";
     app.stage.hitArea = app.screen;
 
     // Initialize Artboard (Root Container for Viewport)
     this.artboard = new Container();
-    this.artboard.label = 'ArtboardRoot';
+    this.artboard.label = "ArtboardRoot";
     app.stage.addChild(this.artboard);
 
     this.selection.init(app, this.artboard);
@@ -542,7 +542,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     // Initialize Clip Container (Masked Content)
     this.clipContainer = new Container();
-    this.clipContainer.label = 'ClipContainer';
+    this.clipContainer.label = "ClipContainer";
     this.artboard.addChild(this.clipContainer);
     // Create mask for Clip Container
     this.artboardMask = new Graphics();
@@ -554,14 +554,14 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     //effectContainer
     this.clipsEffectContainer = new Container();
-    this.clipsEffectContainer.label = 'ClipsEffect';
+    this.clipsEffectContainer.label = "ClipsEffect";
     this.clipsEffectContainer.visible = false;
     this.clipsEffectContainer.zIndex = 1; // Lowest
     this.clipsEffectContainer.sortableChildren = true;
     this.clipContainer.addChild(this.clipsEffectContainer);
 
     this.clipsNormalContainer = new Container();
-    this.clipsNormalContainer.label = 'ClipsNormal';
+    this.clipsNormalContainer.label = "ClipsNormal";
     this.clipsNormalContainer.zIndex = 10; // Highest (above effect)
     this.clipsNormalContainer.sortableChildren = true;
     this.clipContainer.addChild(this.clipsNormalContainer);
@@ -592,7 +592,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     // Listen for resize from Pixi renderer (since we used resizeTo)
     // This handles both window resize and container resize automatically
-    app.renderer.on('resize', () => {
+    app.renderer.on("resize", () => {
       this.handleResize();
     });
     // Removed postProcessContainer usage
@@ -677,11 +677,11 @@ export class Studio extends EventEmitter<StudioEvents> {
       const spacing = this.opts.spacing || 0;
       const containerWidthWithSpacing = Math.max(
         0,
-        containerWidth - spacing * 2
+        containerWidth - spacing * 2,
       );
       const containerHeightWithSpacing = Math.max(
         0,
-        containerHeight - spacing * 2
+        containerHeight - spacing * 2,
       );
 
       // Calculate scale to fit artboard in container with spacing
@@ -711,7 +711,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       return this.pixiApp.canvas as HTMLCanvasElement;
     }
     throw new Error(
-      'Canvas not initialized yet. Wait for initPixiApp to complete.'
+      "Canvas not initialized yet. Wait for initPixiApp to complete.",
     );
   }
 
@@ -719,13 +719,13 @@ export class Studio extends EventEmitter<StudioEvents> {
     transitionKey: string,
     duration: number = 2000000,
     fromClipId?: string | null,
-    toClipId?: string | null
+    toClipId?: string | null,
   ): Promise<void> {
     return this.timeline.addTransition(
       transitionKey,
       duration,
       fromClipId,
-      toClipId
+      toClipId,
     );
   }
 
@@ -747,7 +747,7 @@ export class Studio extends EventEmitter<StudioEvents> {
         }
       | string
       | File
-      | Blob
+      | Blob,
   ): Promise<void> {
     const clips = Array.isArray(clipOrClips) ? clipOrClips : [clipOrClips];
     clips.forEach((c) => this.clipCache.set(c.id, c));
@@ -765,7 +765,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   addTrack(
     track: { name: string; type: string; id?: string },
-    index?: number
+    index?: number,
   ): StudioTrack {
     return this.timeline.addTrack(track, index);
   }
@@ -808,7 +808,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   async centerClip(clipOrId: IClip | string): Promise<void> {
     const clip =
-      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+      typeof clipOrId === "string" ? this.getClipById(clipOrId) : clipOrId;
     if (!clip) return;
     const left = (this.opts.width - clip.width) / 2;
     const top = (this.opts.height - clip.height) / 2;
@@ -826,7 +826,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   async centerClipH(clipOrId: IClip | string): Promise<void> {
     const clip =
-      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+      typeof clipOrId === "string" ? this.getClipById(clipOrId) : clipOrId;
     if (!clip) return;
     const left = (this.opts.width - clip.width) / 2;
 
@@ -842,7 +842,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   async centerClipV(clipOrId: IClip | string): Promise<void> {
     const clip =
-      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+      typeof clipOrId === "string" ? this.getClipById(clipOrId) : clipOrId;
     if (!clip) return;
     const top = (this.opts.height - clip.height) / 2;
 
@@ -858,7 +858,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   async scaleToFit(clipOrId: IClip | string): Promise<void> {
     const clip =
-      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+      typeof clipOrId === "string" ? this.getClipById(clipOrId) : clipOrId;
     if (!clip) return;
 
     const meta = await clip.ready;
@@ -867,7 +867,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     const scale = Math.min(
       this.opts.width / origWidth,
-      this.opts.height / origHeight
+      this.opts.height / origHeight,
     );
     const width = origWidth * scale;
     const height = origHeight * scale;
@@ -885,7 +885,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   async scaleToCover(clipOrId: IClip | string): Promise<void> {
     const clip =
-      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+      typeof clipOrId === "string" ? this.getClipById(clipOrId) : clipOrId;
     if (!clip) return;
 
     const meta = await clip.ready;
@@ -894,7 +894,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     const scale = Math.max(
       this.opts.width / origWidth,
-      this.opts.height / origHeight
+      this.opts.height / origHeight,
     );
     const width = origWidth * scale;
     const height = origHeight * scale;
@@ -908,7 +908,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   async updateClips(
-    updates: { id: string; updates: Partial<IClip> }[]
+    updates: { id: string; updates: Partial<IClip> }[],
   ): Promise<void> {
     this.suspendRendering();
     await this.timeline.updateClips(updates);
@@ -953,7 +953,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   async removeClip(clipOrId: IClip | string): Promise<void> {
     const clip =
-      typeof clipOrId === 'string' ? this.getClipById(clipOrId) : clipOrId;
+      typeof clipOrId === "string" ? this.getClipById(clipOrId) : clipOrId;
 
     if (!clip) {
       console.warn(`[Studio] removeClip: Clip not found`, clipOrId);
@@ -1060,7 +1060,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.transitionSprites.forEach((s) => s.destroy());
     this.transitionSprites.clear();
 
-    this.emit('reset');
+    this.emit("reset");
   }
 
   /**
@@ -1145,12 +1145,12 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
   private isPlaybackCapable(clip: IClip): clip is IClip & IPlaybackCapable {
     return (
-      'createPlaybackElement' in clip &&
-      'play' in clip &&
-      'pause' in clip &&
-      'seek' in clip &&
-      'syncPlayback' in clip &&
-      'cleanupPlayback' in clip
+      "createPlaybackElement" in clip &&
+      "play" in clip &&
+      "pause" in clip &&
+      "seek" in clip &&
+      "syncPlayback" in clip &&
+      "cleanupPlayback" in clip
     );
   }
 
@@ -1245,7 +1245,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       // Handle playback elements (VideoClip and AudioClip)
       const playbackInfo = this.playbackElements.get(clip);
 
-      const isTransitionable = clip.type === 'Video' || clip.type === 'Image';
+      const isTransitionable = clip.type === "Video" || clip.type === "Image";
       const transitionStartTime = clip.transition ? clip.transition.start! : 0;
       const transitionEndTime = clip.transition ? clip.transition.end! : 0;
       const inTransition =
@@ -1261,11 +1261,11 @@ export class Studio extends EventEmitter<StudioEvents> {
         clip.syncPlayback(
           playbackInfo.element,
           this.isPlaying,
-          playbackRelativeTime
+          playbackRelativeTime,
         );
 
         // For VideoClip, handle sprite visibility
-        if (clip.type === 'Video' && this.isPlaybackCapable(clip)) {
+        if (clip.type === "Video" && this.isPlaybackCapable(clip)) {
           const videoSprite = this.videoSprites.get(clip);
           if (videoSprite != null) {
             const clipDurationSeconds = clip.meta.duration / 1e6;
@@ -1345,7 +1345,7 @@ export class Studio extends EventEmitter<StudioEvents> {
         if (fromClip) {
           const fromRelativeTime = Math.max(
             0,
-            timestamp - fromClip.display.from
+            timestamp - fromClip.display.from,
           );
 
           const { video } = await fromClip.getFrame(fromRelativeTime);
@@ -1398,7 +1398,7 @@ export class Studio extends EventEmitter<StudioEvents> {
             this.renderClipToTransitionTexture(
               fromClip,
               fromFrame,
-              this.transFromTexture
+              this.transFromTexture,
             );
           }
           // Renderizar "to" frame en la textura
@@ -1406,7 +1406,7 @@ export class Studio extends EventEmitter<StudioEvents> {
             this.renderClipToTransitionTexture(
               toClip,
               toFrame,
-              this.transToTexture
+              this.transToTexture,
             );
           }
 
@@ -1423,7 +1423,7 @@ export class Studio extends EventEmitter<StudioEvents> {
             } catch (err) {
               console.error(
                 `[Studio] Failed to create transition renderer:`,
-                err
+                err,
               );
             }
           }
@@ -1499,9 +1499,9 @@ export class Studio extends EventEmitter<StudioEvents> {
         // Optimized path: Check if clip has a Texture (e.g., Image.fromUrl)
         // Skip Text and Caption clips here as they have async getTexture() and are handled below
         if (
-          clip.type !== 'Text' &&
-          clip.type !== 'Caption' &&
-          typeof (clip as any).getTexture === 'function' &&
+          clip.type !== "Text" &&
+          clip.type !== "Caption" &&
+          typeof (clip as any).getTexture === "function" &&
           (clip as Image).getTexture() != null
         ) {
           const texture = (clip as Image).getTexture();
@@ -1520,11 +1520,11 @@ export class Studio extends EventEmitter<StudioEvents> {
         }
 
         // Optimized path for Text: Use Texture directly
-        if (clip.type === 'Text') {
+        if (clip.type === "Text") {
           const textClip = clip as Text;
           if (
             this.pixiApp?.renderer &&
-            typeof textClip.setRenderer === 'function'
+            typeof textClip.setRenderer === "function"
           ) {
             textClip.setRenderer(this.pixiApp.renderer);
           }
@@ -1545,13 +1545,13 @@ export class Studio extends EventEmitter<StudioEvents> {
         }
 
         // Optimized path for Caption: Use Texture directly
-        if (clip.type === 'Caption') {
+        if (clip.type === "Caption") {
           // Update caption highlighting based on current time before rendering
           (clip as Caption).updateState(relativeTime);
           const captionClip = clip as Caption;
           if (
             this.pixiApp?.renderer &&
-            typeof captionClip.setRenderer === 'function'
+            typeof captionClip.setRenderer === "function"
           ) {
             captionClip.setRenderer(this.pixiApp.renderer);
           }
@@ -1593,96 +1593,24 @@ export class Studio extends EventEmitter<StudioEvents> {
       }
     }
 
-    // Render global effects
+    // Render global effects sequence
     if (
-      this.activeGlobalEffect &&
+      this.activeGlobalEffects.length > 0 &&
       this.clipsNormalContainer &&
       this.clipsEffectContainer
     ) {
-      const { startTime, duration } = this.activeGlobalEffect;
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(Math.max(elapsed / duration, 0), 1);
-
-      if (progress > 0 && progress < 1) {
-        try {
-          for (const c of this.clips) {
-            this.moveClipToEffectContainer(c, false);
-          }
-
-          // Check if active effect is an Effect (Adjustment Layer)
-          const isAdjustmentLayer = this.clips.some(
-            (c) => c.id === this.activeGlobalEffect!.id && c instanceof Effect
-          );
-
-          for (const c of this.clips) {
-            let shouldApply = false;
-
-            if (isAdjustmentLayer) {
-              // Apply to all clips except the effect clip itself
-              // AND ensure the clip is on a track 'below' the effect track
-              // In typical timeline rendering:
-              // Track 0 (Top) -> Index 0
-              // Track N (Bottom) -> Index N
-              // 'Below' means Track Index > Effect Track Index
-              const effectTrackIndex =
-                this.activeGlobalEffect!.trackIndex ?? -1;
-              const clipTrackIndex = this.getTrackIndex(c.id);
-
-              shouldApply =
-                c.id !== this.activeGlobalEffect!.id &&
-                !(c instanceof Effect) &&
-                clipTrackIndex > effectTrackIndex;
-            } else {
-              const effects = (c as any).effects;
-              shouldApply =
-                Array.isArray(effects) &&
-                effects.some(
-                  (e: any) => e && e.id === this.activeGlobalEffect!.id
-                );
-            }
-
-            if (shouldApply) {
-              this.moveClipToEffectContainer(c, true);
-            }
-          }
-        } catch (err) {
-          console.warn(
-            'Failed to reparent clips for effect; falling back to full-scene render',
-            err
-          );
-        }
-
-        this.clipsNormalContainer.visible = true;
-        await this.applyGlobalEffectIfNeeded(timestamp);
-      } else {
-        for (const c of this.clips) {
-          try {
-            this.moveClipToEffectContainer(c, false);
-          } catch (err) {
-            // non-fatal
-          }
-        }
-
-        this.clipsNormalContainer.visible = true;
-        // Cleanup effect sprite if previously added
-        if (this.currentGlobalEffectSprite) {
-          if (this.currentGlobalEffectSprite.parent) {
-            this.currentGlobalEffectSprite.parent.removeChild(
-              this.currentGlobalEffectSprite
-            );
-          }
-          this.currentGlobalEffectSprite.destroy();
-          this.currentGlobalEffectSprite = null;
-        }
+      // 1. Reset all clips to Normal container first
+      for (const c of this.clips) {
+        this.moveClipToEffectContainer(c, false);
       }
+
+      this.clipsNormalContainer.visible = true;
+      await this.applyGlobalEffects(timestamp);
     } else {
+      // No active global effects
       if (this.clipsNormalContainer) {
         for (const c of this.clips) {
-          try {
-            this.moveClipToEffectContainer(c, false);
-          } catch (err) {
-            /* ignore */
-          }
+          this.moveClipToEffectContainer(c, false);
         }
 
         this.clipsNormalContainer.visible = true;
@@ -1690,7 +1618,7 @@ export class Studio extends EventEmitter<StudioEvents> {
         if (this.currentGlobalEffectSprite) {
           if (this.currentGlobalEffectSprite.parent) {
             this.currentGlobalEffectSprite.parent.removeChild(
-              this.currentGlobalEffectSprite
+              this.currentGlobalEffectSprite,
             );
           }
           this.currentGlobalEffectSprite.destroy();
@@ -1734,8 +1662,8 @@ export class Studio extends EventEmitter<StudioEvents> {
           }
         } catch (err) {
           console.warn(
-            'moveClipToEffectContainer: could not remove root from parent',
-            err
+            "moveClipToEffectContainer: could not remove root from parent",
+            err,
           );
         }
         target.addChild(root);
@@ -1754,8 +1682,8 @@ export class Studio extends EventEmitter<StudioEvents> {
         }
       } catch (err) {
         console.warn(
-          'moveClipToEffectContainer: could not remove transSprite from parent',
-          err
+          "moveClipToEffectContainer: could not remove transSprite from parent",
+          err,
         );
       }
       target.addChild(transSprite);
@@ -1769,7 +1697,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       duration?: number;
       id?: string;
     },
-    clips: IClip[]
+    clips: IClip[],
   ): string {
     const id =
       options.id ||
@@ -1808,7 +1736,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   public async getTransitionFromFrame(
     clip: IClip,
-    timestamp: number
+    timestamp: number,
   ): Promise<ImageBitmap | null | Texture> {
     let prevClip: IClip | null = null;
 
@@ -1830,7 +1758,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     const prevClipDuration = prevClip.duration > 0 ? prevClip.duration : 0;
     const prevRelativeTime = Math.max(
       0,
-      Math.min(timestamp - prevClip.display.from, prevClipDuration)
+      Math.min(timestamp - prevClip.display.from, prevClipDuration),
     );
 
     const { video } = await prevClip.getFrame(prevRelativeTime);
@@ -1848,7 +1776,7 @@ export class Studio extends EventEmitter<StudioEvents> {
             c.id !== clip.id &&
             this.getTrackIndex(c.id) === trackIndex &&
             c.display.from < clip.display.from &&
-            (c instanceof Video || c instanceof Image)
+            (c instanceof Video || c instanceof Image),
         )
         .sort((a, b) => b.display.to - a.display.to)[0] || null
     );
@@ -1860,14 +1788,14 @@ export class Studio extends EventEmitter<StudioEvents> {
   private renderClipToTransitionTexture(
     clip: IClip,
     frame: ImageBitmap | Texture,
-    target: RenderTexture
+    target: RenderTexture,
   ): void {
     if (!this.pixiApp) return;
 
     // 1. Render Clip Frame with its current transforms and CLEAR the target
     // We use a temporary sprite for this to avoid disrupting the main scene's sprites
     const tempSprite = new Sprite(
-      frame instanceof Texture ? frame : Texture.from(frame)
+      frame instanceof Texture ? frame : Texture.from(frame),
     );
 
     // Apply transforms similar to PixiSpriteRenderer.applySpriteTransforms
@@ -1887,10 +1815,10 @@ export class Studio extends EventEmitter<StudioEvents> {
         ? Math.abs(clip.height) / textureHeight
         : 1;
 
-    if (clip.flip === 'horizontal') {
+    if (clip.flip === "horizontal") {
       tempSprite.scale.x = -baseScaleX;
       tempSprite.scale.y = baseScaleY;
-    } else if (clip.flip === 'vertical') {
+    } else if (clip.flip === "vertical") {
       tempSprite.scale.x = baseScaleX;
       tempSprite.scale.y = -baseScaleY;
     } else {
@@ -1924,18 +1852,16 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   private updateActiveGlobalEffect(currentTime: number): void {
-    let candidate: ActiveGlobalEffect | null = null;
+    const active: ActiveGlobalEffect[] = [];
 
     // 1. Check for Effect instances (Adjustment Layer)
-    // These take precedence and apply to all clips below them (conceptually)
-    // For now, we just pick the first active Effect
     for (const clip of this.clips) {
       if (
         clip instanceof Effect &&
         currentTime >= clip.display.from &&
         (clip.display.to === 0 || currentTime < clip.display.to)
       ) {
-        candidate = {
+        active.push({
           id: clip.id,
           key: (clip as Effect).effect.key,
           startTime: clip.display.from,
@@ -1944,37 +1870,37 @@ export class Studio extends EventEmitter<StudioEvents> {
               ? clip.duration
               : clip.display.to - clip.display.from,
           trackIndex: this.getTrackIndex(clip.id),
-        };
-        break;
+        });
       }
     }
 
-    // 2. Fallback to legacy globalEffects map if no Effect found
-    if (!candidate) {
-      for (const effect of this.globalEffects.values()) {
-        const endTime = effect.startTime + effect.duration;
-        if (currentTime >= effect.startTime && currentTime < endTime) {
-          candidate = {
-            id: effect.id,
-            key: effect.key,
-            startTime: effect.startTime,
-            duration: effect.duration,
-            trackIndex: -1, // Global effects apply to everything
-          };
-          break;
-        }
+    // 2. Add legacy globalEffects map if they match the time
+    for (const effect of this.globalEffects.values()) {
+      const endTime = effect.startTime + effect.duration;
+      if (currentTime >= effect.startTime && currentTime < endTime) {
+        active.push({
+          id: effect.id,
+          key: effect.key,
+          startTime: effect.startTime,
+          duration: effect.duration,
+          trackIndex: -1, // Global effects apply to everything
+        });
       }
     }
 
-    this.activeGlobalEffect = candidate;
+    // Sort by track index descending (bottom tracks first)
+    // Legacy global effects (trackIndex: -1) go first as they are "below" everything
+    this.activeGlobalEffects = active.sort(
+      (a, b) => (b.trackIndex ?? -1) - (a.trackIndex ?? -1),
+    );
   }
 
-  private async applyGlobalEffectIfNeeded(timestamp: number): Promise<void> {
-    // Clear previous effect sprite
+  private async applyGlobalEffects(timestamp: number): Promise<void> {
+    // 1. Cleanup previous final effect sprite
     if (this.currentGlobalEffectSprite) {
       if (this.currentGlobalEffectSprite.parent) {
         this.currentGlobalEffectSprite.parent.removeChild(
-          this.currentGlobalEffectSprite
+          this.currentGlobalEffectSprite,
         );
       }
       this.currentGlobalEffectSprite.destroy();
@@ -1982,87 +1908,123 @@ export class Studio extends EventEmitter<StudioEvents> {
     }
 
     if (
-      !this.activeGlobalEffect ||
+      this.activeGlobalEffects.length === 0 ||
       !this.pixiApp ||
       !this.clipContainer ||
-      !this.artboard ||
       !this.clipsNormalContainer ||
       !this.clipsEffectContainer
     )
       return;
 
-    const { key, startTime, duration } = this.activeGlobalEffect;
-    // ... logic checks ...
-    const elapsed = timestamp - startTime;
-    const progress = Math.min(Math.max(elapsed / duration, 0), 1);
-    if (progress <= 0 || progress >= 1) return;
-    this.clipsEffectContainer.visible = true;
-    let effectFilter = this.effectFilters.get(key);
-
-    if (!effectFilter) {
-      try {
-        effectFilter = makeEffect({
-          name: key.toLowerCase() as any,
-          renderer: this.pixiApp.renderer,
-        });
-        if (effectFilter) {
-          this.effectFilters.set(key, effectFilter);
-        } else {
-          return;
-        }
-      } catch (err) {
-        console.error(err);
-        return;
-      }
-    }
     const width = this.opts.width;
     const height = this.opts.height;
+    let lastResultTexture: Texture | null = null;
+    let processedClips = new Set<string>();
 
-    const renderTexture = RenderTexture.create({
-      width: width,
-      height: height,
-    });
+    // Intermediate textures for chain
+    const intermediateTextures: RenderTexture[] = [];
 
-    this.pixiApp.renderer.render({
-      container: this.clipsEffectContainer,
-      target: renderTexture,
-      clear: true,
-    });
-    this.clipsEffectContainer.visible = false;
+    for (const effect of this.activeGlobalEffects) {
+      const { key, startTime, duration, trackIndex } = effect;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(Math.max(elapsed / duration, 0), 1);
 
-    const resultTexture = effectFilter.render({
-      canvasTexture: renderTexture,
-      progress,
-      width,
-      height,
-    });
+      if (progress <= 0 || progress >= 1) continue;
 
-    const effectSprite = new Sprite(resultTexture);
-    // Since we add to clipContainer (which matches Artboard/Clip coordinate space),
-    // we should be at 0,0 locally. No need for global Artboard position.
-    // clipContainer is a child of Artboard.
-    effectSprite.x = 0;
-    effectSprite.y = 0;
-    effectSprite.width = width;
-    effectSprite.height = height;
-    // clipContainer inherits Artboard scale? No, clipContainer is child of Artboard.
-    // Artboard is scaled to fit screen. clipContainer is 1:1 inside Artboard.
-    // So scale should simply be 1?
-    // Wait, earlier code set it to this.scale (which is Artboard scale).
-    // If we add to postProcessContainer (global/stage), we need Artboard scale.
-    // If we add to clipContainer, we inherit Artboard scale automatically.
-    // So scale should include resolution or such?
-    // Generally if texture is WxH and we want it to cover WxH in clipContainer, scale 1 is correct.
-    effectSprite.scale.set(1);
+      // Ensure effect container is ready for this pass
+      this.clipsEffectContainer.visible = true;
+      this.clipsEffectContainer.removeChildren();
 
-    // Set z-index to be between background (lowest) and Normal Clips (highest)
-    // clipContainer has sortableChildren=true
-    effectSprite.zIndex = 5;
+      // If we have a previous result, add it bottom-most in the container
+      if (lastResultTexture) {
+        const prevSprite = new Sprite(lastResultTexture);
+        prevSprite.label = "PrevEffectResult";
+        prevSprite.width = width;
+        prevSprite.height = height;
+        this.clipsEffectContainer.addChild(prevSprite);
+      }
 
-    this.clipContainer.addChild(effectSprite);
-    this.currentGlobalEffectSprite = effectSprite;
+      // Add clips that belong to this effect (below it)
+      const effectTrackIndex = trackIndex ?? -1;
+      for (const c of this.clips) {
+        if (processedClips.has(c.id)) continue;
 
-    renderTexture.destroy(true);
+        const clipTrackIndex = this.getTrackIndex(c.id);
+
+        // Check if clip is an adjustment layer itself
+        const isEffectClip = c instanceof Effect;
+
+        // Clip should be moved if it's below the current effect track
+        // OR if it's a legacy effect (trackIndex -1) and we are processing it (but legacy usually apply to all)
+        if (
+          !isEffectClip &&
+          (effectTrackIndex === -1 || clipTrackIndex > effectTrackIndex)
+        ) {
+          this.moveClipToEffectContainer(c, true);
+          processedClips.add(c.id);
+        }
+      }
+
+      // Apply effect filter
+      let effectFilter = this.effectFilters.get(key);
+      if (!effectFilter) {
+        try {
+          effectFilter = makeEffect({
+            name: key.toLowerCase() as any,
+            renderer: this.pixiApp.renderer,
+          });
+          if (effectFilter) {
+            this.effectFilters.set(key, effectFilter);
+          } else {
+            continue;
+          }
+        } catch (err) {
+          console.error(err);
+          continue;
+        }
+      }
+
+      const inputTexture = RenderTexture.create({ width, height });
+      intermediateTextures.push(inputTexture);
+
+      this.pixiApp.renderer.render({
+        container: this.clipsEffectContainer,
+        target: inputTexture,
+        clear: true,
+      });
+
+      const resultTexture = effectFilter.render({
+        canvasTexture: inputTexture,
+        progress,
+        width,
+        height,
+      });
+
+      // Hide input clips from this container after rendering to texture
+      this.clipsEffectContainer.visible = false;
+
+      lastResultTexture = resultTexture;
+    }
+
+    // Final composition
+    if (lastResultTexture) {
+      const effectSprite = new Sprite(lastResultTexture);
+      effectSprite.x = 0;
+      effectSprite.y = 0;
+      effectSprite.width = width;
+      effectSprite.height = height;
+      effectSprite.scale.set(1);
+      effectSprite.zIndex = 5;
+
+      this.clipContainer.addChild(effectSprite);
+      this.currentGlobalEffectSprite = effectSprite;
+    }
+
+    // Cleanup input textures (but resultTexture might be used as input for NEXT frame or pass)
+    // Actually, resultTexture from makeEffect is usually managed by the filter or temporary for this frame.
+    for (const tex of intermediateTextures) {
+      tex.destroy(true);
+    }
   }
 
   /**
@@ -2070,7 +2032,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   destroy(): void {
     if (this.destroyed) return;
-    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener("resize", this.handleResize);
     this.destroyed = true;
     this.stop();
     this.clear();

@@ -6,32 +6,32 @@ import {
   Sprite,
   Texture,
   Graphics,
-} from 'pixi.js';
-import { makeEffect } from './effect/effect';
+} from "pixi.js";
+import { makeEffect } from "./effect/effect";
 import {
   DEFAULT_AUDIO_CONF,
   getDefaultAudioConf,
   type IClip,
   Effect,
   Transition,
-} from './clips';
-import { recodemux } from 'wrapbox';
-import { Log } from './utils/log';
-import { file2stream } from './utils/stream-utils';
-import EventEmitter from './event-emitter';
-import { PixiSpriteRenderer } from './sprite/pixi-sprite-renderer';
-import { parseColor } from './utils/color';
-import { sleep } from './utils';
+} from "./clips";
+import { recodemux } from "wrapbox";
+import { Log } from "./utils/log";
+import { file2stream } from "./utils/stream-utils";
+import EventEmitter from "./event-emitter";
+import { PixiSpriteRenderer } from "./sprite/pixi-sprite-renderer";
+import { parseColor } from "./utils/color";
+import { sleep } from "./utils";
 import {
   clipToJSON,
   jsonToClip,
   type ClipJSON,
   type ProjectJSON,
   type GlobalTransitionJSON as TransitionJSON,
-} from './json-serialization';
-import { Video } from './clips/video-clip';
-import { Image } from './clips/image-clip';
-import { makeTransition } from './transition/transition';
+} from "./json-serialization";
+import { Video } from "./clips/video-clip";
+import { Image } from "./clips/image-clip";
+import { makeTransition } from "./transition/transition";
 
 export interface ICompositorOpts {
   width?: number;
@@ -100,7 +100,7 @@ export class Compositor extends EventEmitter<{
       width?: number;
       height?: number;
       bitrate?: number;
-    } = {}
+    } = {},
   ): Promise<boolean> {
     return (
       (self.OffscreenCanvas != null &&
@@ -112,7 +112,7 @@ export class Compositor extends EventEmitter<{
         self.AudioData != null &&
         ((
           await self.VideoEncoder.isConfigSupported({
-            codec: args.videoCodec ?? 'avc1.42E032',
+            codec: args.videoCodec ?? "avc1.42E032",
             width: args.width ?? 1920,
             height: args.height ?? 1080,
             bitrate: args.bitrate ?? 7e6,
@@ -159,23 +159,23 @@ export class Compositor extends EventEmitter<{
 
     this.opts = Object.assign(
       {
-        bgColor: '#000',
+        bgColor: "#000",
         width: 0,
         height: 0,
-        videoCodec: 'avc1.42E032',
+        videoCodec: "avc1.42E032",
         audio: true,
         bitrate: 5e6,
         fps: 30,
         metaDataTags: null,
       },
-      opts
+      opts,
     );
 
     this.hasVideoTrack = width * height > 0;
 
     // Initialize codec detection early
     getDefaultAudioConf().catch((err) => {
-      this.logger.warn('Failed to detect audio codec:', err);
+      this.logger.warn("Failed to detect audio codec:", err);
     });
   }
 
@@ -190,19 +190,19 @@ export class Compositor extends EventEmitter<{
       antialias: false,
       autoDensity: false,
       resolution: 1,
-      preference: 'webgl', // Force WebGL to avoid WebGPU overhead/failures in Docker
+      preference: "webgl", // Force WebGL to avoid WebGPU overhead/failures in Docker
     });
 
     // Verify that the app is fully initialized
     if (this.pixiApp.renderer == null || this.pixiApp.stage == null) {
-      throw new Error('Pixi.js Application failed to initialize properly');
+      throw new Error("Pixi.js Application failed to initialize properly");
     }
 
     // Stop the ticker - we manually call render() in the compositor
     // This prevents the ticker from trying to render after cleanup
     try {
       const anyApp = this.pixiApp as any;
-      if (anyApp.ticker && typeof anyApp.ticker.stop === 'function') {
+      if (anyApp.ticker && typeof anyApp.ticker.stop === "function") {
         anyApp.ticker.stop();
       }
     } catch (e) {
@@ -230,7 +230,7 @@ export class Compositor extends EventEmitter<{
       playbackRate: clip.playbackRate,
       zIndex: clip.zIndex,
     };
-    this.logger.info('Compositor add clip', logAttrs);
+    this.logger.info("Compositor add clip", logAttrs);
 
     const cloned = await clip.clone();
 
@@ -238,17 +238,17 @@ export class Compositor extends EventEmitter<{
     if (
       this.pixiApp != null &&
       this.pixiApp.renderer != null &&
-      typeof cloned.setRenderer === 'function'
+      typeof cloned.setRenderer === "function"
     ) {
       cloned.setRenderer(this.pixiApp.renderer);
     }
 
-    this.logger.info('Compositor add clip ready');
+    this.logger.info("Compositor add clip ready");
     this.sprites.push(
       Object.assign(cloned, {
         main: opts.main ?? false,
         expired: false,
-      })
+      }),
     );
     this.sprites.sort((a, b) => a.zIndex - b.zIndex);
   }
@@ -260,7 +260,7 @@ export class Compositor extends EventEmitter<{
     // Check if any sprites actually have video capabilities (width > 0 && height > 0)
     // This handles cases where width/height are set but all sprites are audio-only
     const hasVideoSprites = this.sprites.some(
-      (sprite) => sprite.width > 0 && sprite.height > 0
+      (sprite) => sprite.width > 0 && sprite.height > 0,
     );
 
     // Only create video track if we have video track configured AND we have video sprites
@@ -297,7 +297,7 @@ export class Compositor extends EventEmitter<{
    * @param opts.maxTime Maximum duration allowed for output video, content exceeding this will be ignored
    */
   output(opts: { maxTime?: number } = {}): ReadableStream<Uint8Array> {
-    if (this.sprites.length === 0) throw Error('No sprite added');
+    if (this.sprites.length === 0) throw Error("No sprite added");
 
     const mainSprite = this.sprites.find((it) => it.main);
     // Max time: prefer main sprite, otherwise use maximum value
@@ -315,13 +315,13 @@ export class Compositor extends EventEmitter<{
 
     if (maxTime === Infinity || maxTime <= 0) {
       throw Error(
-        'Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio'
+        "Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio",
       );
     }
     // Main video's (main) videoTrack duration value is 0
     if (maxTime === -1) {
       this.logger.warn(
-        "Unable to determine the end time, process value don't update"
+        "Unable to determine the end time, process value don't update",
       );
     }
 
@@ -330,20 +330,20 @@ export class Compositor extends EventEmitter<{
     let startTime = performance.now();
     const stopMuxer = this.runEncoding(muxer, maxTime, {
       onProgress: (prog) => {
-        this.logger.debug('OutputProgress:', prog);
-        this.emit('OutputProgress', prog);
+        this.logger.debug("OutputProgress:", prog);
+        this.emit("OutputProgress", prog);
       },
       onEnded: async () => {
         await muxer.flush();
         this.logger.info(
-          '===== output ended =====, cost:',
-          performance.now() - startTime
+          "===== output ended =====, cost:",
+          performance.now() - startTime,
         );
-        this.emit('OutputProgress', 1);
+        this.emit("OutputProgress", 1);
         this.destroy();
       },
       onError: (err) => {
-        this.emit('error', err);
+        this.emit("error", err);
         closeOutStream(err);
         this.destroy();
       },
@@ -357,7 +357,7 @@ export class Compositor extends EventEmitter<{
     const { stream, stop: closeOutStream } = file2stream(
       muxer.mp4file,
       500,
-      this.destroy
+      this.destroy,
     );
 
     return stream;
@@ -371,8 +371,8 @@ export class Compositor extends EventEmitter<{
     this.destroyed = true;
 
     this.stopOutput?.();
-    this.off('OutputProgress');
-    this.off('error');
+    this.off("OutputProgress");
+    this.off("error");
 
     // Clean up Pixi.js resources
     if (this.pixiApp != null) {
@@ -384,7 +384,7 @@ export class Compositor extends EventEmitter<{
           return;
         }
         // Stop ticker if present
-        if (anyApp.ticker && typeof anyApp.ticker.stop === 'function') {
+        if (anyApp.ticker && typeof anyApp.ticker.stop === "function") {
           try {
             anyApp.ticker.stop();
           } catch (e) {
@@ -405,7 +405,7 @@ export class Compositor extends EventEmitter<{
       } catch (err) {
         // Swallow errors during destroy - context may be lost or already destroyed
         // eslint-disable-next-line no-console
-        console.warn('Error while destroying Pixi application:', err);
+        console.warn("Error while destroying Pixi application:", err);
       } finally {
         this.pixiApp = null;
       }
@@ -423,7 +423,7 @@ export class Compositor extends EventEmitter<{
       onProgress: (prog: number) => void;
       onEnded: () => Promise<void>;
       onError: (err: Error) => void;
-    }
+    },
   ): () => void {
     let progress = 0;
     const aborter = { aborted: false };
@@ -436,7 +436,7 @@ export class Compositor extends EventEmitter<{
 
       // Check if any sprites actually have video capabilities
       const hasVideoSprites = this.sprites.some(
-        (sprite) => sprite.width > 0 && sprite.height > 0
+        (sprite) => sprite.width > 0 && sprite.height > 0,
       );
 
       renderSprites = createSpritesRender({
@@ -540,7 +540,7 @@ export class Compositor extends EventEmitter<{
               c.id !== clip.id &&
               c.zIndex === clip.zIndex &&
               c.display.from < clip.display.from &&
-              (c instanceof Video || c instanceof Image)
+              (c instanceof Video || c instanceof Image),
           )
           .sort((a, b) => b.display.to - a.display.to)[0];
 
@@ -657,11 +657,11 @@ function createSpritesRender(opts: {
   const getClipFrameAtTimestamp = async (
     clip: IClip,
     timestamp: number,
-    getFrameCached: (clip: IClip, timestamp: number) => Promise<any>
+    getFrameCached: (clip: IClip, timestamp: number) => Promise<any>,
   ) => {
     const relTime = Math.max(
       0,
-      Math.min(timestamp - clip.display.from, clip.duration)
+      Math.min(timestamp - clip.display.from, clip.duration),
     );
     const { video } = await getFrameCached(clip, relTime);
     return video;
@@ -671,7 +671,7 @@ function createSpritesRender(opts: {
     clip: IClip,
     // Example: new Image(imageBitmap), or Texture
     frame: ImageBitmap | Texture,
-    target: RenderTexture
+    target: RenderTexture,
   ) => {
     if (!pixiApp) return;
 
@@ -684,7 +684,7 @@ function createSpritesRender(opts: {
 
     // 2. Render Clip Frame
     const tempSprite = new Sprite(
-      frame instanceof Texture ? frame : Texture.from(frame)
+      frame instanceof Texture ? frame : Texture.from(frame),
     );
 
     tempSprite.x = clip.center.x;
@@ -701,10 +701,10 @@ function createSpritesRender(opts: {
         ? Math.abs(clip.height) / textureHeight
         : 1;
 
-    if (clip.flip === 'horizontal') {
+    if (clip.flip === "horizontal") {
       tempSprite.scale.x = -baseScaleX;
       tempSprite.scale.y = baseScaleY;
-    } else if (clip.flip === 'vertical') {
+    } else if (clip.flip === "vertical") {
       tempSprite.scale.x = baseScaleX;
       tempSprite.scale.y = -baseScaleY;
     } else {
@@ -727,7 +727,7 @@ function createSpritesRender(opts: {
         -textureHeight / 2,
         textureWidth,
         textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2)
+        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
       );
       maskGraphics.fill({ color: 0xffffff, alpha: 1 });
       tempSprite.addChild(maskGraphics);
@@ -756,14 +756,14 @@ function createSpritesRender(opts: {
           -textureHeight / 2,
           textureWidth,
           textureHeight,
-          r
+          r,
         );
       } else {
         strokeGraphics.rect(
           -textureWidth / 2,
           -textureHeight / 2,
           textureWidth,
-          textureHeight
+          textureHeight,
         );
       }
       strokeGraphics.stroke();
@@ -790,14 +790,14 @@ function createSpritesRender(opts: {
           -textureHeight / 2 + dy,
           textureWidth,
           textureHeight,
-          r
+          r,
         );
       } else {
         shadowGraphics.rect(
           -textureWidth / 2 + dx,
           -textureHeight / 2 + dy,
           textureWidth,
-          textureHeight
+          textureHeight,
         );
       }
       shadowGraphics.fill({ color, alpha });
@@ -919,24 +919,24 @@ function createSpritesRender(opts: {
               const fromFrame = await getClipFrameAtTimestamp(
                 fromClip,
                 timestamp,
-                getFrameCached
+                getFrameCached,
               );
               const toFrame = await getClipFrameAtTimestamp(
                 toClip,
                 timestamp,
-                getFrameCached
+                getFrameCached,
               );
 
               if (fromFrame && toFrame) {
                 const progress = Math.min(
                   Math.max(relativeTime / sprite.duration, 0),
-                  1
+                  1,
                 );
 
                 renderClipToTransitionTexture(
                   fromClip,
                   fromFrame,
-                  transFromTexture
+                  transFromTexture,
                 );
                 renderClipToTransitionTexture(toClip, toFrame, transToTexture);
 
@@ -998,7 +998,7 @@ function createSpritesRender(opts: {
           renderer = new PixiSpriteRenderer(
             pixiApp,
             sprite,
-            clipsNormalContainer
+            clipsNormalContainer,
           );
           spriteRenderers.set(sprite, renderer);
         }
@@ -1051,49 +1051,50 @@ function createSpritesRender(opts: {
       clipsNormalContainer != null &&
       postProcessContainer != null
     ) {
-      // 1. Identify active Global Effect
-      let activeEffect: {
+      // 1. Collect all active global and adjustment layer effects
+      const activeGlobalEffects: Array<{
         id: string;
         key: string;
         startTime: number;
         duration: number;
-      } | null = null;
+        zIndex: number;
+      }> = [];
 
-      // Scan for Effect first (Adjustment Layer)
       for (const sprite of sprites) {
         if (sprite instanceof Effect) {
           if (
             timestamp >= sprite.display.from &&
             timestamp < sprite.display.from + sprite.duration
           ) {
-            activeEffect = {
+            activeGlobalEffects.push({
               id: sprite.id,
               key: (sprite as Effect).effect.key,
               startTime: sprite.display.from,
               duration: sprite.duration,
-            };
-            break;
+              zIndex: sprite.zIndex,
+            });
+          }
+        }
+
+        // Check for attached effects (legacy)
+        if (sprite.effects && sprite.effects.length > 0) {
+          for (const effect of sprite.effects) {
+            if (
+              timestamp >= effect.startTime &&
+              timestamp < effect.startTime + effect.duration
+            ) {
+              // Attached effects use the clip's zIndex for sorting
+              activeGlobalEffects.push({
+                ...effect,
+                zIndex: sprite.zIndex,
+              });
+            }
           }
         }
       }
 
-      // Fallback: Scan clips for attached effects if no Effect found
-      if (!activeEffect) {
-        for (const sprite of sprites) {
-          if (sprite.effects && sprite.effects.length > 0) {
-            for (const effect of sprite.effects) {
-              if (
-                timestamp >= effect.startTime &&
-                timestamp < effect.startTime + effect.duration
-              ) {
-                activeEffect = effect;
-                break;
-              }
-            }
-          }
-          if (activeEffect) break;
-        }
-      }
+      // 2. Sort effects bottom-up by zIndex
+      activeGlobalEffects.sort((a, b) => a.zIndex - b.zIndex);
 
       // Clean post process container
       postProcessContainer.removeChildren();
@@ -1102,121 +1103,124 @@ function createSpritesRender(opts: {
       for (const renderer of spriteRenderers.values()) {
         const root = renderer.getRoot();
         if (root && root.parent !== clipsNormalContainer) {
-          // Remove from old parent first to be safe
           if (root.parent) (root.parent as Container).removeChild(root);
           clipsNormalContainer.addChild(root);
         }
       }
 
-      if (activeEffect) {
-        const { key, startTime, duration, id } = activeEffect;
-        const elapsed = timestamp - startTime;
-        const progress =
-          duration > 0 ? Math.min(Math.max(elapsed / duration, 0), 1) : 0;
+      if (activeGlobalEffects.length > 0) {
+        const width = pixiApp.renderer.width;
+        const height = pixiApp.renderer.height;
 
-        // Check if this is an Adjustment Layer Effect (from Effect)
-        // If the ID matches a sprite ID in our list that is an Effect, then it is.
-        const isAdjustmentLayer = sprites.some(
-          (s) => s.id === id && s instanceof Effect
-        );
+        let lastResultTexture: Texture | null = null;
+        const processedClips = new Set<string>();
+        const intermediateTextures: RenderTexture[] = [];
 
-        // Move affected clips to effect container
-        for (const sprite of sprites) {
-          let shouldApply = false;
+        for (const effect of activeGlobalEffects) {
+          const { key, startTime, duration, id, zIndex } = effect;
+          const elapsed = timestamp - startTime;
+          const progress =
+            duration > 0 ? Math.min(Math.max(elapsed / duration, 0), 1) : 0;
 
-          if (isAdjustmentLayer) {
-            // Apply to all clips except the effect clip itself
-            // And maybe except other effect clips?
-            shouldApply = sprite.id !== id && !(sprite instanceof Effect);
-          } else {
-            // Legacy: Only apply if clip explicitly has this effect attached
-            shouldApply =
-              !!sprite.effects && sprite.effects.some((e) => e.id === id);
+          // Check if this is an Adjustment Layer Effect
+          const isAdjustmentLayer = sprites.some(
+            (s) => s.id === id && s instanceof Effect,
+          );
+
+          clipsEffectContainer.removeChildren();
+
+          // If we have a previous result, add it bottom-most
+          if (lastResultTexture) {
+            const prevSprite = new Sprite(lastResultTexture);
+            prevSprite.width = width;
+            prevSprite.height = height;
+            clipsEffectContainer.addChild(prevSprite);
           }
 
-          if (shouldApply) {
-            const renderer = spriteRenderers.get(sprite);
-            if (renderer) {
-              const root = renderer.getRoot();
-              if (root) {
-                if (root.parent) (root.parent as Container).removeChild(root);
-                clipsEffectContainer.addChild(root);
+          // Move affected clips that are BELOW this effect layer
+          for (const sprite of sprites) {
+            if (processedClips.has(sprite.id)) continue;
+
+            let shouldApply = false;
+            if (isAdjustmentLayer) {
+              // Apply to clips below this effect's zIndex
+              shouldApply = sprite.id !== id && sprite.zIndex < zIndex;
+            } else {
+              // Legacy attached effect
+              shouldApply =
+                !!sprite.effects && sprite.effects.some((e) => e.id === id);
+            }
+
+            if (shouldApply) {
+              const renderer = spriteRenderers.get(sprite);
+              if (renderer) {
+                const root = renderer.getRoot();
+                if (root) {
+                  if (root.parent) (root.parent as Container).removeChild(root);
+                  clipsEffectContainer.addChild(root);
+                  processedClips.add(sprite.id);
+                }
+              }
+            }
+          }
+
+          if (clipsEffectContainer.children.length > 0) {
+            let effectCached = effectCache.get(id);
+            if (!effectCached) {
+              try {
+                const res = makeEffect({
+                  name: key as any,
+                  renderer: pixiApp.renderer,
+                });
+                if (res && res.filter) {
+                  effectCached = { filter: res.filter, render: res.render };
+                  effectCache.set(id, effectCached);
+                }
+              } catch (e) {
+                console.warn("Failed to create effect", key, e);
+              }
+            }
+
+            if (effectCached) {
+              const { filter, render } = effectCached;
+              if (filter.resources && filter.resources.effectUniforms) {
+                filter.resources.effectUniforms.uniforms.uTime = progress;
+              }
+
+              const inputTexture = RenderTexture.create({ width, height });
+              intermediateTextures.push(inputTexture);
+
+              clipsEffectContainer.visible = true;
+              pixiApp.renderer.render({
+                container: clipsEffectContainer,
+                target: inputTexture,
+                clear: true,
+              });
+              clipsEffectContainer.visible = false;
+
+              if (render) {
+                const resultTexture = render({
+                  canvasTexture: inputTexture,
+                  progress,
+                  width,
+                  height,
+                });
+                lastResultTexture = resultTexture;
               }
             }
           }
         }
 
-        // If we have clips in effect container, render them
-        // If we have clips in effect container, render them
-        if (clipsEffectContainer.children.length > 0) {
-          // Get effect from cache
-          let effect = effectCache.get(id);
-          if (!effect) {
-            try {
-              const res = makeEffect({
-                name: key as any,
-                renderer: pixiApp.renderer,
-              });
-              if (res && res.filter) {
-                effect = { filter: res.filter, render: res.render };
-                effectCache.set(id, effect);
-              }
-            } catch (e) {
-              console.warn('Failed to create effect', key, e);
-            }
-          }
+        if (lastResultTexture) {
+          const resultSprite = new Sprite(lastResultTexture);
+          resultSprite.width = width;
+          resultSprite.height = height;
+          postProcessContainer.addChild(resultSprite);
+        }
 
-          if (effect) {
-            const { filter, render } = effect;
-
-            // Update uTime
-            if (filter.resources && filter.resources.effectUniforms) {
-              filter.resources.effectUniforms.uniforms.uTime = progress;
-            }
-
-            // Render clips to temporary texture
-            const width = pixiApp.renderer.width;
-            const height = pixiApp.renderer.height;
-            const renderTexture = RenderTexture.create({ width, height });
-
-            clipsEffectContainer.visible = true; // Make visible for render
-            pixiApp.renderer.render({
-              container: clipsEffectContainer,
-              target: renderTexture,
-              clear: true,
-            });
-            clipsEffectContainer.visible = false; // Hide again
-
-            // Apply filter using effect.render helper
-            if (render) {
-              const resultTexture = render({
-                canvasTexture: renderTexture,
-                progress,
-                width,
-                height,
-              });
-
-              // Create sprite from result and add to postProcessContainer
-              const resultSprite = new Sprite(resultTexture);
-              resultSprite.width = width;
-              resultSprite.height = height;
-              postProcessContainer.addChild(resultSprite);
-
-              // Cleanup is handled by Pixi/GC mostly, but intermediate textures might need care?
-              // renderTexture is consumed by effect.render usually?
-              // Check makeEffect implementation: it typically uses canvasTexture as input.
-              // We should probably destroy renderTexture after use if it's not cached?
-              // But effect.render might be async or holding reference? No, it's synchronous usually.
-              // renderTexture.destroy(true) might be safe if resultTexture is a different texture.
-              // But if effect just returns input texture, don't destroy.
-              // Usually effects create a NEW texture or swap.
-              // For now let's rely on GC or explicit destroy if we see leaks.
-              // Actually, Compositor runs for a while. Leaking textures every frame is BAD.
-              // We must verify if makeEffect destroys input.
-              // Assuming we should destroy renderTexture if it was copied.
-              // But wait, renderTexture is passed to render().
-            }
-          }
+        // Cleanup intermediate textures to avoid memory leaks
+        for (const tex of intermediateTextures) {
+          tex.destroy(true);
         }
       }
     }
@@ -1299,8 +1303,8 @@ function createAVEncoder(opts: {
         // If canvas is not ready, skip this frame
         // This can happen if the canvas hasn't been rendered to yet
         console.warn(
-          'Failed to create VideoFrame from canvas, skipping frame:',
-          err
+          "Failed to create VideoFrame from canvas, skipping frame:",
+          err,
         );
       }
     }
@@ -1335,9 +1339,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
           numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
           numberOfFrames: framesPerChunk,
           sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-          format: 'f32',
+          format: "f32",
           data: channelBuf.subarray(readPos, readPos + dataSize),
-        })
+        }),
       );
       readPos += dataSize;
       audioTimestamp += chunkDuration;
@@ -1353,9 +1357,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
           numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
           numberOfFrames: framesPerChunk,
           sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-          format: 'f32',
+          format: "f32",
           data: placeholderData,
-        })
+        }),
       );
       audioTimestamp += chunkDuration;
     }
