@@ -1175,8 +1175,6 @@ function createSpritesRender(opts: {
                   processedClips.add(sprite.id);
                 }
               }
-            } catch (e) {
-              console.warn("Failed to create effect", key, e);
             }
           }
 
