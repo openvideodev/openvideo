@@ -46,7 +46,7 @@ export function AnimationPropertiesPicker() {
   const clipDuration = clip?.duration || 0;
 
   const [activeTab, setActiveTab] = useState<string>("in");
-  const [preset, setPreset] = useState<string>(animation?.type || "fadeIn");
+  const [preset, setPreset] = useState<string>(animation?.type || "");
   const [presetParams, setPresetParams] = useState<any>({
     direction: "left",
     distance: 300,
@@ -54,7 +54,7 @@ export function AnimationPropertiesPicker() {
   });
   const [keyframes, setKeyframes] = useState<
     Record<string, Partial<AnimationProps>>
-  >({});
+  >(animation?.params || { "0%": {}, "100%": {} });
   const [duration, setDuration] = useState<number>(
     (animation?.options.duration || 1000000) / 1000,
   );
@@ -118,13 +118,13 @@ export function AnimationPropertiesPicker() {
     setActiveTab(tab);
     if (tab === "in") {
       setDelay(0);
-      setPreset("fadeIn");
+      setPreset("");
     } else if (tab === "out") {
       const newDelay = Math.max(0, clipDuration / 1000 - duration);
       setDelay(newDelay);
-      setPreset("fadeOut");
+      setPreset("");
     } else {
-      setPreset("custom");
+      setPreset("");
     }
   };
 
@@ -138,9 +138,14 @@ export function AnimationPropertiesPicker() {
 
   // Update keyframes only when preset or params change via UI
   useEffect(() => {
-    if (preset !== "custom") {
+    if (preset !== "custom" && preset !== "") {
       const template = getPresetTemplate(preset, presetParams);
       setKeyframes(template);
+    } else if (
+      preset === "" ||
+      (preset === "custom" && Object.keys(keyframes).length === 0)
+    ) {
+      setKeyframes({ "0%": {}, "100%": {} });
     }
   }, [preset, presetParams]);
 
@@ -253,7 +258,7 @@ export function AnimationPropertiesPicker() {
       (finalParams as any).presetParams = filteredParams;
     }
 
-    const type = preset === "custom" ? "keyframes" : preset;
+    const type = preset === "custom" || preset === "" ? "keyframes" : preset;
 
     if (mode === "edit" && animationId) {
       clip.updateAnimation(animationId, type, opts, finalParams);
@@ -279,6 +284,17 @@ export function AnimationPropertiesPicker() {
     { label: "Fade In", value: "fadeIn" },
     { label: "Zoom In", value: "zoomIn" },
     { label: "Slide In", value: "slideIn" },
+    { label: "Blur In", value: "blurIn" },
+    { label: "Pulse", value: "pulse" },
+    { label: "Custom In 1", value: "customInPreset1" },
+    { label: "Custom In 2", value: "customInPreset2" },
+    { label: "Custom In 3", value: "customInPreset3" },
+    { label: "Custom In 4", value: "customInPreset4" },
+    { label: "Custom In 5", value: "customInPreset5" },
+    { label: "Custom In 6", value: "customInPreset6" },
+    { label: "Custom In 7", value: "customInPreset7" },
+    { label: "Custom In 8", value: "customInPreset8" },
+    { label: "Custom In 9", value: "customInPreset9" },
     ...(isTextLike
       ? [
           { label: "Char Fade In", value: "charFadeIn" },
@@ -292,6 +308,15 @@ export function AnimationPropertiesPicker() {
     { label: "Fade Out", value: "fadeOut" },
     { label: "Zoom Out", value: "zoomOut" },
     { label: "Slide Out", value: "slideOut" },
+    { label: "Blur Out", value: "blurOut" },
+    { label: "Pulse", value: "pulse" },
+    { label: "Custom Out 1", value: "customOutPreset1" },
+    { label: "Custom Out 2", value: "customOutPreset2" },
+    { label: "Custom Out 3", value: "customOutPreset3" },
+    { label: "Custom Out 4", value: "customOutPreset4" },
+    { label: "Custom Out 5", value: "customOutPreset5" },
+    { label: "Custom Out 6", value: "customOutPreset6" },
+    { label: "Custom Out 7", value: "customOutPreset7" },
   ];
 
   return (
@@ -334,9 +359,9 @@ export function AnimationPropertiesPicker() {
                 </label>
                 <Select value={preset} onValueChange={handlePresetChange}>
                   <SelectTrigger className="w-full h-9">
-                    <SelectValue />
+                    <SelectValue placeholder="Select a preset" />
                   </SelectTrigger>
-                  <SelectContent className="z-[250]">
+                  <SelectContent className="z-[250] h-60">
                     {activeTab === "in" &&
                       inPresets.map((p) => (
                         <SelectItem key={p.value} value={p.value}>
@@ -352,7 +377,14 @@ export function AnimationPropertiesPicker() {
                     {activeTab === "custom" && (
                       <>
                         <SelectItem value="custom">Keyframes Only</SelectItem>
-                        {[...inPresets, ...outPresets].map((p) => (
+                        {Array.from(
+                          new Map(
+                            [...inPresets, ...outPresets].map((p) => [
+                              p.value,
+                              p,
+                            ]),
+                          ).values(),
+                        ).map((p) => (
                           <SelectItem key={p.value} value={p.value}>
                             {p.label}
                           </SelectItem>

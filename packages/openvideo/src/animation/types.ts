@@ -8,6 +8,8 @@ export interface AnimationProps {
   scale?: number;
   opacity?: number;
   angle?: number;
+  blur?: number;
+  brightness?: number;
 }
 
 export interface AnimationOptions {
@@ -47,6 +49,8 @@ export interface AnimationTransform {
   scale?: number; // multiplier (relative to 1.0)
   opacity?: number; // multiplier (relative to 1.0)
   angle?: number; // additive offset
+  blur?: number; // additive offset
+  brightness?: number; // multiplier (relative to 1.0)
 }
 
 export interface KeyframeData {
@@ -61,4 +65,6 @@ export const ANIMATABLE_PROPERTIES = {
   scale: { label: "Scale", min: 0, max: 3, step: 0.1, default: 1 },
   opacity: { label: "Opacity", min: 0, max: 1, step: 0.01, default: 1 },
   angle: { label: "Rotation", min: -360, max: 360, step: 1, default: 0 },
+  blur: { label: "Blur", min: 0, max: 100, step: 1, default: 0 },
+  brightness: { label: "Brightness", min: 0, max: 5, step: 0.1, default: 1 },
 } as const;

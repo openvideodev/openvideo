@@ -81,12 +81,15 @@ export class KeyframeAnimation implements IAnimation {
 
     if (offsetTime < 0) return {};
 
-    const iteration = offsetTime / duration;
-    if (iteration >= iterCount && iterCount !== Infinity) {
+    // If iterCount is finite, the whole animation must finish at precisely 'duration'
+    if (iterCount !== Infinity && offsetTime >= duration) {
       return this.interpolateProps(1);
     }
 
-    const progress = (offsetTime % duration) / duration;
+    const cycleDuration =
+      iterCount === Infinity ? duration : duration / iterCount;
+    const progress = (offsetTime % cycleDuration) / cycleDuration;
+
     return this.interpolateProps(progress);
   }
 

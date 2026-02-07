@@ -5,6 +5,7 @@ import {
   Container,
   Graphics,
   BlurFilter,
+  ColorMatrixFilter,
 } from "pixi.js";
 
 import type { IClip } from "../clips/iclip";
@@ -63,7 +64,7 @@ export class PixiSpriteRenderer {
   constructor(
     _pixiApp: Application | null,
     private sprite: IClip,
-    private targetContainer: Container | null = null
+    private targetContainer: Container | null = null,
   ) {
     // If targetContainer is not provided, try to use pixiApp.stage (fallback/legacy)
     if (!targetContainer && _pixiApp) {
@@ -128,7 +129,7 @@ export class PixiSpriteRenderer {
         console.warn(
           "PixiSpriteRenderer: Texture has zero dimensions",
           frame.width,
-          frame.height
+          frame.height,
         );
         return;
       }
@@ -165,7 +166,7 @@ export class PixiSpriteRenderer {
       console.warn(
         "PixiSpriteRenderer: Invalid frame dimensions",
         width,
-        height
+        height,
       );
       return;
     }
@@ -256,6 +257,8 @@ export class PixiSpriteRenderer {
     const angleOffset = renderTransform?.angle ?? 0;
     const scaleMultiplier = renderTransform?.scale ?? 1;
     const opacityMultiplier = renderTransform?.opacity ?? 1;
+    const blurOffset = renderTransform?.blur ?? 0;
+    const brightnessMultiplier = renderTransform?.brightness ?? 1;
 
     // 1. Root container stays at the stable "Anchor" position
     // This ensures the wireframe/transformer remains stationary during animation
@@ -273,6 +276,8 @@ export class PixiSpriteRenderer {
       this.animationContainer.angle = (flip == null ? 1 : -1) * angleOffset;
       this.animationContainer.alpha = opacityMultiplier;
       this.animationContainer.scale.set(scaleMultiplier, scaleMultiplier);
+      this.applyBlur(blurOffset);
+      this.applyBrightness(brightnessMultiplier);
     }
 
     // 3. Local transforms for the sprite (center it within animationRoot)
@@ -334,7 +339,7 @@ export class PixiSpriteRenderer {
         -textureHeight / 2,
         textureWidth,
         textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2)
+        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
       );
       this.maskGraphics.fill({ color: 0xffffff, alpha: 1 });
       this.maskGraphics.visible = true;
@@ -363,7 +368,7 @@ export class PixiSpriteRenderer {
   private applyStroke(
     style: any,
     textureWidth: number,
-    textureHeight: number
+    textureHeight: number,
   ): void {
     const stroke = style.stroke;
     if (stroke && stroke.width > 0) {
@@ -390,14 +395,14 @@ export class PixiSpriteRenderer {
           -textureHeight / 2,
           textureWidth,
           textureHeight,
-          r
+          r,
         );
       } else {
         this.strokeGraphics.rect(
           -textureWidth / 2,
           -textureHeight / 2,
           textureWidth,
-          textureHeight
+          textureHeight,
         );
       }
 
@@ -450,7 +455,7 @@ export class PixiSpriteRenderer {
           -height / 2,
           width,
           height,
-          r
+          r,
         );
       } else {
         this.shadowGraphics!.rect(-width / 2, -height / 2, width, height);
@@ -472,7 +477,7 @@ export class PixiSpriteRenderer {
         // Use worldTransform to get the effective scale on screen
         const worldScale = this.root
           ? Math.sqrt(
-              this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2
+              this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2,
             )
           : 1;
 
@@ -494,6 +499,76 @@ export class PixiSpriteRenderer {
       this.shadowContainer.visible = false;
       this.shadowContainer.filters = [];
     }
+  }
+
+  private applyBlur(blur: number): void {
+    if (!this.animationContainer || this.destroyed) return;
+
+    // Safety check for valid number
+    if (typeof blur !== "number" || !isFinite(blur) || blur <= 0) {
+      if (
+        this.animationContainer.filters &&
+        this.animationContainer.filters.length > 0
+      ) {
+        this.animationContainer.filters = [];
+      }
+      return;
+    }
+
+    if (
+      !this.animationContainer.filters ||
+      this.animationContainer.filters.length === 0
+    ) {
+      const filter = new BlurFilter();
+      filter.strength = blur;
+      filter.quality = 4;
+      (filter as any).repeatEdgePixels = true;
+      this.animationContainer.filters = [filter];
+    }
+
+    const blurFilter = this.animationContainer.filters[0] as BlurFilter;
+
+    // Calculate global scale
+    const worldScale = this.root
+      ? Math.sqrt(
+          this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2,
+        )
+      : 1;
+
+    // Normalize strength by world scale (clamped to sensible minimum if worldScale is essentially 0)
+    const effectiveScale = Math.max(worldScale, 0.001);
+    blurFilter.strength = blur * effectiveScale;
+    blurFilter.resolution = this.resolution;
+    blurFilter.padding = Math.max(blur * 2 * effectiveScale, 20);
+    blurFilter.quality = 4;
+    (blurFilter as any).repeatEdgePixels = true;
+  }
+
+  private applyBrightness(brightness: number): void {
+    if (!this.animationContainer || this.destroyed) return;
+
+    if (brightness === 1) {
+      // Remove brightness filter if it exists
+      if (this.animationContainer.filters) {
+        this.animationContainer.filters =
+          this.animationContainer.filters.filter(
+            (f) => !(f instanceof ColorMatrixFilter),
+          );
+      }
+      return;
+    }
+
+    let brightnessFilter = this.animationContainer.filters?.find(
+      (f) => f instanceof ColorMatrixFilter,
+    ) as ColorMatrixFilter;
+
+    if (!brightnessFilter) {
+      brightnessFilter = new ColorMatrixFilter();
+      const currentFilters = this.animationContainer.filters || [];
+      this.animationContainer.filters = [...currentFilters, brightnessFilter];
+    }
+
+    brightnessFilter.brightness(brightness, false);
   }
 
   updateTransforms(): void {

@@ -145,17 +145,21 @@ export class GsapAnimation implements IAnimation {
     }
 
     // Convert microseconds to seconds
-    const timeInSeconds = offsetTime / 1e6;
-    const durationInSeconds = duration / 1e6;
+    // (Used for GSAP timeline, but we now use progress)
 
     // Handle iteration and clamping
-    let progress = timeInSeconds / durationInSeconds;
-    if (this.options.iterCount !== Infinity) {
-      progress = Math.min(progress, this.options.iterCount);
+    const cycleDuration =
+      this.options.iterCount === Infinity
+        ? duration
+        : duration / this.options.iterCount;
+
+    if (this.options.iterCount !== Infinity && offsetTime >= duration) {
+      this.timeline.progress(1);
+      return;
     }
 
-    // GSAP timeline.seek(seconds)
-    this.timeline.pause(timeInSeconds);
+    const progress = (offsetTime % cycleDuration) / cycleDuration;
+    this.timeline.progress(progress);
   }
 
   /**
