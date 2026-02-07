@@ -215,9 +215,9 @@ export const charTypewriter: AnimationFactory = (opts, params) => {
 };
 
 //custom presets in
-export const customInPreset1: AnimationFactory = (opts, params) => {
+export const blurSlideRightIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset1");
+    return new KeyframeAnimation(params, opts, "blurSlideRightIn");
   }
   return new KeyframeAnimation(
     {
@@ -228,13 +228,13 @@ export const customInPreset1: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset1",
+    "blurSlideRightIn",
   );
 };
 
-export const customInPreset2: AnimationFactory = (opts, params) => {
+export const wobbleZoomIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset2");
+    return new KeyframeAnimation(params, opts, "wobbleZoomIn");
   }
   return new KeyframeAnimation(
     {
@@ -247,13 +247,13 @@ export const customInPreset2: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset2",
+    "wobbleZoomIn",
   );
 };
 
-export const customInPreset3: AnimationFactory = (opts, params) => {
+export const spinZoomIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset3");
+    return new KeyframeAnimation(params, opts, "spinZoomIn");
   }
   return new KeyframeAnimation(
     {
@@ -264,13 +264,13 @@ export const customInPreset3: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset3",
+    "spinZoomIn",
   );
 };
 
-export const customInPreset4: AnimationFactory = (opts, params) => {
+export const blurSlideLeftIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset4");
+    return new KeyframeAnimation(params, opts, "blurSlideLeftIn");
   }
   return new KeyframeAnimation(
     {
@@ -281,13 +281,13 @@ export const customInPreset4: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset4",
+    "blurSlideLeftIn",
   );
 };
 
-export const customInPreset5: AnimationFactory = (opts, params) => {
+export const blurSlideRightStrongIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset5");
+    return new KeyframeAnimation(params, opts, "blurSlideRightStrongIn");
   }
   return new KeyframeAnimation(
     {
@@ -298,13 +298,13 @@ export const customInPreset5: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset5",
+    "blurSlideRightStrongIn",
   );
 };
 
-export const customInPreset6: AnimationFactory = (opts, params) => {
+export const cinematicZoomSlideIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset6");
+    return new KeyframeAnimation(params, opts, "cinematicZoomSlideIn");
   }
   return new KeyframeAnimation(
     {
@@ -317,13 +317,13 @@ export const customInPreset6: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset6",
+    "cinematicZoomSlideIn",
   );
 };
 
-export const customInPreset7: AnimationFactory = (opts, params) => {
+export const elasticTwistIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset7");
+    return new KeyframeAnimation(params, opts, "elasticTwistIn");
   }
   return new KeyframeAnimation(
     {
@@ -336,13 +336,13 @@ export const customInPreset7: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset7",
+    "elasticTwistIn",
   );
 };
 
-export const customInPreset8: AnimationFactory = (opts, params) => {
+export const spinFadeIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset8");
+    return new KeyframeAnimation(params, opts, "spinFadeIn");
   }
   return new KeyframeAnimation(
     {
@@ -353,13 +353,13 @@ export const customInPreset8: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset8",
+    "spinFadeIn",
   );
 };
 
-export const customInPreset9: AnimationFactory = (opts, params) => {
+export const flashZoomIn: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customInPreset9");
+    return new KeyframeAnimation(params, opts, "flashZoomIn");
   }
   return new KeyframeAnimation(
     {
@@ -372,14 +372,14 @@ export const customInPreset9: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customInPreset9",
+    "flashZoomIn",
   );
 };
 
 //custom presets out
-export const customOutPreset1: AnimationFactory = (opts, params) => {
+export const tiltSlideRightOut: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customOutPreset1");
+    return new KeyframeAnimation(params, opts, "tiltSlideRightOut");
   }
   return new KeyframeAnimation(
     {
@@ -391,13 +391,13 @@ export const customOutPreset1: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customOutPreset1",
+    "tiltSlideRightOut",
   );
 };
 
-export const customOutPreset2: AnimationFactory = (opts, params) => {
+export const tiltZoomOut: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customOutPreset2");
+    return new KeyframeAnimation(params, opts, "tiltZoomOut");
   }
   return new KeyframeAnimation(
     {
@@ -408,13 +408,13 @@ export const customOutPreset2: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customOutPreset2",
+    "tiltZoomOut",
   );
 };
 
-export const customOutPreset3: AnimationFactory = (opts, params) => {
+export const glitchSlideOut: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customOutPreset3");
+    return new KeyframeAnimation(params, opts, "glitchSlideOut");
   }
   return new KeyframeAnimation(
     {
@@ -427,13 +427,13 @@ export const customOutPreset3: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customOutPreset3",
+    "glitchSlideOut",
   );
 };
 
-export const customOutPreset4: AnimationFactory = (opts, params) => {
+export const dropBlurOut: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customOutPreset4");
+    return new KeyframeAnimation(params, opts, "dropBlurOut");
   }
   return new KeyframeAnimation(
     {
@@ -444,13 +444,13 @@ export const customOutPreset4: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customOutPreset4",
+    "dropBlurOut",
   );
 };
 
-export const customOutPreset5: AnimationFactory = (opts, params) => {
+export const fallZoomOut: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customOutPreset5");
+    return new KeyframeAnimation(params, opts, "fallZoomOut");
   }
   return new KeyframeAnimation(
     {
@@ -461,13 +461,13 @@ export const customOutPreset5: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customOutPreset5",
+    "fallZoomOut",
   );
 };
 
-export const customOutPreset6: AnimationFactory = (opts, params) => {
+export const zoomSpinOut: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customOutPreset6");
+    return new KeyframeAnimation(params, opts, "zoomSpinOut");
   }
   return new KeyframeAnimation(
     {
@@ -478,13 +478,13 @@ export const customOutPreset6: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customOutPreset6",
+    "zoomSpinOut",
   );
 };
 
-export const customOutPreset7: AnimationFactory = (opts, params) => {
+export const dramaticSpinSlideOut: AnimationFactory = (opts, params) => {
   if (params && (params["0%"] || params["100%"])) {
-    return new KeyframeAnimation(params, opts, "customOutPreset7");
+    return new KeyframeAnimation(params, opts, "dramaticSpinSlideOut");
   }
   return new KeyframeAnimation(
     {
@@ -496,7 +496,7 @@ export const customOutPreset7: AnimationFactory = (opts, params) => {
       ...opts,
       easing: opts.easing || "easeOutQuad",
     },
-    "customOutPreset7",
+    "dramaticSpinSlideOut",
   );
 };
 
@@ -511,22 +511,24 @@ animationRegistry.register("charTypewriter", charTypewriter);
 animationRegistry.register("pulse", pulse);
 animationRegistry.register("blurIn", blurIn);
 animationRegistry.register("blurOut", blurOut);
-animationRegistry.register("customInPreset1", customInPreset1);
-animationRegistry.register("customInPreset2", customInPreset2);
-animationRegistry.register("customInPreset3", customInPreset3);
-animationRegistry.register("customInPreset4", customInPreset4);
-animationRegistry.register("customInPreset5", customInPreset5);
-animationRegistry.register("customInPreset6", customInPreset6);
-animationRegistry.register("customInPreset7", customInPreset7);
-animationRegistry.register("customInPreset8", customInPreset8);
-animationRegistry.register("customInPreset9", customInPreset9);
-animationRegistry.register("customOutPreset1", customOutPreset1);
-animationRegistry.register("customOutPreset2", customOutPreset2);
-animationRegistry.register("customOutPreset3", customOutPreset3);
-animationRegistry.register("customOutPreset4", customOutPreset4);
-animationRegistry.register("customOutPreset5", customOutPreset5);
-animationRegistry.register("customOutPreset6", customOutPreset6);
-animationRegistry.register("customOutPreset7", customOutPreset7);
+//custom presets in
+animationRegistry.register("blurSlideRightIn", blurSlideRightIn);
+animationRegistry.register("wobbleZoomIn", wobbleZoomIn);
+animationRegistry.register("spinZoomIn", spinZoomIn);
+animationRegistry.register("blurSlideLeftIn", blurSlideLeftIn);
+animationRegistry.register("blurSlideRightStrongIn", blurSlideRightStrongIn);
+animationRegistry.register("cinematicZoomSlideIn", cinematicZoomSlideIn);
+animationRegistry.register("elasticTwistIn", elasticTwistIn);
+animationRegistry.register("spinFadeIn", spinFadeIn);
+animationRegistry.register("flashZoomIn", flashZoomIn);
+//custom presets out
+animationRegistry.register("tiltSlideRightOut", tiltSlideRightOut);
+animationRegistry.register("tiltZoomOut", tiltZoomOut);
+animationRegistry.register("glitchSlideOut", glitchSlideOut);
+animationRegistry.register("dropBlurOut", dropBlurOut);
+animationRegistry.register("fallZoomOut", fallZoomOut);
+animationRegistry.register("zoomSpinOut", zoomSpinOut);
+animationRegistry.register("dramaticSpinSlideOut", dramaticSpinSlideOut);
 
 /**
  * Get the keyframe template for a preset animation
@@ -614,93 +616,93 @@ export function getPresetTemplate(type: string, params?: any): any {
         "0%": { blur: 0, opacity: 1 },
         "100%": { blur: 20, opacity: 0 },
       };
-    case "customInPreset1":
+    case "blurSlideRightIn":
       return {
         "0%": { blur: 5, x: 100 },
         "100%": { blur: 0, x: 0 },
       };
-    case "customInPreset2":
+    case "wobbleZoomIn":
       return {
         "0%": { scale: 1.2, angle: -5 },
         "32%": { scale: 1, angle: 0 },
         "64%": { scale: 1.2, angle: -5 },
         "100%": { scale: 1, angle: 0 },
       };
-    case "customInPreset3":
+    case "spinZoomIn":
       return {
         "0%": { blur: 5, angle: 45, scale: 2 },
         "100%": { blur: 0, angle: 0, scale: 1 },
       };
-    case "customInPreset4":
+    case "blurSlideLeftIn":
       return {
         "0%": { x: -200, blur: 10 },
         "100%": { x: 0, blur: 0 },
       };
-    case "customInPreset5":
+    case "blurSlideRightStrongIn":
       return {
         "0%": { x: 200, blur: 10 },
         "100%": { x: 0, blur: 0 },
       };
-    case "customInPreset6":
+    case "cinematicZoomSlideIn":
       return {
         "0%": { scale: 1, blur: 30, x: 200 },
         "30%": { scale: 1.2, blur: 20, x: 50 },
         "60%": { scale: 1.3, blur: 10, x: 0 },
         "100%": { scale: 1.4, blur: 0, x: 0 },
       };
-    case "customInPreset7":
+    case "elasticTwistIn":
       return {
         "0%": { scale: 1.4, blur: 20, angle: 10 },
         "40%": { scale: 1, blur: 0, angle: 0 },
         "60%": { scale: 1.3, blur: 0, angle: -10 },
         "100%": { scale: 1, blur: 0, angle: 0 },
       };
-    case "customInPreset8":
+    case "spinFadeIn":
       return {
         "0%": { blur: 40, angle: 80 },
         "100%": { blur: 0, angle: 0 },
       };
-    case "customInPreset9":
+    case "flashZoomIn":
       return {
         "0%": { scale: 1, brightness: 3 },
         "40%": { scale: 1, brightness: 3 },
         "80%": { scale: 1.5, brightness: 3 },
         "100%": { scale: 1, brightness: 1 },
       };
-    case "customOutPreset1":
+    case "tiltSlideRightOut":
       return {
         "0%": { angle: 0, x: 0 },
         "70%": { angle: 7, x: 0 },
         "100%": { angle: 10, x: 200 },
       };
-    case "customOutPreset2":
+    case "tiltZoomOut":
       return {
         "0%": { angle: 0, scale: 1 },
         "100%": { angle: -10, scale: 1.2 },
       };
-    case "customOutPreset3":
+    case "glitchSlideOut":
       return {
         "0%": { x: 0, angle: 0 },
         "30%": { x: 100, angle: -5 },
         "70%": { x: 100, angle: -20 },
         "100%": { x: -100, angle: -20 },
       };
-    case "customOutPreset4":
+    case "dropBlurOut":
       return {
         "0%": { y: 0, blur: 0 },
         "100%": { y: 200, blur: 20 },
       };
-    case "customOutPreset5":
+    case "fallZoomOut":
       return {
         "0%": { y: 0, scale: 1 },
         "100%": { y: 250, scale: 1.5 },
       };
-    case "customOutPreset6":
+    case "zoomSpinOut":
       return {
         "0%": { scale: 1, angle: 0 },
         "100%": { scale: 2, angle: 10 },
       };
-    case "customOutPreset7":
+    case "dramaticSpinSlideOut":
       return {
         "0%": { x: 0, angle: 0, blur: 0 },
         "40%": { x: -200, angle: 10, blur: 5 },
