@@ -1,7 +1,7 @@
 {
   "name": "editor",
   "description": "Open-source AI Video Editor with client-side rendering (WebCodecs) and AI Copilot.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
