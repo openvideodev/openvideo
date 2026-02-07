@@ -40,7 +40,7 @@ export interface BaseSpriteEvents {
  * @see {@link OffscreenSprite}
  */
 export abstract class BaseSprite<
-  T extends BaseSpriteEvents = BaseSpriteEvents
+  T extends BaseSpriteEvents = BaseSpriteEvents,
 > extends EventEmitter<T> {
   /**
    * Unique identifier for the sprite/clip
@@ -252,6 +252,8 @@ export abstract class BaseSprite<
     scale: 1,
     opacity: 1,
     angle: 0,
+    blur: 0,
+    brightness: 1,
   };
 
   /**
@@ -259,7 +261,7 @@ export abstract class BaseSprite<
    * For clips, this should be Promise<IClipMeta>, but for BaseSprite it's just Promise<void>
    */
   protected _render(
-    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   ): void {
     const { center } = this;
     ctx.setTransform(
@@ -271,10 +273,13 @@ export abstract class BaseSprite<
       this.flip === "vertical" ? -1 : 1,
       // Coordinate origin offset x y
       center.x,
-      center.y
+      center.y,
     );
 
-    ctx.globalAlpha = this.opacity * (this.renderTransform.opacity ?? 1);
+    ctx.globalAlpha =
+      this.opacity *
+      (this.renderTransform.opacity ?? 1) *
+      (this.renderTransform.brightness ?? 1);
 
     const x = this.renderTransform.x ?? 0;
     const y = this.renderTransform.y ?? 0;
@@ -330,6 +335,8 @@ export abstract class BaseSprite<
       scale: 1,
       opacity: 1,
       angle: 0,
+      blur: 0,
+      brightness: 1,
     };
 
     // 1. Process new modular animations
@@ -343,10 +350,14 @@ export abstract class BaseSprite<
         this.renderTransform.height! += transform.height;
       if (transform.angle !== undefined)
         this.renderTransform.angle! += transform.angle;
+      if (transform.blur !== undefined)
+        this.renderTransform.blur! += transform.blur;
       if (transform.scale !== undefined)
         this.renderTransform.scale! *= transform.scale;
       if (transform.opacity !== undefined)
         this.renderTransform.opacity! *= transform.opacity;
+      if (transform.brightness !== undefined)
+        this.renderTransform.brightness! *= transform.brightness;
 
       if (target && anim.apply) {
         anim.apply(target, time);
@@ -364,7 +375,7 @@ export abstract class BaseSprite<
     const updateProps = linearTimeFn(
       time,
       this.animatKeyFrame,
-      this.animatOpts
+      this.animatOpts,
     );
     // Only update properties that are actually in the animation keyframes
     // This ensures manual property settings (like opacity) are preserved if not animated
@@ -478,7 +489,7 @@ export abstract class BaseSprite<
 export function linearTimeFn(
   time: number,
   keyFrame: TAnimationKeyFrame,
-  opts: Required<IAnimationOpts>
+  opts: Required<IAnimationOpts>,
 ): Partial<TAnimateProps> {
   const offsetTime = time - opts.delay;
   const t = offsetTime % opts.duration;

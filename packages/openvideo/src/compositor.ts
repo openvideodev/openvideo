@@ -6,6 +6,8 @@ import {
   Sprite,
   Texture,
   Graphics,
+  BlurFilter,
+  ColorMatrixFilter,
 } from "pixi.js";
 import { makeEffect } from "./effect/effect";
 import {
@@ -310,12 +312,12 @@ export class Compositor extends EventEmitter<{
       (mainSprite != null
         ? mainSprite.display.from + mainSprite.duration
         : finiteDurations.length > 0
-        ? Math.max(...finiteDurations)
-        : Infinity);
+          ? Math.max(...finiteDurations)
+          : Infinity);
 
     if (maxTime === Infinity || maxTime <= 0) {
       throw Error(
-        "Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio"
+        "Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio",
       );
     }
     // Main video's (main) videoTrack duration value is 0
@@ -337,7 +339,7 @@ export class Compositor extends EventEmitter<{
         await muxer.flush();
         this.logger.info(
           "===== output ended =====, cost:",
-          performance.now() - startTime
+          performance.now() - startTime,
         );
         this.emit("OutputProgress", 1);
         this.destroy();
@@ -468,9 +470,8 @@ export class Compositor extends EventEmitter<{
         }
         progress = timestamp / maxTime;
 
-        const { audios, mainSprDone, hasVideo } = await renderSprites.render(
-          timestamp
-        );
+        const { audios, mainSprDone, hasVideo } =
+          await renderSprites.render(timestamp);
         if (mainSprDone) {
           exit();
           await onEnded();
@@ -698,6 +699,8 @@ function createSpritesRender(opts: {
     const angleOffset = renderTransform?.angle ?? 0;
     const scaleMultiplier = renderTransform?.scale ?? 1;
     const opacityMultiplier = renderTransform?.opacity ?? 1;
+    const blurOffset = renderTransform?.blur ?? 0;
+    const brightnessMultiplier = renderTransform?.brightness ?? 1;
 
     tempSprite.x = clip.center.x + xOffset;
     tempSprite.y = clip.center.y + yOffset;
@@ -728,6 +731,21 @@ function createSpritesRender(opts: {
       ((clip.flip == null ? 1 : -1) * ((clip.angle + angleOffset) * Math.PI)) /
       180;
     tempSprite.alpha = clip.opacity * opacityMultiplier;
+
+    if (blurOffset > 0) {
+      const blurFilter = new BlurFilter();
+      blurFilter.strength = blurOffset;
+      blurFilter.quality = 4;
+      (blurFilter as any).repeatEdgePixels = true;
+      tempSprite.filters = [blurFilter];
+    }
+
+    if (brightnessMultiplier !== 1) {
+      const brightnessFilter = new ColorMatrixFilter();
+      brightnessFilter.brightness(brightnessMultiplier, false);
+      const currentFilters = tempSprite.filters || [];
+      tempSprite.filters = [...currentFilters, brightnessFilter];
+    }
 
     const style = (clip as any).style || {};
 
@@ -1318,7 +1336,7 @@ function createAVEncoder(opts: {
         // This can happen if the canvas hasn't been rendered to yet
         console.warn(
           "Failed to create VideoFrame from canvas, skipping frame:",
-          err
+          err,
         );
       }
     }

@@ -5,6 +5,8 @@ import {
   Container,
   Graphics,
   RenderTexture,
+  BlurFilter,
+  ColorMatrixFilter,
 } from "pixi.js";
 
 import { Caption } from "./clips/caption-clip";
@@ -1801,8 +1803,17 @@ export class Studio extends EventEmitter<StudioEvents> {
     // Apply transforms similar to PixiSpriteRenderer.applySpriteTransforms
     // Note: textures in transitions are expected to be artboard-sized at the end
     // so we render this sprite into the RenderTexture (which is artboard-sized).
-    tempSprite.x = clip.center.x;
-    tempSprite.y = clip.center.y;
+    const { renderTransform } = clip;
+    const xOffset = renderTransform?.x ?? 0;
+    const yOffset = renderTransform?.y ?? 0;
+    const angleOffset = renderTransform?.angle ?? 0;
+    const scaleMultiplier = renderTransform?.scale ?? 1;
+    const opacityMultiplier = renderTransform?.opacity ?? 1;
+    const blurOffset = renderTransform?.blur ?? 0;
+    const brightnessMultiplier = renderTransform?.brightness ?? 1;
+
+    tempSprite.x = clip.center.x + xOffset;
+    tempSprite.y = clip.center.y + yOffset;
     tempSprite.anchor.set(0.5, 0.5);
 
     const textureWidth = tempSprite.texture.width || 1;
@@ -1816,18 +1827,35 @@ export class Studio extends EventEmitter<StudioEvents> {
         : 1;
 
     if (clip.flip === "horizontal") {
-      tempSprite.scale.x = -baseScaleX;
-      tempSprite.scale.y = baseScaleY;
+      tempSprite.scale.x = -baseScaleX * scaleMultiplier;
+      tempSprite.scale.y = baseScaleY * scaleMultiplier;
     } else if (clip.flip === "vertical") {
-      tempSprite.scale.x = baseScaleX;
-      tempSprite.scale.y = -baseScaleY;
+      tempSprite.scale.x = baseScaleX * scaleMultiplier;
+      tempSprite.scale.y = -baseScaleY * scaleMultiplier;
     } else {
-      tempSprite.scale.x = baseScaleX;
-      tempSprite.scale.y = baseScaleY;
+      tempSprite.scale.x = baseScaleX * scaleMultiplier;
+      tempSprite.scale.y = baseScaleY * scaleMultiplier;
     }
 
-    tempSprite.rotation = (clip.flip == null ? 1 : -1) * clip.angle;
-    tempSprite.alpha = clip.opacity;
+    tempSprite.rotation =
+      ((clip.flip == null ? 1 : -1) * ((clip.angle + angleOffset) * Math.PI)) /
+      180;
+    tempSprite.alpha = clip.opacity * opacityMultiplier;
+
+    if (blurOffset > 0) {
+      const blurFilter = new BlurFilter();
+      blurFilter.strength = blurOffset;
+      blurFilter.quality = 4;
+      (blurFilter as any).repeatEdgePixels = true;
+      tempSprite.filters = [blurFilter];
+    }
+
+    if (brightnessMultiplier !== 1) {
+      const brightnessFilter = new ColorMatrixFilter();
+      brightnessFilter.brightness(brightnessMultiplier, false);
+      const currentFilters = tempSprite.filters || [];
+      tempSprite.filters = [...currentFilters, brightnessFilter];
+    }
 
     // Render onto target and CLEAR the texture first
     this.pixiApp.renderer.render({
