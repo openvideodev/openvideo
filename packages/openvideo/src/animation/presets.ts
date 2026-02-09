@@ -12,6 +12,7 @@ import { GsapAnimation } from "./gsap-animation";
 
 export const pulse: AnimationFactory = (opts, params) => {
   const factor = Math.max(opts.duration / 1e6, 1);
+  const defaultMirror = params?.mirror || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(
       params,
@@ -21,9 +22,11 @@ export const pulse: AnimationFactory = (opts, params) => {
   }
   return new KeyframeAnimation(
     {
-      "0%": { scale: 0.9 },
-      "50%": { scale: 1 },
-      "100%": { scale: 0.9 },
+      "0%": { scale: 1, mirror: defaultMirror },
+      "25%": { scale: 0.9, mirror: defaultMirror },
+      "50%": { scale: 1, mirror: defaultMirror },
+      "75%": { scale: 0.9, mirror: defaultMirror },
+      "100%": { scale: 1, mirror: defaultMirror },
     },
     {
       ...opts,
@@ -36,13 +39,15 @@ export const pulse: AnimationFactory = (opts, params) => {
 
 export const fadeIn: AnimationFactory = (opts, params) => {
   // If params has keyframes, use them as-is (allows UI persistence)
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "fadeIn");
   }
   return new KeyframeAnimation(
     {
-      "0%": { opacity: 0, scale: 0.9 },
-      "100%": { opacity: 1, scale: 1 },
+      "0%": { opacity: defaultOpacity, scale: 0.9, mirror: defaultMirror },
+      "100%": { opacity: 1, scale: 1, mirror: defaultMirror },
     },
     { ...opts, easing: opts.easing || "easeOutQuad" },
     "fadeIn",
@@ -50,13 +55,15 @@ export const fadeIn: AnimationFactory = (opts, params) => {
 };
 
 export const fadeOut: AnimationFactory = (opts, params) => {
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "fadeOut");
   }
   return new KeyframeAnimation(
     {
-      "0%": { opacity: 1 },
-      "100%": { opacity: 0 },
+      "0%": { opacity: 1, mirror: defaultMirror },
+      "100%": { opacity: defaultOpacity, mirror: defaultMirror },
     },
     { ...opts, easing: opts.easing || "easeInQuad" },
     "fadeOut",
@@ -65,21 +72,27 @@ export const fadeOut: AnimationFactory = (opts, params) => {
 
 export const slideIn: AnimationFactory = (opts, params) => {
   // If params has keyframes, use them as-is
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "slideIn");
   }
   const config = params || { direction: "left" };
   const dist = config.distance || 300;
   const frames: any = {
-    "100%": { x: 0, y: 0, opacity: 1 },
+    "100%": { x: 0, y: 0, opacity: 1, mirror: defaultMirror },
   };
 
-  if (config.direction === "left") frames["0%"] = { x: -dist, opacity: 0 };
-  else if (config.direction === "right") frames["0%"] = { x: dist, opacity: 0 };
-  else if (config.direction === "top") frames["0%"] = { y: -dist, opacity: 0 };
+  if (config.direction === "left")
+    frames["0%"] = { x: -dist, opacity: defaultOpacity, mirror: defaultMirror };
+  else if (config.direction === "right")
+    frames["0%"] = { x: dist, opacity: defaultOpacity, mirror: defaultMirror };
+  else if (config.direction === "top")
+    frames["0%"] = { y: -dist, opacity: defaultOpacity, mirror: defaultMirror };
   else if (config.direction === "bottom")
-    frames["0%"] = { y: dist, opacity: 0 };
-  else frames["0%"] = { x: -dist, opacity: 0 }; // Default left
+    frames["0%"] = { y: dist, opacity: defaultOpacity, mirror: defaultMirror };
+  else
+    frames["0%"] = { x: -dist, opacity: defaultOpacity, mirror: defaultMirror }; // Default left
 
   const anim = new KeyframeAnimation(
     frames,
@@ -92,23 +105,47 @@ export const slideIn: AnimationFactory = (opts, params) => {
 
 export const slideOut: AnimationFactory = (opts, params) => {
   // If params has keyframes, use them as-is
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "slideOut");
   }
   const config = params || { direction: "left" };
   const dist = config.distance || 300;
   const frames: any = {
-    "0%": { x: 0, y: 0, opacity: 1 },
+    "0%": { x: 0, y: 0, opacity: 1, mirror: defaultMirror },
   };
 
-  if (config.direction === "left") frames["100%"] = { x: -dist, opacity: 0 };
+  if (config.direction === "left")
+    frames["100%"] = {
+      x: -dist,
+      opacity: defaultOpacity,
+      mirror: defaultMirror,
+    };
   else if (config.direction === "right")
-    frames["100%"] = { x: dist, opacity: 0 };
+    frames["100%"] = {
+      x: dist,
+      opacity: defaultOpacity,
+      mirror: defaultMirror,
+    };
   else if (config.direction === "top")
-    frames["100%"] = { y: -dist, opacity: 0 };
+    frames["100%"] = {
+      y: -dist,
+      opacity: defaultOpacity,
+      mirror: defaultMirror,
+    };
   else if (config.direction === "bottom")
-    frames["100%"] = { y: dist, opacity: 0 };
-  else frames["100%"] = { x: -dist, opacity: 0 }; // Default left
+    frames["100%"] = {
+      y: dist,
+      opacity: defaultOpacity,
+      mirror: defaultMirror,
+    };
+  else
+    frames["100%"] = {
+      x: -dist,
+      opacity: defaultOpacity,
+      mirror: defaultMirror,
+    }; // Default left
 
   const anim = new KeyframeAnimation(
     frames,
@@ -120,13 +157,20 @@ export const slideOut: AnimationFactory = (opts, params) => {
 };
 
 export const zoomIn: AnimationFactory = (opts, params) => {
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
+  const defaultScale = params?.scale || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "zoomIn");
   }
   return new KeyframeAnimation(
     {
-      "0%": { scale: 0, opacity: 0 },
-      "100%": { scale: 1, opacity: 1 },
+      "0%": {
+        scale: defaultScale,
+        opacity: defaultOpacity,
+        mirror: defaultMirror,
+      },
+      "100%": { scale: 1, opacity: 1, mirror: defaultMirror },
     },
     { ...opts, easing: opts.easing || "easeOutBack" },
     "zoomIn",
@@ -134,13 +178,20 @@ export const zoomIn: AnimationFactory = (opts, params) => {
 };
 
 export const zoomOut: AnimationFactory = (opts, params) => {
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
+  const defaultScale = params?.scale || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "zoomOut");
   }
   return new KeyframeAnimation(
     {
-      "0%": { scale: 1, opacity: 1 },
-      "100%": { scale: 0, opacity: 0 },
+      "0%": { scale: 1, opacity: 1, mirror: defaultMirror },
+      "100%": {
+        scale: defaultScale,
+        opacity: defaultOpacity,
+        mirror: defaultMirror,
+      },
     },
     { ...opts, easing: opts.easing || "easeInBack" },
     "zoomOut",
@@ -148,13 +199,15 @@ export const zoomOut: AnimationFactory = (opts, params) => {
 };
 
 export const blurIn: AnimationFactory = (opts, params) => {
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "blurIn");
   }
   return new KeyframeAnimation(
     {
-      "0%": { blur: 20, opacity: 0 },
-      "100%": { blur: 0, opacity: 1 },
+      "0%": { blur: 20, opacity: defaultOpacity, mirror: defaultMirror },
+      "100%": { blur: 0, opacity: 1, mirror: defaultMirror },
     },
     { ...opts, easing: opts.easing || "easeOutQuad" },
     "blurIn",
@@ -162,13 +215,16 @@ export const blurIn: AnimationFactory = (opts, params) => {
 };
 
 export const blurOut: AnimationFactory = (opts, params) => {
+  const defaultMirror = params?.mirror || 0;
+  const defaultOpacity = params?.opacity || 0;
+
   if (params && (params["0%"] || params["100%"])) {
     return new KeyframeAnimation(params, opts, "blurOut");
   }
   return new KeyframeAnimation(
     {
-      "0%": { blur: 0, opacity: 1 },
-      "100%": { blur: 20, opacity: 0 },
+      "0%": { blur: 0, opacity: 1, mirror: defaultMirror },
+      "100%": { blur: 20, opacity: defaultOpacity, mirror: defaultMirror },
     },
     { ...opts, easing: opts.easing || "easeInQuad" },
     "blurOut",
@@ -535,26 +591,37 @@ animationRegistry.register("dramaticSpinSlideOut", dramaticSpinSlideOut);
  * Useful for populating the animation editor UI
  */
 export function getPresetTemplate(type: string, params?: any): any {
+  const defaultMirror = params?.mirror || 0;
+  const defaultScale = params?.scale || 0;
+  const defaultOpacity = params?.opacity || 0;
   switch (type) {
     case "fadeIn":
       return {
-        "0%": { opacity: 0, scale: 0.9 },
-        "100%": { opacity: 1, scale: 1 },
+        "0%": { opacity: defaultOpacity, scale: 0.9, mirror: defaultMirror },
+        "100%": { opacity: 1, scale: 1, mirror: defaultMirror },
       };
     case "fadeOut":
       return {
-        "0%": { opacity: 1 },
-        "100%": { opacity: 0 },
+        "0%": { opacity: 1, mirror: defaultMirror },
+        "100%": { opacity: defaultOpacity, mirror: defaultMirror },
       };
     case "zoomIn":
       return {
-        "0%": { scale: 0, opacity: 0 },
-        "100%": { scale: 1, opacity: 1 },
+        "0%": {
+          scale: defaultScale,
+          opacity: defaultOpacity,
+          mirror: defaultMirror,
+        },
+        "100%": { scale: 1, opacity: 1, mirror: defaultMirror },
       };
     case "zoomOut":
       return {
-        "0%": { scale: 1, opacity: 1 },
-        "100%": { scale: 0, opacity: 0 },
+        "0%": { scale: 1, opacity: 1, mirror: defaultMirror },
+        "100%": {
+          scale: defaultScale,
+          opacity: defaultOpacity,
+          mirror: defaultMirror,
+        },
       };
     case "slideIn": {
       const direction = params?.direction || "left";
@@ -573,16 +640,17 @@ export function getPresetTemplate(type: string, params?: any): any {
               : direction === "bottom"
                 ? distance
                 : 0,
-          opacity: 0,
+          opacity: defaultOpacity,
+          mirror: defaultMirror,
         },
-        "100%": { x: 0, y: 0, opacity: 1 },
+        "100%": { x: 0, y: 0, opacity: 1, mirror: defaultMirror },
       };
     }
     case "slideOut": {
       const direction = params?.direction || "left";
       const distance = params?.distance || 300;
       return {
-        "0%": { x: 0, y: 0, opacity: 1 },
+        "0%": { x: 0, y: 0, opacity: 1, mirror: defaultMirror },
         "100%": {
           x:
             direction === "left"
@@ -596,30 +664,33 @@ export function getPresetTemplate(type: string, params?: any): any {
               : direction === "bottom"
                 ? distance
                 : 0,
-          opacity: 0,
+          opacity: defaultOpacity,
+          mirror: defaultMirror,
         },
       };
     }
     case "pulse":
       return {
-        "0%": { scale: 0.9 },
-        "50%": { scale: 1 },
-        "100%": { scale: 0.9 },
+        "0%": { scale: 1, mirror: defaultMirror },
+        "25%": { scale: 0.9, mirror: defaultMirror },
+        "50%": { scale: 1, mirror: defaultMirror },
+        "75%": { scale: 0.9, mirror: defaultMirror },
+        "100%": { scale: 1, mirror: defaultMirror },
       };
     case "blurIn":
       return {
-        "0%": { blur: 20, opacity: 0 },
-        "100%": { blur: 0, opacity: 1 },
+        "0%": { blur: 20, opacity: defaultOpacity, mirror: defaultMirror },
+        "100%": { blur: 0, opacity: 1, mirror: defaultMirror },
       };
     case "blurOut":
       return {
-        "0%": { blur: 0, opacity: 1 },
-        "100%": { blur: 20, opacity: 0 },
+        "0%": { blur: 0, opacity: 1, mirror: defaultMirror },
+        "100%": { blur: 20, opacity: defaultOpacity, mirror: defaultMirror },
       };
     case "blurSlideRightIn":
       return {
-        "0%": { blur: 5, x: 100, mirror: 1 },
-        "100%": { blur: 0, x: 0, mirror: 1 },
+        "0%": { blur: 5, x: 100, mirror: defaultMirror },
+        "100%": { blur: 0, x: 0, mirror: defaultMirror },
       };
     case "wobbleZoomIn":
       return {
