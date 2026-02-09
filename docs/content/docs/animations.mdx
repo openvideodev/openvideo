@@ -18,10 +18,10 @@ import { Image } from "openvideo";
 
 const image = await Image.fromUrl("photo.jpg");
 
-// Add a built-in preset
+// Add a built-in preset with easing
 image.addAnimation("fadeIn", {
   duration: 1000 * 1000, // 1 second in microseconds
-  easing: "easeOutQuad",
+  easing: "easeOutQuad", // Control the animation timing
 });
 
 // Add a custom keyframe animation
