@@ -1,17 +1,17 @@
-import { BaseTimelineClip, type BaseClipProps } from './base';
-import { type Control, Pattern } from 'fabric';
-import { createTrimControls } from '../controls';
-import { editorFont } from '@/components/editor/constants';
-import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
-import { useStudioStore } from '@/stores/studio-store';
-import type { Video as VideoClip } from 'openvideo';
-import ThumbnailCache from '../utils/thumbnail-cache';
-import { unitsToTimeMs } from '../utils/filmstrip';
+import { BaseTimelineClip, type BaseClipProps } from "./base";
+import { type Control, Pattern } from "fabric";
+import { createTrimControls } from "../controls";
+import { editorFont } from "@/components/editor/constants";
+import { TIMELINE_CONSTANTS } from "@/components/editor/timeline/timeline-constants";
+import { useStudioStore } from "@/stores/studio-store";
+import type { Video as VideoClip } from "openvideo";
+import ThumbnailCache from "../utils/thumbnail-cache";
+import { unitsToTimeMs } from "../utils/filmstrip";
 
 const MICROSECONDS_IN_SECOND = 1_000_000;
 const DEFAULT_THUMBNAIL_HEIGHT = 52;
 const DEFAULT_ASPECT_RATIO = 16 / 9;
-const FALLBACK_COLOR = '#1e1b4b'; // Deep Indigo
+const FALLBACK_COLOR = "#1e1b4b"; // Deep Indigo
 const THUMBNAIL_STEP_US = 1_000_000; // 1fps
 
 export class Video extends BaseTimelineClip {
@@ -37,12 +37,12 @@ export class Video extends BaseTimelineClip {
     rx: 6,
     ry: 6,
     objectCaching: false,
-    borderColor: 'transparent',
-    stroke: 'transparent',
+    borderColor: "transparent",
+    stroke: "transparent",
     strokeWidth: 0,
-    fill: '#312e81',
+    fill: "#312e81",
     borderOpacityWhenMoving: 1,
-    hoverCursor: 'default',
+    hoverCursor: "default",
   };
 
   constructor(options: BaseClipProps) {
@@ -52,7 +52,7 @@ export class Video extends BaseTimelineClip {
   }
 
   set(key: string, value: any) {
-    if (key === 'width') {
+    if (key === "width") {
       // Re-initialize dimensions and thumbnails if width changes (e.g. zoom, trim)
       // Debounce this if it happens too often during drag, but for now simple trigger
       if (this.width !== value) {
@@ -81,8 +81,8 @@ export class Video extends BaseTimelineClip {
   }
 
   private async createFallbackThumbnail() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const targetHeight = DEFAULT_THUMBNAIL_HEIGHT;
@@ -101,7 +101,7 @@ export class Video extends BaseTimelineClip {
     });
 
     this._thumbnailWidth = targetWidth;
-    this._thumbnailCache.setThumbnail('fallback', img);
+    this._thumbnailCache.setThumbnail("fallback", img);
   }
 
   private createFallbackPattern() {
@@ -129,7 +129,7 @@ export class Video extends BaseTimelineClip {
     if (!studio || !this.studioClipId) return;
 
     const clip = studio.getClipById(this.studioClipId);
-    if (!clip || clip.type !== 'Video') return;
+    if (!clip || clip.type !== "Video") return;
 
     const videoClip = clip as VideoClip;
 
@@ -212,14 +212,14 @@ export class Video extends BaseTimelineClip {
 
       // Ignore expected abort errors
       if (
-        error?.name === 'AbortError' ||
-        error?.message === 'generate thumbnails aborted' ||
-        error?.message?.includes('aborted')
+        error?.name === "AbortError" ||
+        error?.message === "generate thumbnails aborted" ||
+        error?.message?.includes("aborted")
       ) {
         return;
       }
 
-      console.warn('Failed to load thumbnails:', error);
+      console.warn("Failed to load thumbnails:", error);
     }
   }
 
@@ -258,12 +258,12 @@ export class Video extends BaseTimelineClip {
       -this.height / 2,
       this.width,
       this.height,
-      radius
+      radius,
     );
     ctx.clip();
 
     // Draw background fill manually (instead of using super._render with pattern)
-    ctx.fillStyle = (this.fill as string) || '#312e81';
+    ctx.fillStyle = (this.fill as string) || "#312e81";
     ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
 
     // Translate for filmstrip and identity drawing
@@ -291,7 +291,7 @@ export class Video extends BaseTimelineClip {
     let maxX = -Infinity;
     if (oneSourceSecWidth >= thumbnailWidth) {
       const startSourceSec = Math.floor(
-        this.trim.from / MICROSECONDS_IN_SECOND
+        this.trim.from / MICROSECONDS_IN_SECOND,
       );
       const endSourceSec = Math.ceil(this.trim.to / MICROSECONDS_IN_SECOND);
 
@@ -313,7 +313,7 @@ export class Video extends BaseTimelineClip {
 
         const img =
           this._thumbnailCache.getThumbnail(sec) ||
-          this._thumbnailCache.getThumbnail('fallback');
+          this._thumbnailCache.getThumbnail("fallback");
         if (img) {
           const tileCount = Math.ceil(oneSourceSecWidth / thumbnailWidth);
 
@@ -338,7 +338,7 @@ export class Video extends BaseTimelineClip {
                 drawX,
                 0,
                 drawWidth,
-                drawHeight // destination
+                drawHeight, // destination
               );
 
               minX = Math.min(minX, drawX);
@@ -357,14 +357,14 @@ export class Video extends BaseTimelineClip {
         const timeOffsetUs = unitsToTimeMs(
           x,
           this.timeScale,
-          this.playbackRate || 1
+          this.playbackRate || 1,
         );
         const absoluteTimeUs = timeOffsetUs + this.trim.from;
         const secKey = Math.floor(absoluteTimeUs / MICROSECONDS_IN_SECOND);
 
         let img = this._thumbnailCache.getThumbnail(secKey);
         if (!img) {
-          img = this._thumbnailCache.getThumbnail('fallback');
+          img = this._thumbnailCache.getThumbnail("fallback");
         }
 
         if (img) {
@@ -382,7 +382,7 @@ export class Video extends BaseTimelineClip {
               x,
               0,
               drawWidth,
-              drawHeight // destination
+              drawHeight, // destination
             );
             minX = Math.min(minX, x);
             maxX = Math.max(maxX, x + drawWidth);
@@ -396,7 +396,7 @@ export class Video extends BaseTimelineClip {
       const isMissingStart = minX > 0.5;
       if (isMissingEnd || isMissingStart) {
         console.warn(
-          `[Video Filmstrip] MISSING COVERAGE! Desired: ${this.width.toFixed(2)}, Drawn: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], Strategy: ${oneSourceSecWidth >= thumbnailWidth ? 'Zoomed In' : 'Zoomed Out'}`
+          `[Video Filmstrip] MISSING COVERAGE! Desired: ${this.width.toFixed(2)}, Drawn: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], Strategy: ${oneSourceSecWidth >= thumbnailWidth ? "Zoomed In" : "Zoomed Out"}`,
         );
       } else {
         // console.log(
@@ -407,11 +407,11 @@ export class Video extends BaseTimelineClip {
   }
 
   public drawIdentity(ctx: CanvasRenderingContext2D) {
-    const text = this.text || '';
+    const text = this.text || "";
     const seconds = Math.round(this.duration / MICROSECONDS_IN_SECOND);
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    const durationText = `${m}:${s.toString().padStart(2, '0')}`;
+    const durationText = `${m}:${s.toString().padStart(2, "0")}`;
 
     ctx.font = `600 11px ${editorFont.fontFamily}`;
     const paddingX = 6;
@@ -427,16 +427,16 @@ export class Video extends BaseTimelineClip {
       const metrics = ctx.measureText(content);
       const bgWidth = metrics.width + paddingX * 2;
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.beginPath();
       ctx.roundRect(currentX, y, bgWidth, bgHeight, 4);
       ctx.fill();
 
       ctx.fillStyle = isDimmed
-        ? 'rgba(255, 255, 255, 0.5)'
-        : 'rgba(255, 255, 255, 0.9)';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
+        ? "rgba(255, 255, 255, 0.5)"
+        : "rgba(255, 255, 255, 0.9)";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
       ctx.fillText(content, currentX + paddingX, y + paddingY + 1);
 
       currentX += bgWidth + blockGap;
@@ -449,7 +449,7 @@ export class Video extends BaseTimelineClip {
   }
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected ? '#ffffff' : '#3730a3';
+    const borderColor = this.isSelected ? "#ffffff" : "#3730a3";
     const borderWidth = 2;
     const radius = 6;
 
@@ -462,7 +462,7 @@ export class Video extends BaseTimelineClip {
       -this.height / 2,
       this.width,
       this.height,
-      radius
+      radius,
     );
 
     ctx.roundRect(
@@ -470,10 +470,10 @@ export class Video extends BaseTimelineClip {
       -this.height / 2 + borderWidth,
       this.width - borderWidth * 2,
       this.height - borderWidth * 2,
-      radius - borderWidth
+      radius - borderWidth,
     );
 
-    ctx.fill('evenodd');
+    ctx.fill("evenodd");
     ctx.restore();
   }
 }

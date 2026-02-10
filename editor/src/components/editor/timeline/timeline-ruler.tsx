@@ -1,18 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
+import { useEffect, useRef } from "react";
+import { TIMELINE_CONSTANTS } from "@/components/editor/timeline/timeline-constants";
 
 interface TimelineRulerProps {
   zoomLevel: number;
   duration: number;
   width: number;
+  scrollLeft: number;
 }
 
 export function TimelineRuler({
   zoomLevel,
   duration,
   width,
+  scrollLeft,
 }: TimelineRulerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -20,7 +22,7 @@ export function TimelineRuler({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Handle high DPI screens
@@ -44,17 +46,27 @@ export function TimelineRuler({
     // Background for valid duration (darker)
     const durationX = duration * pixelsPerSecond;
     if (durationX > 0) {
-      ctx.fillStyle = 'rgba(33, 33, 33, 1)';
-      ctx.fillRect(0, 0, Math.min(width, durationX), 24);
+      ctx.fillStyle = "rgba(33, 33, 33, 1)";
+      // We only fill visible part
+      const visibleStart = Math.max(0, scrollLeft);
+      const visibleEnd = Math.min(scrollLeft + width, durationX);
+      if (visibleEnd > visibleStart) {
+        ctx.fillRect(
+          visibleStart - scrollLeft,
+          0,
+          visibleEnd - visibleStart,
+          24,
+        );
+      }
     }
 
     // Drawing settings
-    ctx.fillStyle = '#9ca3af'; // text-gray-400
-    ctx.strokeStyle = '#374151'; // border-gray-700
+    ctx.fillStyle = "#9ca3af"; // text-gray-400
+    ctx.strokeStyle = "#374151"; // border-gray-700
     ctx.lineWidth = 1;
-    ctx.font = '12px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+    ctx.font = "12px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
 
     // Calculate intervals
     // We want main labels (text) to have enough space (min 50px)
@@ -76,7 +88,7 @@ export function TimelineRuler({
       // If interval is sub-second, show decimal
       if (mainInterval < 1) {
         // Avoid long floating point errors
-        return seconds.toFixed(1) + 's';
+        return seconds.toFixed(1) + "s";
       }
 
       const m = Math.floor(seconds / 60);
@@ -86,11 +98,11 @@ export function TimelineRuler({
         return `${m}m`;
       }
       if (m === 0 && s === 0) {
-        return '0s';
+        return "0s";
       }
       return m > 0
-        ? `${m}:${s.toString().padStart(2, '0')}`
-        : s.toString().padStart(2, '0');
+        ? `${m}:${s.toString().padStart(2, "0")}`
+        : s.toString().padStart(2, "0");
     };
 
     // Sub ticks
@@ -106,14 +118,21 @@ export function TimelineRuler({
       subInterval = mainInterval; // No sub ticks
     }
 
-    const rangeEnd = Math.max(duration, width / pixelsPerSecond);
-    const count = Math.ceil(rangeEnd / subInterval) + 1;
+    // Determine range to draw based on scrollLeft and width
+    const startTime =
+      Math.floor(scrollLeft / pixelsPerSecond / subInterval) * subInterval;
+    const endTime = (scrollLeft + width) / pixelsPerSecond;
+
+    const count = Math.ceil((endTime - startTime) / subInterval) + 1;
 
     for (let i = 0; i < count; i++) {
-      const time = i * subInterval;
-      const x = Math.floor(time * pixelsPerSecond) + 0.5;
+      const time = startTime + i * subInterval;
+      if (time < 0) continue;
+
+      const x = Math.floor(time * pixelsPerSecond - scrollLeft) + 0.5;
 
       if (x > width) break;
+      if (x < -20) continue; // Skip if far left
 
       const isBeyondDuration = time > duration + 0.001;
       ctx.globalAlpha = isBeyondDuration ? 0.4 : 1.0;
@@ -144,13 +163,13 @@ export function TimelineRuler({
       ctx.stroke();
     }
     ctx.globalAlpha = 1.0;
-  }, [zoomLevel, duration, width]);
+  }, [zoomLevel, duration, width, scrollLeft]);
 
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none"
-      style={{ height: '24px' }}
+      style={{ height: "24px" }}
     />
   );
 }

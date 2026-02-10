@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Video,
   Music,
@@ -10,37 +10,37 @@ import {
   Ellipsis,
   ArrowUp,
   ArrowDown,
-} from 'lucide-react';
-import { useTimelineStore } from '@/stores/timeline-store';
-import { usePlaybackStore } from '@/stores/playback-store';
-import { useStudioStore } from '@/stores/studio-store';
+} from "lucide-react";
+import { useTimelineStore } from "@/stores/timeline-store";
+import { usePlaybackStore } from "@/stores/playback-store";
+import { useStudioStore } from "@/stores/studio-store";
 
-import { useTimelineZoom } from '@/hooks/use-timeline-zoom';
+import { useTimelineZoom } from "@/hooks/use-timeline-zoom";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import {
   TimelinePlayhead,
   useTimelinePlayheadRuler,
-} from './timeline-playhead';
-import type { TimelineTrack } from '@/types/timeline';
-import { TimelineRuler } from './timeline-ruler';
+} from "./timeline-playhead";
+import type { TimelineTrack } from "@/types/timeline";
+import { TimelineRuler } from "./timeline-ruler";
 import {
   getTrackHeight,
   TIMELINE_CONSTANTS,
   snapTimeToFrame,
-} from '@/components/editor/timeline/timeline-constants';
-import { TimelineToolbar } from './timeline-toolbar';
-import { TimelineCanvas } from './timeline';
-import { TimelineStudioSync } from './timeline-studio-sync';
-import { useEditorHotkeys } from '@/hooks/use-editor-hotkeys';
+} from "@/components/editor/timeline/timeline-constants";
+import { TimelineToolbar } from "./timeline-toolbar";
+import { TimelineCanvas } from "./timeline";
+import { TimelineStudioSync } from "./timeline-studio-sync";
+import { useEditorHotkeys } from "@/hooks/use-editor-hotkeys";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export function Timeline() {
   const { tracks, clips, getTotalDuration } = useTimelineStore();
@@ -59,6 +59,9 @@ export function Timeline() {
     downTime: 0,
   });
 
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
+
   // Timeline zoom functionality
   const { zoomLevel, setZoomLevel, handleWheel } = useTimelineZoom({
     containerRef: timelineRef,
@@ -70,7 +73,7 @@ export function Timeline() {
   // Dynamic timeline width calculation based on playhead position and duration
   const dynamicTimelineWidth = Math.max(
     (duration || 0) * TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel, // Base width from duration
-    timelineRef.current?.clientWidth || 1000 // Minimum width
+    timelineRef.current?.clientWidth || 1000, // Minimum width
   );
 
   // Scroll synchronization and auto-scroll to playhead
@@ -120,7 +123,7 @@ export function Timeline() {
       }
 
       // Don't seek if clicking on timeline elements, but still deselect
-      if ((e.target as HTMLElement).closest('.timeline-element')) {
+      if ((e.target as HTMLElement).closest(".timeline-element")) {
         return;
       }
 
@@ -133,7 +136,7 @@ export function Timeline() {
 
       // Determine if we're clicking in ruler or tracks area
       const isRulerClick = (e.target as HTMLElement).closest(
-        '[data-ruler-area]'
+        "[data-ruler-area]",
       );
 
       let mouseX: number;
@@ -172,8 +175,8 @@ export function Timeline() {
         Math.min(
           duration,
           (mouseX + scrollLeft) /
-            (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel)
-        )
+            (TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel),
+        ),
       );
 
       // Use frame snapping for timeline clicking
@@ -181,7 +184,7 @@ export function Timeline() {
       const time = snapTimeToFrame(rawTime, projectFps);
       seek(time);
     },
-    [duration, zoomLevel, seek, rulerScrollRef, tracksScrollRef]
+    [duration, zoomLevel, seek, rulerScrollRef, tracksScrollRef],
   );
 
   // Update timeline duration when tracks change
@@ -190,26 +193,45 @@ export function Timeline() {
     setDuration(totalDuration);
   }, [tracks, clips, setDuration, getTotalDuration]);
 
+  // Track viewport width
+  useEffect(() => {
+    if (!timelineRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setViewportWidth(entry.contentRect.width);
+      }
+    });
+
+    observer.observe(timelineRef.current);
+    // Initial width
+    setViewportWidth(timelineRef.current.clientWidth);
+
+    return () => observer.disconnect();
+  }, []);
+
   // --- Scroll synchronization effect ---
   // Horizontal scroll synchronization (Ruler -> Canvas) is now handled via canvas.initScrollbars
   // but we still need to keep the UI in sync when the canvas scrolls.
 
   useEffect(() => {
-    const canvas = new TimelineCanvas('timeline-canvas');
+    const canvas = new TimelineCanvas("timeline-canvas");
     timelineCanvasRef.current = canvas;
 
     // Set up UI event listeners (scroll/zoom)
-    canvas.on('scroll', ({ deltaX, deltaY, scrollX, scrollY }) => {
+    canvas.on("scroll", ({ deltaX, deltaY, scrollX, scrollY }) => {
       if (isUpdatingRef.current) return;
       isUpdatingRef.current = true;
 
-      if (typeof scrollX === 'number' && rulerScrollRef.current) {
+      if (typeof scrollX === "number" && rulerScrollRef.current) {
         rulerScrollRef.current.scrollLeft = scrollX;
+        setScrollLeft(scrollX);
       } else if (deltaX !== 0 && rulerScrollRef.current) {
         rulerScrollRef.current.scrollLeft += deltaX;
+        setScrollLeft(rulerScrollRef.current.scrollLeft);
       }
 
-      if (typeof scrollY === 'number' && trackLabelsRef.current) {
+      if (typeof scrollY === "number" && trackLabelsRef.current) {
         trackLabelsRef.current.scrollTop = scrollY;
       } else if (deltaY !== 0 && trackLabelsRef.current) {
         trackLabelsRef.current.scrollTop += deltaY;
@@ -218,8 +240,8 @@ export function Timeline() {
       isUpdatingRef.current = false;
     });
 
-    canvas.on('zoom', ({ delta, zoomLevel: newZoomLevel }) => {
-      if (typeof newZoomLevel === 'number') {
+    canvas.on("zoom", ({ delta, zoomLevel: newZoomLevel }) => {
+      if (typeof newZoomLevel === "number") {
         setZoomLevel(newZoomLevel);
         return;
       }
@@ -237,7 +259,7 @@ export function Timeline() {
       extraMarginX: 50,
       extraMarginY: 15,
       scrollbarWidth: 8,
-      scrollbarColor: 'rgba(255, 255, 255, 0.3)',
+      scrollbarColor: "rgba(255, 255, 255, 0.3)",
     });
 
     canvas.setTracks(tracks);
@@ -258,10 +280,10 @@ export function Timeline() {
       timelineCanvasRef.current?.reloadClip(newClip.id);
     };
 
-    studio.on('clip:replaced', onReplaced);
+    studio.on("clip:replaced", onReplaced);
 
     return () => {
-      studio.off('clip:replaced', onReplaced);
+      studio.off("clip:replaced", onReplaced);
     };
   }, []);
 
@@ -294,7 +316,7 @@ export function Timeline() {
   return (
     <div
       className={
-        'h-full flex flex-col transition-colors duration-200 relative bg-card rounded-sm overflow-hidden'
+        "h-full flex flex-col transition-colors duration-200 relative bg-card rounded-sm overflow-hidden"
       }
       onMouseEnter={() => setIsInTimeline(true)}
       onMouseLeave={() => setIsInTimeline(false)}
@@ -360,6 +382,7 @@ export function Timeline() {
                 if (isUpdatingRef.current) return;
                 isUpdatingRef.current = true;
                 const scrollX = (e.currentTarget as HTMLDivElement).scrollLeft;
+                setScrollLeft(scrollX);
                 timelineCanvasRef.current?.setScroll(scrollX, undefined);
                 isUpdatingRef.current = false;
               }}
@@ -372,11 +395,20 @@ export function Timeline() {
                 }}
                 onMouseDown={handleRulerMouseDown}
               >
-                <TimelineRuler
-                  zoomLevel={zoomLevel}
-                  duration={duration}
-                  width={dynamicTimelineWidth}
-                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    transform: `translateX(${scrollLeft}px)`,
+                    width: viewportWidth ? `${viewportWidth - 64}px` : "100%",
+                  }}
+                >
+                  <TimelineRuler
+                    zoomLevel={zoomLevel}
+                    duration={duration}
+                    width={viewportWidth ? viewportWidth - 64 : 1000}
+                    scrollLeft={scrollLeft}
+                  />
+                </div>
               </div>
             </ScrollArea>
           </div>
@@ -400,14 +432,14 @@ export function Timeline() {
                         className="w-full"
                         style={{
                           height: `${TIMELINE_CONSTANTS.TRACK_PADDING_TOP}px`,
-                          marginBottom: '0px',
-                          background: 'transparent',
+                          marginBottom: "0px",
+                          background: "transparent",
                         }}
                       />
                     )}
 
                     <div
-                      className={cn('flex items-center px-3 group bg-input/40')}
+                      className={cn("flex items-center px-3 group bg-input/40")}
                       style={{ height: getTrackHeight(track.type as any) }}
                     >
                       <div className="flex items-center justify-center flex-1 min-w-0 gap-1">
@@ -455,13 +487,13 @@ export function Timeline() {
                       className="w-full relative"
                       style={{
                         height: `${TIMELINE_CONSTANTS.TRACK_SPACING}px`,
-                        background: 'transparent',
+                        background: "transparent",
                       }}
                     ></div>
                   </div>
                 ))}
                 {/* Spacer to match canvas extraMarginY */}
-                <div style={{ height: '15px', flexShrink: 0 }} />
+                <div style={{ height: "15px", flexShrink: 0 }} />
               </div>
             </div>
           )}
@@ -479,22 +511,22 @@ export function Timeline() {
 function TrackIcon({ track }: { track: TimelineTrack }) {
   return (
     <>
-      {track.type === 'Image' && (
+      {track.type === "Image" && (
         <Image className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
-      {(track.type === 'Video' || track.type === 'Placeholder') && (
+      {(track.type === "Video" || track.type === "Placeholder") && (
         <Video className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
-      {track.type === 'Text' && (
+      {track.type === "Text" && (
         <TypeIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
-      {track.type === 'Caption' && (
+      {track.type === "Caption" && (
         <TypeIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
-      {track.type === 'Audio' && (
+      {track.type === "Audio" && (
         <Music className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
-      {track.type === 'Effect' && (
+      {track.type === "Effect" && (
         <SparklesIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
       )}
     </>

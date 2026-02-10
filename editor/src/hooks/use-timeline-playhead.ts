@@ -1,8 +1,8 @@
-import { snapTimeToFrame } from '@/components/editor/timeline/timeline-constants';
-import { DEFAULT_FPS } from '@/stores/project-store';
-import { usePlaybackStore } from '@/stores/playback-store';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useEdgeAutoScroll } from '@/hooks/use-edge-auto-scroll';
+import { snapTimeToFrame } from "@/components/editor/timeline/timeline-constants";
+import { DEFAULT_FPS } from "@/stores/project-store";
+import { usePlaybackStore } from "@/stores/playback-store";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useEdgeAutoScroll } from "@/hooks/use-edge-auto-scroll";
 
 interface UseTimelinePlayheadProps {
   currentTime: number;
@@ -45,7 +45,7 @@ export function useTimelinePlayhead({
       setIsScrubbing(true);
       handleScrub(e);
     },
-    [duration, zoomLevel]
+    [duration, zoomLevel],
   );
 
   // Ruler mouse down handler
@@ -65,7 +65,7 @@ export function useTimelinePlayhead({
       setIsScrubbing(true);
       handleScrub(e);
     },
-    [duration, zoomLevel]
+    [duration, zoomLevel],
   );
 
   const handleScrub = useCallback(
@@ -92,7 +92,7 @@ export function useTimelinePlayhead({
       // Store mouse position for auto-scrolling
       lastMouseXRef.current = e.clientX;
     },
-    [duration, zoomLevel, seek, rulerRef]
+    [duration, zoomLevel, seek, rulerRef],
   );
 
   useEdgeAutoScroll({
@@ -131,14 +131,14 @@ export function useTimelinePlayhead({
       }
     };
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
 
     // Edge auto-scroll is handled by useEdgeAutoScroll
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
       // nothing to cleanup for edge auto scroll
     };
   }, [
@@ -176,7 +176,7 @@ export function useTimelinePlayhead({
       // Center the playhead in the viewport
       const desiredScroll = Math.max(
         scrollMin,
-        Math.min(scrollMax, playheadPx - viewportWidth / 2)
+        Math.min(scrollMax, playheadPx - viewportWidth / 2),
       );
       rulerViewport.scrollLeft = tracksViewport.scrollLeft = desiredScroll;
     }
