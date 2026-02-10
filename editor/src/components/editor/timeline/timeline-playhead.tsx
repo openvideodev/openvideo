@@ -18,6 +18,8 @@ interface TimelinePlayheadProps {
   timelineRef: React.RefObject<HTMLDivElement | null>;
   playheadRef?: React.RefObject<HTMLDivElement | null>;
   isSnappingToPlayhead?: boolean;
+  scrollLeft: number;
+  onScrollChange?: (scrollX: number) => void;
 }
 
 export function TimelinePlayhead({
@@ -32,12 +34,13 @@ export function TimelinePlayhead({
   timelineRef,
   playheadRef: externalPlayheadRef,
   isSnappingToPlayhead = false,
+  scrollLeft,
+  onScrollChange,
 }: TimelinePlayheadProps) {
   const currentTime = usePlaybackStore((state) => state.currentTime);
 
   const internalPlayheadRef = useRef<HTMLDivElement>(null);
   const playheadRef = externalPlayheadRef || internalPlayheadRef;
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const { playheadPosition, handlePlayheadMouseDown } = useTimelinePlayhead({
     currentTime,
@@ -48,25 +51,8 @@ export function TimelinePlayhead({
     rulerScrollRef,
     tracksScrollRef,
     playheadRef,
+    onScrollChange,
   });
-
-  // Track scroll position to lock playhead to frame
-  useEffect(() => {
-    // We use the ruler as the source of truth for X-axis scrolling
-    const scrollViewport = rulerScrollRef.current;
-
-    if (!scrollViewport) return;
-
-    const handleScroll = () => {
-      setScrollLeft(scrollViewport.scrollLeft);
-    };
-
-    // Set initial scroll position
-    setScrollLeft(scrollViewport.scrollLeft);
-
-    scrollViewport.addEventListener("scroll", handleScroll);
-    return () => scrollViewport.removeEventListener("scroll", handleScroll);
-  }, [rulerScrollRef]);
 
   // Use timeline container height minus a few pixels for breathing room
   const timelineContainerHeight = timelineRef.current?.offsetHeight || 400;
@@ -141,7 +127,13 @@ export function useTimelinePlayheadRuler({
   rulerScrollRef,
   tracksScrollRef,
   playheadRef,
-}: Omit<TimelinePlayheadProps, "tracks" | "trackLabelsRef" | "timelineRef">) {
+  onScrollChange,
+}: Omit<
+  TimelinePlayheadProps,
+  "tracks" | "trackLabelsRef" | "timelineRef" | "scrollLeft"
+> & {
+  scrollLeft?: number;
+}) {
   const currentTime = usePlaybackStore((state) => state.currentTime);
   const { handleRulerMouseDown, isDraggingRuler } = useTimelinePlayhead({
     currentTime,
@@ -152,6 +144,7 @@ export function useTimelinePlayheadRuler({
     rulerScrollRef,
     tracksScrollRef,
     playheadRef,
+    onScrollChange,
   });
 
   return { handleRulerMouseDown, isDraggingRuler };
