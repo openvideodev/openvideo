@@ -15,7 +15,7 @@ export class KeyframeAnimation implements IAnimation {
   private frames: Array<{
     progress: number;
     props: Partial<AnimationProps>;
-    easing: string | ((t: number) => number);
+    easing?: string | ((t: number) => number);
   }>;
 
   constructor(
@@ -39,7 +39,7 @@ export class KeyframeAnimation implements IAnimation {
       this.frames = data.map((f: any) => ({
         progress: f.progress,
         props: f.props || f, // handle cases where props is missing or is the object itself
-        easing: f.easing || "linear",
+        easing: f.easing,
       }));
     } else {
       // Handle object format (percentage keys)
@@ -57,7 +57,7 @@ export class KeyframeAnimation implements IAnimation {
           return {
             progress: progress / 100,
             props,
-            easing: easing || "linear",
+            easing: easing,
           };
         })
         .sort((a, b) => a.progress - b.progress);
@@ -65,13 +65,13 @@ export class KeyframeAnimation implements IAnimation {
 
     // Ensure 0 and 1 exist
     if (this.frames.length > 0 && this.frames[0].progress !== 0) {
-      this.frames.unshift({ progress: 0, props: {}, easing: "linear" });
+      this.frames.unshift({ progress: 0, props: {} });
     }
     if (
       this.frames.length > 0 &&
       this.frames[this.frames.length - 1].progress !== 1
     ) {
-      this.frames.push({ progress: 1, props: {}, easing: "linear" });
+      this.frames.push({ progress: 1, props: {} });
     }
   }
 
@@ -109,12 +109,9 @@ export class KeyframeAnimation implements IAnimation {
     const segmentProgress =
       (progress - startFrame.progress) /
       (endFrame.progress - startFrame.progress);
-    const easingSource = endFrame.easing ?? this.options.easing ?? "linear";
+    const easingSource = endFrame.easing ?? this.options.easing;
 
-    const easingFn =
-      typeof easingSource === "function"
-        ? easingSource
-        : getEasing(easingSource);
+    const easingFn = getEasing(easingSource);
 
     const easedProgress = easingFn(segmentProgress);
 
