@@ -84,6 +84,17 @@ export function Timeline() {
   const timelineCanvasRef = useRef<TimelineCanvas | null>(null);
   const isUpdatingRef = useRef(false);
 
+  const handleScrollChange = useCallback(
+    (scrollX: number) => {
+      setScrollLeft(scrollX);
+      if (rulerScrollRef.current) {
+        rulerScrollRef.current.scrollLeft = scrollX;
+      }
+      timelineCanvasRef.current?.setScroll(scrollX, undefined);
+    },
+    [timelineCanvasRef],
+  );
+
   // Timeline playhead ruler handlers
   const { handleRulerMouseDown } = useTimelinePlayheadRuler({
     duration,
@@ -93,6 +104,7 @@ export function Timeline() {
     rulerScrollRef,
     tracksScrollRef,
     playheadRef,
+    onScrollChange: handleScrollChange,
   });
 
   // Timeline content click to seek handler
@@ -223,12 +235,15 @@ export function Timeline() {
       if (isUpdatingRef.current) return;
       isUpdatingRef.current = true;
 
-      if (typeof scrollX === "number" && rulerScrollRef.current) {
-        rulerScrollRef.current.scrollLeft = scrollX;
+      if (typeof scrollX === "number") {
         setScrollLeft(scrollX);
+        if (rulerScrollRef.current) {
+          rulerScrollRef.current.scrollLeft = scrollX;
+        }
       } else if (deltaX !== 0 && rulerScrollRef.current) {
-        rulerScrollRef.current.scrollLeft += deltaX;
-        setScrollLeft(rulerScrollRef.current.scrollLeft);
+        const newX = rulerScrollRef.current.scrollLeft + deltaX;
+        setScrollLeft(newX);
+        rulerScrollRef.current.scrollLeft = newX;
       }
 
       if (typeof scrollY === "number" && trackLabelsRef.current) {
@@ -347,6 +362,8 @@ export function Timeline() {
           timelineRef={timelineRef}
           playheadRef={playheadRef}
           isSnappingToPlayhead={false}
+          scrollLeft={scrollLeft}
+          onScrollChange={handleScrollChange}
         />
 
         {/* Timeline Header with Ruler */}
@@ -380,11 +397,8 @@ export function Timeline() {
               ref={rulerScrollRef}
               onScroll={(e) => {
                 if (isUpdatingRef.current) return;
-                isUpdatingRef.current = true;
                 const scrollX = (e.currentTarget as HTMLDivElement).scrollLeft;
-                setScrollLeft(scrollX);
-                timelineCanvasRef.current?.setScroll(scrollX, undefined);
-                isUpdatingRef.current = false;
+                handleScrollChange(scrollX);
               }}
             >
               <div
