@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useRef, useState, useEffect } from 'react';
-import { usePlaybackStore } from '@/stores/playback-store';
-import { TimelineTrack } from '@/types/timeline';
-import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
-import { useTimelinePlayhead } from '@/hooks/use-timeline-playhead';
+import { useRef, useState, useEffect } from "react";
+import { usePlaybackStore } from "@/stores/playback-store";
+import { TimelineTrack } from "@/types/timeline";
+import { TIMELINE_CONSTANTS } from "@/components/editor/timeline/timeline-constants";
+import { useTimelinePlayhead } from "@/hooks/use-timeline-playhead";
 
 interface TimelinePlayheadProps {
   duration: number;
@@ -64,8 +64,8 @@ export function TimelinePlayhead({
     // Set initial scroll position
     setScrollLeft(scrollViewport.scrollLeft);
 
-    scrollViewport.addEventListener('scroll', handleScroll);
-    return () => scrollViewport.removeEventListener('scroll', handleScroll);
+    scrollViewport.addEventListener("scroll", handleScroll);
+    return () => scrollViewport.removeEventListener("scroll", handleScroll);
   }, [rulerScrollRef]);
 
   // Use timeline container height minus a few pixels for breathing room
@@ -93,12 +93,12 @@ export function TimelinePlayhead({
   const leftBoundary = trackLabelsWidth;
   const rightBoundary = Math.min(
     trackLabelsWidth + timelineContentWidth - scrollLeft, // Don't go beyond timeline content
-    trackLabelsWidth + viewportWidth // Don't go beyond viewport
+    trackLabelsWidth + viewportWidth, // Don't go beyond viewport
   );
 
   const leftPosition = Math.max(
     leftBoundary,
-    Math.min(rightBoundary, rawLeftPosition)
+    Math.min(rightBoundary, rawLeftPosition),
   );
 
   return (
@@ -109,7 +109,7 @@ export function TimelinePlayhead({
         left: `${leftPosition}px`,
         top: 0,
         height: `${totalHeight}px`,
-        width: '1px',
+        width: "1px",
         opacity: duration === 0 ? 0 : 1,
       }}
       onMouseDown={handlePlayheadMouseDown}
@@ -121,11 +121,11 @@ export function TimelinePlayhead({
       <div
         className="absolute left-1/2 transform -translate-x-1/2 cursor-col-resize bg-white"
         style={{
-          top: '0',
-          width: '12px',
-          height: '14px',
-          borderRadius: '2px 2px 0 0',
-          clipPath: 'polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)',
+          top: "0",
+          width: "12px",
+          height: "14px",
+          borderRadius: "2px 2px 0 0",
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)",
         }}
       />
     </div>
@@ -141,7 +141,7 @@ export function useTimelinePlayheadRuler({
   rulerScrollRef,
   tracksScrollRef,
   playheadRef,
-}: Omit<TimelinePlayheadProps, 'tracks' | 'trackLabelsRef' | 'timelineRef'>) {
+}: Omit<TimelinePlayheadProps, "tracks" | "trackLabelsRef" | "timelineRef">) {
   const currentTime = usePlaybackStore((state) => state.currentTime);
   const { handleRulerMouseDown, isDraggingRuler } = useTimelinePlayhead({
     currentTime,

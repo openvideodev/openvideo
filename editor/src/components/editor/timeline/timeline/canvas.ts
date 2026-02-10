@@ -1,5 +1,5 @@
-import { Canvas, Rect, type FabricObject, ActiveSelection } from 'fabric';
-import { Track } from './track';
+import { Canvas, Rect, type FabricObject, ActiveSelection } from "fabric";
+import { Track } from "./track";
 import {
   Text,
   Video,
@@ -9,25 +9,25 @@ import {
   type BaseTimelineClip,
   Transition,
   Caption,
-} from './clips';
-import { TransitionButton } from './objects/transition-button';
-import { TIMELINE_CONSTANTS } from '@/components/editor/timeline/timeline-constants';
+} from "./clips";
+import { TransitionButton } from "./objects/transition-button";
+import { TIMELINE_CONSTANTS } from "@/components/editor/timeline/timeline-constants";
 import {
   type ITimelineTrack,
   type IClip,
   MICROSECONDS_PER_SECOND,
   type TrackType,
-} from '@/types/timeline';
-import { useTimelineStore } from '@/stores/timeline-store';
-import EventEmitter from './event-emitter';
-import * as SelectionHandlers from './handlers/selection';
-import * as DragHandlers from './handlers/drag-handler';
-import * as ModifyHandlers from './handlers/modify-handler';
-import { Scrollbars } from './scrollbar';
-import { makeMouseWheel } from './scrollbar/util';
-import type { ScrollbarsProps } from './scrollbar/types';
-import { getTrackHeight } from '@/components/editor/timeline/timeline-constants';
-import type { TMat2D, TPointerEventInfo } from 'fabric';
+} from "@/types/timeline";
+import { useTimelineStore } from "@/stores/timeline-store";
+import EventEmitter from "./event-emitter";
+import * as SelectionHandlers from "./handlers/selection";
+import * as DragHandlers from "./handlers/drag-handler";
+import * as ModifyHandlers from "./handlers/modify-handler";
+import { Scrollbars } from "./scrollbar";
+import { makeMouseWheel } from "./scrollbar/util";
+import type { ScrollbarsProps } from "./scrollbar/types";
+import { getTrackHeight } from "@/components/editor/timeline/timeline-constants";
+import type { TMat2D, TPointerEventInfo } from "fabric";
 
 export interface TimelineCanvasEvents {
   scroll: {
@@ -38,13 +38,13 @@ export interface TimelineCanvasEvents {
     isSelection?: boolean;
   };
   zoom: { delta: number; zoomLevel?: number };
-  'clip:modified': {
+  "clip:modified": {
     clipId: string;
     displayFrom: number;
     duration: number;
     trim?: { from: number; to: number };
   };
-  'clips:modified': {
+  "clips:modified": {
     clips: Array<{
       clipId: string;
       displayFrom: number;
@@ -52,16 +52,16 @@ export interface TimelineCanvasEvents {
       trim?: { from: number; to: number };
     }>;
   };
-  'clip:movedToTrack': { clipId: string; trackId: string };
-  'clip:movedToNewTrack': { clipId: string; targetIndex: number };
-  'timeline:updated': { tracks: ITimelineTrack[] };
-  'clips:removed': { clipIds: string[] };
-  'selection:changed': { selectedIds: string[] };
-  'selection:duplicated': { clipIds: string[] };
-  'selection:split': { clipId: string; splitTime: number };
-  'transition:add': { fromClipId: string; toClipId: string; trackId: string };
-  'selection:delete': undefined;
-  'viewport:changed': { scrollX: number; scrollY: number };
+  "clip:movedToTrack": { clipId: string; trackId: string };
+  "clip:movedToNewTrack": { clipId: string; targetIndex: number };
+  "timeline:updated": { tracks: ITimelineTrack[] };
+  "clips:removed": { clipIds: string[] };
+  "selection:changed": { selectedIds: string[] };
+  "selection:duplicated": { clipIds: string[] };
+  "selection:split": { clipId: string; splitTime: number };
+  "transition:add": { fromClipId: string; toClipId: string; trackId: string };
+  "selection:delete": undefined;
+  "viewport:changed": { scrollX: number; scrollY: number };
   [key: string]: any;
   [key: symbol]: any;
 }
@@ -121,7 +121,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     // Bind handlers
     this.#onDragging = (options) => {
       const e = options.e as MouseEvent | PointerEvent | TouchEvent;
-      const pointer = 'clientX' in e ? e : (e as TouchEvent).touches[0];
+      const pointer = "clientX" in e ? e : (e as TouchEvent).touches[0];
       this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
       this.#startDragAutoScroll();
       DragHandlers.handleDragging(this, options);
@@ -146,9 +146,9 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   public init() {
-    const canvasElement = document.createElement('canvas');
-    canvasElement.style.width = '100%';
-    canvasElement.style.height = '100%';
+    const canvasElement = document.createElement("canvas");
+    canvasElement.style.width = "100%";
+    canvasElement.style.height = "100%";
     this.containerEl.appendChild(canvasElement);
 
     const { clientWidth, clientHeight } = this.containerEl;
@@ -160,7 +160,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       renderOnAddRemove: false, // Performance optimization
     });
 
-    this.canvas.on('mouse:wheel', (opt) => {
+    this.canvas.on("mouse:wheel", (opt) => {
       if (this.#mouseWheelHandler) {
         this.#mouseWheelHandler(opt);
         return;
@@ -170,28 +170,28 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       e.stopPropagation();
 
       if (e.ctrlKey || e.metaKey) {
-        this.emit('zoom', { delta: e.deltaY });
+        this.emit("zoom", { delta: e.deltaY });
       } else {
         const deltaX = e.shiftKey ? e.deltaY : e.deltaX;
         const deltaY = e.shiftKey ? 0 : e.deltaY;
-        this.emit('scroll', { deltaX, deltaY });
+        this.emit("scroll", { deltaX, deltaY });
       }
     });
 
-    this.canvas.on('mouse:down', (options) => {
+    this.canvas.on("mouse:down", (options) => {
       if (!options.target) {
         this.#isSelectingArea = true;
         const e = options.e as MouseEvent | PointerEvent | TouchEvent;
-        const pointer = 'clientX' in e ? e : (e as TouchEvent).touches[0];
+        const pointer = "clientX" in e ? e : (e as TouchEvent).touches[0];
         this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
         this.#startDragAutoScroll();
       }
     });
 
-    this.canvas.on('mouse:move', (options) => {
+    this.canvas.on("mouse:move", (options) => {
       if (this.#isSelectingArea) {
         const e = options.e as MouseEvent | PointerEvent | TouchEvent;
-        const pointer = 'clientX' in e ? e : (e as TouchEvent).touches[0];
+        const pointer = "clientX" in e ? e : (e as TouchEvent).touches[0];
         this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
       }
     });
@@ -211,17 +211,17 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   private setupEvents() {
-    this.canvas.on('object:moving', this.#onDragging);
+    this.canvas.on("object:moving", this.#onDragging);
     // Note: handleTrackRelocation should run before handleClipModification or be prioritized
-    this.canvas.on('object:modified', this.#onTrackRelocation);
-    this.canvas.on('object:modified', this.#onClipModification);
-    this.canvas.on('selection:created', this.#onSelectionCreate);
-    this.canvas.on('selection:updated', this.#onSelectionUpdate);
-    this.canvas.on('selection:cleared', this.#onSelectionClear);
-    this.canvas.on('mouse:move', this.#onMouseMove);
+    this.canvas.on("object:modified", this.#onTrackRelocation);
+    this.canvas.on("object:modified", this.#onClipModification);
+    this.canvas.on("selection:created", this.#onSelectionCreate);
+    this.canvas.on("selection:updated", this.#onSelectionUpdate);
+    this.canvas.on("selection:cleared", this.#onSelectionClear);
+    this.canvas.on("mouse:move", this.#onMouseMove);
 
     // Stop auto-scroll on mouse up just in case
-    this.canvas.on('mouse:up', () => this.#stopDragAutoScroll());
+    this.canvas.on("mouse:up", () => this.#stopDragAutoScroll());
   }
 
   #startDragAutoScroll() {
@@ -279,18 +279,18 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       const maxScrollX = Math.max(0, durationPx - this.canvas.width);
       const maxScrollY = Math.max(
         0,
-        this.#totalTracksHeight + 15 - this.canvas.height
+        this.#totalTracksHeight + 15 - this.canvas.height,
       ); // 15 is extraMarginY
 
       if (this.#isSelectingArea) {
         // --- SYNCHRONOUS CLAMPING FOR AREA SELECTION ---
         const newScrollX = Math.max(
           0,
-          Math.min(maxScrollX, this.#scrollX + deltaX)
+          Math.min(maxScrollX, this.#scrollX + deltaX),
         );
         const newScrollY = Math.max(
           0,
-          Math.min(maxScrollY, this.#scrollY + deltaY)
+          Math.min(maxScrollY, this.#scrollY + deltaY),
         );
 
         const actualDeltaX = newScrollX - this.#scrollX;
@@ -299,7 +299,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         if (actualDeltaX !== 0 || actualDeltaY !== 0) {
           this.setScroll(newScrollX, newScrollY);
 
-          this.emit('scroll', {
+          this.emit("scroll", {
             deltaX: actualDeltaX,
             deltaY: actualDeltaY,
             scrollX: newScrollX,
@@ -332,7 +332,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         if (actualDeltaX !== 0 || actualDeltaY !== 0) {
           this.setScroll(newScrollX, newScrollY);
 
-          this.emit('scroll', {
+          this.emit("scroll", {
             deltaX: actualDeltaX,
             deltaY: actualDeltaY,
             scrollX: newScrollX,
@@ -344,7 +344,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
             const e = {
               clientX: this.#lastPointer.x,
               clientY: this.#lastPointer.y,
-              type: 'mousemove',
+              type: "mousemove",
               preventDefault: () => {},
               stopPropagation: () => {},
             } as any;
@@ -406,13 +406,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       if (Math.abs(x - transitionPointX) < TRANSITION_POINT_THRESHOLD) {
         // Higher priority check: types must be media (Video/Image)
         if (
-          (clipA.type === 'Video' || clipA.type === 'Image') &&
-          (clipB.type === 'Video' || clipB.type === 'Image')
+          (clipA.type === "Video" || clipA.type === "Image") &&
+          (clipB.type === "Video" || clipB.type === "Image")
         ) {
           // Check if there's already a transition here
           const hasTransition = trackData.clipIds.some((id) => {
             const c = this.#clipsMap[id];
-            if (!c || c.type !== 'Transition') return false;
+            if (!c || c.type !== "Transition") return false;
             // Transition is roughly centered at transition point
             const tStart =
               (c.display.from / MICROSECONDS_PER_SECOND) *
@@ -444,7 +444,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         track.top + (track.bottom - track.top) / 2,
         foundTransitionPoint.clipA.id,
         foundTransitionPoint.clipB.id,
-        foundTransitionPoint.trackId
+        foundTransitionPoint.trackId,
       );
     } else {
       this.clearTransitionButton();
@@ -456,7 +456,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     y: number,
     clipAId: string,
     clipBId: string,
-    trackId: string
+    trackId: string,
   ) {
     if (this.#transitionButton) {
       // If already showing for these clips, just move it if needed (though it shouldn't move much)
@@ -476,7 +476,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       left: x,
       top: y,
       onClick: () => {
-        this.emit('transition:add', {
+        this.emit("transition:add", {
           fromClipId: clipAId,
           toClipId: clipBId,
           trackId: trackId,
@@ -520,19 +520,19 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
   public get totalTracksHeight() {
     return this.#tracks.reduce<number>((acc, track) => {
-      let trackType: TrackType = 'Video';
+      let trackType: TrackType = "Video";
       if (
-        track.type.toLowerCase() === 'caption' ||
-        track.type.toLowerCase() === 'text'
+        track.type.toLowerCase() === "caption" ||
+        track.type.toLowerCase() === "text"
       ) {
-        trackType = 'Text';
-      } else if (track.type.toLowerCase() === 'audio') {
-        trackType = 'Audio';
+        trackType = "Text";
+      } else if (track.type.toLowerCase() === "audio") {
+        trackType = "Audio";
       } else if (
-        track.type.toLowerCase() === 'effect' ||
-        track.type.toLowerCase() === 'filter'
+        track.type.toLowerCase() === "effect" ||
+        track.type.toLowerCase() === "filter"
       ) {
-        trackType = 'Effect';
+        trackType = "Effect";
       }
       return acc + getTrackHeight(trackType) + TIMELINE_CONSTANTS.TRACK_SPACING;
     }, TIMELINE_CONSTANTS.TRACK_PADDING_TOP);
@@ -560,7 +560,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
   public clearSeparatorHighlights() {
     this.#separatorLines.forEach((sep) => {
-      sep.highlight.set('fill', 'transparent');
+      sep.highlight.set("fill", "transparent");
     });
   }
 
@@ -569,10 +569,10 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   public getTrackAt(
-    y: number
+    y: number,
   ): { top: number; bottom: number; id: string } | undefined {
     return this.#trackRegions.find(
-      (region) => y >= region.top && y <= region.bottom
+      (region) => y >= region.top && y <= region.bottom,
     );
   }
 
@@ -609,7 +609,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   public checkSeparatorIntersection(
-    cursorY: number
+    cursorY: number,
   ): { container: Rect; highlight: Rect; index: number } | null {
     // Separator height is derived from gap
     const SEPARATOR_HEIGHT = TIMELINE_CONSTANTS.TRACK_SPACING;
@@ -647,7 +647,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.clearTransitionButton();
 
     this.canvas.requestRenderAll();
-    this.emit('timeline:cleared', {});
+    this.emit("timeline:cleared", {});
   }
 
   public initScrollbars(config: any = {}): void {
@@ -662,11 +662,11 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       extraMarginX: config.extraMarginX ?? 50,
       extraMarginY: config.extraMarginY ?? 15,
       scrollbarWidth: config.scrollbarWidth ?? 8,
-      scrollbarColor: config.scrollbarColor ?? 'rgba(255, 255, 255, 0.3)',
+      scrollbarColor: config.scrollbarColor ?? "rgba(255, 255, 255, 0.3)",
       onViewportChange: ({ scrollX, scrollY }) => {
-        if (typeof scrollX === 'number') this.#scrollX = scrollX;
-        if (typeof scrollY === 'number') this.#scrollY = scrollY;
-        this.emit('scroll', {
+        if (typeof scrollX === "number") this.#scrollX = scrollX;
+        if (typeof scrollY === "number") this.#scrollY = scrollY;
+        this.emit("scroll", {
           deltaX: 0,
           deltaY: 0,
           scrollX,
@@ -674,7 +674,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         });
       },
       onZoom: (zoom: number) => {
-        this.emit('zoom', { delta: 0, zoomLevel: zoom });
+        this.emit("zoom", { delta: 0, zoomLevel: zoom });
       },
     };
 
@@ -731,16 +731,16 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.#tracks.forEach((trackData) => {
       usedTrackIds.add(trackData.id);
 
-      let trackType: TrackType = 'Video';
+      let trackType: TrackType = "Video";
       if (
-        trackData.type.toLowerCase() === 'caption' ||
-        trackData.type.toLowerCase() === 'text'
+        trackData.type.toLowerCase() === "caption" ||
+        trackData.type.toLowerCase() === "text"
       ) {
-        trackType = 'Text';
-      } else if (trackData.type.toLowerCase() === 'audio') {
-        trackType = 'Audio';
-      } else if (trackData.type.toLowerCase() === 'effect') {
-        trackType = 'Effect';
+        trackType = "Text";
+      } else if (trackData.type.toLowerCase() === "audio") {
+        trackType = "Audio";
+      } else if (trackData.type.toLowerCase() === "effect") {
+        trackType = "Effect";
       }
 
       const trackHeight = getTrackHeight(trackType);
@@ -788,7 +788,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       this.renderSeparatorLine(
         index + 1,
         region.bottom + GAP / 2,
-        this.canvas.width || 2000
+        this.canvas.width || 2000,
       );
     });
 
@@ -815,22 +815,22 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           this.#timeScale;
 
         if (
-          clip.type === 'Caption' ||
-          clip.type === 'Text' ||
-          clip.type === 'Video' ||
-          clip.type === 'Image' ||
-          clip.type === 'Audio' ||
-          clip.type === 'Effect' ||
-          clip.type === 'Transition' ||
-          clip.type === 'Placeholder'
+          clip.type === "Caption" ||
+          clip.type === "Text" ||
+          clip.type === "Video" ||
+          clip.type === "Image" ||
+          clip.type === "Audio" ||
+          clip.type === "Effect" ||
+          clip.type === "Transition" ||
+          clip.type === "Placeholder"
         ) {
           let timelineClip = this.#clipObjects.get(clip.id);
           const isMedia =
-            clip.type === 'Video' ||
-            clip.type === 'Image' ||
-            clip.type === 'Audio';
+            clip.type === "Video" ||
+            clip.type === "Image" ||
+            clip.type === "Audio";
 
-          const isTextual = clip.type === 'Text' || clip.type === 'Caption';
+          const isTextual = clip.type === "Text" || clip.type === "Caption";
 
           let clipName = isTextual
             ? clip.text || clip.name || clip.type
@@ -840,12 +840,12 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           if (
             isMedia &&
             clipName &&
-            (clipName.startsWith('http') || clipName.startsWith('blob:'))
+            (clipName.startsWith("http") || clipName.startsWith("blob:"))
           ) {
             try {
               const url = new URL(clipName);
               const pathname = url.pathname;
-              const filename = pathname.split('/').pop();
+              const filename = pathname.split("/").pop();
               if (filename) {
                 clipName = decodeURIComponent(filename);
               }
@@ -866,17 +866,17 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
             };
             console.log({ commonProps });
 
-            if (clip.type === 'Audio') {
+            if (clip.type === "Audio") {
               timelineClip = new Audio(commonProps);
-            } else if (clip.type === 'Video' || clip.type === 'Placeholder') {
+            } else if (clip.type === "Video" || clip.type === "Placeholder") {
               timelineClip = new Video(commonProps);
-            } else if (clip.type === 'Image') {
+            } else if (clip.type === "Image") {
               timelineClip = new Image(commonProps);
-            } else if (clip.type === 'Effect') {
+            } else if (clip.type === "Effect") {
               timelineClip = new Effect(commonProps);
-            } else if (clip.type === 'Transition') {
+            } else if (clip.type === "Transition") {
               timelineClip = new Transition(commonProps);
-            } else if (clip.type === 'Caption') {
+            } else if (clip.type === "Caption") {
               timelineClip = new Caption(commonProps);
             } else {
               timelineClip = new Text(commonProps);
@@ -993,7 +993,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
     // We emit intent to delete selected.
     // The synchronization layer or parent component will handle actually calling the engine.
-    this.emit('selection:delete', undefined);
+    this.emit("selection:delete", undefined);
   }
 
   public duplicateSelectedClips() {
@@ -1009,7 +1009,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     });
 
     if (clipIdsToDuplicate.length > 0) {
-      this.emit('selection:duplicated', { clipIds: clipIdsToDuplicate });
+      this.emit("selection:duplicated", { clipIds: clipIdsToDuplicate });
     }
   }
 
@@ -1018,7 +1018,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
     // 1. Check strict single selection
     if (!activeObjects || activeObjects.length !== 1) {
-      console.warn('Split requires exactly one selected clip.');
+      console.warn("Split requires exactly one selected clip.");
       return;
     }
 
@@ -1030,7 +1030,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     // 2. Validate split time against clip bounds
     const clip = this.#clipsMap[clipId];
     if (!clip) {
-      console.error('Clip not found for split:', clipId);
+      console.error("Clip not found for split:", clipId);
       return;
     }
 
@@ -1041,15 +1041,15 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     // We don't split if exactly at start or end.
     if (splitTime <= clip.display.from || splitTime >= clip.display.to) {
       console.warn(
-        'Split time is outside the clip range or at the edges.',
+        "Split time is outside the clip range or at the edges.",
         splitTime,
-        clip.display
+        clip.display,
       );
       return;
     }
 
     // 3. Emit event
-    this.emit('selection:split', { clipId, splitTime });
+    this.emit("selection:split", { clipId, splitTime });
   }
 
   public reloadClip(clipId: string) {
@@ -1068,7 +1068,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       .map((obj: any) => obj.elementId)
       .filter(Boolean);
 
-    this.emit('selection:changed', { selectedIds: activeIds });
+    this.emit("selection:changed", { selectedIds: activeIds });
   }
 
   private renderSeparatorLine(index: number, top: number, width: number) {
@@ -1078,11 +1078,11 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       top: top,
       width: width,
       height: TIMELINE_CONSTANTS.TRACK_SPACING,
-      fill: 'transparent',
+      fill: "transparent",
       selectable: false,
       evented: false,
-      hoverCursor: 'default',
-      originY: 'center',
+      hoverCursor: "default",
+      originY: "center",
       opacity: 0.5,
     });
 
@@ -1092,11 +1092,11 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       top: top,
       width: width,
       height: 2,
-      fill: 'transparent',
+      fill: "transparent",
       selectable: false,
       evented: false,
-      hoverCursor: 'default',
-      originY: 'center',
+      hoverCursor: "default",
+      originY: "center",
       opacity: 0.8,
     });
 
@@ -1111,8 +1111,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     // Notify clips about zoom change (affects thumbnails density)
     this.#clipObjects.forEach((clip) => {
       if (
-        'onScrollChange' in clip &&
-        typeof (clip as any).onScrollChange === 'function'
+        "onScrollChange" in clip &&
+        typeof (clip as any).onScrollChange === "function"
       ) {
         (clip as any).onScrollChange({
           scrollLeft: this.#scrollX,
@@ -1125,22 +1125,22 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   public setScroll(scrollX?: number, scrollY?: number) {
-    if (typeof scrollX === 'number') this.#scrollX = scrollX;
-    if (typeof scrollY === 'number') this.#scrollY = scrollY;
+    if (typeof scrollX === "number") this.#scrollX = scrollX;
+    if (typeof scrollY === "number") this.#scrollY = scrollY;
 
     const vpt = [...this.canvas.viewportTransform];
     vpt[4] = -this.#scrollX + this.#offsetX;
     vpt[5] = -this.#scrollY + this.#offsetY;
 
     this.canvas.setViewportTransform(
-      vpt as [number, number, number, number, number, number]
+      vpt as [number, number, number, number, number, number],
     );
 
     // Notify clips about scroll change for lazy loading thumbnails
     this.#clipObjects.forEach((clip) => {
       if (
-        'onScrollChange' in clip &&
-        typeof (clip as any).onScrollChange === 'function'
+        "onScrollChange" in clip &&
+        typeof (clip as any).onScrollChange === "function"
       ) {
         (clip as any).onScrollChange({ scrollLeft: this.#scrollX });
       }
@@ -1160,13 +1160,13 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       this.#resizeObserver = null;
     }
     if (this.canvas) {
-      this.canvas.off('object:moving', this.#onDragging);
-      this.canvas.off('object:modified', this.#onTrackRelocation);
-      this.canvas.off('object:modified', this.#onClipModification);
-      this.canvas.off('selection:created', this.#onSelectionCreate);
-      this.canvas.off('selection:updated', this.#onSelectionUpdate);
-      this.canvas.off('selection:cleared', this.#onSelectionClear);
-      this.canvas.off('mouse:move', this.#onMouseMove);
+      this.canvas.off("object:moving", this.#onDragging);
+      this.canvas.off("object:modified", this.#onTrackRelocation);
+      this.canvas.off("object:modified", this.#onClipModification);
+      this.canvas.off("selection:created", this.#onSelectionCreate);
+      this.canvas.off("selection:updated", this.#onSelectionUpdate);
+      this.canvas.off("selection:cleared", this.#onSelectionClear);
+      this.canvas.off("mouse:move", this.#onMouseMove);
 
       this.clearTransitionButton();
       this.disposeScrollbars();
