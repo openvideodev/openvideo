@@ -926,15 +926,14 @@ function createSpritesRender(opts: {
     // This prevents redundant getFrame calls (e.g., during transitions)
     // which can cause audio choppiness if the underlying source advances on each call.
     const frameCache = new Map<
-      string,
+      IClip,
       { video: any; audio: Float32Array[]; done: boolean }
     >();
 
     const getFrameCached = async (sprite: IClip, relTime: number) => {
-      const key = `${sprite.id}_${relTime}`;
-      if (frameCache.has(key)) return frameCache.get(key)!;
+      if (frameCache.has(sprite)) return frameCache.get(sprite)!;
       const res = await sprite.getFrame(relTime);
-      frameCache.set(key, res);
+      frameCache.set(sprite, res);
       return res;
     };
 
@@ -1091,11 +1090,8 @@ function createSpritesRender(opts: {
       }
 
       // Check if sprite is done or expired
-      if (
-        (sprite.duration > 0 &&
-          timestamp > sprite.display.from + sprite.duration) ||
-        done
-      ) {
+
+      if ((sprite.duration > 0 && relativeTime >= sprite.duration) || done) {
         if (sprite.main) mainSprDone = true;
 
         // Mark as expired but DON'T destroy yet
