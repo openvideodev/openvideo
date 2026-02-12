@@ -1,4 +1,5 @@
-import { fontManager } from 'openvideo';
+import { fontManager } from "openvideo";
+import * as PIXI from "pixi.js";
 
 /**
  * Fetches caption data from a URL
@@ -11,7 +12,7 @@ export const fetchCaptionData = async (url: string): Promise<any> => {
     }
     return await response.json();
   } catch (error) {
-    console.error('Error fetching caption data:', error);
+    console.error("Error fetching caption data:", error);
     return null;
   }
 };
@@ -24,29 +25,33 @@ export const groupWordsByWidth = (
   words: any[],
   maxWidth: number = 800,
   fontSize: number = 80,
-  fontFamily: string = 'Bangers-Regular'
+  fontFamily: string = "Bangers-Regular",
 ): any[] => {
   if (!words || words.length === 0) return [];
 
   // Create canvas for text measurement
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
   if (!ctx) return [];
 
   ctx.font = `${fontSize}px ${fontFamily}`;
 
   const captions: any[] = [];
   let currentWords: any[] = [];
-  let currentText = '';
+  let currentText = "";
   let currentWidth = 0;
 
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
-    const wordText = word.word || word.text || '';
+    const wordText = word.word || word.text || "";
 
     // Calculate width if we add this word
     const testText = currentText ? `${currentText} ${wordText}` : wordText;
-    const testWidth = ctx.measureText(testText).width;
+    const bitmapText = new PIXI.BitmapText(testText, {
+      fontFamily,
+      fontSize,
+    });
+    const testWidth = bitmapText.width + 160;
 
     if (testWidth > maxWidth && currentWords.length > 0) {
       // Width exceeded, create caption with current words
@@ -54,7 +59,7 @@ export const groupWordsByWidth = (
       const lastWord = currentWords[currentWords.length - 1];
 
       // Measure actual height of the text
-      const metrics = ctx.measureText('AaFfLMZpPqQ');
+      const metrics = ctx.measureText("AaFfLMZpPqQ");
       const textHeight =
         metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
@@ -63,11 +68,11 @@ export const groupWordsByWidth = (
         width: currentWidth, // Actual measured width
         height: textHeight || fontSize, // Actual measured height, fallback to fontSize
         words: currentWords.map((w, idx) => ({
-          text: w.word || w.text || '',
+          text: w.word || w.text || "",
           from: idx === 0 ? 0 : (w.start - firstWord.start) * 1000, // Relative to caption start in ms
           to: (w.end - firstWord.start) * 1000, // Relative to caption start in ms
           isKeyWord: idx === 0 || idx === currentWords.length - 1, // First and last words are keywords
-          paragraphIndex: w.paragraphIndex ?? '',
+          paragraphIndex: w.paragraphIndex ?? "",
         })),
         from: firstWord.start, // In seconds
         to: lastWord.end, // In seconds
@@ -90,7 +95,7 @@ export const groupWordsByWidth = (
     const lastWord = currentWords[currentWords.length - 1];
 
     // Measure actual height of the text
-    const metrics = ctx.measureText('AaFfLMZpPqQ');
+    const metrics = ctx.measureText("AaFfLMZpPqQ");
     const textHeight =
       metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
@@ -99,11 +104,11 @@ export const groupWordsByWidth = (
       width: currentWidth, // Actual measured width
       height: textHeight || fontSize, // Actual measured height, fallback to fontSize
       words: currentWords.map((w, idx) => ({
-        text: w.word || w.text || '',
+        text: w.word || w.text || "",
         from: idx === 0 ? 0 : (w.start - firstWord.start) * 1000,
         to: (w.end - firstWord.start) * 1000,
         isKeyWord: idx === 0 || idx === currentWords.length - 1,
-        paragraphIndex: w.paragraphIndex ?? '',
+        paragraphIndex: w.paragraphIndex ?? "",
       })),
       from: firstWord.start,
       to: lastWord.end,
@@ -117,7 +122,7 @@ export const groupWordsByWidth = (
  * Converts schema.json format to exported.json format compatible with Studio
  */
 export const convertSchemaToExported = async (
-  schemaJson: any
+  schemaJson: any,
 ): Promise<any> => {
   const schema = schemaJson.schema || schemaJson;
   const clips: any[] = [];
@@ -125,14 +130,14 @@ export const convertSchemaToExported = async (
   // Load Bangers font for caption text measurement
   await fontManager.loadFonts([
     {
-      name: 'Bangers-Regular',
-      url: 'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf',
+      name: "Bangers-Regular",
+      url: "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
     },
   ]);
 
   // Extract aspect ratio to calculate dimensions
-  const aspectRatio = schema.aspectRatio || '9:16';
-  const [widthRatio, heightRatio] = aspectRatio.split(':').map(Number);
+  const aspectRatio = schema.aspectRatio || "9:16";
+  const [widthRatio, heightRatio] = aspectRatio.split(":").map(Number);
 
   // Default dimensions for 9:16 aspect ratio
   let width = 1080;
@@ -161,7 +166,7 @@ export const convertSchemaToExported = async (
       if (segment.clips && Array.isArray(segment.clips)) {
         for (const clip of segment.clips) {
           if (
-            clip.type === 'video' &&
+            clip.type === "video" &&
             clip.src &&
             Array.isArray(clip.src) &&
             clip.src.length > 0
@@ -181,7 +186,7 @@ export const convertSchemaToExported = async (
             const toUs = toMs * 1000;
 
             clips.push({
-              type: 'Video',
+              type: "Video",
               src: clip.src[0], // Use first video source
               display: {
                 from: fromUs,
@@ -198,7 +203,7 @@ export const convertSchemaToExported = async (
               audio: true,
             });
           } else if (
-            clip.type === 'image' &&
+            clip.type === "image" &&
             clip.src &&
             Array.isArray(clip.src) &&
             clip.src.length > 0
@@ -218,7 +223,7 @@ export const convertSchemaToExported = async (
             const toUs = toMs * 1000;
 
             clips.push({
-              type: 'Image',
+              type: "Image",
               src: clip.src[0], // Use first image source
               display: {
                 from: fromUs,
@@ -251,7 +256,7 @@ export const convertSchemaToExported = async (
         const toUs = toMs * 1000;
 
         clips.push({
-          type: 'Audio',
+          type: "Audio",
           src: segment.textToSpeech.src,
           display: {
             from: fromUs,
@@ -291,7 +296,7 @@ export const convertSchemaToExported = async (
               words,
               800,
               80,
-              'Bangers-Regular'
+              "Bangers-Regular",
             );
 
             // Create Caption clips for each chunk
@@ -311,8 +316,8 @@ export const convertSchemaToExported = async (
               const captionHeight = Math.ceil(chunk.height) + 20; // Add 20px vertical padding
 
               clips.push({
-                type: 'Caption',
-                src: '',
+                type: "Caption",
+                src: "",
                 display: {
                   from: fromUs,
                   to: toUs,
@@ -330,19 +335,19 @@ export const convertSchemaToExported = async (
                 text: chunk.text,
                 style: {
                   fontSize: 80,
-                  fontFamily: 'Bangers-Regular',
-                  fontWeight: '700',
-                  fontStyle: 'normal',
-                  color: '#ffffff',
-                  align: 'center',
+                  fontFamily: "Bangers-Regular",
+                  fontWeight: "700",
+                  fontStyle: "normal",
+                  color: "#ffffff",
+                  align: "center",
                   fontUrl:
-                    'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf',
+                    "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
                   stroke: {
-                    color: '#000000',
+                    color: "#000000",
                     width: 4,
                   },
                   shadow: {
-                    color: '#000000',
+                    color: "#000000",
                     alpha: 0.5,
                     blur: 4,
                     offsetX: 2,
@@ -352,11 +357,11 @@ export const convertSchemaToExported = async (
                 caption: {
                   words: chunk.words,
                   colors: {
-                    appeared: '#ffffff',
-                    active: '#ffffff',
-                    activeFill: '#FF5700',
-                    background: '',
-                    keyword: '#ffffff',
+                    appeared: "#ffffff",
+                    active: "#ffffff",
+                    activeFill: "#FF5700",
+                    background: "",
+                    keyword: "#ffffff",
                   },
                   preserveKeywordColor: true,
                   positioning: {
@@ -368,7 +373,7 @@ export const convertSchemaToExported = async (
             }
           }
         } catch (error) {
-          console.error('Error processing caption data:', error);
+          console.error("Error processing caption data:", error);
         }
       }
 
@@ -383,7 +388,7 @@ export const convertSchemaToExported = async (
       width,
       height,
       fps: 30,
-      bgColor: '#000000',
+      bgColor: "#000000",
     },
   };
 };

@@ -1,13 +1,14 @@
-'use client';
-import React, { useEffect, useRef } from 'react';
-import { CircleOff, XIcon } from 'lucide-react';
-import useLayoutStore from '../store/use-layout-store';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ICaptionsControlProps } from '../interface/captions';
-import { STYLE_CAPTION_PRESETS, NONE_PRESET } from '../constant/caption';
+"use client";
+import React, { useEffect, useRef } from "react";
+import { CircleOff, XIcon } from "lucide-react";
+import useLayoutStore from "../store/use-layout-store";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ICaptionsControlProps } from "../interface/captions";
+import { STYLE_CAPTION_PRESETS, NONE_PRESET } from "../constant/caption";
 
-import { useStudioStore } from '@/stores/studio-store';
-import { fontManager } from 'openvideo';
+import { useStudioStore } from "@/stores/studio-store";
+import { fontManager } from "openvideo";
+import { regenerateCaptionClips } from "@/lib/caption-utils";
 
 const CaptionPresetPicker = () => {
   const { setFloatingControl } = useLayoutStore();
@@ -20,13 +21,13 @@ const CaptionPresetPicker = () => {
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setFloatingControl('');
+        setFloatingControl("");
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [setFloatingControl]);
 
@@ -34,8 +35,15 @@ const CaptionPresetPicker = () => {
     if (!studio) return;
 
     // Filter for Captions
-    const captionClips = selectedClips.filter((c) => c.type === 'Caption');
+    const captionClips = selectedClips.filter((c) => c.type === "Caption");
     if (captionClips.length === 0) return;
+    if (preset.fontFamily === undefined) {
+      preset.fontFamily = "Bangers-Regular";
+    }
+    if (preset.fontUrl === undefined) {
+      preset.fontUrl =
+        "https://fonts.gstatic.com/s/bangers/v13/FeVQS0BTqb0h60ACL5la2bxii28.ttf";
+    }
 
     // Load fonts if needed
     if (preset.fontFamily && preset.fontUrl) {
@@ -61,14 +69,14 @@ const CaptionPresetPicker = () => {
           active: preset.activeColor,
           activeFill: preset.activeFillColor,
           background: preset.backgroundColor,
-          keyword: preset.isKeywordColor ?? 'transparent',
+          keyword: preset.isKeywordColor ?? "transparent",
         },
         preserveKeywordColor: preset.preservedColorKeyWord ?? false,
       },
-      animation: preset.animation || 'undefined',
-      textCase: preset.textTransform || 'normal',
+      animation: preset.animation || "undefined",
+      textCase: preset.textTransform || "normal",
       dropShadow: {
-        color: preset.boxShadow?.color ?? 'transparent',
+        color: preset.boxShadow?.color ?? "transparent",
         alpha: 0.5,
         blur: preset.boxShadow?.blur ?? 4,
         distance: Math.sqrt(x * x + y * y) ?? 4,
@@ -84,16 +92,36 @@ const CaptionPresetPicker = () => {
       }
     }
 
-    const allCaptionClips = studio.clips.filter((c) => c.type === 'Caption');
-    const targetClips = allCaptionClips.filter(
-      (c) => captionClips.includes(c) || mediaIds.has((c as any).mediaId)
-    );
+    const allCaptionClips = studio.clips.filter((c) => c.type === "Caption");
+    // const targetClips = allCaptionClips.filter(
+    //   (c) => captionClips.includes(c) || mediaIds.has((c as any).mediaId),
+    // );
 
-    const updates = targetClips.map((clip) => ({
-      id: clip.id,
-      updates: styleUpdate,
-    }));
-    await studio.updateClips(updates);
+    if (preset.type === "word") {
+      for (const clip of allCaptionClips) {
+        await regenerateCaptionClips({
+          studio,
+          captionClip: clip,
+          mode: "single",
+          fontSize: (clip as any).originalOpts?.fontSize,
+          fontFamily: preset.fontFamily,
+          fontUrl: preset.fontUrl,
+          styleUpdate: styleUpdate,
+        });
+      }
+    } else {
+      for (const clip of allCaptionClips) {
+        await regenerateCaptionClips({
+          studio,
+          captionClip: clip,
+          mode: "multiple",
+          fontSize: (clip as any).originalOpts?.fontSize,
+          fontFamily: preset.fontFamily,
+          fontUrl: preset.fontUrl,
+          styleUpdate: styleUpdate,
+        });
+      }
+    }
   };
 
   const PresetGrid = ({ presets }: { presets: ICaptionsControlProps[] }) => (
@@ -132,7 +160,7 @@ const CaptionPresetPicker = () => {
     >
       <div className="handle flex  items-center justify-between px-4 py-3 pb-0">
         <p className="text-sm font-bold">Presets</p>
-        <div className="h-4 w-4" onClick={() => setFloatingControl('')}>
+        <div className="h-4 w-4" onClick={() => setFloatingControl("")}>
           <XIcon className="h-3 w-3 cursor-pointer font-extrabold text-muted-foreground" />
         </div>
       </div>
