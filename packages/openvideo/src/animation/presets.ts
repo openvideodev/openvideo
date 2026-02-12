@@ -362,6 +362,137 @@ export const flashZoomIn: AnimationFactory = (opts, params) => {
   );
 };
 
+export const tiltSlideRightIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltSlideRightIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "tiltSlideRightIn",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "tiltSlideRightIn",
+  );
+};
+
+export const tiltZoomIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...opts, easing }, "tiltZoomIn");
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "tiltZoomIn",
+  );
+};
+
+export const glitchSlideIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("glitchSlideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "glitchSlideIn",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "glitchSlideIn",
+  );
+};
+
+export const dropBlurIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dropBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...opts, easing }, "dropBlurIn");
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "dropBlurIn",
+  );
+};
+
+export const fallZoomIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("fallZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...opts, easing }, "fallZoomIn");
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "fallZoomIn",
+  );
+};
+
+export const zoomSpinIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomSpinIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...opts, easing }, "zoomSpinIn");
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "zoomSpinIn",
+  );
+};
+
+export const dramaticSpinSlideIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dramaticSpinSlideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "dramaticSpinSlideIn",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "dramaticSpinSlideIn",
+  );
+};
+
 //custom presets out
 export const tiltSlideRightOut: AnimationFactory = (opts, params) => {
   const normalized = normalizeParams(params);
@@ -507,6 +638,195 @@ export const dramaticSpinSlideOut: AnimationFactory = (opts, params) => {
       easing,
     },
     "dramaticSpinSlideOut",
+  );
+};
+
+export const blurSlideRightOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideRightOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "blurSlideRightOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "blurSlideRightOut",
+  );
+};
+
+export const wobbleZoomOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("wobbleZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "wobbleZoomOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "wobbleZoomOut",
+  );
+};
+
+export const spinZoomOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spinZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "spinZoomOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "spinZoomOut",
+  );
+};
+
+export const blurSlideLeftOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideLeftOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "blurSlideLeftOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "blurSlideLeftOut",
+  );
+};
+
+export const blurSlideRightStrongOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideRightStrongOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "blurSlideRightStrongOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "blurSlideRightStrongOut",
+  );
+};
+
+export const cinematicZoomSlideOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("cinematicZoomSlideOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "cinematicZoomSlideOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "cinematicZoomSlideOut",
+  );
+};
+
+export const elasticTwistOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("elasticTwistOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "elasticTwistOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "elasticTwistOut",
+  );
+};
+
+export const spinFadeOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spinFadeOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "spinFadeOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "spinFadeOut",
+  );
+};
+
+export const flashZoomOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("flashZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "flashZoomOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    {
+      ...opts,
+      easing,
+    },
+    "flashZoomOut",
   );
 };
 
@@ -1739,6 +2059,14 @@ animationRegistry.register("cinematicZoomSlideIn", cinematicZoomSlideIn);
 animationRegistry.register("elasticTwistIn", elasticTwistIn);
 animationRegistry.register("spinFadeIn", spinFadeIn);
 animationRegistry.register("flashZoomIn", flashZoomIn);
+animationRegistry.register("tiltSlideRightIn", tiltSlideRightIn);
+animationRegistry.register("tiltZoomIn", tiltZoomIn);
+animationRegistry.register("glitchSlideIn", glitchSlideIn);
+animationRegistry.register("dropBlurIn", dropBlurIn);
+animationRegistry.register("fallZoomIn", fallZoomIn);
+animationRegistry.register("zoomSpinIn", zoomSpinIn);
+animationRegistry.register("dramaticSpinSlideIn", dramaticSpinSlideIn);
+
 //custom presets out
 animationRegistry.register("tiltSlideRightOut", tiltSlideRightOut);
 animationRegistry.register("tiltZoomOut", tiltZoomOut);
@@ -1747,6 +2075,15 @@ animationRegistry.register("dropBlurOut", dropBlurOut);
 animationRegistry.register("fallZoomOut", fallZoomOut);
 animationRegistry.register("zoomSpinOut", zoomSpinOut);
 animationRegistry.register("dramaticSpinSlideOut", dramaticSpinSlideOut);
+animationRegistry.register("blurSlideRightOut", blurSlideRightOut);
+animationRegistry.register("wobbleZoomOut", wobbleZoomOut);
+animationRegistry.register("spinZoomOut", spinZoomOut);
+animationRegistry.register("blurSlideLeftOut", blurSlideLeftOut);
+animationRegistry.register("blurSlideRightStrongOut", blurSlideRightStrongOut);
+animationRegistry.register("cinematicZoomSlideOut", cinematicZoomSlideOut);
+animationRegistry.register("elasticTwistOut", elasticTwistOut);
+animationRegistry.register("spinFadeOut", spinFadeOut);
+animationRegistry.register("flashZoomOut", flashZoomOut);
 
 //presets special
 animationRegistry.register("slideRotateIn", slideRotateIn);
@@ -1966,31 +2303,40 @@ export function getPresetTemplate(type: string, params?: any): any {
     case "blurSlideRightIn":
       return {
         "0%": {
-          blur: blurInit ?? 5,
-          x: xPositionInit ?? 100,
+          blur: blurInit ?? 20,
+          x: xPositionInit ?? 300,
+          scale: scaleInit ?? 0.7,
+          mirror: defaultMirror,
+        },
+        "40%": {
+          blur: 5,
+          x: 20,
+          scale: 1.05,
           mirror: defaultMirror,
         },
         "100%": {
           blur: blurEnd ?? 0,
           x: xPositionEnd ?? 0,
+          scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
       };
+
     case "wobbleZoomIn":
       return {
         "0%": {
-          scale: scaleInit ?? 1.2,
-          angle: angleInit ?? -5,
+          scale: scaleInit ?? 1.3,
+          angle: angleInit ?? -8,
           mirror: defaultMirror,
         },
-        "32%": {
-          scale: scaleEnd ?? 1,
-          angle: angleEnd ?? 0,
+        "15%": {
+          scale: 0.95,
+          angle: 4,
           mirror: defaultMirror,
         },
-        "64%": {
-          scale: scaleInit ?? 1.2,
-          angle: angleInit ?? -5,
+        "30%": {
+          scale: 1.05,
+          angle: -2,
           mirror: defaultMirror,
         },
         "100%": {
@@ -1999,12 +2345,19 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
+
     case "spinZoomIn":
       return {
         "0%": {
-          blur: blurInit ?? 5,
-          angle: angleInit ?? 45,
-          scale: scaleInit ?? 2,
+          blur: blurInit ?? 15,
+          angle: angleInit ?? 180,
+          scale: scaleInit ?? 0.7,
+          mirror: defaultMirror,
+        },
+        "60%": {
+          blur: 5,
+          angle: -10,
+          scale: 1.1,
           mirror: defaultMirror,
         },
         "100%": {
@@ -2014,72 +2367,469 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
+
     case "blurSlideLeftIn":
       return {
         "0%": {
-          x: xPositionInit ?? -200,
-          blur: blurInit ?? 10,
+          x: xPositionInit ?? -400,
+          blur: blurInit ?? 25,
+          scale: scaleInit ?? 0.7,
+          mirror: defaultMirror,
+        },
+        "30%": {
+          x: xPositionEnd ?? 0,
+          blur: 0,
+          scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
         "100%": {
           x: xPositionEnd ?? 0,
-          blur: blurEnd ?? 0,
+          blur: 0,
+          scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
       };
+
     case "blurSlideRightStrongIn":
       return {
         "0%": {
-          x: xPositionInit ?? 200,
-          blur: blurInit ?? 10,
+          x: xPositionInit ?? 600,
+          blur: blurInit ?? 40,
+          scale: scaleInit ?? 0.8,
           mirror: defaultMirror,
         },
-        "100%": {
-          x: xPositionEnd ?? 0,
-          blur: blurEnd ?? 0,
+        "25%": {
+          x: -20,
+          blur: 10,
+          scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
+        "100%": { x: 0, blur: 0, scale: scaleEnd ?? 1, mirror: defaultMirror },
       };
+
     case "cinematicZoomSlideIn":
       return {
-        "0%": { scale: 0.6, blur: 30, x: 200, mirror: defaultMirror },
-        "30%": { scale: 0.8, blur: 20, x: 50, mirror: defaultMirror },
-        "60%": { scale: 0.9, blur: 10, x: 0, mirror: defaultMirror },
-        "100%": { scale: 1, blur: 0, x: 0, mirror: defaultMirror },
-      };
-    case "elasticTwistIn":
-      return {
-        "0%": { scale: 1.4, blur: 20, angle: 10, mirror: defaultMirror },
-        "40%": { scale: 1, blur: 0, angle: 0, mirror: defaultMirror },
-        "60%": { scale: 1.3, blur: 0, angle: -10, mirror: defaultMirror },
-        "100%": { scale: 1, blur: 0, angle: 0, mirror: defaultMirror },
-      };
-    case "spinFadeIn":
-      return {
         "0%": {
-          blur: blurInit ?? 40,
-          angle: angleInit ?? 80,
+          scale: scaleInit ?? 1.5,
+          blur: blurInit ?? 20,
+          x: xPositionInit ?? 100,
+          mirror: defaultMirror,
+        },
+        "40%": {
+          scale: 1.1,
+          blur: 5,
+          x: xPositionEnd ?? 0,
           mirror: defaultMirror,
         },
         "100%": {
+          scale: scaleEnd ?? 1,
+          blur: blurEnd ?? 0,
+          x: xPositionEnd ?? 0,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "elasticTwistIn":
+      return {
+        "0%": {
+          scale: scaleInit ?? 0.7,
+          blur: blurInit ?? 15,
+          angle: angleInit ?? 45,
+          mirror: defaultMirror,
+        },
+        "50%": { scale: 1.2, blur: 0, angle: -10, mirror: defaultMirror },
+        "75%": { scale: 0.95, blur: 0, angle: 5, mirror: defaultMirror },
+        "100%": {
+          scale: scaleEnd ?? 1,
           blur: blurEnd ?? 0,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
+
+    case "spinFadeIn":
+      return {
+        "0%": {
+          blur: blurInit ?? 30,
+          angle: angleInit ?? 90,
+          scale: scaleInit ?? 0.7,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          blur: blurEnd ?? 0,
+          angle: angleEnd ?? 0,
+          scale: scaleEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+
     case "flashZoomIn":
       return {
-        "0%": { scale: 1, brightness: 3, mirror: defaultMirror },
-        "40%": { scale: 1, brightness: 3, mirror: defaultMirror },
-        "80%": { scale: 1.5, brightness: 3, mirror: defaultMirror },
+        "0%": { scale: 1, brightness: 6, mirror: defaultMirror },
+        "15%": { scale: 1.3, brightness: 4, mirror: defaultMirror },
+        "30%": { scale: 1, brightness: 1, mirror: defaultMirror },
         "100%": { scale: 1, brightness: 1, mirror: defaultMirror },
       };
+
+    case "tiltSlideRightIn":
+      return {
+        "0%": {
+          angle: angleInit ?? -12,
+          x: xPositionInit ?? -400,
+          scale: scaleInit ?? 1.1,
+          mirror: defaultMirror,
+        },
+        "30%": {
+          angle: 3,
+          x: 10,
+          scale: 1,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          angle: angleEnd ?? 0,
+          x: xPositionEnd ?? 0,
+          scale: scaleEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "tiltZoomIn":
+      return {
+        "0%": {
+          angle: angleInit ?? 15,
+          scale: scaleInit ?? 0.7,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          angle: angleEnd ?? 0,
+          scale: scaleEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "glitchSlideIn":
+      return {
+        "0%": {
+          x: xPositionInit ?? 600,
+          angle: angleInit ?? 25,
+          scale: scaleInit ?? 0.7,
+          mirror: defaultMirror,
+        },
+        "20%": {
+          x: 50,
+          angle: -10,
+          scale: 1.1,
+          mirror: defaultMirror,
+        },
+        "40%": {
+          x: -30,
+          angle: 5,
+          scale: 1.05,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          x: xPositionEnd ?? 0,
+          angle: angleEnd ?? 0,
+          scale: scaleEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "dropBlurIn":
+      return {
+        "0%": {
+          y: yPositionInit ?? -500,
+          blur: blurInit ?? 30,
+          scale: scaleInit ?? 0.9,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          y: yPositionEnd ?? 0,
+          blur: blurEnd ?? 0,
+          scale: scaleEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "fallZoomIn":
+      return {
+        "0%": {
+          y: yPositionInit ?? -400,
+          scale: scaleInit ?? 1.5,
+          mirror: defaultMirror,
+        },
+        "30%": {
+          y: 20,
+          scale: 1.05,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          y: yPositionEnd ?? 0,
+          scale: scaleEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "zoomSpinIn":
+      return {
+        "0%": {
+          scale: scaleInit ?? 3,
+          angle: angleInit ?? -45,
+          blur: blurInit ?? 15,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          scale: scaleEnd ?? 1,
+          angle: angleEnd ?? 0,
+          blur: blurEnd ?? 0,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "dramaticSpinSlideIn":
+      return {
+        "0%": {
+          x: xPositionInit ?? 800,
+          angle: angleInit ?? -60,
+          blur: blurInit ?? 40,
+          scale: scaleInit ?? 0.7,
+          mirror: defaultMirror,
+        },
+        "30%": {
+          x: -50,
+          angle: 5,
+          blur: 0,
+          scale: 1,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          x: xPositionEnd ?? 0,
+          angle: angleEnd ?? 0,
+          blur: blurEnd ?? 0,
+          scale: scaleEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "blurSlideRightOut":
+      return {
+        "0%": {
+          blur: blurInit ?? 0,
+          x: xPositionInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "40%": {
+          blur: 5,
+          x: -20,
+          scale: 1.05,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          blur: blurEnd ?? 20,
+          x: xPositionEnd ?? 300,
+          scale: scaleEnd ?? 0.7,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "wobbleZoomOut":
+      return {
+        "0%": {
+          scale: scaleInit ?? 1,
+          angle: angleInit ?? 0,
+          mirror: defaultMirror,
+        },
+        "15%": {
+          scale: 1.05,
+          angle: -4,
+          mirror: defaultMirror,
+        },
+        "30%": {
+          scale: 0.95,
+          angle: 2,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          scale: scaleEnd ?? 1.3,
+          angle: angleEnd ?? 8,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "spinZoomOut":
+      return {
+        "0%": {
+          blur: blurInit ?? 0,
+          angle: angleInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "60%": {
+          blur: 5,
+          angle: 10,
+          scale: 1.1,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          blur: blurEnd ?? 15,
+          angle: angleEnd ?? -180,
+          scale: scaleEnd ?? 0.7,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "blurSlideLeftOut":
+      return {
+        "0%": {
+          x: xPositionInit ?? 0,
+          blur: blurInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "30%": {
+          x: 0,
+          blur: 5,
+          scale: 1,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          x: xPositionEnd ?? -400,
+          blur: blurEnd ?? 25,
+          scale: scaleEnd ?? 0.7,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "blurSlideRightStrongOut":
+      return {
+        "0%": {
+          x: xPositionInit ?? 0,
+          blur: blurInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "25%": {
+          x: 20,
+          blur: 10,
+          scale: 1,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          x: xPositionEnd ?? 600,
+          blur: blurEnd ?? 40,
+          scale: scaleEnd ?? 0.8,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "cinematicZoomSlideOut":
+      return {
+        "0%": {
+          scale: scaleInit ?? 1,
+          blur: blurInit ?? 0,
+          x: xPositionInit ?? 0,
+          mirror: defaultMirror,
+        },
+        "40%": {
+          scale: 1.1,
+          blur: 5,
+          x: -50,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          scale: scaleEnd ?? 1.5,
+          blur: blurEnd ?? 20,
+          x: xPositionEnd ?? -100,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "elasticTwistOut":
+      return {
+        "0%": {
+          scale: scaleInit ?? 1,
+          blur: blurInit ?? 0,
+          angle: angleInit ?? 0,
+          mirror: defaultMirror,
+        },
+        "50%": {
+          scale: 0.9,
+          blur: 0,
+          angle: 10,
+          mirror: defaultMirror,
+        },
+        "75%": {
+          scale: 1.1,
+          blur: 5,
+          angle: -5,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          scale: scaleEnd ?? 0.7,
+          blur: blurEnd ?? 15,
+          angle: angleEnd ?? -45,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "spinFadeOut":
+      return {
+        "0%": {
+          blur: blurInit ?? 0,
+          angle: angleInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          blur: blurEnd ?? 30,
+          angle: angleEnd ?? -90,
+          scale: scaleEnd ?? 0.7,
+          mirror: defaultMirror,
+        },
+      };
+
+    case "flashZoomOut":
+      return {
+        "0%": {
+          scale: scaleInit ?? 1,
+          brightness: brightnessInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "15%": {
+          scale: 1.3,
+          brightness: 3,
+          mirror: defaultMirror,
+        },
+        "30%": {
+          scale: 1,
+          brightness: 5,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          scale: scaleEnd ?? 1,
+          brightness: brightnessEnd ?? 6,
+          mirror: defaultMirror,
+        },
+      };
+
     case "tiltSlideRightOut":
       return {
-        "0%": { angle: 0, x: 0, mirror: defaultMirror },
-        "70%": { angle: 7, x: 0, mirror: defaultMirror },
-        "100%": { angle: 10, x: 200, mirror: defaultMirror },
+        "0%": {
+          angle: angleInit ?? 0,
+          x: xPositionInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "30%": { angle: -3, x: -10, scale: 1, mirror: defaultMirror },
+        "100%": {
+          angle: angleEnd ?? 12,
+          x: xPositionEnd ?? 400,
+          scale: scaleEnd ?? 1.1,
+          mirror: defaultMirror,
+        },
       };
+
     case "tiltZoomOut":
       return {
         "0%": {
@@ -2088,31 +2838,46 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
         "100%": {
-          angle: angleEnd ?? -10,
-          scale: scaleEnd ?? 1.2,
+          angle: angleEnd ?? -15,
+          scale: scaleEnd ?? 0.7,
           mirror: defaultMirror,
         },
       };
+
     case "glitchSlideOut":
       return {
-        "0%": { x: 0, angle: 0, mirror: defaultMirror },
-        "30%": { x: 100, angle: -5, mirror: defaultMirror },
-        "70%": { x: 100, angle: -20, mirror: defaultMirror },
-        "100%": { x: -100, angle: -20, mirror: defaultMirror },
+        "0%": {
+          x: xPositionInit ?? 0,
+          angle: angleInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "20%": { x: -30, angle: 5, scale: 1.05, mirror: defaultMirror },
+        "40%": { x: 50, angle: -10, scale: 1.1, mirror: defaultMirror },
+        "100%": {
+          x: xPositionEnd ?? -600,
+          angle: angleEnd ?? -25,
+          scale: scaleEnd ?? 0.7,
+          mirror: defaultMirror,
+        },
       };
+
     case "dropBlurOut":
       return {
         "0%": {
           y: yPositionInit ?? 0,
           blur: blurInit ?? 0,
+          scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
         "100%": {
-          y: yPositionEnd ?? 200,
-          blur: blurEnd ?? 20,
+          y: yPositionEnd ?? 500,
+          blur: blurEnd ?? 30,
+          scale: scaleEnd ?? 0.9,
           mirror: defaultMirror,
         },
       };
+
     case "fallZoomOut":
       return {
         "0%": {
@@ -2120,30 +2885,47 @@ export function getPresetTemplate(type: string, params?: any): any {
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
+        "30%": { y: -20, scale: 1.05, mirror: defaultMirror },
         "100%": {
-          y: yPositionEnd ?? 250,
+          y: yPositionEnd ?? 400,
           scale: scaleEnd ?? 1.5,
           mirror: defaultMirror,
         },
       };
+
     case "zoomSpinOut":
       return {
         "0%": {
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
+          blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
         "100%": {
-          scale: scaleEnd ?? 2,
-          angle: angleEnd ?? 10,
+          scale: scaleEnd ?? 3,
+          angle: angleEnd ?? 45,
+          blur: blurEnd ?? 15,
           mirror: defaultMirror,
         },
       };
+
     case "dramaticSpinSlideOut":
       return {
-        "0%": { x: 0, angle: 0, blur: 0, mirror: defaultMirror },
-        "40%": { x: -200, angle: 10, blur: 5, mirror: defaultMirror },
-        "100%": { x: -200, angle: 60, blur: 20, mirror: defaultMirror },
+        "0%": {
+          x: xPositionInit ?? 0,
+          angle: angleInit ?? 0,
+          blur: blurInit ?? 0,
+          scale: scaleInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "30%": { x: 50, angle: -5, blur: 0, scale: 1, mirror: defaultMirror },
+        "100%": {
+          x: xPositionEnd ?? -800,
+          angle: angleEnd ?? 60,
+          blur: blurEnd ?? 40,
+          scale: scaleEnd ?? 0.7,
+          mirror: defaultMirror,
+        },
       };
     case "slideRotateIn":
       return {
@@ -2332,7 +3114,7 @@ export function getPresetTemplate(type: string, params?: any): any {
       return {
         "0%": {
           x: xPositionInit ?? 300,
-          scale: scaleInit ?? 0.6,
+          scale: scaleInit ?? 0.7,
           blur: blurInit ?? 40,
           mirror: defaultMirror,
         },
@@ -2353,7 +3135,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
         "100%": {
           x: xPositionEnd ?? 300,
-          scale: scaleEnd ?? 0.6,
+          scale: scaleEnd ?? 0.7,
           blur: blurEnd ?? 40,
           mirror: defaultMirror,
         },
@@ -2471,7 +3253,7 @@ export function getPresetTemplate(type: string, params?: any): any {
     case "spiralIn":
       return {
         "0%": {
-          scale: scaleInit ?? 0.5,
+          scale: scaleInit ?? 0.7,
           angle: angleInit ?? 90,
           blur: blurInit ?? 30,
           mirror: defaultMirror,
@@ -2492,7 +3274,7 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
         "100%": {
-          scale: scaleEnd ?? 0.5,
+          scale: scaleEnd ?? 0.7,
           angle: angleEnd ?? 90,
           blur: blurEnd ?? 30,
           mirror: defaultMirror,
@@ -2528,7 +3310,7 @@ export function getPresetTemplate(type: string, params?: any): any {
       return {
         "0%": {
           x: xPositionInit ?? -300,
-          scale: scaleInit ?? 0.5,
+          scale: scaleInit ?? 0.7,
           angle: angleInit ?? -20,
           blur: blurInit ?? 50,
           mirror: defaultMirror,
@@ -2552,7 +3334,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
         "100%": {
           x: xPositionEnd ?? -300,
-          scale: scaleEnd ?? 0.5,
+          scale: scaleEnd ?? 0.7,
           angle: angleEnd ?? -20,
           blur: blurEnd ?? 50,
           mirror: defaultMirror,
@@ -2593,7 +3375,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         "0%": {
           x: xPositionInit ?? 150,
           y: yPositionInit ?? -150,
-          scale: scaleInit ?? 0.6,
+          scale: scaleInit ?? 0.7,
           blur: blurInit ?? 30,
           mirror: defaultMirror,
         },
@@ -2617,7 +3399,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         "100%": {
           x: xPositionEnd ?? 150,
           y: yPositionEnd ?? -150,
-          scale: scaleEnd ?? 0.6,
+          scale: scaleEnd ?? 0.7,
           blur: blurEnd ?? 30,
           mirror: defaultMirror,
         },
@@ -2684,7 +3466,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         "0%": {
           y: yPositionInit ?? 250,
           angle: angleInit ?? -15,
-          scale: scaleInit ?? 0.8,
+          scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
         "100%": {
@@ -2705,7 +3487,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         "100%": {
           y: yPositionEnd ?? 250,
           angle: angleEnd ?? -15,
-          scale: scaleEnd ?? 0.8,
+          scale: scaleEnd ?? 0.7,
           mirror: defaultMirror,
         },
       };
@@ -2947,7 +3729,7 @@ export function getPresetTemplate(type: string, params?: any): any {
     case "collapseRotateZoomIn":
       return {
         "0%": {
-          scale: scaleInit ?? 0.4,
+          scale: scaleInit ?? 0.7,
           angle: angleInit ?? -45,
           mirror: defaultMirror,
         },
@@ -2965,7 +3747,7 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
         "100%": {
-          scale: scaleEnd ?? 0.4,
+          scale: scaleEnd ?? 0.7,
           angle: angleEnd ?? -45,
           mirror: defaultMirror,
         },
@@ -2975,7 +3757,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         "0%": {
           x: xPositionInit ?? 400,
           y: yPositionInit ?? 200,
-          scale: scaleInit ?? 0.5,
+          scale: scaleInit ?? 0.7,
           blur: blurInit ?? 60,
           angle: angleInit ?? 30,
           mirror: defaultMirror,
@@ -3002,7 +3784,7 @@ export function getPresetTemplate(type: string, params?: any): any {
         "100%": {
           x: xPositionEnd ?? 400,
           y: yPositionEnd ?? 200,
-          scale: scaleEnd ?? 0.5,
+          scale: scaleEnd ?? 0.7,
           blur: blurEnd ?? 60,
           angle: angleEnd ?? 30,
           mirror: defaultMirror,
