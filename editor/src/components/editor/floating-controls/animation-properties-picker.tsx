@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useLayoutStore from "../store/use-layout-store";
 import { useStudioStore } from "@/stores/studio-store";
 import { useRef } from "react";
+import { Switch } from "@/components/ui/switch";
 
 type PropertyKey = keyof typeof ANIMATABLE_PROPERTIES;
 
@@ -67,6 +68,7 @@ export function AnimationPropertiesPicker() {
   const [easing, setEasing] = useState<string>(
     (animation?.options.easing as string) || "easeOutQuad",
   );
+  const [mirrorEnabled, setMirrorEnabled] = useState<boolean>(false);
 
   // Initialize from animation
   useEffect(() => {
@@ -75,6 +77,12 @@ export function AnimationPropertiesPicker() {
       if (animation.params.presetParams) {
         setPresetParams(animation.params.presetParams);
       }
+
+      // Check if mirror is enabled in any keyframe
+      const hasMirror = Object.values(animation.params as KeyframeData).some(
+        (p: any) => p && p.mirror > 0,
+      );
+      setMirrorEnabled(hasMirror);
 
       // Determine active tab based on delay and type
       const currentDelayMicro = animation.options.delay;
@@ -246,6 +254,17 @@ export function AnimationPropertiesPicker() {
     };
 
     const finalParams = { ...keyframes };
+
+    // Apply global mirror setting to all keyframes
+    Object.keys(finalParams).forEach((key) => {
+      if (key.includes("%")) {
+        finalParams[key] = {
+          ...finalParams[key],
+          mirror: mirrorEnabled ? 1 : 0,
+        };
+      }
+    });
+
     if (preset !== "custom") {
       // Filter presetParams to only include relevant values
       const filteredParams: any = {};
@@ -480,6 +499,20 @@ export function AnimationPropertiesPicker() {
                 </Button>
               </div>
 
+              {/* Mirror Effect */}
+              <div className="flex items-center justify-between p-2 bg-secondary/20 rounded-md border border-dashed">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-medium">Mirror Effect</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Repeat edges to fill frame
+                  </span>
+                </div>
+                <Switch
+                  checked={mirrorEnabled}
+                  onCheckedChange={setMirrorEnabled}
+                />
+              </div>
+
               {/* Timing */}
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -645,42 +678,44 @@ function KeyframeItem({
 
       {expanded && (
         <div className="p-2 pt-0 flex flex-col gap-2">
-          {(Object.keys(ANIMATABLE_PROPERTIES) as PropertyKey[]).map((prop) => {
-            const isEnabled = prop in properties;
-            const config = ANIMATABLE_PROPERTIES[prop];
+          {(Object.keys(ANIMATABLE_PROPERTIES) as PropertyKey[])
+            .filter((prop) => prop !== "mirror")
+            .map((prop) => {
+              const isEnabled = prop in properties;
+              const config = ANIMATABLE_PROPERTIES[prop];
 
-            return (
-              <div key={prop} className="flex items-center gap-2">
-                <Checkbox
-                  checked={isEnabled}
-                  onCheckedChange={(checked) =>
-                    onPropertyToggle(prop, checked === true)
-                  }
-                />
+              return (
+                <div key={prop} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={isEnabled}
+                    onCheckedChange={(checked) =>
+                      onPropertyToggle(prop, checked === true)
+                    }
+                  />
 
-                <span className="text-[10px] text-muted-foreground min-w-[60px]">
-                  {config.label}
-                </span>
-                {isEnabled && (
-                  <div className="flex-1 flex items-center gap-2">
-                    <Slider
-                      value={[properties[prop] ?? config.default]}
-                      onValueChange={([val]) => onPropertyChange(prop, val)}
-                      min={config.min}
-                      max={config.max}
-                      step={config.step}
-                      className="flex-1"
-                    />
-                    <NumberInput
-                      value={properties[prop] ?? config.default}
-                      onChange={(val) => onPropertyChange(prop, val)}
-                      className="w-16 h-7 text-xs p-1"
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  <span className="text-[10px] text-muted-foreground min-w-[60px]">
+                    {config.label}
+                  </span>
+                  {isEnabled && (
+                    <div className="flex-1 flex items-center gap-2">
+                      <Slider
+                        value={[properties[prop] ?? config.default]}
+                        onValueChange={([val]) => onPropertyChange(prop, val)}
+                        min={config.min}
+                        max={config.max}
+                        step={config.step}
+                        className="flex-1"
+                      />
+                      <NumberInput
+                        value={properties[prop] ?? config.default}
+                        onChange={(val) => onPropertyChange(prop, val)}
+                        className="w-16 h-7 text-xs p-1"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       )}
     </div>
