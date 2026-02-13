@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { jsonToClip } from "openvideo";
 import { generateCaptionClips } from "@/lib/caption-generator";
+import { regenerateCaptionClips, WordsPerLineMode } from "@/lib/caption-utils";
 import {
   IconTextSize,
   IconRotate,
@@ -56,7 +57,6 @@ interface CaptionPropertiesProps {
   clip: IClip;
 }
 type VerticalAlignMode = "top" | "center" | "bottom";
-type WordsPerLineMode = "single" | "multiple";
 
 export function CaptionProperties({ clip }: CaptionPropertiesProps) {
   const captionClip = clip as any;
@@ -144,112 +144,16 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
 
   async function changeWordsPerLine(v: string, captionClip: any, opts: any) {
     const val = v as WordsPerLineMode;
-    if (!studio || !captionClip?.mediaId) return;
+    if (!studio) return;
 
-    const mediaId = captionClip.mediaId;
-    const tracks = studio.getTracks();
-    const siblingClips: any[] = [];
-
-    tracks.forEach((track: any) => {
-      track.clipIds.forEach((id: string) => {
-        const c = studio.getClipById(id);
-        if (c && c.type === "Caption" && (c as any).opts.mediaId === mediaId) {
-          siblingClips.push(c);
-        }
-      });
-    });
-
-    siblingClips.sort((a, b) => a.display.from - b.display.from);
-
-    if (siblingClips.length === 0) return;
-
-    const uniformTop = captionClip.top ?? 0;
-
-    const mediaClip = studio.getClipById(mediaId);
-    if (!mediaClip) return;
-
-    const mediaStartUs = mediaClip.display.from;
-    const allWords: any[] = [];
-
-    siblingClips.forEach((c) => {
-      const clipStartUs = c.display.from;
-      const words = c.words || [];
-      words.forEach((w: any) => {
-        allWords.push({
-          ...w,
-          start: (clipStartUs + w.from * 1000 - mediaStartUs) / 1000000,
-          end: (clipStartUs + w.to * 1000 - mediaStartUs) / 1000000,
-        });
-      });
-    });
-
-    if (allWords.length === 0) return;
-
-    const newClipsJSON = await generateCaptionClips({
-      videoWidth: (studio as any).opts.width,
-      videoHeight: (studio as any).opts.height,
-      words: allWords,
+    await regenerateCaptionClips({
+      studio,
+      captionClip,
       mode: val,
-      fontSize: opts.fontSize || 80,
-      fontFamily: opts.fontFamily || "Bangers-Regular",
+      fontSize: opts.fontSize,
+      fontFamily: opts.fontFamily,
       fontUrl: opts.fontUrl,
-      style: captionClip.style,
     });
-
-    const trackId = studio.findTrackIdByClipId(captionClip.id);
-    if (!trackId) return;
-
-    siblingClips.forEach((c) => {
-      try {
-        (c as any).wordsPerLine = val;
-        if ((c as any).opts) (c as any).opts.wordsPerLine = val;
-        if ((c as any).originalOpts) (c as any).originalOpts.wordsPerLine = val;
-        (c as any).emit && (c as any).emit("propsChange", {});
-      } catch (e) {
-        // ignore
-      }
-    });
-
-    const clipsToAdd: IClip[] = [];
-
-    for (const json of newClipsJSON) {
-      const enrichedJson = {
-        ...json,
-        mediaId,
-        wordsPerLine: val,
-        top: uniformTop,
-        originalOpts: {
-          ...(json.originalOpts || {}),
-          wordsPerLine: val,
-        },
-        opts: {
-          ...(json.opts || {}),
-          wordsPerLine: val,
-        },
-        display: {
-          from: json.display.from + mediaStartUs,
-          to: json.display.to + mediaStartUs,
-        },
-      };
-
-      const clip = await jsonToClip(enrichedJson);
-      clipsToAdd.push(clip);
-    }
-
-    siblingClips.forEach((c) => studio.removeClipById(c.id));
-
-    await studio.addClip(clipsToAdd, { trackId });
-
-    try {
-      (captionClip as any).wordsPerLine = val;
-      if ((captionClip as any).opts)
-        (captionClip as any).opts.wordsPerLine = val;
-      if ((captionClip as any).originalOpts)
-        (captionClip as any).originalOpts.wordsPerLine = val;
-      captionClip.emit && captionClip.emit("propsChange", {});
-    } catch (e) {
-      // ignore
-    }
   }
 
   function updateVerticalAlign(
