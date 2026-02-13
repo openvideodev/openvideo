@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useStudioStore } from '@/stores/studio-store';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useStudioStore } from "@/stores/studio-store";
+import { useProjectStore } from "@/stores/project-store";
 import {
   Image,
   Video,
@@ -11,7 +12,7 @@ import {
   Log,
   clipToJSON,
   type IClip as StudioClip,
-} from 'openvideo';
+} from "openvideo";
 import {
   Upload,
   Film,
@@ -20,18 +21,18 @@ import {
   HardDrive,
   Trash2,
   Music,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   storageService,
   type StorageStats,
-} from '@/lib/storage/storage-service';
-import type { MediaFile, MediaType } from '@/types/media';
-import { uploadFile } from '@/lib/upload-utils';
+} from "@/lib/storage/storage-service";
+import type { MediaFile, MediaType } from "@/types/media";
+import { uploadFile } from "@/lib/upload-utils";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '@/components/ui/input-group';
+} from "@/components/ui/input-group";
 interface VisualAsset {
   id: string;
   type: MediaType;
@@ -44,27 +45,27 @@ interface VisualAsset {
   size?: number;
 }
 
-const STORAGE_KEY = 'designcombo_uploads';
-const PROJECT_ID = 'local-uploads';
+const STORAGE_KEY = "designcombo_uploads";
+const PROJECT_ID = "local-uploads";
 
 // Detect file type from MIME type and extension
 function detectFileType(file: File): MediaType {
   const mime = file.type.toLowerCase();
-  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
 
   if (
-    mime.startsWith('audio/') ||
-    ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'].includes(ext)
+    mime.startsWith("audio/") ||
+    ["mp3", "wav", "ogg", "flac", "aac", "m4a"].includes(ext)
   ) {
-    return 'audio';
+    return "audio";
   }
   if (
-    mime.startsWith('video/') ||
-    ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)
+    mime.startsWith("video/") ||
+    ["mp4", "webm", "mov", "avi", "mkv"].includes(ext)
   ) {
-    return 'video';
+    return "video";
   }
-  return 'image';
+  return "image";
 }
 
 // Replace old blob URLs with new ones in serialized clips
@@ -82,10 +83,10 @@ function detectFileType(file: File): MediaType {
 
 // Helper to format duration like 00:00
 function formatDuration(seconds?: number) {
-  if (!seconds) return '';
+  if (!seconds) return "";
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 // Asset card component
@@ -104,13 +105,13 @@ function AssetCard({
       onClick={() => onAdd(asset)}
     >
       <div className="relative aspect-square rounded-sm overflow-hidden bg-foreground/20 border border-transparent group-hover:border-primary/50 transition-all flex items-center justify-center">
-        {asset.type === 'image' ? (
+        {asset.type === "image" ? (
           <img
             src={asset.src}
             alt={asset.name}
             className="max-w-full max-h-full object-contain"
           />
-        ) : asset.type === 'audio' ? (
+        ) : asset.type === "audio" ? (
           <div className="w-full h-full flex items-center justify-center relative">
             <Music
               className="text-[#2dc28c]"
@@ -164,7 +165,8 @@ function AssetCard({
 
 export default function PanelUploads() {
   const { studio } = useStudioStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { canvasSize } = useProjectStore();
+  const [searchQuery, setSearchQuery] = useState("");
   const [uploads, setUploads] = useState<VisualAsset[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
@@ -209,7 +211,7 @@ export default function PanelUploads() {
 
         // Load old localStorage entries for URL mapping
         const oldEntries: VisualAsset[] = JSON.parse(
-          localStorage.getItem(STORAGE_KEY) || '[]'
+          localStorage.getItem(STORAGE_KEY) || "[]",
         );
         const urlMapping: Record<string, string> = {};
 
@@ -219,7 +221,7 @@ export default function PanelUploads() {
 
           // Find matching old entry by ID or name to map URLs
           const oldEntry = oldEntries.find(
-            (e) => e.id === file.id || e.name === file.name
+            (e) => e.id === file.id || e.name === file.name,
           );
 
           if (oldEntry?.src && oldEntry.src !== newBlobUrl) {
@@ -227,7 +229,7 @@ export default function PanelUploads() {
           }
 
           // Prefer R2 URL from previous state if available
-          const isR2Url = oldEntry?.src && !oldEntry.src.startsWith('blob:');
+          const isR2Url = oldEntry?.src && !oldEntry.src.startsWith("blob:");
           const finalUrl = isR2Url ? oldEntry.src! : newBlobUrl;
 
           return {
@@ -240,7 +242,7 @@ export default function PanelUploads() {
             duration: file.duration,
           };
         });
-        console.warn('USE THIS LOGIC WHEN NEW CLIPS ARE ADDEDE EVENT');
+        console.warn("USE THIS LOGIC WHEN NEW CLIPS ARE ADDEDE EVENT");
         // // Update timeline clips with new blob URLs if needed
         // if (Object.keys(urlMapping).length > 0 && studio) {
         //   try {
@@ -273,7 +275,7 @@ export default function PanelUploads() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(recoveredAssets));
         await loadStorageStats();
       } catch (error) {
-        console.error('Failed to recover uploads from OPFS:', error);
+        console.error("Failed to recover uploads from OPFS:", error);
         // Fall back to localStorage
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -305,7 +307,7 @@ export default function PanelUploads() {
         try {
           uploadResult = await uploadFile(file);
         } catch (error) {
-          console.error('R2 upload failed, falling back to local only:', error);
+          console.error("R2 upload failed, falling back to local only:", error);
         }
 
         const src = uploadResult?.url || URL.createObjectURL(file);
@@ -339,11 +341,11 @@ export default function PanelUploads() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       await loadStorageStats();
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error("Upload failed:", error);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -363,7 +365,7 @@ export default function PanelUploads() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       await loadStorageStats();
     } catch (error) {
-      console.error('Failed to delete upload:', error);
+      console.error("Failed to delete upload:", error);
     }
   };
 
@@ -372,23 +374,23 @@ export default function PanelUploads() {
     if (!studio) return;
 
     try {
-      if (asset.type === 'image') {
+      if (asset.type === "image") {
         const imageClip = await Image.fromUrl(asset.src);
         imageClip.name = asset.name;
         imageClip.display = { from: 0, to: 5 * 1e6 };
         imageClip.duration = 5 * 1e6;
-        await imageClip.scaleToFit(1080, 1920);
-        imageClip.centerInScene(1080, 1920);
+        await imageClip.scaleToFit(canvasSize.width, canvasSize.height);
+        imageClip.centerInScene(canvasSize.width, canvasSize.height);
         await studio.addClip(imageClip);
-      } else if (asset.type === 'audio') {
+      } else if (asset.type === "audio") {
         const audioClip = await Audio.fromUrl(asset.src);
         audioClip.name = asset.name;
         await studio.addClip(audioClip);
       } else {
         const videoClip = await Video.fromUrl(asset.src);
         videoClip.name = asset.name;
-        await videoClip.scaleToFit(1080, 1920);
-        videoClip.centerInScene(1080, 1920);
+        await videoClip.scaleToFit(canvasSize.width, canvasSize.height);
+        videoClip.centerInScene(canvasSize.width, canvasSize.height);
         await studio.addClip(videoClip);
       }
     } catch (error) {
@@ -398,7 +400,7 @@ export default function PanelUploads() {
 
   // Filter assets by search query
   const filteredAssets = uploads.filter((asset) =>
-    asset.name.toLowerCase().includes(searchQuery.toLowerCase())
+    asset.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   if (!isLoaded) {
@@ -438,7 +440,7 @@ export default function PanelUploads() {
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              variant={'outline'}
+              variant={"outline"}
             >
               <Upload size={14} />
             </Button>
@@ -450,7 +452,7 @@ export default function PanelUploads() {
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              variant={'outline'}
+              variant={"outline"}
               className="w-full"
             >
               <Upload size={14} /> Upload
@@ -465,7 +467,7 @@ export default function PanelUploads() {
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
             <Upload size={32} className="opacity-50" />
             <span className="text-sm">
-              {uploads.length === 0 ? 'No uploads yet' : 'No matches found'}
+              {uploads.length === 0 ? "No uploads yet" : "No matches found"}
             </span>
           </div>
         ) : (

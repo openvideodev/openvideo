@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useStudioStore } from '@/stores/studio-store';
-import { Video, Log, Placeholder } from 'openvideo';
-import { Search, Film, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useStudioStore } from "@/stores/studio-store";
+import { useProjectStore } from "@/stores/project-store";
+import { Video, Log, Placeholder } from "openvideo";
+import { Search, Film, Loader2 } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '@/components/ui/input-group';
-import { cloneDeep, debounce } from 'lodash';
+} from "@/components/ui/input-group";
+import { cloneDeep, debounce } from "lodash";
 
 interface PexelsVideo {
   id: number;
@@ -26,7 +27,7 @@ interface PexelsVideo {
   };
   video_files: {
     id: number;
-    quality: 'hd' | 'sd';
+    quality: "hd" | "sd";
     file_type: string;
     width: number;
     height: number;
@@ -36,7 +37,8 @@ interface PexelsVideo {
 
 export default function PanelVideos() {
   const { studio } = useStudioStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { canvasSize } = useProjectStore();
+  const [searchQuery, setSearchQuery] = useState("");
   const [videos, setVideos] = useState<PexelsVideo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,7 +56,7 @@ export default function PanelVideos() {
         setVideos([]);
       }
     } catch (error) {
-      console.error('Failed to fetch videos:', error);
+      console.error("Failed to fetch videos:", error);
     } finally {
       setIsLoading(false);
     }
@@ -62,11 +64,11 @@ export default function PanelVideos() {
 
   const debouncedFetch = useCallback(
     debounce((query: string) => fetchVideos(query), 500),
-    []
+    [],
   );
 
   useEffect(() => {
-    fetchVideos('');
+    fetchVideos("");
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,9 +82,9 @@ export default function PanelVideos() {
     try {
       // Find the best quality mp4 link
       const videoFile =
-        asset.video_files.find((f) => f.quality === 'hd') ||
+        asset.video_files.find((f) => f.quality === "hd") ||
         asset.video_files[0];
-      if (!videoFile) throw new Error('No video file found');
+      if (!videoFile) throw new Error("No video file found");
 
       const src = videoFile.link;
       const clipName = `Video by ${asset.user.name}`;
@@ -95,13 +97,13 @@ export default function PanelVideos() {
           height: asset.height,
           duration: asset.duration * 1e6, // seconds to microseconds
         },
-        'Video'
+        "Video",
       );
       placeholder.name = clipName;
 
-      // Scale to fit and center in scene (1080x1920)
-      await placeholder.scaleToFit(1080, 1920);
-      placeholder.centerInScene(1080, 1920);
+      // Scale to fit and center in scene
+      await placeholder.scaleToFit(canvasSize.width, canvasSize.height);
+      placeholder.centerInScene(canvasSize.width, canvasSize.height);
 
       await studio.addClip(placeholder);
 
@@ -125,7 +127,7 @@ export default function PanelVideos() {
             newTrim.to = Math.max(newTrim.to, realDuration);
             newTrim.from = Math.min(newTrim.from, newTrim.to);
             console.warn(
-              'This needs to be reviewed. assets from pexels may not have the right duration'
+              "This needs to be reviewed. assets from pexels may not have the right duration",
             );
             clone.display = { ...oldClip.display };
             clone.trim = newTrim;
@@ -136,7 +138,7 @@ export default function PanelVideos() {
           });
         })
         .catch((err) => {
-          Log.error('Failed to load video in background:', err);
+          Log.error("Failed to load video in background:", err);
           // Optional: handle failure by removing placeholder or showing error
         });
     } catch (error) {
