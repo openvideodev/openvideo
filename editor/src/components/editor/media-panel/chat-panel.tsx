@@ -5,11 +5,13 @@ import {
   IconSparkles2,
   IconCropPortrait,
   IconPhoto,
-} from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+} from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useProjectStore } from "@/stores/project-store";
 
 export function ChatPanel() {
+  const { aspectRatio } = useProjectStore();
   return (
     <div className="flex flex-col h-full bg-card">
       <div className="rounded-xl h-full p-3 flex flex-col gap-2 shadow-sm">
@@ -23,12 +25,12 @@ export function ChatPanel() {
 
         <div className="flex items-center gap-2 pt-2 w-full justify-between">
           <div className="flex items-center gap-2">
-            <Button variant={'secondary'} size="sm">
+            <Button variant={"secondary"} size="sm">
               <IconPhoto />
               Image
             </Button>
-            <Button variant={'secondary'} size="sm">
-              <IconCropPortrait /> 9:16
+            <Button variant={"secondary"} size="sm">
+              <IconCropPortrait /> {aspectRatio}
             </Button>
           </div>
 
