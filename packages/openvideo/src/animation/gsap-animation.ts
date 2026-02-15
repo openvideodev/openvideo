@@ -34,6 +34,7 @@ export class GsapAnimation implements IAnimation {
       easing: opts.easing ?? "none",
       iterCount: opts.iterCount ?? 1,
       id: this.id,
+      disableGlobalEasing: opts.disableGlobalEasing ?? false,
     };
   }
 
