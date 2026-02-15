@@ -19,6 +19,7 @@ export interface AnimationOptions {
   easing?: string | EasingFunction;
   iterCount?: number;
   id?: string;
+  disableGlobalEasing?: boolean;
 }
 
 export interface IAnimation {

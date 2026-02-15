@@ -100,9 +100,11 @@ Control the flow of motion with easing. All standard easing functions are suppor
 - `linear` - Constant speed
 - `easeInQuad`, `easeOutQuad`, `easeInOutQuad`
 - `easeInCubic`, `easeOutCubic`, `easeInOutCubic`
-- `easeInQuart`, `easeOutQuart`, `easeInOutQuart`
+- `easeInSine`, `easeOutSine`, `easeInOutSine`
 - `easeInExpo`, `easeOutExpo`, `easeInOutExpo`
+- `easeInCirc`, `easeOutCirc`, `easeInOutCirc`
 - `easeInBack`, `easeOutBack`, `easeInOutBack`
+- `slow` - A complex easing that stays linear in the middle
 
 ## Keyframe Specification
 
@@ -114,16 +116,36 @@ image.addAnimation(
   { duration: 1e6 },
   {
     "0%": {
-      left: 0,
-      top: 0,
+      x: 0,
+      y: 0,
       opacity: 0,
     },
     "100%": {
-      left: 1920,
-      top: 1080,
+      x: 500,
+      y: 200,
       opacity: 1,
     },
   },
+);
+```
+
+### Keyframe Easing
+
+By default, the `easing` in `AnimationOptions` is applied **globally** across all keyframes. To apply easing per-segment, you can disable global easing and specify easing within the keyframes:
+
+```ts
+image.addAnimation(
+  "keyframes",
+  { 
+    duration: 2e6,
+    easing: "easeInOutQuad",
+    disableGlobalEasing: true 
+  },
+  {
+    "0%": { y: 0 },
+    "50%": { y: 100, easing: "linear" }, // Easing from 0% to 50%
+    "100%": { y: 200 } // Uses global easing (easeInOutQuad) from 50% to 100%
+  }
 );
 ```
 
@@ -131,13 +153,14 @@ image.addAnimation(
 
 The following properties can be animated across most clip types:
 
-- `left`, `top` (Position)
+- `x`, `y` (Position)
 - `width`, `height` (Dimensions)
 - `scale` (Size multiplier)
 - `angle` (Rotation in degrees)
 - `opacity` (Transparency 0-1)
-- `zIndex` (Depth)
-- `volume` (Audio level for video/audio clips)
+- `blur` (Blur filter strength)
+- `brightness` (Brightness multiplier)
+- `mirror` (Whether to mirror the clip: 0 or 1)
 
 ## UI Editor
 

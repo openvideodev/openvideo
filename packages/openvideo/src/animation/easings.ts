@@ -31,7 +31,35 @@ export const easings: Record<string, EasingFunction> = {
     if ((t /= 0.5) < 1) return -0.5 * (Math.sqrt(1 - t * t) - 1);
     return 0.5 * (Math.sqrt(1 - (t - 2) * t) + 1);
   },
+  
+  slow: createSlowMo(0.7, 0.7, false),
 };
+
+export function createSlowMo(
+  linearRatio: number = 0.7,
+  power: number = 0.7,
+  yoyoMode: boolean = false
+): EasingFunction {
+  const lr = Math.min(1, linearRatio);
+  const pow = lr < 1 ? power : 0;
+  const t1 = (1 - lr) / 2;
+  const t3 = t1 + lr;
+
+  return (t: number) => {
+    const r = t + (0.5 - t) * pow;
+    if (t < t1) {
+      const tMod = 1 - t / t1;
+      return yoyoMode ? 1 - tMod * tMod : r - tMod * tMod * tMod * r;
+    }
+    if (t > t3) {
+      const tMod = (t - t3) / t1;
+      return yoyoMode
+        ? (t === 1 ? 0 : 1 - tMod * tMod)
+        : r + (t - r) * tMod * tMod * tMod;
+    }
+    return yoyoMode ? 1 : r;
+  };
+}
 
 export function getEasing(easing: string | EasingFunction | undefined): EasingFunction {
   if (typeof easing === 'function') return easing;

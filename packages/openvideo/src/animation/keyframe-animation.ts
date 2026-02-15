@@ -32,6 +32,7 @@ export class KeyframeAnimation implements IAnimation {
       easing: opts.easing ?? "linear",
       iterCount: opts.iterCount ?? 1,
       id: this.id,
+      disableGlobalEasing: opts.disableGlobalEasing ?? false,
     };
 
     // Handle array format (internal representation)
@@ -76,7 +77,8 @@ export class KeyframeAnimation implements IAnimation {
   }
 
   getTransform(time: number): AnimationTransform {
-    const { duration, delay, iterCount } = this.options;
+    const { duration, delay, iterCount, easing, disableGlobalEasing } =
+      this.options;
     const offsetTime = time - delay;
 
     if (offsetTime < 0) return {};
@@ -92,7 +94,12 @@ export class KeyframeAnimation implements IAnimation {
 
     const cycleDuration =
       iterCount === Infinity ? duration : duration / iterCount;
-    const progress = (offsetTime % cycleDuration) / cycleDuration;
+    let progress = (offsetTime % cycleDuration) / cycleDuration;
+
+    if (!disableGlobalEasing && easing !== "linear") {
+      const easingFn = getEasing(easing);
+      progress = easingFn(progress);
+    }
 
     return this.interpolateProps(progress);
   }
@@ -109,7 +116,13 @@ export class KeyframeAnimation implements IAnimation {
     const segmentProgress =
       (progress - startFrame.progress) /
       (endFrame.progress - startFrame.progress);
-    const easingSource = endFrame.easing ?? this.options.easing;
+
+    // If global easing is used, the input progress is already eased.
+    // In that case, we default to linear interpolation between keyframes
+    // unless a specific per-segment easing is provided.
+    const easingSource =
+      endFrame.easing ??
+      (this.options.disableGlobalEasing ? this.options.easing : "linear");
 
     const easingFn = getEasing(easingSource);
 

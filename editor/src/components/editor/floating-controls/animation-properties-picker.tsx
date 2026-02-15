@@ -91,7 +91,7 @@ export function AnimationPropertiesPicker() {
         animation.type.toLowerCase().includes("out") ||
         (currentDelayMicro > 0 &&
           Math.abs(currentDelayMicro + currentDurationMicro - clipDuration) <
-            1000); // within 1ms tolerance
+          1000); // within 1ms tolerance
 
       if (animation.type === "keyframes") {
         setActiveTab("custom");
@@ -307,10 +307,10 @@ export function AnimationPropertiesPicker() {
     { label: "Pulse", value: "pulse" },
     ...(isTextLike
       ? [
-          { label: "Char Fade In", value: "charFadeIn" },
-          { label: "Char Slide Up", value: "charSlideUp" },
-          { label: "Char Typewriter", value: "charTypewriter" },
-        ]
+        { label: "Char Fade In", value: "charFadeIn" },
+        { label: "Char Slide Up", value: "charSlideUp" },
+        { label: "Char Typewriter", value: "charTypewriter" },
+      ]
       : []),
   ];
 
@@ -540,7 +540,7 @@ export function AnimationPropertiesPicker() {
                   <InputGroup
                     className={cn(
                       activeTab !== "custom" &&
-                        "opacity-60 pointer-events-none",
+                      "opacity-60 pointer-events-none",
                     )}
                   >
                     <InputGroupAddon align="inline-start">
@@ -592,6 +592,7 @@ export function AnimationPropertiesPicker() {
                   </SelectTrigger>
                   <SelectContent className="z-[250]">
                     <SelectItem value="linear">Linear</SelectItem>
+                    <SelectItem value="slow">Slow</SelectItem>
                     <SelectItem value="easeInQuad">Ease In Quad</SelectItem>
                     <SelectItem value="easeOutQuad">Ease Out Quad</SelectItem>
                     <SelectItem value="easeInOutQuad">
