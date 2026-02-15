@@ -32,7 +32,7 @@ export const easings: Record<string, EasingFunction> = {
     return 0.5 * (Math.sqrt(1 - (t - 2) * t) + 1);
   },
   
-  slow: createSlowMo(0.7, 0.7, false),
+  slow: createSlowMo(0.5, 0.5, false),
 };
 
 export function createSlowMo(
