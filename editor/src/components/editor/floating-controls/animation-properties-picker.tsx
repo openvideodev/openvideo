@@ -66,7 +66,7 @@ export function AnimationPropertiesPicker() {
     animation?.options.iterCount || 1,
   );
   const [easing, setEasing] = useState<string>(
-    (animation?.options.easing as string) || "easeOutQuad",
+    (animation?.options.easing as string) || "",
   );
   const [mirrorEnabled, setMirrorEnabled] = useState<boolean>(false);
 
@@ -91,7 +91,7 @@ export function AnimationPropertiesPicker() {
         animation.type.toLowerCase().includes("out") ||
         (currentDelayMicro > 0 &&
           Math.abs(currentDelayMicro + currentDurationMicro - clipDuration) <
-          1000); // within 1ms tolerance
+            1000); // within 1ms tolerance
 
       if (animation.type === "keyframes") {
         setActiveTab("custom");
@@ -307,10 +307,28 @@ export function AnimationPropertiesPicker() {
     { label: "Pulse", value: "pulse" },
     ...(isTextLike
       ? [
-        { label: "Char Fade In", value: "charFadeIn" },
-        { label: "Char Slide Up", value: "charSlideUp" },
-        { label: "Char Typewriter", value: "charTypewriter" },
-      ]
+          { label: "Char Fade In", value: "charFadeIn" },
+          { label: "Char Slide Up", value: "charSlideUp" },
+          { label: "Char Typewriter", value: "charTypewriter" },
+          { label: "Fade By Word", value: "fadeByWord" },
+          { label: "Pop By Word", value: "popByWord" },
+          { label: "Scale Fade By Word", value: "scaleFadeByWord" },
+          { label: "Bounce By Word", value: "bounceByWord" },
+          { label: "Rotate In By Word", value: "rotateInByWord" },
+          { label: "Slide Right By Word", value: "slideRightByWord" },
+          { label: "Slide Left By Word", value: "slideLeftByWord" },
+          { label: "Fade Rotate By Word", value: "fadeRotateByWord" },
+          { label: "Skew By Word", value: "skewByWord" },
+          { label: "Wave By Word", value: "waveByWord" },
+          { label: "Blur In By Word", value: "blurInByWord" },
+          { label: "Drop Soft By Word", value: "dropSoftByWord" },
+          { label: "Elastic Pop By Word", value: "elasticPopByWord" },
+          { label: "Flip Up By Word", value: "flipUpByWord" },
+          { label: "Spin In By Word", value: "spinInByWord" },
+          { label: "Stretch In By Word", value: "stretchInByWord" },
+          { label: "Reveal Zoom By Word", value: "revealZoomByWord" },
+          { label: "Float Wave By Word", value: "floatWaveByWord" },
+        ]
       : []),
   ];
 
@@ -540,7 +558,7 @@ export function AnimationPropertiesPicker() {
                   <InputGroup
                     className={cn(
                       activeTab !== "custom" &&
-                      "opacity-60 pointer-events-none",
+                        "opacity-60 pointer-events-none",
                     )}
                   >
                     <InputGroupAddon align="inline-start">
@@ -588,7 +606,7 @@ export function AnimationPropertiesPicker() {
                 </label>
                 <Select value={easing} onValueChange={setEasing}>
                   <SelectTrigger className="w-full h-9">
-                    <SelectValue />
+                    <SelectValue placeholder="Select easing" />
                   </SelectTrigger>
                   <SelectContent className="z-[250]">
                     <SelectItem value="linear">Linear</SelectItem>

@@ -151,8 +151,8 @@ export const charSlideUp: AnimationFactory = (opts, params) => {
   return new GsapAnimation(
     {
       type: "character",
-      from: { alpha: 0, y: 50 },
-      to: { alpha: 1, y: 0 },
+      from: { alpha: 0, y: "+=50" },
+      to: { alpha: 1, y: "-=50" },
       stagger: normalized?.stagger ?? 0.05,
     },
     {
@@ -179,6 +179,330 @@ export const charTypewriter: AnimationFactory = (opts, params) => {
     "charTypewriter",
   );
 };
+
+export const fadeByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0 },
+      to: { alpha: 1 },
+      stagger: normalized?.stagger ?? 0.05,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "none",
+    },
+    "fadeByWord",
+  );
+};
+export const popByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { scale: 0, immediateRender: true },
+      to: {
+        keyframes: {
+          "0%": { scale: 0 },
+          "50%": { scale: 1.2 },
+          "100%": { scale: 1 },
+        },
+        ease: "none",
+      },
+      stagger: normalized?.stagger ?? 0.05,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "none",
+    },
+    "popByWord",
+  );
+};
+
+export const scaleFadeByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, scale: 0.7 },
+      to: { alpha: 1, scale: 1 },
+      stagger: normalized?.stagger ?? 0.08,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "back.out(1.5)",
+    },
+    "scaleFadeByWord",
+  );
+};
+
+export const bounceByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, y: "-=30", scale: 0.8 },
+      to: { alpha: 1, y: "+=30", scale: 1 },
+      stagger: normalized?.stagger ?? 0.1,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "bounce.out",
+    },
+    "bounceByWord",
+  );
+};
+
+export const rotateInByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, rotation: -10 },
+      to: { alpha: 1, rotation: 0 },
+      stagger: normalized?.stagger ?? 0.08,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power2.out",
+    },
+    "rotateInByWord",
+  );
+};
+
+export const slideRightByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, x: "-=50" },
+      to: { alpha: 1, x: "+=50" },
+      stagger: normalized?.stagger ?? 0.1,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power2.out",
+    },
+    "slideRightByWord",
+  );
+};
+
+export const slideLeftByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, x: "+=50" },
+      to: { alpha: 1, x: "-=50" },
+      stagger: normalized?.stagger ?? 0.1,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power2.out",
+    },
+    "slideLeftByWord",
+  );
+};
+
+export const fadeRotateByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, rotation: 90 },
+      to: { alpha: 1, rotation: 0 },
+      stagger: normalized?.stagger ?? 0.1,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power2.out",
+    },
+    "fadeRotateByWord",
+  );
+};
+
+export const skewByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, skewX: 45 },
+      to: { alpha: 1, skewX: 0 },
+      stagger: normalized?.stagger ?? 0.08,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power3.out",
+    },
+    "skewByWord",
+  );
+};
+
+export const waveByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, y: "+=20" },
+      to: {
+        alpha: 1,
+        y: "-=20",
+        repeat: 1,
+        yoyo: true,
+      },
+      stagger: normalized?.stagger ?? 0.12,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "sine.inOut",
+    },
+    "waveByWord",
+  );
+};
+
+export const blurInByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, blur: 10 },
+      to: { alpha: 1, blur: 0 },
+      stagger: normalized?.stagger ?? 0.08,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power2.out",
+    },
+    "blurInByWord",
+  );
+};
+export const dropSoftByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, y: "-=60", scaleY: 2 },
+      to: { alpha: 1, y: "+=60", scaleY: 1 },
+      stagger: normalized?.stagger ?? 0.09,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power3.out",
+    },
+    "dropSoftByWord",
+  );
+};
+
+export const elasticPopByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, scale: 0 },
+      to: { alpha: 1, scale: 1 },
+      stagger: normalized?.stagger ?? 0.07,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "elastic.out(1, 0.5)",
+    },
+    "elasticPopByWord",
+  );
+};
+
+export const flipUpByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, skewX: -20 },
+      to: { alpha: 1, skewX: 0 },
+      stagger: normalized?.stagger ?? 0.1,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power2.out",
+    },
+    "flipUpByWord",
+  );
+};
+export const spinInByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, rotation: -180, scale: 0.5 },
+      to: { alpha: 1, rotation: 0, scale: 1 },
+      stagger: normalized?.stagger ?? 0.09,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power3.out",
+    },
+    "spinInByWord",
+  );
+};
+
+export const stretchInByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, scaleX: 1.5, scaleY: 0.5 },
+      to: { alpha: 1, scaleX: 1, scaleY: 1 },
+      stagger: normalized?.stagger ?? 0.08,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power2.out",
+    },
+    "stretchInByWord",
+  );
+};
+
+export const revealZoomByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, scale: 1.4 },
+      to: { alpha: 1, scale: 1 },
+      stagger: normalized?.stagger ?? 0.1,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "power4.out",
+    },
+    "revealZoomByWord",
+  );
+};
+
+export const floatWaveByWord: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  return new GsapAnimation(
+    {
+      type: "word",
+      from: { alpha: 0, y: "+=25" },
+      to: {
+        alpha: 1,
+        y: "-=25",
+        // repeat: 1,
+        // yoyo: true,
+      },
+      stagger: normalized?.stagger ?? 0.15,
+    },
+    {
+      ...opts,
+      easing: normalized?.easing || opts.easing || "sine.out",
+    },
+    "floatWaveByWord",
+  );
+};
+
+
+
 
 //custom presets in
 export const blurSlideRightIn: AnimationFactory = (opts, params) => {
@@ -2045,7 +2369,27 @@ animationRegistry.register("slideIn", slideIn);
 animationRegistry.register("slideOut", slideOut);
 animationRegistry.register("zoomIn", zoomIn);
 animationRegistry.register("zoomOut", zoomOut);
+animationRegistry.register("charFadeIn", charFadeIn);
+animationRegistry.register("charSlideUp", charSlideUp);
 animationRegistry.register("charTypewriter", charTypewriter);
+animationRegistry.register("fadeByWord", fadeByWord);
+animationRegistry.register("popByWord", popByWord);
+animationRegistry.register("scaleFadeByWord", scaleFadeByWord);
+animationRegistry.register("bounceByWord", bounceByWord);
+animationRegistry.register("rotateInByWord", rotateInByWord);
+animationRegistry.register("slideRightByWord", slideRightByWord);
+animationRegistry.register("slideLeftByWord", slideLeftByWord);
+animationRegistry.register("fadeRotateByWord", fadeRotateByWord);
+animationRegistry.register("skewByWord", skewByWord);
+animationRegistry.register("waveByWord", waveByWord);
+animationRegistry.register("blurInByWord", blurInByWord);
+animationRegistry.register("dropSoftByWord", dropSoftByWord);
+animationRegistry.register("elasticPopByWord", elasticPopByWord);
+animationRegistry.register("flipUpByWord", flipUpByWord);
+animationRegistry.register("spinInByWord", spinInByWord);
+animationRegistry.register("stretchInByWord", stretchInByWord);
+animationRegistry.register("revealZoomByWord", revealZoomByWord);
+animationRegistry.register("floatWaveByWord", floatWaveByWord);
 animationRegistry.register("pulse", pulse);
 animationRegistry.register("blurIn", blurIn);
 animationRegistry.register("blurOut", blurOut);
