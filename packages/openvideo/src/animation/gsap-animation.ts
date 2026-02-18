@@ -1,5 +1,11 @@
 import gsap from "gsap";
+import { PixiPlugin } from "gsap/PixiPlugin";
+import * as PIXI from "pixi.js";
 import { AnimationOptions, AnimationTransform, IAnimation } from "./types";
+
+// Register PixiPlugin to support skewX, skewY, and other PixiJS properties
+gsap.registerPlugin(PixiPlugin);
+PixiPlugin.registerPIXI(PIXI);
 
 export interface GsapAnimationParams {
   /**
@@ -239,12 +245,82 @@ export class GsapAnimation implements IAnimation {
       this.timeline.kill();
     }
     this.timeline = gsap.timeline({ paused: true });
+    animTargets.forEach((t) => {
+      if (t.anchor) {
+        if (t.anchor.x !== 0.5 || t.anchor.y !== 0.5) {
+          const oldX = t.anchor.x;
+          const oldY = t.anchor.y;
+          t.anchor.set(0.5, 0.5);
+          const w = t.width / (t.scale?.x || 1);
+          const h = t.height / (t.scale?.y || 1);
+          t.x += (0.5 - oldX) * w * (t.scale?.x || 1);
+          t.y += (0.5 - oldY) * h * (t.scale?.y || 1);
+        }
+      } else if (t.pivot && t.getLocalBounds) {
+        const bounds = t.getLocalBounds();
+        const cx = bounds.x + bounds.width / 2;
+        const cy = bounds.y + bounds.height / 2;
+        if (t.pivot.x !== cx || t.pivot.y !== cy) {
+          const oldX = t.pivot.x;
+          const oldY = t.pivot.y;
+          t.pivot.set(cx, cy);
+          t.x += (cx - oldX) * (t.scale?.x || 1);
+          t.y += (cy - oldY) * (t.scale?.y || 1);
+        }
+      }
+    });
 
-    this.timeline.fromTo(animTargets, from, {
+    // List of properties that should be handled by PixiPlugin
+    const pixiProps = [
+      "scale",
+      "scaleX",
+      "scaleY",
+      "rotation",
+      "skewX",
+      "skewY",
+      "skew",
+      "pivotX",
+      "pivotY",
+      "pivot",
+      "anchorX",
+      "anchorY",
+      "anchor",
+      "blur",
+      "brightness",
+      "contrast",
+      "grayscale",
+      "hueRotate",
+      "invert",
+      "saturate",
+      "threshold",
+      "matrix",
+    ];
+
+    const hasPixiProp = (obj: any) =>
+      obj && Object.keys(obj).some((key) => pixiProps.includes(key));
+
+    const prepareVars = (vars: any) => {
+      if (!hasPixiProp(vars)) return vars;
+      const newVars: any = { ...vars };
+      const pixiVars: any = {};
+      pixiProps.forEach((prop) => {
+        if (prop in newVars) {
+          pixiVars[prop] = newVars[prop];
+          delete newVars[prop];
+        }
+      });
+      newVars.pixi = pixiVars;
+      return newVars;
+    };
+
+    const finalFrom = prepareVars(from);
+    const finalTo = prepareVars(to);
+
+    this.timeline.fromTo(animTargets, finalFrom, {
       duration: durationInSeconds,
       stagger: stagger || 0,
       ease: this.options.easing as any,
-      ...to,
+      ...finalTo,
     });
   }
 

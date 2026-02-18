@@ -68,7 +68,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     let outAudio = audio ?? [];
     if (audio != null && this.playbackRate !== 1) {
       outAudio = audio.map((pcm) =>
-        changePCMPlaybackRate(pcm, this.playbackRate)
+        changePCMPlaybackRate(pcm, this.playbackRate),
       );
     }
 
@@ -107,7 +107,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    */
   async offscreenRender(
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-    time: number
+    time: number,
   ): Promise<{
     audio: Float32Array[];
     done: boolean;
@@ -120,7 +120,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     let outAudio = audio ?? [];
     if (audio != null && this.playbackRate !== 1) {
       outAudio = audio.map((pcm) =>
-        changePCMPlaybackRate(pcm, this.playbackRate)
+        changePCMPlaybackRate(pcm, this.playbackRate),
       );
     }
 
@@ -234,7 +234,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       height?: number;
       duration?: number;
     },
-    fps: number = 30
+    fps: number = 30,
   ): this {
     if (props.display) {
       if (props.display.from !== undefined) {
@@ -289,23 +289,28 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
                   progress === 0
                     ? "from"
                     : progress === 1
-                    ? "to"
-                    : `${Math.round(progress * 100)}%`;
+                      ? "to"
+                      : `${Math.round(progress * 100)}%`;
                 acc[key] = props;
                 return acc;
               },
-              {}
+              {},
             ),
             opts: (this as any).animatOpts,
           }
         : undefined;
 
     // Extract new modular animations
-    const animations = this.animations.map((a) => ({
-      type: a.type,
-      opts: a.options,
-      params: a.params || {},
-    }));
+    const animations = this.animations.map((a) => {
+      if ("toJSON" in a && typeof (a as any).toJSON === "function") {
+        return (a as any).toJSON();
+      }
+      return {
+        type: a.type,
+        opts: a.options,
+        params: a.params || {},
+      };
+    });
 
     return {
       type: this.constructor.name as ClipJSON["type"],
