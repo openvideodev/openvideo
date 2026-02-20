@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { TimelineTrack } from "@/types/timeline";
 import { TIMELINE_CONSTANTS } from "@/components/editor/timeline/timeline-constants";
 import { useTimelinePlayhead } from "@/hooks/use-timeline-playhead";
+import { useTheme } from "next-themes";
 
 interface TimelinePlayheadProps {
   duration: number;
@@ -41,6 +42,20 @@ export function TimelinePlayhead({
 
   const internalPlayheadRef = useRef<HTMLDivElement>(null);
   const playheadRef = externalPlayheadRef || internalPlayheadRef;
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const currentTheme = useMemo(() => {
+    if (!mounted) return "light";
+    return (theme === "system" ? resolvedTheme : theme) as "dark" | "light";
+  }, [mounted, theme, resolvedTheme]);
+
+  const color = useMemo(() => {
+    return currentTheme === "dark" ? "#ffffff" : "#000000";
+  }, [currentTheme]);
 
   const { playheadPosition, handlePlayheadMouseDown } = useTimelinePlayhead({
     currentTime,
@@ -101,17 +116,23 @@ export function TimelinePlayhead({
       onMouseDown={handlePlayheadMouseDown}
     >
       {/* The playhead line spanning full height */}
-      <div className="absolute left-1/2 -translate-x-1/2 w-[1px] cursor-col-resize h-full bg-white" />
+      <div
+        className="absolute left-1/2 -translate-x-1/2 w-[1px] cursor-col-resize h-full"
+        style={{
+          backgroundColor: color,
+        }}
+      />
 
       {/* Playhead indicator at the top */}
       <div
-        className="absolute left-1/2 transform -translate-x-1/2 cursor-col-resize bg-white"
+        className="absolute left-1/2 transform -translate-x-1/2 cursor-col-resize"
         style={{
           top: "0",
           width: "12px",
           height: "14px",
           borderRadius: "2px 2px 0 0",
           clipPath: "polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)",
+          backgroundColor: color,
         }}
       />
     </div>

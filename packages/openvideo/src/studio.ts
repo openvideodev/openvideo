@@ -614,6 +614,20 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.updateDimensions(width, height);
   }
 
+  /**
+   * Update the background color of the studio
+   */
+  public setBgColor(color: string) {
+    this.opts.bgColor = color;
+    const colorNum = this.hexToNumber(color);
+
+    if (this.pixiApp) {
+      this.pixiApp.renderer.background.color = colorNum;
+    }
+
+    this.updateFrame(this.currentTime);
+  }
+
   public updateDimensions(width: number, height: number) {
     this.opts.width = width;
     this.opts.height = height;

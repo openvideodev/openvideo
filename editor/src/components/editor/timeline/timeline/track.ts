@@ -1,5 +1,5 @@
-import { Rect, RectProps } from 'fabric';
-import { TrackType } from '@/types/timeline';
+import { Rect, RectProps } from "fabric";
+import { TrackType } from "@/types/timeline";
 
 export interface TrackProps extends Partial<RectProps> {
   trackType: TrackType;
@@ -16,10 +16,10 @@ export class Track extends Rect {
     this.trackId = options.trackId;
 
     this.set({
-      fill: '#202020',
+      fill: options.fill || "#202020",
       strokeWidth: 0,
       selectable: false,
-      hoverCursor: 'default',
+      hoverCursor: "default",
     });
   }
 }

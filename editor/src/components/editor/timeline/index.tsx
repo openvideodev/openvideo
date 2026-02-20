@@ -14,10 +14,11 @@ import {
 import { useTimelineStore } from "@/stores/timeline-store";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { useStudioStore } from "@/stores/studio-store";
+import { useTheme } from "next-themes";
 
 import { useTimelineZoom } from "@/hooks/use-timeline-zoom";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   TimelinePlayhead,
@@ -46,6 +47,19 @@ export function Timeline() {
   const { tracks, clips, getTotalDuration } = useTimelineStore();
   const { duration, seek, setDuration } = usePlaybackStore();
   const { studio } = useStudioStore();
+  const { theme, resolvedTheme } = useTheme();
+
+  const currentTheme = (theme === "system" ? resolvedTheme : theme) as
+    | "dark"
+    | "light";
+
+  const scrollbarColors = useMemo(() => {
+    const isDark = currentTheme === "dark";
+    return {
+      fill: isDark ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.3)",
+      stroke: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+    };
+  }, [currentTheme]);
 
   const timelineRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
@@ -274,7 +288,7 @@ export function Timeline() {
       extraMarginX: 50,
       extraMarginY: 15,
       scrollbarWidth: 8,
-      scrollbarColor: "rgba(255, 255, 255, 0.3)",
+      scrollbarColor: scrollbarColors.fill,
     });
 
     canvas.setTracks(tracks);
@@ -308,6 +322,12 @@ export function Timeline() {
       timelineCanvasRef.current.setTracks(tracks);
     }
   }, [zoomLevel, tracks, clips]);
+
+  useEffect(() => {
+    if (timelineCanvasRef.current) {
+      timelineCanvasRef.current.updateTheme(currentTheme);
+    }
+  }, [currentTheme]);
 
   const handleDelete = useCallback(() => {
     studio?.deleteSelected();
@@ -347,7 +367,7 @@ export function Timeline() {
 
       {/* Timeline Container */}
       <div
-        className="flex-1 flex flex-col overflow-hidden relative bg-[#121212]"
+        className="flex-1 flex flex-col overflow-hidden relative bg-card"
         ref={timelineRef}
       >
         <TimelinePlayhead

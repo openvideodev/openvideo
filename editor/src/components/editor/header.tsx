@@ -30,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ModeToggle } from "../ui/mode-toggle";
 
 export default function Header() {
   const { studio } = useStudioStore();
@@ -409,6 +410,7 @@ export default function Header() {
           onOpenChange={setIsShortcutsModalOpen}
         />
 
+        <ModeToggle />
         <Button
           className="flex h-7 gap-1 border border-border"
           variant="outline"

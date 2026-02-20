@@ -630,6 +630,29 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.render();
   }
 
+  public updateTheme(themeStr: "dark" | "light") {
+    const isDark = themeStr === "dark";
+    const trackColor = isDark ? "#202020" : "#f4f4f5";
+    const scrollbarFill = isDark
+      ? "rgba(255, 255, 255, 0.3)"
+      : "rgba(0, 0, 0, 0.3)";
+    const scrollbarStroke = isDark
+      ? "rgba(255, 255, 255, 0.1)"
+      : "rgba(0, 0, 0, 0.1)";
+
+    // Update existing tracks
+    this.#trackObjects.forEach((track) => {
+      track.set("fill", trackColor);
+    });
+
+    // Update scrollbars
+    if (this.#scrollbars) {
+      this.#scrollbars.updateColors(scrollbarFill, scrollbarStroke);
+    }
+
+    this.canvas.requestRenderAll();
+  }
+
   public clear() {
     this.#tracks = []; // Reset tracks
     this.#clipsMap = {}; // Reset clips
@@ -753,6 +776,9 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
 
       let trackObj = this.#trackObjects.get(trackData.id);
       if (!trackObj) {
+        const themeStr = document.documentElement.classList.contains("dark")
+          ? "dark"
+          : "light";
         trackObj = new Track({
           left: 0,
           top: currentY,
@@ -762,6 +788,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           trackId: trackData.id,
           selectable: false,
           evented: false,
+          fill: themeStr === "dark" ? "#202020" : "#f4f4f5",
         });
         this.#trackObjects.set(trackData.id, trackObj);
         this.canvas.add(trackObj);

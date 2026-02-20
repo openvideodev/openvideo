@@ -1,16 +1,16 @@
-import { Canvas, util, type TMat2D, type TPointerEvent } from 'fabric';
-import type Timeline from '../canvas';
+import { Canvas, util, type TMat2D, type TPointerEvent } from "fabric";
+import type Timeline from "../canvas";
 import type {
   ScrollbarProps,
   ScrollbarsProps,
   ScrollbarXProps,
   ScrollbarYProps,
-} from './types';
+} from "./types";
 
 export class Scrollbars {
   timeline: Timeline;
-  fill = 'rgba(255, 255, 255, 0.3)';
-  stroke = 'rgba(255, 255, 255, 0.1)';
+  fill = "rgba(255, 255, 255, 0.3)";
+  stroke = "rgba(255, 255, 255, 0.1)";
   lineWidth = 1;
   hideX = false;
   hideY = false;
@@ -23,7 +23,7 @@ export class Scrollbars {
   offsetX = 0;
   offsetY = 0;
   scrollbarWidth = 8;
-  scrollbarColor = 'rgba(255, 255, 255, 0.3)';
+  scrollbarColor = "rgba(255, 255, 255, 0.3)";
   onViewportChange?: (v: {
     left: number;
     scrollX: number;
@@ -72,8 +72,8 @@ export class Scrollbars {
   }
 
   initBehavior() {
-    this.timeline.canvas.on('before:render', this.beforeRenderHandler);
-    this.timeline.canvas.on('after:render', this.afterRenderHandler);
+    this.timeline.canvas.on("before:render", this.beforeRenderHandler);
+    this.timeline.canvas.on("after:render", this.afterRenderHandler);
   }
 
   getScrollbar(e: TPointerEvent) {
@@ -92,7 +92,7 @@ export class Scrollbars {
             this.padding &&
         p.y < canvas.height - this.scrollSpace + this.padding;
 
-      if (b) return { type: 'x', start: p.x, vpt };
+      if (b) return { type: "x", start: p.x, vpt };
     }
 
     if (!this.hideY) {
@@ -103,7 +103,7 @@ export class Scrollbars {
           canvas.width - this.scrollbarSize - this.scrollSpace - this.padding &&
         p.x < canvas.width - this.scrollSpace + this.padding;
 
-      if (b) return { type: 'y', start: p.y, vpt };
+      if (b) return { type: "y", start: p.y, vpt };
     }
     return undefined;
   }
@@ -113,7 +113,7 @@ export class Scrollbars {
     if (!this._bar) {
       return (Canvas.prototype as any).__onMouseDown.call(
         this.timeline.canvas,
-        e
+        e,
       );
     }
   }
@@ -122,16 +122,16 @@ export class Scrollbars {
     if (!this._bar) {
       return (Canvas.prototype as any)._onMouseMove.call(
         this.timeline.canvas,
-        e
+        e,
       );
     }
 
     const canvas = this.timeline.canvas;
     const p = canvas.getViewportPoint(e);
     const s =
-      this._bar.type == 'x' ? this._barViewport.sx : this._barViewport.sy;
-    const n = this._bar.type == 'x' ? 4 : 5;
-    const end = this._bar.type == 'x' ? p.x : p.y;
+      this._bar.type == "x" ? this._barViewport.sx : this._barViewport.sy;
+    const n = this._bar.type == "x" ? 4 : 5;
+    const end = this._bar.type == "x" ? p.x : p.y;
     const vpt = this._bar.vpt.slice(0) as TMat2D;
     vpt[n] -= (end - this._bar.start) * s;
 
@@ -213,7 +213,7 @@ export class Scrollbars {
   render(
     ctx: CanvasRenderingContext2D,
     mapRect: ScrollbarProps,
-    objectRect: ScrollbarProps
+    objectRect: ScrollbarProps,
   ) {
     const canvas = this.timeline.canvas;
     // Clear only scrollbar areas
@@ -222,7 +222,7 @@ export class Scrollbars {
         0,
         canvas.height - this.scrollbarSize - this.scrollSpace - this.lineWidth,
         canvas.width,
-        this.scrollbarSize + this.scrollSpace + this.lineWidth
+        this.scrollbarSize + this.scrollSpace + this.lineWidth,
       );
     }
 
@@ -231,7 +231,7 @@ export class Scrollbars {
         canvas.width - this.scrollbarSize - this.scrollSpace - this.lineWidth,
         0,
         this.scrollbarSize + this.scrollSpace + this.lineWidth,
-        canvas.height
+        canvas.height,
       );
     }
 
@@ -249,7 +249,7 @@ export class Scrollbars {
   drawScrollbarX(
     ctx: CanvasRenderingContext2D,
     mapRect: ScrollbarXProps,
-    objectRect: ScrollbarXProps
+    objectRect: ScrollbarXProps,
   ) {
     const canvas = this.timeline.canvas;
     const mapWidth = mapRect.right - mapRect.left;
@@ -285,7 +285,7 @@ export class Scrollbars {
   drawScrollbarY(
     ctx: CanvasRenderingContext2D,
     mapRect: ScrollbarYProps,
-    objectRect: ScrollbarYProps
+    objectRect: ScrollbarYProps,
   ) {
     const canvas = this.timeline.canvas;
     const mapHeight = mapRect.bottom - mapRect.top;
@@ -319,7 +319,7 @@ export class Scrollbars {
 
   drawRect(
     ctx: CanvasRenderingContext2D,
-    props: { x: number; y: number; w: number; h: number }
+    props: { x: number; y: number; w: number; h: number },
   ) {
     const { x, y, w, h } = props;
     const r = Math.min(w, h) / 2;
@@ -346,7 +346,7 @@ export class Scrollbars {
       return { left: 0, top: 0, right: 0, bottom: 0 };
     }
     const { left, top, width, height } = util.makeBoundingBoxFromPoints(
-      objects.map((x) => x.getCoords()).flat(1)
+      objects.map((x) => x.getCoords()).flat(1),
     );
     return { left, top, right: left + width, bottom: top + height };
   }
@@ -407,7 +407,13 @@ export class Scrollbars {
       (canvas as any)._onMouseUp = this._originalMouseUp;
     }
 
-    canvas.off('before:render', this.beforeRenderHandler);
-    canvas.off('after:render', this.afterRenderHandler);
+    canvas.off("before:render", this.beforeRenderHandler);
+    canvas.off("after:render", this.afterRenderHandler);
+  }
+
+  updateColors(fill: string, stroke: string) {
+    this.fill = fill;
+    this.stroke = stroke;
+    this.timeline.canvas.requestRenderAll();
   }
 }
