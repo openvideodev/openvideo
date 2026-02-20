@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { TIMELINE_CONSTANTS } from "@/components/editor/timeline/timeline-constants";
 
 interface TimelineRulerProps {
@@ -17,6 +18,20 @@ export function TimelineRuler({
   scrollLeft,
 }: TimelineRulerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { theme, resolvedTheme } = useTheme();
+
+  const currentTheme = (theme === "system" ? resolvedTheme : theme) as
+    | "dark"
+    | "light";
+
+  const colors = useMemo(() => {
+    const isDark = currentTheme === "dark";
+    return {
+      bg: isDark ? "#111010" : "#f3f4f6",
+      text: isDark ? "#9ca3af" : "#4b5563",
+      border: isDark ? "#374151" : "#d1d5db",
+    };
+  }, [currentTheme]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -43,10 +58,10 @@ export function TimelineRuler({
 
     const pixelsPerSecond = TIMELINE_CONSTANTS.PIXELS_PER_SECOND * zoomLevel;
 
-    // Background for valid duration (darker)
+    // Background for valid duration
     const durationX = duration * pixelsPerSecond;
     if (durationX > 0) {
-      ctx.fillStyle = "rgba(33, 33, 33, 1)";
+      ctx.fillStyle = colors.bg;
       // We only fill visible part
       const visibleStart = Math.max(0, scrollLeft);
       const visibleEnd = Math.min(scrollLeft + width, durationX);
@@ -61,8 +76,8 @@ export function TimelineRuler({
     }
 
     // Drawing settings
-    ctx.fillStyle = "#9ca3af"; // text-gray-400
-    ctx.strokeStyle = "#374151"; // border-gray-700
+    ctx.fillStyle = colors.text;
+    ctx.strokeStyle = colors.border;
     ctx.lineWidth = 1;
     ctx.font = "12px Inter, sans-serif";
     ctx.textAlign = "center";
@@ -163,7 +178,7 @@ export function TimelineRuler({
       ctx.stroke();
     }
     ctx.globalAlpha = 1.0;
-  }, [zoomLevel, duration, width, scrollLeft]);
+  }, [zoomLevel, duration, width, scrollLeft, colors]);
 
   return (
     <canvas

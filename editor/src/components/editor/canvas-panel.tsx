@@ -1,14 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { Studio, fontManager } from "openvideo";
+import { useTheme } from "next-themes";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
 import { editorFont } from "./constants";
 
 const STUDIO_CONFIG = {
   fps: 30,
-  bgColor: "#181818",
   interactivity: true,
   spacing: 20,
+} as const;
+
+const THEME_COLORS = {
+  dark: "#181818",
+  light: "#ffffff",
 } as const;
 
 interface CanvasPanelProps {
@@ -25,6 +30,12 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
   const onReadyRef = useRef(onReady);
   const { setStudio } = useStudioStore();
   const { canvasSize } = useProjectStore();
+  const { theme, resolvedTheme } = useTheme();
+
+  const bgColor = useMemo(() => {
+    const currentTheme = theme === "system" ? resolvedTheme : theme;
+    return currentTheme === "dark" ? THEME_COLORS.dark : THEME_COLORS.light;
+  }, [theme, resolvedTheme]);
 
   // Keep onReady ref up to date
   useEffect(() => {
@@ -38,6 +49,13 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     }
   }, [canvasSize]);
 
+  // Handle theme changes
+  useEffect(() => {
+    if (studioRef.current) {
+      studioRef.current.setBgColor(bgColor);
+    }
+  }, [bgColor]);
+
   // Setup Studio and ResizeObserver (only once on mount)
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -46,6 +64,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     studioRef.current = new Studio({
       ...canvasSize,
       ...STUDIO_CONFIG,
+      bgColor,
       canvas: canvasRef.current,
     });
 
