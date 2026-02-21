@@ -75,8 +75,14 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
         const deltaX = placeholderLeft - absPoint.x;
         const deltaY = placeholderTop - absPoint.y;
         const simulated = selectedObjects.map((obj: any) => {
-          const newLeft = (-obj.left || 0) + deltaX;
-          const width = (obj.width || 0) * (obj.scaleX || 1);
+          const objAbsPoint = util.transformPoint(
+            { x: obj.left, y: obj.top },
+            matrix,
+          );
+          let newLeft = objAbsPoint.x + deltaX;
+          if (newLeft < 0) newLeft = 0;
+          const width =
+            (obj.width || 0) * (obj.scaleX || 1) * (selection.scaleX || 1);
           return {
             elementId: obj.elementId,
             left: newLeft,
