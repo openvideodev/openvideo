@@ -36,11 +36,14 @@ function updateClipTimeLocally(
 export function handleTrackRelocation(timeline: Timeline, options: any) {
   const target = options.target as FabricObject | undefined;
   if (!target) return;
+  const allClips = timeline.canvas
+    .getObjects()
+    .filter((obj: any) => obj.elementId);
 
   clearAuxiliaryObjects(timeline.canvas, timeline.canvas.getObjects());
 
   const targetAny = target as any;
-  // --- Snap target to placeholder position before any other logic ---
+
   const placeholder = timeline.dragPlaceholder;
   if (placeholder && placeholder.visible) {
     const placeholderLeft = placeholder.left || 0;
@@ -51,16 +54,18 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
       target.type === "activeselection"
     ) {
       const selection = target as any;
+      const selectedObjects = selection._objects || [];
+
       const pdt = timeline.primaryDragTarget as any;
       const primaryTarget = pdt
-        ? selection._objects?.includes(pdt)
+        ? selectedObjects?.includes(pdt)
           ? pdt
           : pdt.elementId
-            ? selection._objects?.find(
+            ? selectedObjects?.find(
                 (obj: any) => obj.elementId === pdt.elementId,
-              ) || selection._objects?.[0]
-            : selection._objects?.[0]
-        : selection._objects?.[0];
+              ) || selectedObjects?.[0]
+            : selectedObjects?.[0]
+        : selectedObjects?.[0];
 
       if (primaryTarget) {
         const matrix = selection.calcTransformMatrix(true);
@@ -69,6 +74,77 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
 
         const deltaX = placeholderLeft - absPoint.x;
         const deltaY = placeholderTop - absPoint.y;
+        const simulated = selectedObjects.map((obj: any) => {
+          const newLeft = (-obj.left || 0) + deltaX;
+          const width = (obj.width || 0) * (obj.scaleX || 1);
+          return {
+            elementId: obj.elementId,
+            left: newLeft,
+            right: newLeft + width,
+          };
+        });
+
+        const nonSelectedClips = allClips
+          .filter(
+            (clip: any) =>
+              !selectedObjects.some(
+                (sel: any) => sel.elementId === clip.elementId,
+              ),
+          )
+          .map((clip: any) => {
+            const track = timeline.tracks.find((t) =>
+              t.clipIds.includes(clip.elementId),
+            );
+            return { clip, trackId: track?.id };
+          });
+
+        let shouldCancel = false;
+
+        for (const sim of simulated) {
+          const objInSelection = selectedObjects.find(
+            (o: any) => o.elementId === sim.elementId,
+          );
+          const simTop =
+            placeholderTop +
+            (objInSelection.top - (primaryTarget.top || 0)) *
+              (selection.scaleY || 1);
+          const simHeight =
+            (objInSelection.height || 0) *
+            (objInSelection.scaleY || 1) *
+            (selection.scaleY || 1);
+          const targetTrack = timeline.getTrackAt(simTop + simHeight / 2);
+
+          if (!targetTrack) continue;
+
+          for (const { clip, trackId } of nonSelectedClips) {
+            if (trackId !== targetTrack.id) continue;
+
+            const clipLeft = clip.left || 0;
+            const clipWidth = (clip.width || 0) * (clip.scaleX || 1);
+            const clipRight = clipLeft + clipWidth;
+            const overlaps = sim.right > clipLeft && sim.left < clipRight;
+
+            if (overlaps) {
+              shouldCancel = true;
+              break;
+            }
+          }
+          if (shouldCancel) break;
+        }
+
+        if (shouldCancel) {
+          target.set({
+            left: (target as any)._originalLeft,
+            top: (target as any)._originalTop,
+          });
+          target.setCoords();
+          timeline.clearSeparatorHighlights();
+          timeline.setActiveSeparatorIndex(null);
+          timeline.removeDragPlaceholder();
+          timeline.clearPrimaryDragTarget();
+          timeline.canvas.requestRenderAll();
+          return;
+        }
 
         target.set({
           left: (target.left || 0) + deltaX,
@@ -78,10 +154,7 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
       }
     } else {
       // Single clip: snap directly to placeholder
-      target.set({
-        left: placeholderLeft,
-        top: placeholderTop,
-      });
+      target.set({ left: placeholderLeft, top: placeholderTop });
       target.setCoords();
     }
   }
@@ -201,6 +274,7 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
     targetAny.type === "activeselection" ||
     target.type === "activeselection"
   ) {
+    // Track changes and position updates are deferred to selection:cleared
     timeline.clearSeparatorHighlights();
     timeline.setActiveSeparatorIndex(null);
     timeline.removeDragPlaceholder();

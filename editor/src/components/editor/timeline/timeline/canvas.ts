@@ -80,6 +80,7 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   #scrollbars?: Scrollbars;
   #mouseWheelHandler?: (e: TPointerEventInfo<WheelEvent>) => void;
   #dragPlaceholder: Rect | null = null;
+  #extraDragPlaceholders: Rect[] = [];
   #primaryDragTarget: FabricObject | null = null;
 
   // Drag Auto-scroll state
@@ -190,6 +191,10 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       }
 
       const target = options.target || this.canvas.findTarget(options.e);
+      if (target) {
+        (target as any)._originalLeft = target.left;
+        (target as any)._originalTop = target.top;
+      }
       if (
         target &&
         (target.type === "activeSelection" || (target as any)._objects)
@@ -708,6 +713,9 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       this.canvas.sendObjectToBack(this.#dragPlaceholder);
     }
 
+    // Hide extra placeholders by default, we'll show them if needed
+    this.#extraDragPlaceholders.forEach((p) => p.set({ visible: false }));
+
     let left = target.left || 0;
     let top = target.top || 0;
     let width = target.width || 0;
@@ -723,6 +731,11 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
           : selection._objects[0];
 
       if (primaryTarget) {
+        const primaryClipId = (primaryTarget as any).elementId;
+        const sourceTrack = this.#tracks.find((t) =>
+          t.clipIds.includes(primaryClipId),
+        );
+
         // Calculate absolute position of the sub-object
         // In ActiveSelection, children coordinates are relative to the selection center.
         const matrix = selection.calcTransformMatrix(true);
@@ -740,20 +753,113 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         height = finalHeight;
         left = absPoint.x;
         top = absPoint.y - finalHeight / 2;
+
+        // Determine the snap track based on primary target
+        const track = this.getTrackAt(top + height / 2);
+        const snapTop = track ? track.top : top;
+        const snapDiffY = snapTop - top;
+
+        this.#dragPlaceholder.set({
+          left,
+          top: snapTop,
+          width,
+          height,
+          visible: true,
+        });
+
+        // Now handle extra placeholders for clips on the same track as primary
+        if (sourceTrack) {
+          const sameTrackClips = selection._objects.filter((obj: any) => {
+            if (obj === primaryTarget) return false;
+            return sourceTrack.clipIds.includes(obj.elementId);
+          });
+
+          sameTrackClips.forEach((extraTarget: any, index: number) => {
+            let p = this.#extraDragPlaceholders[index];
+            if (!p) {
+              p = new Rect({
+                fill: "rgba(254, 249, 195, 0.4)",
+                stroke: "#facc15",
+                strokeWidth: 2,
+                strokeDashArray: [5, 5],
+                rx: 4,
+                ry: 4,
+                selectable: false,
+                evented: false,
+                visible: false,
+              });
+              this.#extraDragPlaceholders.push(p);
+              this.canvas.add(p);
+            }
+
+            const ePoint = { x: extraTarget.left, y: extraTarget.top };
+            const eAbsPoint = util.transformPoint(ePoint, matrix);
+            const eWidth =
+              extraTarget.getScaledWidth() * (selection.scaleX || 1);
+            const eHeight =
+              extraTarget.getScaledHeight() * (selection.scaleY || 1);
+            const eLeft = eAbsPoint.x;
+            const eTop = eAbsPoint.y - eHeight / 2;
+
+            p.set({
+              left: eLeft,
+              top: eTop + snapDiffY,
+              width: eWidth,
+              height: eHeight,
+              visible: true,
+            });
+            this.canvas.sendObjectToBack(p);
+          });
+        }
       }
+    } else {
+      // Single clip: snap directly to placeholder
+      const track = this.getTrackAt(top + height / 2);
+      const snapTop = track ? track.top : top;
+
+      let finalLeft = left;
+
+      if (track) {
+        const trackClips =
+          this.#tracks.find((t) => t.id === track.id)?.clipIds || [];
+        const targetClipId = (target as any).elementId;
+
+        for (const clipId of trackClips) {
+          if (clipId === targetClipId) continue;
+          const clipObj = this.#clipObjects.get(clipId);
+          if (!clipObj) continue;
+
+          const clipLeft = clipObj.left || 0;
+          const clipWidth = clipObj.getScaledWidth();
+          const clipRight = clipLeft + clipWidth;
+
+          const targetWidth = target.getScaledWidth();
+          const targetRight = left + targetWidth;
+
+          // Horizontal overlap check
+          if (targetRight > clipLeft && left < clipRight) {
+            const targetCenter = left + targetWidth / 2;
+            const clipCenter = clipLeft + clipWidth / 2;
+
+            if (targetCenter < clipCenter) {
+              finalLeft = clipLeft - targetWidth;
+            } else {
+              finalLeft = clipRight;
+            }
+            break;
+          }
+        }
+      }
+
+      this.#dragPlaceholder.set({
+        left: finalLeft,
+        top: snapTop,
+        width,
+        height,
+        visible: true,
+      });
     }
 
-    // Determine the snap track
-    const track = this.getTrackAt(top + height / 2);
-    const snapTop = track ? track.top : top;
-
-    this.#dragPlaceholder.set({
-      left,
-      top: snapTop,
-      width,
-      height,
-      visible: true,
-    });
     this.canvas.sendObjectToBack(this.#dragPlaceholder);
     // Re-ensure tracks are really at the back
     this.#trackObjects.forEach((t) => this.canvas.sendObjectToBack(t));
@@ -765,8 +871,10 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     if (this.#dragPlaceholder) {
       this.canvas.remove(this.#dragPlaceholder);
       this.#dragPlaceholder = null;
-      this.canvas.requestRenderAll();
     }
+    this.#extraDragPlaceholders.forEach((p) => this.canvas.remove(p));
+    this.#extraDragPlaceholders = [];
+    this.canvas.requestRenderAll();
   }
 
   public clearPrimaryDragTarget() {
