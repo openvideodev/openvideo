@@ -8,6 +8,7 @@ import {
   type TrackType,
 } from "@/types/timeline";
 import { TIMELINE_CONSTANTS } from "../../timeline-constants";
+import { handleDragend, handleSelectionClear } from "./selection";
 
 /**
  * Helper to safely update the local clips map in Timeline to reflect the new visual state
@@ -79,13 +80,19 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
             { x: obj.left, y: obj.top },
             matrix,
           );
+
           let newLeft = objAbsPoint.x + deltaX;
           if (newLeft < 0) newLeft = 0;
+
+          const newTop = objAbsPoint.y + deltaY;
+
           const width =
             (obj.width || 0) * (obj.scaleX || 1) * (selection.scaleX || 1);
+
           return {
             elementId: obj.elementId,
             left: newLeft,
+            top: newTop,
             right: newLeft + width,
           };
         });
@@ -157,6 +164,25 @@ export function handleTrackRelocation(timeline: Timeline, options: any) {
           top: (target.top || 0) + deltaY,
         });
         target.setCoords();
+        simulated.forEach((sim: any) => {
+          const obj = selectedObjects.find(
+            (o: any) => o.elementId === sim.elementId,
+          );
+          if (!obj) return;
+
+          obj.set({
+            left: sim.left,
+            top: sim.top,
+          });
+
+          obj.setCoords();
+        });
+
+        handleDragend(timeline, {
+          deselected: selectedObjects,
+        });
+        timeline.canvas.discardActiveObject();
+        timeline.canvas.requestRenderAll();
       }
     } else {
       // Single clip: snap directly to placeholder
