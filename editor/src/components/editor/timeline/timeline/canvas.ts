@@ -1,4 +1,4 @@
-import { Canvas, Rect, type FabricObject, ActiveSelection } from "fabric";
+import { Canvas, Rect, type FabricObject, ActiveSelection, util } from "fabric";
 import { Track } from "./track";
 import {
   Text,
@@ -79,6 +79,8 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   #scrollY: number = 0;
   #scrollbars?: Scrollbars;
   #mouseWheelHandler?: (e: TPointerEventInfo<WheelEvent>) => void;
+  #dragPlaceholder: Rect | null = null;
+  #primaryDragTarget: FabricObject | null = null;
 
   // Drag Auto-scroll state
   #dragAutoScrollRaf: number | null = null;
@@ -185,6 +187,34 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         const pointer = "clientX" in e ? e : (e as TouchEvent).touches[0];
         this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
         this.#startDragAutoScroll();
+      }
+
+      const target = options.target || this.canvas.findTarget(options.e);
+      if (
+        target &&
+        (target.type === "activeSelection" || (target as any)._objects)
+      ) {
+        const selection = target as any;
+        const pointer = this.canvas.getPointer(options.e);
+
+        const matrix = selection.calcTransformMatrix(true);
+        const invertedMatrix = util.invertTransform(matrix);
+        const localPointer = util.transformPoint(pointer, invertedMatrix);
+
+        // Find which object in selection contains the pointer
+        this.#primaryDragTarget = selection._objects.find((obj: any) => {
+          // Children in ActiveSelection/Group are usually centered
+          const w = obj.getScaledWidth();
+          const h = obj.getScaledHeight();
+          return (
+            localPointer.x >= obj.left &&
+            localPointer.x <= obj.left + w &&
+            localPointer.y >= obj.top &&
+            localPointer.y <= obj.top + h
+          );
+        });
+      } else {
+        this.#primaryDragTarget = target || null;
       }
     });
 
@@ -549,7 +579,6 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   public get trackRegions() {
     return this.#trackRegions;
   }
-
   public get enableGuideRedraw() {
     return this.#enableGuideRedraw;
   }
@@ -651,6 +680,97 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     }
 
     this.canvas.requestRenderAll();
+  }
+
+  public get primaryDragTarget() {
+    return this.#primaryDragTarget;
+  }
+
+  public get dragPlaceholder() {
+    return this.#dragPlaceholder;
+  }
+
+  public updateDragPlaceholder(target: FabricObject) {
+    if (!this.#dragPlaceholder) {
+      this.#dragPlaceholder = new Rect({
+        fill: "rgba(254, 249, 195, 0.4)",
+        stroke: "#facc15",
+        strokeWidth: 2,
+        strokeDashArray: [5, 5],
+        rx: 4,
+        ry: 4,
+        selectable: false,
+        evented: false,
+        visible: false,
+      });
+      this.canvas.add(this.#dragPlaceholder);
+      // Ensure it stays behind clips but above tracks
+      this.canvas.sendObjectToBack(this.#dragPlaceholder);
+    }
+
+    let left = target.left || 0;
+    let top = target.top || 0;
+    let width = target.width || 0;
+    let height = target.height || 0;
+
+    // If it's a multi-selection, we only show placeholder for the primary target
+    if (target.type === "activeSelection" || (target as any)._objects) {
+      const selection = target as any;
+      const primaryTarget =
+        this.#primaryDragTarget &&
+        selection._objects.includes(this.#primaryDragTarget)
+          ? this.#primaryDragTarget
+          : selection._objects[0];
+
+      if (primaryTarget) {
+        // Calculate absolute position of the sub-object
+        // In ActiveSelection, children coordinates are relative to the selection center.
+        const matrix = selection.calcTransformMatrix(true);
+
+        // Sub-targets in selection are always centered (originX/Y: center) by Fabric
+        const point = { x: primaryTarget.left, y: primaryTarget.top };
+        const absPoint = util.transformPoint(point, matrix);
+        // Scale the sub-object dimensions by selection scales
+        const finalWidth =
+          primaryTarget.getScaledWidth() * (selection.scaleX || 1);
+        const finalHeight =
+          primaryTarget.getScaledHeight() * (selection.scaleY || 1);
+
+        width = finalWidth;
+        height = finalHeight;
+        left = absPoint.x;
+        top = absPoint.y - finalHeight / 2;
+      }
+    }
+
+    // Determine the snap track
+    const track = this.getTrackAt(top + height / 2);
+    const snapTop = track ? track.top : top;
+
+    this.#dragPlaceholder.set({
+      left,
+      top: snapTop,
+      width,
+      height,
+      visible: true,
+    });
+    this.canvas.sendObjectToBack(this.#dragPlaceholder);
+    // Re-ensure tracks are really at the back
+    this.#trackObjects.forEach((t) => this.canvas.sendObjectToBack(t));
+
+    this.canvas.requestRenderAll();
+  }
+
+  public removeDragPlaceholder() {
+    if (this.#dragPlaceholder) {
+      this.canvas.remove(this.#dragPlaceholder);
+      this.#dragPlaceholder = null;
+      this.canvas.requestRenderAll();
+    }
+  }
+
+  public clearPrimaryDragTarget() {
+    this.#primaryDragTarget = null;
   }
 
   public clear() {
