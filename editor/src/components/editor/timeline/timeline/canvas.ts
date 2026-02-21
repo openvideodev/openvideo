@@ -1,4 +1,4 @@
-import { Canvas, Rect, type FabricObject, ActiveSelection } from "fabric";
+import { Canvas, Rect, type FabricObject, ActiveSelection, util } from "fabric";
 import { Track } from "./track";
 import {
   Text,
@@ -79,6 +79,9 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   #scrollY: number = 0;
   #scrollbars?: Scrollbars;
   #mouseWheelHandler?: (e: TPointerEventInfo<WheelEvent>) => void;
+  #dragPlaceholder: Rect | null = null;
+  #extraDragPlaceholders: Rect[] = [];
+  #primaryDragTarget: FabricObject | null = null;
 
   // Drag Auto-scroll state
   #dragAutoScrollRaf: number | null = null;
@@ -185,6 +188,38 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
         const pointer = "clientX" in e ? e : (e as TouchEvent).touches[0];
         this.#lastPointer = { x: pointer.clientX, y: pointer.clientY };
         this.#startDragAutoScroll();
+      }
+
+      const target = options.target || this.canvas.findTarget(options.e);
+      if (target) {
+        (target as any)._originalLeft = target.left;
+        (target as any)._originalTop = target.top;
+      }
+      if (
+        target &&
+        (target.type === "activeSelection" || (target as any)._objects)
+      ) {
+        const selection = target as any;
+        const pointer = this.canvas.getPointer(options.e);
+
+        const matrix = selection.calcTransformMatrix(true);
+        const invertedMatrix = util.invertTransform(matrix);
+        const localPointer = util.transformPoint(pointer, invertedMatrix);
+
+        // Find which object in selection contains the pointer
+        this.#primaryDragTarget = selection._objects.find((obj: any) => {
+          // Children in ActiveSelection/Group are usually centered
+          const w = obj.getScaledWidth();
+          const h = obj.getScaledHeight();
+          return (
+            localPointer.x >= obj.left &&
+            localPointer.x <= obj.left + w &&
+            localPointer.y >= obj.top &&
+            localPointer.y <= obj.top + h
+          );
+        });
+      } else {
+        this.#primaryDragTarget = target || null;
       }
     });
 
@@ -549,7 +584,6 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   public get trackRegions() {
     return this.#trackRegions;
   }
-
   public get enableGuideRedraw() {
     return this.#enableGuideRedraw;
   }
@@ -651,6 +685,200 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     }
 
     this.canvas.requestRenderAll();
+  }
+
+  public get primaryDragTarget() {
+    return this.#primaryDragTarget;
+  }
+
+  public get dragPlaceholder() {
+    return this.#dragPlaceholder;
+  }
+
+  public updateDragPlaceholder(target: FabricObject) {
+    if (!this.#dragPlaceholder) {
+      this.#dragPlaceholder = new Rect({
+        fill: "rgba(254, 249, 195, 0.4)",
+        stroke: "#facc15",
+        strokeWidth: 2,
+        strokeDashArray: [5, 5],
+        rx: 4,
+        ry: 4,
+        selectable: false,
+        evented: false,
+        visible: false,
+      });
+      this.canvas.add(this.#dragPlaceholder);
+      // Ensure it stays behind clips but above tracks
+      this.canvas.sendObjectToBack(this.#dragPlaceholder);
+    }
+
+    // Hide extra placeholders by default, we'll show them if needed
+    this.#extraDragPlaceholders.forEach((p) => p.set({ visible: false }));
+
+    let left = target.left || 0;
+    let top = target.top || 0;
+    let width = target.width || 0;
+    let height = target.height || 0;
+
+    // If it's a multi-selection, we only show placeholder for the primary target
+    if (target.type === "activeSelection" || (target as any)._objects) {
+      const selection = target as any;
+      const primaryTarget =
+        this.#primaryDragTarget &&
+        selection._objects.includes(this.#primaryDragTarget)
+          ? this.#primaryDragTarget
+          : selection._objects[0];
+
+      if (primaryTarget) {
+        const primaryClipId = (primaryTarget as any).elementId;
+        const sourceTrack = this.#tracks.find((t) =>
+          t.clipIds.includes(primaryClipId),
+        );
+
+        // Calculate absolute position of the sub-object
+        // In ActiveSelection, children coordinates are relative to the selection center.
+        const matrix = selection.calcTransformMatrix(true);
+
+        // Sub-targets in selection are always centered (originX/Y: center) by Fabric
+        const point = { x: primaryTarget.left, y: primaryTarget.top };
+        const absPoint = util.transformPoint(point, matrix);
+        // Scale the sub-object dimensions by selection scales
+        const finalWidth =
+          primaryTarget.getScaledWidth() * (selection.scaleX || 1);
+        const finalHeight =
+          primaryTarget.getScaledHeight() * (selection.scaleY || 1);
+
+        width = finalWidth;
+        height = finalHeight;
+        left = absPoint.x;
+        top = absPoint.y - finalHeight / 2;
+
+        // Determine the snap track based on primary target
+        const track = this.getTrackAt(top + height / 2);
+        const snapTop = track ? track.top : top;
+        const snapDiffY = snapTop - top;
+
+        this.#dragPlaceholder.set({
+          left,
+          top: snapTop,
+          width,
+          height,
+          visible: true,
+        });
+
+        // Now handle extra placeholders for clips on the same track as primary
+        if (sourceTrack) {
+          const sameTrackClips = selection._objects.filter((obj: any) => {
+            if (obj === primaryTarget) return false;
+            return sourceTrack.clipIds.includes(obj.elementId);
+          });
+
+          sameTrackClips.forEach((extraTarget: any, index: number) => {
+            let p = this.#extraDragPlaceholders[index];
+            if (!p) {
+              p = new Rect({
+                fill: "rgba(254, 249, 195, 0.4)",
+                stroke: "#facc15",
+                strokeWidth: 2,
+                strokeDashArray: [5, 5],
+                rx: 4,
+                ry: 4,
+                selectable: false,
+                evented: false,
+                visible: false,
+              });
+              this.#extraDragPlaceholders.push(p);
+              this.canvas.add(p);
+            }
+
+            const ePoint = { x: extraTarget.left, y: extraTarget.top };
+            const eAbsPoint = util.transformPoint(ePoint, matrix);
+            const eWidth =
+              extraTarget.getScaledWidth() * (selection.scaleX || 1);
+            const eHeight =
+              extraTarget.getScaledHeight() * (selection.scaleY || 1);
+            const eLeft = eAbsPoint.x;
+            const eTop = eAbsPoint.y - eHeight / 2;
+
+            p.set({
+              left: eLeft,
+              top: eTop + snapDiffY,
+              width: eWidth,
+              height: eHeight,
+              visible: true,
+            });
+            this.canvas.sendObjectToBack(p);
+          });
+        }
+      }
+    } else {
+      // Single clip: snap directly to placeholder
+      const track = this.getTrackAt(top + height / 2);
+      const snapTop = track ? track.top : top;
+
+      let finalLeft = left;
+
+      if (track) {
+        const trackClips =
+          this.#tracks.find((t) => t.id === track.id)?.clipIds || [];
+        const targetClipId = (target as any).elementId;
+
+        for (const clipId of trackClips) {
+          if (clipId === targetClipId) continue;
+          const clipObj = this.#clipObjects.get(clipId);
+          if (!clipObj) continue;
+
+          const clipLeft = clipObj.left || 0;
+          const clipWidth = clipObj.getScaledWidth();
+          const clipRight = clipLeft + clipWidth;
+
+          const targetWidth = target.getScaledWidth();
+          const targetRight = left + targetWidth;
+
+          // Horizontal overlap check
+          if (targetRight > clipLeft && left < clipRight) {
+            const targetCenter = left + targetWidth / 2;
+            const clipCenter = clipLeft + clipWidth / 2;
+
+            if (targetCenter < clipCenter) {
+              finalLeft = clipLeft - targetWidth;
+            } else {
+              finalLeft = clipRight;
+            }
+            break;
+          }
+        }
+      }
+
+      this.#dragPlaceholder.set({
+        left: finalLeft,
+        top: snapTop,
+        width,
+        height,
+        visible: true,
+      });
+    }
+
+    this.canvas.sendObjectToBack(this.#dragPlaceholder);
+    // Re-ensure tracks are really at the back
+    this.#trackObjects.forEach((t) => this.canvas.sendObjectToBack(t));
+
+    this.canvas.requestRenderAll();
+  }
+
+  public removeDragPlaceholder() {
+    if (this.#dragPlaceholder) {
+      this.canvas.remove(this.#dragPlaceholder);
+      this.#dragPlaceholder = null;
+    }
+    this.#extraDragPlaceholders.forEach((p) => this.canvas.remove(p));
+    this.#extraDragPlaceholders = [];
+    this.canvas.requestRenderAll();
+  }
+
+  public clearPrimaryDragTarget() {
+    this.#primaryDragTarget = null;
   }
 
   public clear() {
