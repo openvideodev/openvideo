@@ -82,6 +82,10 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   #dragPlaceholder: Rect | null = null;
   #extraDragPlaceholders: Rect[] = [];
   #primaryDragTarget: FabricObject | null = null;
+  // Stores clipId → new pixel-left for clips that need to shift right on drop (single-clip push-to-fit)
+  #pendingClipShifts: Map<string, number> = new Map();
+  // Stores original pixel-left values for siblings that are being visually shifted during drag
+  #shiftedObjectOriginals: Map<string, number> = new Map();
 
   // Drag Auto-scroll state
   #dragAutoScrollRaf: number | null = null;
@@ -817,36 +821,83 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
       const track = this.getTrackAt(top + height / 2);
       const snapTop = track ? track.top : top;
 
+      // Revert any siblings that were visually shifted in the previous frame
+      this.#revertShiftedObjects();
+
+      // Reset pending shifts each frame
+      this.#pendingClipShifts.clear();
+
       let finalLeft = left;
 
       if (track) {
         const trackClips =
           this.#tracks.find((t) => t.id === track.id)?.clipIds || [];
         const targetClipId = (target as any).elementId;
+        const targetWidth = target.getScaledWidth();
 
-        for (const clipId of trackClips) {
-          if (clipId === targetClipId) continue;
-          const clipObj = this.#clipObjects.get(clipId);
-          if (!clipObj) continue;
+        // 1. Collect sibling clip objects sorted left→right using their ORIGINAL/REAL positions
+        const siblings = trackClips
+          .filter((id) => id !== targetClipId)
+          .map((id) => {
+            const obj = this.#clipObjects.get(id);
+            if (!obj) return null;
+            return { id, left: obj.left || 0, width: obj.getScaledWidth() };
+          })
+          .filter(Boolean) as { id: string; left: number; width: number }[];
+        siblings.sort((a, b) => a.left - b.left);
 
-          const clipLeft = clipObj.left || 0;
-          const clipWidth = clipObj.getScaledWidth();
-          const clipRight = clipLeft + clipWidth;
-
-          const targetWidth = target.getScaledWidth();
-          const targetRight = left + targetWidth;
-
-          // Horizontal overlap check
-          if (targetRight > clipLeft && left < clipRight) {
-            const targetCenter = left + targetWidth / 2;
-            const clipCenter = clipLeft + clipWidth / 2;
-
-            if (targetCenter < clipCenter) {
-              finalLeft = clipLeft - targetWidth;
-            } else {
-              finalLeft = clipRight;
-            }
+        // 2. Find insertion index 'k' based on center-to-center heuristic
+        // D wants to land between siblings[k-1] and siblings[k]
+        let k = siblings.length;
+        const dCenter = left + targetWidth / 2;
+        for (let i = 0; i < siblings.length; i++) {
+          const s = siblings[i];
+          const sCenter = s.left + s.width / 2;
+          if (dCenter < sCenter) {
+            k = i;
             break;
+          }
+        }
+
+        // 3. Determine bounds for the chosen slot
+        const leftLimit =
+          k > 0 ? siblings[k - 1].left + siblings[k - 1].width : 0;
+        const rightLimit = k < siblings.length ? siblings[k].left : Infinity;
+        const gapSize = rightLimit - leftLimit;
+
+        // 4. Calculate finalLeft and pushAmount
+        let pushAmount = 0;
+        if (targetWidth <= gapSize) {
+          // Fits: allow free movement within the gap
+          finalLeft = Math.max(
+            leftLimit,
+            Math.min(left, rightLimit - targetWidth),
+          );
+          pushAmount = 0;
+        } else {
+          // Doesn't fit: snap placeholder to start of gap and push everything after by shortfall.
+          // This avoids the "moving with it" behavior because the shift is constant for this slot.
+          finalLeft = leftLimit;
+          pushAmount = targetWidth - gapSize;
+        }
+
+        // 5. Apply shifts and record for drop
+        if (pushAmount > 0) {
+          for (let i = k; i < siblings.length; i++) {
+            const s = siblings[i];
+            const newLeft = s.left + pushAmount;
+            this.#pendingClipShifts.set(s.id, newLeft);
+
+            // Live visual shift: move the Fabric object so user sees it during drag
+            const obj = this.#clipObjects.get(s.id);
+            if (obj) {
+              // Store original if not yet stored this drag
+              if (!this.#shiftedObjectOriginals.has(s.id)) {
+                this.#shiftedObjectOriginals.set(s.id, s.left);
+              }
+              obj.set("left", newLeft);
+              obj.setCoords();
+            }
           }
         }
       }
@@ -868,6 +919,9 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
   }
 
   public removeDragPlaceholder() {
+    // Revert any live-shifted siblings back to their original positions
+    this.#revertShiftedObjects();
+
     if (this.#dragPlaceholder) {
       this.canvas.remove(this.#dragPlaceholder);
       this.#dragPlaceholder = null;
@@ -877,8 +931,34 @@ class Timeline extends EventEmitter<TimelineCanvasEvents> {
     this.canvas.requestRenderAll();
   }
 
+  /** Restores all Fabric objects that were live-shifted during a drag back to their stored originals. */
+  #revertShiftedObjects() {
+    for (const [id, originalLeft] of this.#shiftedObjectOriginals) {
+      const obj = this.#clipObjects.get(id);
+      if (obj) {
+        obj.set("left", originalLeft);
+        obj.setCoords();
+      }
+    }
+    this.#shiftedObjectOriginals.clear();
+  }
+
   public clearPrimaryDragTarget() {
     this.#primaryDragTarget = null;
+  }
+
+  public getPendingShifts(): Map<string, number> {
+    return this.#pendingClipShifts;
+  }
+
+  /** Clears the originals map WITHOUT reverting — call this after a committed drop so
+   *  removeDragPlaceholder doesn't undo positions already set by render(). */
+  public clearShiftedOriginals() {
+    this.#shiftedObjectOriginals.clear();
+  }
+
+  public clearPendingShifts() {
+    this.#pendingClipShifts.clear();
   }
 
   public clear() {
