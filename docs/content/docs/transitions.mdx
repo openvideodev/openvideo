@@ -10,7 +10,7 @@ Transitions create smooth visual effects between two consecutive clips on the ti
 To add a transition, you can use the `addTransition` method on the `Studio` instance. It is recommended to add transitions after both clips have been added to the studio.
 
 ```ts
-import { Studio, Video, Transition } from 'openvideo';
+import { Studio, Video, Transition } from "openvideo";
 
 const studio = new Studio({
   width: 1080,
@@ -19,10 +19,10 @@ const studio = new Studio({
   canvas: canvasRef.current!,
 });
 
-const video1 = await Video.fromUrl('video1.mp4');
+const video1 = await Video.fromUrl("video1.mp4");
 studio.addClip(video1);
 
-const video2 = await Video.fromUrl('video2.mp4');
+const video2 = await Video.fromUrl("video2.mp4");
 video2.display = {
   from: video1.duration,
   to: video1.duration + video2.duration,
@@ -32,10 +32,10 @@ studio.addClip(video2);
 // Add transition from video1 to video2
 // Usage: studio.addTransition(key, duration, fromClipId, toClipId)
 try {
-  await studio.addTransition('cube', 2 * 1e6, video1.id, video2.id);
-  console.log('Transition added successfully');
+  await studio.addTransition("cube", 2 * 1e6, video1.id, video2.id);
+  console.log("Transition added successfully");
 } catch (e) {
-  console.error('Failed to add transition:', e);
+  console.error("Failed to add transition:", e);
 }
 ```
 
@@ -43,76 +43,117 @@ try {
 
 You can find the full list of available transitions in the `GL_TRANSITION_OPTIONS` constant.
 
-| Name | Key |
-| :--- | :--- |
-| **Bounce** | `Bounce` |
-| **BowTieHorizontal** | `BowTieHorizontal` |
-| **BowTieVertical** | `BowTieVertical` |
+| Name                      | Key                     |
+| :------------------------ | :---------------------- |
+| **Bounce**                | `Bounce`                |
+| **BowTieHorizontal**      | `BowTieHorizontal`      |
+| **BowTieVertical**        | `BowTieVertical`        |
 | **ButterflyWaveScrawler** | `ButterflyWaveScrawler` |
-| **CircleCrop** | `CircleCrop` |
-| **ColourDistance** | `ColourDistance` |
-| **CrazyParametricFun** | `CrazyParametricFun` |
-| **CrossZoom** | `CrossZoom` |
-| **Directional** | `Directional` |
-| **DoomScreenTransition** | `DoomScreenTransition` |
-| **Dreamy** | `Dreamy` |
-| **DreamyZoom** | `DreamyZoom` |
-| **GlitchDisplace** | `GlitchDisplace` |
-| **GlitchMemories** | `GlitchMemories` |
-| **GridFlip** | `GridFlip` |
-| **InvertedPageCurl** | `InvertedPageCurl` |
-| **LinearBlur** | `LinearBlur` |
-| **Mosaic** | `Mosaic` |
-| **PolkaDotsCurtain** | `PolkaDotsCurtain` |
-| **Radial** | `Radial` |
-| **SimpleZoom** | `SimpleZoom` |
-| **StereoViewer** | `StereoViewer` |
-| **Swirl** | `Swirl` |
-| **WaterDrop** | `WaterDrop` |
-| **ZoomInCircles** | `ZoomInCircles` |
-| **angular** | `angular` |
-| **burn** | `burn` |
-| **cannabisleaf** | `cannabisleaf` |
-| **circle** | `circle` |
-| **circleopen** | `circleopen` |
-| **colorphase** | `colorphase` |
-| **crosshatch** | `crosshatch` |
-| **crosswarp** | `crosswarp` |
-| **cube** | `cube` |
-| **directionalwarp** | `directionalwarp` |
-| **directionalwipe** | `directionalwipe` |
-| **displacement** | `displacement` |
-| **doorway** | `doorway` |
-| **fade** | `fade` |
-| **fadecolor** | `fadecolor` |
-| **fadegrayscale** | `fadegrayscale` |
-| **flyeye** | `flyeye` |
-| **heart** | `heart` |
-| **hexagonalize** | `hexagonalize` |
-| **kaleidoscope** | `kaleidoscope` |
-| **luma** | `luma` |
-| **luminance_melt** | `luminance_melt` |
-| **morph** | `morph` |
-| **multiply_blend** | `multiply_blend` |
-| **perlin** | `perlin` |
-| **pinwheel** | `pinwheel` |
-| **pixelize** | `pixelize` |
-| **polar_function** | `polar_function` |
-| **randomsquares** | `randomsquares` |
-| **ripple** | `ripple` |
-| **rotate_scale_fade** | `rotate_scale_fade` |
-| **squareswire** | `squareswire` |
-| **squeeze** | `squeeze` |
-| **swap** | `swap` |
-| **undulatingBurnOut** | `undulatingBurnOut` |
-| **wind** | `wind` |
-| **windowblinds** | `windowblinds` |
-| **windowslice** | `windowslice` |
-| **wipeDown** | `wipeDown` |
-| **wipeLeft** | `wipeLeft` |
-| **wipeRight** | `wipeRight` |
-| **wipeUp** | `wipeUp` |
-| **Radial Swipe** | `radialSwipe` |
+| **CircleCrop**            | `CircleCrop`            |
+| **ColourDistance**        | `ColourDistance`        |
+| **CrazyParametricFun**    | `CrazyParametricFun`    |
+| **CrossZoom**             | `CrossZoom`             |
+| **Directional**           | `Directional`           |
+| **DoomScreenTransition**  | `DoomScreenTransition`  |
+| **Dreamy**                | `Dreamy`                |
+| **DreamyZoom**            | `DreamyZoom`            |
+| **GlitchDisplace**        | `GlitchDisplace`        |
+| **GlitchMemories**        | `GlitchMemories`        |
+| **GridFlip**              | `GridFlip`              |
+| **InvertedPageCurl**      | `InvertedPageCurl`      |
+| **LinearBlur**            | `LinearBlur`            |
+| **Mosaic**                | `Mosaic`                |
+| **PolkaDotsCurtain**      | `PolkaDotsCurtain`      |
+| **Radial**                | `Radial`                |
+| **SimpleZoom**            | `SimpleZoom`            |
+| **StereoViewer**          | `StereoViewer`          |
+| **Swirl**                 | `Swirl`                 |
+| **WaterDrop**             | `WaterDrop`             |
+| **ZoomInCircles**         | `ZoomInCircles`         |
+| **angular**               | `angular`               |
+| **burn**                  | `burn`                  |
+| **cannabisleaf**          | `cannabisleaf`          |
+| **circle**                | `circle`                |
+| **circleopen**            | `circleopen`            |
+| **colorphase**            | `colorphase`            |
+| **crosshatch**            | `crosshatch`            |
+| **crosswarp**             | `crosswarp`             |
+| **cube**                  | `cube`                  |
+| **directionalwarp**       | `directionalwarp`       |
+| **directionalwipe**       | `directionalwipe`       |
+| **displacement**          | `displacement`          |
+| **doorway**               | `doorway`               |
+| **fade**                  | `fade`                  |
+| **fadecolor**             | `fadecolor`             |
+| **fadegrayscale**         | `fadegrayscale`         |
+| **flyeye**                | `flyeye`                |
+| **heart**                 | `heart`                 |
+| **hexagonalize**          | `hexagonalize`          |
+| **kaleidoscope**          | `kaleidoscope`          |
+| **luma**                  | `luma`                  |
+| **luminance_melt**        | `luminance_melt`        |
+| **morph**                 | `morph`                 |
+| **multiply_blend**        | `multiply_blend`        |
+| **perlin**                | `perlin`                |
+| **pinwheel**              | `pinwheel`              |
+| **pixelize**              | `pixelize`              |
+| **polar_function**        | `polar_function`        |
+| **randomsquares**         | `randomsquares`         |
+| **ripple**                | `ripple`                |
+| **rotate_scale_fade**     | `rotate_scale_fade`     |
+| **squareswire**           | `squareswire`           |
+| **squeeze**               | `squeeze`               |
+| **swap**                  | `swap`                  |
+| **undulatingBurnOut**     | `undulatingBurnOut`     |
+| **wind**                  | `wind`                  |
+| **windowblinds**          | `windowblinds`          |
+| **windowslice**           | `windowslice`           |
+| **wipeDown**              | `wipeDown`              |
+| **wipeLeft**              | `wipeLeft`              |
+| **wipeRight**             | `wipeRight`             |
+| **wipeUp**                | `wipeUp`                |
+| **Radial Swipe**          | `radialSwipe`           |
+
+## Custom Transitions
+
+You can add your own custom transition shaders using the `registerCustomTransition` function. This allows you to extend the engine with your own GLSL effects.
+
+### Registering a Custom Transition
+
+To register a custom transition, you need to provide a unique key and a transition object containing the GLSL fragment shader.
+
+```ts
+import { registerCustomTransition } from "openvideo";
+
+registerCustomTransition("myCustomTransition", {
+  label: "My Custom Transition",
+  fragment: `
+    vec4 transition(vec2 p) {
+      return mix(getFromColor(p), getToColor(p), progress);
+    }
+  `,
+});
+```
+
+### Usage in Studio
+
+Once registered, you can use the transition key just like any built-in transition:
+
+```ts
+await studio.addTransition("myCustomTransition", 1 * 1e6, clip1.id, clip2.id);
+```
+
+### GlTransition Interface
+
+The transition object follows this structure:
+
+| Property           | Type     | Description                                          |
+| :----------------- | :------- | :--------------------------------------------------- |
+| **label**          | `string` | Human-readable name for the transition.              |
+| **fragment**       | `string` | GLSL fragment shader code.                           |
+| **uniforms**       | `Record` | (Optional) Default values for shader uniforms.       |
+| **previewStatic**  | `string` | (Optional) URL for a static preview image.           |
+| **previewDynamic** | `string` | (Optional) URL for a dynamic preview image or video. |
 
 ## Overlap Management
 
