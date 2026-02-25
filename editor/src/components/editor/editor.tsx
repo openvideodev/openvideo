@@ -15,8 +15,6 @@ import FloatingControl from "@/components/editor/floating-controls/floating-cont
 import { Compositor } from "openvideo";
 import { WebCodecsUnsupportedModal } from "@/components/editor/webcodecs-unsupported-modal";
 import Assistant from "./assistant/assistant";
-import ModalTransition from "./modals/modal-transition";
-import { useTransitionStore } from "@/stores/transition-store";
 
 export default function Editor() {
   const {
@@ -33,12 +31,6 @@ export default function Editor() {
 
   const [isReady, setIsReady] = useState(false);
   const [isWebCodecsSupported, setIsWebCodecsSupported] = useState(true);
-
-  const { initialize: initializeTransitions } = useTransitionStore();
-
-  useEffect(() => {
-    initializeTransitions();
-  }, [initializeTransitions]);
 
   useEffect(() => {
     const checkSupport = async () => {
@@ -139,7 +131,6 @@ export default function Editor() {
 
       {/* WebCodecs Support Check Modal */}
       <WebCodecsUnsupportedModal open={!isWebCodecsSupported} />
-      <ModalTransition />
     </div>
   );
 }

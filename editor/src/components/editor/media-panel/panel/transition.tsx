@@ -1,28 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStudioStore } from "@/stores/studio-store";
-import { useTransitionStore } from "@/stores/transition-store";
 import { getTransitionOptions } from "openvideo";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PanelTransition = () => {
   const { studio } = useStudioStore();
-  const { customTransitions } = useTransitionStore();
   const TRANSITION_DURATION_DEFAULT = 2_000_000;
 
   const [hovered, setHovered] = useState<Record<string, boolean>>({});
 
-  // Combine built-in options with custom ones
   const allTransitions = getTransitionOptions();
-
-  const presets = useMemo(
-    () => allTransitions.filter((t) => !t.isCustom),
-    [allTransitions],
-  );
-  const custom = useMemo(
-    () => allTransitions.filter((t) => t.isCustom),
-    [allTransitions],
-  );
 
   const renderTransitionList = (list: typeof allTransitions) => (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(92px,1fr))] gap-2.5 justify-items-center">
@@ -77,38 +64,9 @@ const PanelTransition = () => {
 
   return (
     <div className="py-4 h-full flex flex-col gap-4">
-      <Tabs
-        defaultValue="presets"
-        className="w-full flex-1 flex flex-col min-h-0"
-      >
-        <div className="px-4">
-          <TabsList className="grid w-full grid-cols-2 h-8">
-            <TabsTrigger value="presets" className="text-xs">
-              Presets
-            </TabsTrigger>
-            <TabsTrigger value="custom" className="text-xs">
-              Custom
-            </TabsTrigger>
-          </TabsList>
-        </div>
-        <ScrollArea className="flex-1 mt-4 px-4">
-          <TabsContent value="presets" className="mt-0">
-            {renderTransitionList(presets)}
-          </TabsContent>
-          <TabsContent value="custom" className="mt-0">
-            {custom.length > 0 ? (
-              renderTransitionList(custom)
-            ) : (
-              <div className="flex flex-col items-center justify-center p-8 text-center border-2 border-dashed rounded-lg text-muted-foreground">
-                <p className="text-sm">No custom transitions yet</p>
-                <p className="text-xs">
-                  Create them from the Clip Properties panel
-                </p>
-              </div>
-            )}
-          </TabsContent>
-        </ScrollArea>
-      </Tabs>
+      <ScrollArea className="flex-1 px-4">
+        {renderTransitionList(allTransitions)}
+      </ScrollArea>
     </div>
   );
 };

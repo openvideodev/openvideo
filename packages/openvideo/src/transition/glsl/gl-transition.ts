@@ -48,7 +48,7 @@ export function getAllTransitions(): Record<string, GlTransition> {
         label: t.name,
         fragment: t.glsl,
         uniforms: t.defaultParams,
-        previewDynamic: `transition: ${t.name}`,
+        previewDynamic: "",
       };
       return acc;
     }, {}),
@@ -68,8 +68,12 @@ export function getTransitionOptions() {
     key: key as TransitionKey,
     label: value.label,
     isCustom: registeredKeys.includes(key),
-    previewStatic: `https://cdn.subgen.co/previews/static/transition_${key}_static.webp`,
-    previewDynamic: `https://cdn.subgen.co/previews/dynamic/transition_${key}_dynamic.webp`,
+    previewStatic:
+      value.previewStatic ||
+      `https://cdn.subgen.co/previews/static/transition_${key}_static.webp`,
+    previewDynamic:
+      value.previewDynamic ||
+      `https://cdn.subgen.co/previews/dynamic/transition_${key}_dynamic.webp`,
   }));
 }
 
