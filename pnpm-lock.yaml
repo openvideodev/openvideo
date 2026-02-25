@@ -304,8 +304,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       wrapbox:
-        specifier: workspace:*
-        version: link:../../wrapbox
+        specifier: ^0.0.2
+        version: 0.0.2
     devDependencies:
       '@types/dom-webcodecs':
         specifier: ^0.1.17
@@ -346,28 +346,6 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.0.8)(@vitest/browser-playwright@4.0.18)(@vitest/ui@4.0.18)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(yaml@2.8.2)
-
-  wrapbox:
-    dependencies:
-      mp4box:
-        specifier: ^2.3.0
-        version: 2.3.0
-    devDependencies:
-      '@types/rollup-plugin-peer-deps-external':
-        specifier: ^2.2.6
-        version: 2.2.6(rollup@4.53.3)
-      rollup-plugin-peer-deps-external:
-        specifier: ^2.2.4
-        version: 2.2.4(rollup@4.53.3)
-      typescript:
-        specifier: ~5.9.2
-        version: 5.9.3
-      vite:
-        specifier: ^7.1.5
-        version: 7.2.4(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2)
-      vite-plugin-dts:
-        specifier: ^4.5.4
-        version: 4.5.4(@types/node@25.0.8)(rollup@4.53.3)(typescript@5.9.3)(vite@7.2.4(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))
 
 packages:
 
@@ -6626,6 +6604,9 @@ packages:
   wrap-ansi@9.0.2:
     resolution: {integrity: sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==}
     engines: {node: '>=18'}
+
+  wrapbox@0.0.2:
+    resolution: {integrity: sha512-Pu4YT5uCKla0XAWINdtVKeZKyjP05MJ5wb4p7XqheNDSQlfFG4l5kWERSuFWJB0yBDPYcvSIufwbQGEqtI8gug==}
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
@@ -14915,6 +14896,10 @@ snapshots:
       ansi-styles: 6.2.3
       string-width: 7.2.0
       strip-ansi: 7.1.2
+
+  wrapbox@0.0.2:
+    dependencies:
+      mp4box: 2.3.0
 
   wrappy@1.0.2:
     optional: true

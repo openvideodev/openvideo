@@ -2,4 +2,3 @@ packages:
   - "editor"
   - "packages/*"
   - "docs"
-  - "wrapbox"
