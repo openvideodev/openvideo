@@ -1,9 +1,10 @@
 import { useEffect, useRef, useMemo } from "react";
-import { Studio, fontManager } from "openvideo";
+import { Studio, fontManager, registerCustomTransition } from "openvideo";
 import { useTheme } from "next-themes";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
 import { editorFont } from "./constants";
+import { CUSTOM_TRANSITIONS } from "./transition-custom";
 
 const STUDIO_CONFIG = {
   fps: 30,
@@ -127,6 +128,12 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  useEffect(() => {
+    CUSTOM_TRANSITIONS.forEach((t) => {
+      registerCustomTransition(t.key, t as any);
+    });
+  }, []);
 
   return (
     <div className="h-full w-full flex flex-col min-h-0 min-w-0 bg-card rounded-sm relative">

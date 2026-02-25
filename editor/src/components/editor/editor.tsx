@@ -1,20 +1,20 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { MediaPanel } from '@/components/editor/media-panel';
-import { CanvasPanel } from '@/components/editor/canvas-panel';
-import { Timeline } from '@/components/editor/timeline';
+"use client";
+import { useState, useEffect } from "react";
+import { MediaPanel } from "@/components/editor/media-panel";
+import { CanvasPanel } from "@/components/editor/canvas-panel";
+import { Timeline } from "@/components/editor/timeline";
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
-} from '@/components/ui/resizable';
-import { usePanelStore } from '@/stores/panel-store';
-import Header from '@/components/editor/header';
-import { Loading } from '@/components/editor/loading';
-import FloatingControl from '@/components/editor/floating-controls/floating-control';
-import { Compositor } from 'openvideo';
-import { WebCodecsUnsupportedModal } from '@/components/editor/webcodecs-unsupported-modal';
-import Assistant from './assistant/assistant';
+} from "@/components/ui/resizable";
+import { usePanelStore } from "@/stores/panel-store";
+import Header from "@/components/editor/header";
+import { Loading } from "@/components/editor/loading";
+import FloatingControl from "@/components/editor/floating-controls/floating-control";
+import { Compositor } from "openvideo";
+import { WebCodecsUnsupportedModal } from "@/components/editor/webcodecs-unsupported-modal";
+import Assistant from "./assistant/assistant";
 
 export default function Editor() {
   const {
