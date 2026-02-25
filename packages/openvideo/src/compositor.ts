@@ -35,6 +35,22 @@ import {
 import { Video } from "./clips/video-clip";
 import { Image } from "./clips/image-clip";
 import { makeTransition } from "./transition/transition";
+import {
+  Output,
+  StreamTarget,
+  VideoSampleSource,
+  AudioSampleSource,
+  VideoSample,
+  AudioSample,
+  Mp4OutputFormat,
+  WebMOutputFormat,
+  MkvOutputFormat,
+  MovOutputFormat,
+  Mp3OutputFormat,
+  OggOutputFormat,
+  WavOutputFormat,
+  FlacOutputFormat,
+} from "mediabunny";
 
 export interface ICompositorOpts {
   width?: number;
@@ -43,10 +59,18 @@ export interface ICompositorOpts {
   fps?: number;
   bgColor?: string;
   videoCodec?: string;
+  format?: string;
   /**
-   * If false, exclude audio track from the output video
+   * Whether to include audio track in the output video
    */
-  audio?: false;
+  audio?: boolean;
+  audioCodec?: string;
+  audioSampleRate?: number;
+  audioBitrate?: number;
+  /**
+   * Number of audio channels, default 2
+   */
+  audioChannelCount?: number;
   /**
    * Write metadata tags to the output video
    */
@@ -55,6 +79,19 @@ export interface ICompositorOpts {
    * Unsafe, may be deprecated at any time
    */
   __unsafe_hardwareAcceleration__?: HardwarePreference;
+}
+
+export type HardwarePreference =
+  | "no-preference"
+  | "prefer-hardware"
+  | "prefer-software";
+
+interface IMuxer {
+  encodeVideo(frame: VideoFrame, options: VideoEncoderEncodeOptions): void;
+  encodeAudio(data: AudioData): void;
+  getEncodeQueueSize(): number;
+  flush(): Promise<void>;
+  close(): void;
 }
 
 let COM_ID = 0;
@@ -167,14 +204,19 @@ export class Compositor extends EventEmitter<{
         height: 0,
         videoCodec: "avc1.42E032",
         audio: true,
+        audioCodec: DEFAULT_AUDIO_CONF.codec,
+        audioSampleRate: DEFAULT_AUDIO_CONF.sampleRate,
+        audioChannelCount: DEFAULT_AUDIO_CONF.channelCount,
+        audioBitrate: 128000,
         bitrate: 5e6,
         fps: 30,
+        format: "mp4",
         metaDataTags: null,
       },
       opts,
     );
 
-    this.hasVideoTrack = width * height > 0;
+    this.hasVideoTrack = width * height > 0 && !!opts.videoCodec;
 
     // Initialize codec detection early
     getDefaultAudioConf().catch((err) => {
@@ -266,8 +308,27 @@ export class Compositor extends EventEmitter<{
       (sprite) => sprite.width > 0 && sprite.height > 0,
     );
 
-    // Only create video track if we have video track configured AND we have video sprites
-    const shouldCreateVideoTrack = this.hasVideoTrack && hasVideoSprites;
+    // Only create video track if we have video track configured AND we have video sprites AND it's not an audio-only format
+    const isAudioOnly = ["mp3", "wav", "flac", "ogg"].includes(
+      this.opts.format?.toLowerCase(),
+    );
+    const shouldCreateVideoTrack =
+      this.hasVideoTrack && hasVideoSprites && !isAudioOnly;
+
+    let mappedVideoCodec = videoCodec;
+    if (videoCodec === "avc") {
+      // Default to Level 5.0 (0x32)
+      // Upgrade to Level 5.2 (0x34) if area exceeds Level 5.1 limit or for 4K safety
+      // Level 5.1 limit is ~8.9M pixels, 4K is ~8.3M, so 5.1 is technically enough
+      // but 5.2 provides more headroom for higher framerates and bitrates.
+      const area = width * height;
+      if (area > 5652480) {
+        mappedVideoCodec = "avc1.42E034";
+      } else {
+        mappedVideoCodec = "avc1.42E032";
+      }
+    } else if (videoCodec === "hevc") mappedVideoCodec = "hvc1.1.6.L120.90";
+    else if (videoCodec === "vp9") mappedVideoCodec = "vp09.00.10.08";
 
     const muxer = recodemux({
       video: shouldCreateVideoTrack
@@ -275,7 +336,7 @@ export class Compositor extends EventEmitter<{
             width,
             height,
             expectFPS: fps,
-            codec: videoCodec,
+            codec: mappedVideoCodec,
             bitrate,
             __unsafe_hardwareAcceleration__:
               this.opts.__unsafe_hardwareAcceleration__,
@@ -285,9 +346,12 @@ export class Compositor extends EventEmitter<{
         audio === false
           ? null
           : {
-              codec: DEFAULT_AUDIO_CONF.codecType,
-              sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-              channelCount: DEFAULT_AUDIO_CONF.channelCount,
+              codec:
+                (this.opts.audioCodec as any) || DEFAULT_AUDIO_CONF.codecType,
+              sampleRate:
+                this.opts.audioSampleRate || DEFAULT_AUDIO_CONF.sampleRate,
+              channelCount:
+                this.opts.audioChannelCount || DEFAULT_AUDIO_CONF.channelCount,
             },
       duration,
       metaDataTags: metaDataTags,
@@ -329,41 +393,176 @@ export class Compositor extends EventEmitter<{
     }
 
     this.logger.info(`start combinate video, maxTime:${maxTime}`);
-    const muxer = this.initMuxer(maxTime);
-    let startTime = performance.now();
-    const stopMuxer = this.runEncoding(muxer, maxTime, {
-      onProgress: (prog) => {
-        this.logger.debug("OutputProgress:", prog);
-        this.emit("OutputProgress", prog);
-      },
-      onEnded: async () => {
-        await muxer.flush();
-        this.logger.info(
-          "===== output ended =====, cost:",
-          performance.now() - startTime,
-        );
-        this.emit("OutputProgress", 1);
-        this.destroy();
-      },
-      onError: (err) => {
+
+    const format = (this.opts as any).format?.toLowerCase() || "mp4";
+    const isMP4 = format === "mp4";
+
+    if (isMP4) {
+      const muxer = this.initMuxer(maxTime);
+      let startTime = performance.now();
+      const stopMuxer = this.runEncoding(muxer, maxTime, {
+        onProgress: (prog) => {
+          this.logger.debug("OutputProgress:", prog);
+          this.emit("OutputProgress", prog);
+        },
+        onEnded: async () => {
+          await muxer.flush();
+          this.logger.info(
+            "===== output ended =====, cost:",
+            performance.now() - startTime,
+          );
+          this.emit("OutputProgress", 1);
+          this.destroy();
+        },
+        onError: (err) => {
+          this.emit("error", err);
+          closeOutStream(err);
+          this.destroy();
+        },
+      });
+
+      this.stopOutput = () => {
+        stopMuxer();
+        muxer.close();
+        closeOutStream();
+      };
+      const { stream, stop: closeOutStream } = file2stream(
+        muxer.mp4file,
+        500,
+        this.destroy,
+      );
+
+      return stream;
+    } else {
+      // New MediaBunny-based streaming path for non-MP4 formats
+      let outputFormat: any;
+      switch (format) {
+        case "webm":
+          outputFormat = new WebMOutputFormat();
+          break;
+        case "mkv":
+          outputFormat = new MkvOutputFormat();
+          break;
+        case "mov":
+          outputFormat = new MovOutputFormat();
+          break;
+        case "mp3":
+          outputFormat = new Mp3OutputFormat();
+          break;
+        case "ogg":
+          outputFormat = new OggOutputFormat();
+          break;
+        case "wav":
+          outputFormat = new WavOutputFormat();
+          break;
+        case "flac":
+          outputFormat = new FlacOutputFormat();
+          break;
+        default:
+          outputFormat = new Mp4OutputFormat();
+          break;
+      }
+
+      const { readable: outStream, writable } = new TransformStream<
+        Uint8Array,
+        Uint8Array
+      >();
+      const writer = writable.getWriter();
+
+      const target = new StreamTarget(
+        new WritableStream({
+          write: (chunk) => writer.write(chunk.data),
+          close: () => writer.close(),
+          abort: (err) => writer.abort(err),
+        }),
+      );
+
+      const mbOutput = new Output({
+        format: outputFormat,
+        target,
+      });
+
+      const isAudioOnly = ["mp3", "wav", "flac", "ogg"].includes(format);
+      let videoSource: VideoSampleSource | null = null;
+      if (this.hasVideoTrack && !isAudioOnly) {
+        videoSource = new VideoSampleSource({
+          codec: (this.opts.videoCodec as any) || "avc",
+          bitrate: this.opts.bitrate || 5e6,
+        });
+        mbOutput.addVideoTrack(videoSource, {
+          frameRate: this.opts.fps || 30,
+        });
+      }
+
+      let audioSource: AudioSampleSource | null = null;
+      if (this.opts.audio !== false) {
+        audioSource = new AudioSampleSource({
+          codec:
+            (this.opts.audioCodec as any) ||
+            (DEFAULT_AUDIO_CONF.codecType as any),
+          bitrate: this.opts.audioBitrate || 128000,
+        });
+        mbOutput.addAudioTrack(audioSource);
+      }
+
+      if (this.opts.metaDataTags) {
+        mbOutput.setMetadataTags(this.opts.metaDataTags as any);
+      }
+
+      const mbMuxer: IMuxer = {
+        encodeVideo: (frame, options) => {
+          const sample = new VideoSample(frame);
+          videoSource?.add(sample, options);
+          sample.close();
+          frame.close();
+        },
+        encodeAudio: (data) => {
+          const sample = new AudioSample(data);
+          audioSource?.add(sample);
+          sample.close();
+          data.close();
+        },
+        getEncodeQueueSize: () => 0,
+        flush: () => mbOutput.finalize(),
+        close: () => mbOutput.cancel(),
+      };
+
+      let startTime = performance.now();
+
+      const stopMuxer = this.runEncoding(mbMuxer, maxTime, {
+        onProgress: (prog) => {
+          this.logger.debug("OutputProgress:", prog);
+          this.emit("OutputProgress", prog);
+        },
+        onEnded: async () => {
+          await mbMuxer.flush();
+          this.logger.info(
+            "===== output ended =====, cost:",
+            performance.now() - startTime,
+          );
+          this.emit("OutputProgress", 1);
+          this.destroy();
+        },
+        onError: (err) => {
+          this.emit("error", err);
+          writer.abort(err);
+          this.destroy();
+        },
+      });
+
+      this.stopOutput = () => {
+        stopMuxer();
+        mbMuxer.close();
+      };
+
+      mbOutput.start().catch((err) => {
         this.emit("error", err);
-        closeOutStream(err);
+        writer.abort(err);
         this.destroy();
-      },
-    });
+      });
 
-    this.stopOutput = () => {
-      stopMuxer();
-      muxer.close();
-      closeOutStream();
-    };
-    const { stream, stop: closeOutStream } = file2stream(
-      muxer.mp4file,
-      500,
-      this.destroy,
-    );
-
-    return stream;
+      return outStream;
+    }
   }
 
   /**
@@ -416,7 +615,7 @@ export class Compositor extends EventEmitter<{
   }
 
   private runEncoding(
-    muxer: ReturnType<typeof recodemux>,
+    muxer: IMuxer,
     maxTime: number,
     {
       onProgress,
@@ -452,6 +651,8 @@ export class Compositor extends EventEmitter<{
         muxer,
         canvas: this.canvas,
         outputAudio,
+        audioSampleRate: this.opts.audioSampleRate,
+        audioChannelCount: this.opts.audioChannelCount,
         hasVideoTrack: this.hasVideoTrack && hasVideoSprites,
         timeSlice,
         fps,
@@ -567,8 +768,12 @@ export class Compositor extends EventEmitter<{
         videoCodec: this.opts.videoCodec,
         bitrate: this.opts.bitrate,
         audio: this.opts.audio,
+        audioCodec: this.opts.audioCodec,
+        audioSampleRate: this.opts.audioSampleRate,
+        audioChannelCount: this.opts.audioChannelCount,
+        audioBitrate: this.opts.audioBitrate,
         metaDataTags: this.opts.metaDataTags,
-      },
+      } as any,
     };
   }
 
@@ -589,6 +794,9 @@ export class Compositor extends EventEmitter<{
         this.opts.width = json.settings.width;
       if (json.settings.height !== undefined)
         this.opts.height = json.settings.height;
+
+      this.hasVideoTrack = (this.opts.width || 0) * (this.opts.height || 0) > 0;
+
       if (json.settings.fps !== undefined) this.opts.fps = json.settings.fps;
       if (json.settings.bgColor !== undefined)
         this.opts.bgColor = json.settings.bgColor;
@@ -597,9 +805,16 @@ export class Compositor extends EventEmitter<{
       if (json.settings.bitrate !== undefined)
         this.opts.bitrate = json.settings.bitrate;
       if (json.settings.audio !== undefined) {
-        this.opts.audio =
-          json.settings.audio === false ? false : (undefined as any);
+        this.opts.audio = json.settings.audio;
       }
+      if (json.settings.audioCodec !== undefined)
+        this.opts.audioCodec = json.settings.audioCodec;
+      if (json.settings.audioSampleRate !== undefined)
+        this.opts.audioSampleRate = json.settings.audioSampleRate;
+      if (json.settings.audioBitrate !== undefined)
+        this.opts.audioBitrate = json.settings.audioBitrate;
+      if (json.settings.audioChannelCount !== undefined)
+        this.opts.audioChannelCount = json.settings.audioChannelCount;
       if (json.settings.metaDataTags !== undefined)
         this.opts.metaDataTags = json.settings.metaDataTags;
     }
@@ -1335,19 +1550,33 @@ function createSpritesRender(opts: {
 }
 
 function createAVEncoder(opts: {
-  muxer: ReturnType<typeof recodemux>;
+  muxer: IMuxer;
   canvas: OffscreenCanvas;
   outputAudio?: boolean;
+  audioSampleRate: number;
+  audioChannelCount: number;
   hasVideoTrack: boolean;
   timeSlice: number;
   fps: number;
 }) {
-  const { canvas, outputAudio, muxer, hasVideoTrack, timeSlice } = opts;
+  const {
+    canvas,
+    outputAudio,
+    muxer,
+    hasVideoTrack,
+    timeSlice,
+    audioSampleRate,
+    audioChannelCount,
+  } = opts;
   let frameCnt = 0;
   // GOP size: 3 seconds
   const gopSize = Math.floor(3 * opts.fps);
 
-  const audioTrackBuf = createAudioTrackBuf(1024);
+  const audioTrackBuf = createAudioTrackBuf(
+    1024,
+    audioSampleRate,
+    audioChannelCount,
+  );
 
   return (timestamp: number, audios: Float32Array[][], hasVideo: boolean) => {
     if (outputAudio !== false) {
@@ -1385,15 +1614,21 @@ function createAVEncoder(opts: {
 /**
  * Buffer input data and convert to AudioData with fixed frame count
  * @param framesPerChunk Number of audio frames per AudioData instance
+ * @param sampleRate Audio sample rate
+ * @param channelCount Number of audio channels
  */
-export function createAudioTrackBuf(framesPerChunk: number) {
-  const dataSize = framesPerChunk * DEFAULT_AUDIO_CONF.channelCount;
+export function createAudioTrackBuf(
+  framesPerChunk: number,
+  sampleRate: number,
+  channelCount: number,
+) {
+  const dataSize = framesPerChunk * channelCount;
   // PCM data buffer
   const channelBuf = new Float32Array(dataSize * 3);
   let writePos = 0;
 
   let audioTimestamp = 0;
-  const chunkDuration = (framesPerChunk / DEFAULT_AUDIO_CONF.sampleRate) * 1e6;
+  const chunkDuration = (framesPerChunk / sampleRate) * 1e6;
 
   // Placeholder when audio data is missing
   const placeholderData = new Float32Array(dataSize);
@@ -1407,9 +1642,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
       results.push(
         new AudioData({
           timestamp: audioTimestamp,
-          numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
+          numberOfChannels: channelCount,
           numberOfFrames: framesPerChunk,
-          sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
+          sampleRate: sampleRate,
           format: "f32",
           data: channelBuf.subarray(readPos, readPos + dataSize),
         }),
@@ -1425,9 +1660,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
       results.push(
         new AudioData({
           timestamp: audioTimestamp,
-          numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
+          numberOfChannels: channelCount,
           numberOfFrames: framesPerChunk,
-          sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
+          sampleRate: sampleRate,
           format: "f32",
           data: placeholderData,
         }),
@@ -1440,19 +1675,18 @@ export function createAudioTrackBuf(framesPerChunk: number) {
   return (timestamp: number, trackAudios: Float32Array[][]) => {
     const maxLen = Math.max(...trackAudios.map((a) => a[0]?.length ?? 0));
     for (let bufIdx = 0; bufIdx < maxLen; bufIdx++) {
-      let ch0 = 0;
-      let ch1 = 0;
-      for (let trackIdx = 0; trackIdx < trackAudios.length; trackIdx++) {
-        const c0 = trackAudios[trackIdx][0]?.[bufIdx] ?? 0;
-        // If mono PCM, duplicate first channel to second channel
-        const c1 = trackAudios[trackIdx][1]?.[bufIdx] ?? c0;
-        ch0 += c0;
-        ch1 += c1;
+      for (let chIdx = 0; chIdx < channelCount; chIdx++) {
+        let mixedSample = 0;
+        for (let trackIdx = 0; trackIdx < trackAudios.length; trackIdx++) {
+          const trackAudio = trackAudios[trackIdx];
+          // If track has fewer channels than target, duplicate or use 0
+          // Example: mono track (trackAudio[0]) to stereo output (mixedSample for chIdx=0 and chIdx=1)
+          const sourceChanIdx = Math.min(chIdx, trackAudio.length - 1);
+          mixedSample += trackAudio[sourceChanIdx]?.[bufIdx] ?? 0;
+        }
+        channelBuf[writePos] = mixedSample;
+        writePos++;
       }
-      // Mix multiple track audio data and write to buffer
-      channelBuf[writePos] = ch0;
-      channelBuf[writePos + 1] = ch1;
-      writePos += 2;
     }
     // Consume buffer data and generate AudioData
     return getAudioData(timestamp);
