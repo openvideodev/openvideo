@@ -1,7 +1,7 @@
 import { mp4box, MP4File, MP4Sample, SampleOpts, TrakBoxParser } from 'wrapbox';
 import { tmpfile, write } from 'opfs-tools';
 import { DEFAULT_AUDIO_CONF } from '../clips';
-import { autoReadStream, file2stream } from '../utils/stream-utils';
+import { autoReadStream } from '../utils/stream-utils';
 import { Log } from '../utils/log';
 import {
   concatPCMFragments,
@@ -416,7 +416,83 @@ export function mixinMP4AndAudio(
   });
 
   const outfile = mp4box.createFile() as unknown as MP4File;
-  const { stream: outStream, stop: stopOut } = file2stream(outfile, 500);
+
+  let outStream: ReadableStream<Uint8Array>;
+  let timerId = 0;
+  let sendedBoxIdx = 0;
+  const boxes = outfile.boxes;
+  let firstMoofReady = false;
+
+  const deltaBuf = (): Uint8Array | null => {
+    if (!firstMoofReady) {
+      if (boxes.find((box: any) => box.type === 'moof') != null) {
+        firstMoofReady = true;
+      } else {
+        return null;
+      }
+    }
+    if (sendedBoxIdx >= boxes.length) return null;
+
+    const ds = new mp4box.DataStream();
+
+    let i = sendedBoxIdx;
+    try {
+      for (; i < boxes.length; ) {
+        boxes[i].write(ds);
+        delete boxes[i];
+        i += 1;
+      }
+    } catch (err) {
+      throw err;
+    }
+
+    if (outfile.moov != null) {
+      for (var j = 0; j < outfile.moov.traks.length; j++) {
+        outfile.moov.traks[j].samples = [];
+      }
+      outfile.mdats = [];
+      outfile.moofs = [];
+    }
+
+    sendedBoxIdx = boxes.length;
+    return new Uint8Array(ds.buffer);
+  };
+
+  let stoped = false;
+  let canceled = false;
+  let exit: ((err?: Error) => void) | null = null;
+  outStream = new ReadableStream({
+    start(ctrl) {
+      timerId = self.setInterval(() => {
+        const d = deltaBuf();
+        if (d != null && !canceled) ctrl.enqueue(d);
+      }, 500);
+
+      exit = (err) => {
+        clearInterval(timerId);
+        outfile.flush();
+        if (err != null) {
+          ctrl.error(err);
+          return;
+        }
+
+        const d = deltaBuf();
+        if (d != null && !canceled) ctrl.enqueue(d);
+
+        if (!canceled) ctrl.close();
+      };
+    },
+    cancel() {
+      canceled = true;
+      clearInterval(timerId);
+    },
+  });
+
+  const stopOut = (err?: Error) => {
+    if (stoped) return;
+    stoped = true;
+    exit?.(err);
+  };
 
   let audioSampleDecoder: ReturnType<
     typeof createMP4AudioSampleDecoder

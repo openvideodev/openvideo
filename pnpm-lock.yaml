@@ -288,6 +288,9 @@ importers:
       gsap:
         specifier: ^3.12.7
         version: 3.14.2
+      mediabunny:
+        specifier: ^1.26.0
+        version: 1.27.6
       microdiff:
         specifier: ^1.4.0
         version: 1.5.0
@@ -301,8 +304,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       wrapbox:
-        specifier: ^0.0.2
-        version: 0.0.2
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       '@types/dom-webcodecs':
         specifier: ^0.1.17
@@ -6602,8 +6605,8 @@ packages:
     resolution: {integrity: sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==}
     engines: {node: '>=18'}
 
-  wrapbox@0.0.2:
-    resolution: {integrity: sha512-Pu4YT5uCKla0XAWINdtVKeZKyjP05MJ5wb4p7XqheNDSQlfFG4l5kWERSuFWJB0yBDPYcvSIufwbQGEqtI8gug==}
+  wrapbox@0.1.0:
+    resolution: {integrity: sha512-KvybgkCwP74+4PYzZHPxdKrRIGFewzFxeswXjocVgVCR+jebFdMwrfjVoQe4MVs0PQ67sRf+p4zh4//x7jDj9w==}
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
@@ -14894,8 +14897,9 @@ snapshots:
       string-width: 7.2.0
       strip-ansi: 7.1.2
 
-  wrapbox@0.0.2:
+  wrapbox@0.1.0:
     dependencies:
+      mediabunny: 1.27.6
       mp4box: 2.3.0
 
   wrappy@1.0.2:

@@ -20,7 +20,6 @@ import {
 } from "./clips";
 import { recodemux } from "wrapbox";
 import { Log } from "./utils/log";
-import { file2stream } from "./utils/stream-utils";
 import EventEmitter from "./event-emitter";
 import { PixiSpriteRenderer } from "./sprite/pixi-sprite-renderer";
 import { parseColor } from "./utils/color";
@@ -42,11 +41,14 @@ export interface ICompositorOpts {
   bitrate?: number;
   fps?: number;
   bgColor?: string;
+  format?: string;
   videoCodec?: string;
   /**
    * If false, exclude audio track from the output video
    */
   audio?: false;
+  audioCodec?: string;
+  audioSampleRate?: number;
   /**
    * Write metadata tags to the output video
    */
@@ -156,6 +158,8 @@ export class Compositor extends EventEmitter<{
    */
   constructor(opts: ICompositorOpts = {}) {
     super();
+
+    console.log("Compositor constructor", opts);
     const { width = 0, height = 0 } = opts;
     this.canvas = new OffscreenCanvas(width, height);
     // this.canvas = document.querySelector('#canvas') as HTMLCanvasElement
@@ -165,8 +169,11 @@ export class Compositor extends EventEmitter<{
         bgColor: "#000",
         width: 0,
         height: 0,
+        format: "mp4",
         videoCodec: "avc1.42E032",
         audio: true,
+        audioCodec: "aac",
+        audioSampleRate: 48000,
         bitrate: 5e6,
         fps: 30,
         metaDataTags: null,
@@ -174,6 +181,7 @@ export class Compositor extends EventEmitter<{
       opts,
     );
 
+    console.log("Compositor opts", this.opts);
     this.hasVideoTrack = width * height > 0;
 
     // Initialize codec detection early
@@ -257,7 +265,7 @@ export class Compositor extends EventEmitter<{
   }
 
   private initMuxer(duration: number) {
-    const { fps, width, height, videoCodec, bitrate, audio, metaDataTags } =
+    const { fps, width, height, videoCodec, bitrate, audio, metaDataTags, format, audioCodec, audioSampleRate } =
       this.opts;
 
     // Check if any sprites actually have video capabilities (width > 0 && height > 0)
@@ -270,6 +278,7 @@ export class Compositor extends EventEmitter<{
     const shouldCreateVideoTrack = this.hasVideoTrack && hasVideoSprites;
 
     const muxer = recodemux({
+      format: format || "mp4",
       video: shouldCreateVideoTrack
         ? {
             width,
@@ -285,8 +294,8 @@ export class Compositor extends EventEmitter<{
         audio === false
           ? null
           : {
-              codec: DEFAULT_AUDIO_CONF.codecType,
-              sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
+              codec: audioCodec || DEFAULT_AUDIO_CONF.codecType,
+              sampleRate: audioSampleRate || DEFAULT_AUDIO_CONF.sampleRate,
               channelCount: DEFAULT_AUDIO_CONF.channelCount,
             },
       duration,
@@ -300,6 +309,8 @@ export class Compositor extends EventEmitter<{
    * @param opts.maxTime Maximum duration allowed for output video, content exceeding this will be ignored
    */
   output(opts: { maxTime?: number } = {}): ReadableStream<Uint8Array> {
+
+    console.log("Compositor output", opts);
     if (this.sprites.length === 0) throw Error("No sprite added");
 
     const mainSprite = this.sprites.find((it) => it.main);
@@ -347,7 +358,7 @@ export class Compositor extends EventEmitter<{
       },
       onError: (err) => {
         this.emit("error", err);
-        closeOutStream(err);
+        muxer.close();
         this.destroy();
       },
     });
@@ -355,15 +366,9 @@ export class Compositor extends EventEmitter<{
     this.stopOutput = () => {
       stopMuxer();
       muxer.close();
-      closeOutStream();
     };
-    const { stream, stop: closeOutStream } = file2stream(
-      muxer.mp4file,
-      500,
-      this.destroy,
-    );
 
-    return stream;
+    return muxer.stream;
   }
 
   /**
@@ -564,9 +569,12 @@ export class Compositor extends EventEmitter<{
         height: this.opts.height,
         fps: this.opts.fps,
         bgColor: this.opts.bgColor,
+        format: this.opts.format,
         videoCodec: this.opts.videoCodec,
         bitrate: this.opts.bitrate,
         audio: this.opts.audio,
+        audioCodec: this.opts.audioCodec,
+        audioSampleRate: this.opts.audioSampleRate,
         metaDataTags: this.opts.metaDataTags,
       },
     };
@@ -592,6 +600,8 @@ export class Compositor extends EventEmitter<{
       if (json.settings.fps !== undefined) this.opts.fps = json.settings.fps;
       if (json.settings.bgColor !== undefined)
         this.opts.bgColor = json.settings.bgColor;
+      if (json.settings.format !== undefined)
+        this.opts.format = json.settings.format;
       if (json.settings.videoCodec !== undefined)
         this.opts.videoCodec = json.settings.videoCodec;
       if (json.settings.bitrate !== undefined)
@@ -600,6 +610,10 @@ export class Compositor extends EventEmitter<{
         this.opts.audio =
           json.settings.audio === false ? false : (undefined as any);
       }
+      if (json.settings.audioCodec !== undefined)
+        this.opts.audioCodec = json.settings.audioCodec;
+      if (json.settings.audioSampleRate !== undefined)
+        this.opts.audioSampleRate = json.settings.audioSampleRate;
       if (json.settings.metaDataTags !== undefined)
         this.opts.metaDataTags = json.settings.metaDataTags;
     }
