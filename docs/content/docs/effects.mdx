@@ -43,8 +43,55 @@ Since `effects` is a standard array, you can use standard array methods:
 
 ```ts
 // Remove an effect
-clip.effects = clip.effects.filter(e => e.id !== "my-effect");
+clip.effects = clip.effects.filter((e) => e.id !== "my-effect");
 
 // Clear all effects
 clip.effects = [];
 ```
+
+## Custom Effects
+
+You can add your own custom effect shaders using the `registerCustomEffect` function. This allows you to extend the engine with your own GLSL filters.
+
+### Registering a Custom Effect
+
+To register a custom effect, you need to provide a unique key and an effect object containing the GLSL fragment shader.
+
+```ts
+import { registerCustomEffect } from "openvideo";
+
+registerCustomEffect("myCustomEffect", {
+  label: "My Custom Effect",
+  fragment: `
+    vec4 mainImage(vec2 p) {
+      vec4 color = getTextureColor(p);
+      return vec4(color.g, color.r, color.b, color.a); // Swap R and G channels
+    }
+  `,
+});
+```
+
+### Usage in Editor/Studio
+
+Once registered, you can use the effect key just like any built-in effect:
+
+```ts
+clip.effects.push({
+  id: "custom-1",
+  key: "myCustomEffect",
+  startTime: 0,
+  duration: 5e6,
+});
+```
+
+### GlEffect Interface
+
+The effect object follows this structure:
+
+| Property           | Type     | Description                                                  |
+| :----------------- | :------- | :----------------------------------------------------------- |
+| **label**          | `string` | Human-readable name for the effect.                          |
+| **fragment**       | `string` | GLSL fragment shader code (main entry point is `mainImage`). |
+| **uniforms**       | `Record` | (Optional) Default values for shader uniforms.               |
+| **previewStatic**  | `string` | (Optional) URL for a static preview image.                   |
+| **previewDynamic** | `string` | (Optional) URL for a dynamic preview image or video.         |

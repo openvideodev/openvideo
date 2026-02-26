@@ -1,17 +1,38 @@
-import { Filter, GlProgram, Sprite, Texture, RenderTexture } from 'pixi.js';
+import {
+  Filter,
+  GlProgram,
+  Sprite,
+  Texture,
+  RenderTexture,
+  UniformGroup,
+} from "pixi.js";
 
-import type { EffectOptions, EffectRendererOptions } from './types';
-import { vertex } from './vertex';
-import { GL_EFFECTS } from './glsl/gl-effect';
+import type { EffectOptions, EffectRendererOptions } from "./types";
+import { vertex } from "./vertex";
+import { getAllEffects } from "./glsl/gl-effect";
 
 export function makeEffect({ name, renderer }: EffectOptions) {
   let effect: undefined | any = undefined;
-  const localKey = Object.keys(GL_EFFECTS).find(
-    (key) => key.toLowerCase() === name.toLowerCase()
-  ) as keyof typeof GL_EFFECTS | undefined;
+  const effects = getAllEffects();
+  const localKey = Object.keys(effects).find(
+    (key) => key.toLowerCase() === name.toLowerCase(),
+  ) as string | undefined;
   if (localKey) {
-    effect = GL_EFFECTS[localKey] as any;
+    effect = effects[localKey] as any;
   }
+
+  if (!effect) {
+    console.warn(`Effect ${name} not found`);
+    return {
+      filter: null,
+      render({ canvasTexture }: EffectRendererOptions) {
+        return canvasTexture instanceof RenderTexture
+          ? canvasTexture
+          : Texture.from(canvasTexture as HTMLCanvasElement);
+      },
+    };
+  }
+
   const { fragment, uniforms, label } = effect;
   const effectSprite = new Sprite();
 
@@ -26,18 +47,19 @@ export function makeEffect({ name, renderer }: EffectOptions) {
     name: `${label}-shader`,
   });
 
+  const effectUniforms = new UniformGroup({
+    uTime: { value: 0, type: "f32" },
+    ...uniforms,
+  });
+
   const filter = new Filter({
     glProgram: program,
     resources: {
-      effectUniforms: {
-        ...uniforms,
-      },
+      effectUniforms,
     },
   });
 
   effectSprite.filters = [filter];
-
-  // effectSprite.filters = [filter];
 
   return {
     filter,
@@ -54,8 +76,8 @@ export function makeEffect({ name, renderer }: EffectOptions) {
       effectSprite.texture = tex;
       effectSprite.width = width;
       effectSprite.height = height;
-      const effectUniforms = filter.resources.effectUniforms.uniforms;
-      effectUniforms.uTime = progress;
+
+      effectUniforms.uniforms.uTime = progress;
 
       renderer.render({
         container: effectSprite,

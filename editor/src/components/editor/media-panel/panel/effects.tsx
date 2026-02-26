@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Effect, GL_EFFECT_OPTIONS } from 'openvideo';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useStudioStore } from '@/stores/studio-store';
+import { useState } from "react";
+import { Effect, getEffectOptions } from "openvideo";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useStudioStore } from "@/stores/studio-store";
 
 const PanelEffect = () => {
   const { studio } = useStudioStore();
   const EFFECT_DURATION_DEFAULT = 5000000;
+  const effects = getEffectOptions();
 
   const [hovered, setHovered] = useState<Record<string, boolean>>({});
   return (
@@ -19,7 +20,7 @@ const PanelEffect = () => {
         justify-items-center
       "
         >
-          {GL_EFFECT_OPTIONS.map((effect) => {
+          {effects.map((effect) => {
             const isHovered = hovered[effect.key];
 
             return (
@@ -27,10 +28,16 @@ const PanelEffect = () => {
                 key={effect.key}
                 className="flex w-full items-center gap-2 flex-col group cursor-pointer"
                 onMouseEnter={() =>
-                  setHovered((prev) => ({ ...prev, [effect.key]: true }))
+                  setHovered((prev: Record<string, boolean>) => ({
+                    ...prev,
+                    [effect.key]: true,
+                  }))
                 }
                 onMouseLeave={() =>
-                  setHovered((prev) => ({ ...prev, [effect.key]: false }))
+                  setHovered((prev: Record<string, boolean>) => ({
+                    ...prev,
+                    [effect.key]: false,
+                  }))
                 }
                 onClick={() => {
                   if (!studio) return;
