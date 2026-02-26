@@ -265,9 +265,12 @@ export interface ProjectJSON {
     height?: number;
     fps?: number;
     bgColor?: string;
+    format?: string;
     videoCodec?: string;
     bitrate?: number;
     audio?: boolean;
+    audioCodec?: string;
+    audioSampleRate?: number;
     metaDataTags?: Record<string, string>;
   };
 }
