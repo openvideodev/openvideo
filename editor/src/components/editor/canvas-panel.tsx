@@ -1,10 +1,16 @@
 import { useEffect, useRef, useMemo } from "react";
-import { Studio, fontManager, registerCustomTransition } from "openvideo";
+import {
+  Studio,
+  fontManager,
+  registerCustomTransition,
+  registerCustomEffect,
+} from "openvideo";
 import { useTheme } from "next-themes";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
 import { editorFont } from "./constants";
 import { CUSTOM_TRANSITIONS } from "./transition-custom";
+import { CUSTOM_EFFECTS } from "./effect-custom";
 
 const STUDIO_CONFIG = {
   fps: 30,
@@ -132,6 +138,9 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
   useEffect(() => {
     CUSTOM_TRANSITIONS.forEach((t) => {
       registerCustomTransition(t.key, t as any);
+    });
+    CUSTOM_EFFECTS.forEach((e) => {
+      registerCustomEffect(e.key, e as any);
     });
   }, []);
 

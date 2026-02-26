@@ -38,8 +38,15 @@ export { fontManager } from "./utils/fonts";
 
 // Effects
 export { makeEffect } from "./effect/effect";
+export {
+  registerCustomEffect,
+  unregisterCustomEffect,
+  getAllEffects,
+  getEffectOptions,
+  GL_EFFECT_OPTIONS,
+  type GlEffect,
+} from "./effect/glsl/gl-effect";
 export type { EffectKey } from "./effect/glsl/gl-effect";
-export { GL_EFFECT_OPTIONS } from "./effect/glsl/gl-effect";
 
 // Transitions
 export { makeTransition } from "./transition/transition";
