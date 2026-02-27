@@ -307,6 +307,13 @@ export function AnimationPropertiesPicker() {
     { label: "Pulse", value: "pulse" },
     ...(isTextLike
       ? [
+          { label: "Pop Caption", value: "popCaption" },
+          { label: "Bounce Caption", value: "bounceCaption" },
+          { label: "Scale Caption", value: "scaleCaption" },
+          { label: "Slide Left Caption", value: "slideLeftCaption" },
+          { label: "Slide Right Caption", value: "slideRightCaption" },
+          { label: "Slide Up Caption", value: "slideUpCaption" },
+          { label: "Slide Down Caption", value: "slideDownCaption" },
           { label: "Char Fade In", value: "charFadeIn" },
           { label: "Char Slide Up", value: "charSlideUp" },
           { label: "Char Typewriter", value: "charTypewriter" },

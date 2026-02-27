@@ -5,7 +5,7 @@ export interface IBoxShadow {
   blur: number;
 }
 export interface ICaptionsControlProps {
-  type?: 'word' | 'lines';
+  type?: "word" | "lines";
   appearedColor: string;
   activeColor: string;
   activeFillColor: string;
@@ -15,11 +15,17 @@ export interface ICaptionsControlProps {
   borderColor: string;
   borderWidth: number;
   boxShadow?: IBoxShadow;
-  animation?: string;
+  animation?: string | string[];
   fontFamily?: string;
   fontUrl?: string;
   textTransform?: string;
   previewUrl?: string;
   textAlign?: string;
   preservedColorKeyWord?: boolean;
+  wordAnimation?: {
+    type: "scale" | "opacity";
+    application: "active" | "keyword" | "none";
+    value: number;
+    mode?: "static" | "dynamic";
+  };
 }

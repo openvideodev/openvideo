@@ -257,6 +257,8 @@ export class PixiSpriteRenderer {
     const yOffset = renderTransform?.y ?? 0;
     const angleOffset = renderTransform?.angle ?? 0;
     const scaleMultiplier = renderTransform?.scale ?? 1;
+    const scaleXMultiplier = renderTransform?.scaleX ?? 1;
+    const scaleYMultiplier = renderTransform?.scaleY ?? 1;
     const opacityMultiplier = renderTransform?.opacity ?? 1;
     const blurOffset = renderTransform?.blur ?? 0;
     const brightnessMultiplier = renderTransform?.brightness ?? 1;
@@ -277,7 +279,10 @@ export class PixiSpriteRenderer {
       this.animationContainer.y = yOffset;
       this.animationContainer.angle = (flip == null ? 1 : -1) * angleOffset;
       this.animationContainer.alpha = opacityMultiplier;
-      this.animationContainer.scale.set(scaleMultiplier, scaleMultiplier);
+      this.animationContainer.scale.set(
+        scaleMultiplier * scaleXMultiplier,
+        scaleMultiplier * scaleYMultiplier,
+      );
       this.applyBlur(blurOffset);
       this.applyBrightness(brightnessMultiplier);
     }

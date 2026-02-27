@@ -7,6 +7,7 @@ import type {
   CaptionDataJSON,
   CaptionColorsJSON,
   CaptionPositioningJSON,
+  ICaptionWordAnimation,
 } from "../json-serialization";
 import {
   type Application,
@@ -76,6 +77,7 @@ export interface ICaptionStyle {
     distance: number;
     angle: number;
   };
+  wordAnimation?: ICaptionWordAnimation;
 }
 
 export interface ICaptionEvents extends BaseSpriteEvents {
@@ -161,6 +163,7 @@ export interface ICaptionOpts {
       videoHeight?: number;
       bottomOffset?: number;
     };
+    wordAnimation?: ICaptionWordAnimation;
   };
   /**
    * @deprecated Use caption.words instead
@@ -277,6 +280,7 @@ export interface ICaptionOpts {
    * @default 'multiple'
    */
   wordsPerLine?: "single" | "multiple";
+  wordAnimation?: ICaptionWordAnimation;
 }
 
 /**
@@ -479,6 +483,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       textCase: opts.textCase,
       verticalAlign: opts.verticalAlign,
       wordsPerLine: opts.wordsPerLine,
+      wordAnimation: opts.wordAnimation,
       stroke: opts.stroke
         ? typeof opts.stroke === "object"
           ? { color: opts.stroke.color, width: opts.stroke.width }
@@ -709,6 +714,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     preserveKeywordColor: boolean;
     mediaId?: string;
     wordsPerLine: "single" | "multiple";
+    wordAnimation?: ICaptionWordAnimation;
   };
   // Pixi rendering fields (to mirror TextClip)
   private pixiTextContainer: Container | null = null;
@@ -774,6 +780,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         false,
       mediaId: opts.mediaId,
       wordsPerLine: opts.wordsPerLine ?? "multiple",
+      wordAnimation: opts.caption?.wordAnimation ?? opts.wordAnimation,
     };
 
     this._initialLayoutApplied = opts.initialLayoutApplied ?? false;
@@ -919,44 +926,59 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this.originalOpts = { ...this.originalOpts, ...processedOpts };
 
     // 2. Update internal opts
-    if (opts.fontSize !== undefined) this.opts.fontSize = opts.fontSize;
-    if (opts.fontFamily !== undefined) this.opts.fontFamily = opts.fontFamily;
-    if (opts.fontUrl !== undefined) this.opts.fontUrl = opts.fontUrl;
-    if (opts.fontWeight !== undefined) this.opts.fontWeight = opts.fontWeight;
-    if (opts.fontStyle !== undefined)
-      this.opts.fontStyle = opts.fontStyle as "normal" | "italic" | "oblique";
-    if (opts.fill !== undefined) this.opts.fill = opts.fill;
-    if (opts.align !== undefined) this.opts.align = opts.align;
-    if (opts.letterSpacing !== undefined)
-      this.opts.letterSpacing = opts.letterSpacing;
-    if (opts.lineHeight !== undefined) this.opts.lineHeight = opts.lineHeight;
-    if (opts.textCase !== undefined) this.opts.textCase = opts.textCase;
-    if (opts.wordWrapWidth !== undefined) {
-      this.opts.wordWrapWidth = opts.wordWrapWidth;
-      if (opts.wordWrapWidth > 0) {
+    if (processedOpts.fontSize !== undefined)
+      this.opts.fontSize = processedOpts.fontSize;
+    if (processedOpts.fontFamily !== undefined)
+      this.opts.fontFamily = processedOpts.fontFamily;
+    if (processedOpts.fontUrl !== undefined)
+      this.opts.fontUrl = processedOpts.fontUrl;
+    if (processedOpts.fontWeight !== undefined)
+      this.opts.fontWeight = processedOpts.fontWeight;
+    if (processedOpts.fontStyle !== undefined)
+      this.opts.fontStyle = processedOpts.fontStyle as
+        | "normal"
+        | "italic"
+        | "oblique";
+    if (processedOpts.fill !== undefined) this.opts.fill = processedOpts.fill;
+    if (processedOpts.align !== undefined)
+      this.opts.align = processedOpts.align;
+    if (processedOpts.letterSpacing !== undefined)
+      this.opts.letterSpacing = processedOpts.letterSpacing;
+    if (processedOpts.lineHeight !== undefined)
+      this.opts.lineHeight = processedOpts.lineHeight;
+    if (processedOpts.textCase !== undefined)
+      this.opts.textCase = processedOpts.textCase;
+    if (processedOpts.wordWrapWidth !== undefined) {
+      this.opts.wordWrapWidth = processedOpts.wordWrapWidth;
+      if (processedOpts.wordWrapWidth > 0) {
         this._isWidthConstrained = true;
         this.opts.wordWrap = true;
       }
     }
-    if (opts.wordsPerLine !== undefined)
-      this.opts.wordsPerLine = opts.wordsPerLine;
+    if (processedOpts.wordsPerLine !== undefined)
+      this.opts.wordsPerLine = processedOpts.wordsPerLine;
+    if (processedOpts.wordAnimation !== undefined)
+      this.opts.wordAnimation = processedOpts.wordAnimation;
 
-    // Handle nested colors in opts.caption.colors
-    if (opts.caption?.colors) {
-      if (opts.caption.colors.appeared !== undefined)
-        this.opts.appeared = opts.caption.colors.appeared;
-      if (opts.caption.colors.active !== undefined)
-        this.opts.active = opts.caption.colors.active;
-      if (opts.caption.colors.activeFill !== undefined)
-        this.opts.activeFill = opts.caption.colors.activeFill;
-      if (opts.caption.colors.background !== undefined)
-        this.opts.background = opts.caption.colors.background;
-      if (opts.caption.colors.keyword !== undefined)
-        this.opts.keyword = opts.caption.colors.keyword;
+    // Handle nested colors in processedOpts.caption.colors
+    if (processedOpts.caption?.colors) {
+      if (processedOpts.caption.colors.appeared !== undefined)
+        this.opts.appeared = processedOpts.caption.colors.appeared;
+      if (processedOpts.caption.colors.active !== undefined)
+        this.opts.active = processedOpts.caption.colors.active;
+      if (processedOpts.caption.colors.activeFill !== undefined)
+        this.opts.activeFill = processedOpts.caption.colors.activeFill;
+      if (processedOpts.caption.colors.background !== undefined)
+        this.opts.background = processedOpts.caption.colors.background;
+      if (processedOpts.caption.colors.keyword !== undefined)
+        this.opts.keyword = processedOpts.caption.colors.keyword;
+      if (processedOpts.caption.wordAnimation !== undefined)
+        this.opts.wordAnimation = processedOpts.caption.wordAnimation;
     }
 
-    if (opts.caption?.preserveKeywordColor !== undefined) {
-      this.opts.preserveKeywordColor = opts.caption.preserveKeywordColor;
+    if (processedOpts.caption?.preserveKeywordColor !== undefined) {
+      this.opts.preserveKeywordColor =
+        processedOpts.caption.preserveKeywordColor;
     }
 
     // 3. Update TextStyle
@@ -1319,14 +1341,20 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         }
 
         line.words.forEach((wordText, wordIndex) => {
-          // Position word
-          wordText.x = Math.round(currentX);
-          wordText.y = Math.round(currentY);
+          const bounds = wordText.getLocalBounds();
+          const wordW = bounds.width || wordText.width;
+          const wordH = bounds.height || wordText.height;
+
+          // Set pivot to center for centered scaling
+          wordText.pivot.set(wordW / 2, wordH / 2);
+
+          // Position word (compensating for pivot)
+          wordText.x = Math.round(currentX + wordW / 2);
+          wordText.y = Math.round(currentY + wordH / 2);
 
           // Advance X (add space unless it's the last word in the line)
           currentX +=
-            (wordText.getLocalBounds().width || wordText.width) +
-            (wordIndex < line.words.length - 1 ? spaceWidth : 0);
+            wordW + (wordIndex < line.words.length - 1 ? spaceWidth : 0);
         });
 
         // Advance Y
@@ -1479,8 +1507,59 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
       if (!word) return;
 
+      // RESET SCALE
+      wordText.scale.set(1, 1);
+
       const isActive = currentTimeMs >= word.from && currentTimeMs < word.to;
       const hasBeenActive = currentTimeMs >= word.to;
+
+      // APPLY WORD ANIMATION
+      const wordAnimation = this.opts.wordAnimation;
+      let animationFactor = 0;
+      let shouldApply = false;
+
+      if (wordAnimation && wordAnimation.application !== "none") {
+        if (wordAnimation.application === "active" && isActive) {
+          shouldApply = true;
+        } else if (wordAnimation.application === "keyword" && word.isKeyWord) {
+          shouldApply = true;
+        }
+
+        if (shouldApply) {
+          if (wordAnimation.mode === "dynamic" && isActive) {
+            const duration = word.to - word.from;
+            if (duration > 0) {
+              const progress = (currentTimeMs - word.from) / duration;
+              const safeProgress = Math.max(0, Math.min(1, progress));
+              if (wordAnimation.value < 1) {
+                animationFactor = safeProgress;
+              } else {
+                animationFactor = Math.sin(safeProgress * Math.PI);
+              }
+            } else {
+              animationFactor = 1;
+            }
+          } else {
+            animationFactor = 1;
+          }
+
+          if (wordAnimation.type === "scale") {
+            let scale = 1;
+            if (
+              wordAnimation.value < 1 &&
+              wordAnimation.mode === "dynamic" &&
+              isActive
+            ) {
+              scale =
+                wordAnimation.value +
+                (1 - wordAnimation.value) * animationFactor;
+            } else {
+              scale = 1 + (wordAnimation.value - 1) * animationFactor;
+            }
+            wordText.scale.set(scale, scale);
+          }
+        }
+      }
 
       const isKeywordWithColor =
         word.isKeyWord && !isTransparent(this.opts.keyword);
@@ -1491,11 +1570,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       if (word.isKeyWord && isActive && isKeywordWithColor) {
         ({ color: textColor, alpha: textAlpha } = resolveColor(
           this.opts.keyword,
+          0xffff00,
         ));
       } else if (isActive) {
-        ({ color: textColor, alpha: textAlpha } = resolveColor(
-          this.opts.active,
-        ));
+        textAlpha = resolveColor(this.opts.active, 0xffffff).alpha;
+        textColor = resolveColor(this.opts.active, 0xffffff).color;
       } else if (
         hasBeenActive &&
         this.opts.preserveKeywordColor &&
@@ -1517,6 +1596,21 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         ({ color: textColor, alpha: textAlpha } = resolveColor(
           fillToResolve as any,
         ));
+      }
+
+      if (shouldApply && wordAnimation?.type === "opacity") {
+        let opacityFactor = 1;
+        if (
+          wordAnimation.value < 1 &&
+          wordAnimation.mode === "dynamic" &&
+          isActive
+        ) {
+          opacityFactor =
+            wordAnimation.value + (1 - wordAnimation.value) * animationFactor;
+        } else {
+          opacityFactor = 1 + (wordAnimation.value - 1) * animationFactor;
+        }
+        textAlpha *= opacityFactor;
       }
 
       // Aplicar color al texto
@@ -1829,6 +1923,8 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       if (opts.wordWrapWidth !== undefined)
         style.wordWrapWidth = opts.wordWrapWidth;
       if (opts.wordWrap !== undefined) style.wordWrap = opts.wordWrap;
+      if (opts.wordAnimation !== undefined)
+        style.wordAnimation = opts.wordAnimation;
 
       // Handle stroke
       if (opts.stroke) {
@@ -1920,6 +2016,14 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       caption.positioning = positioning;
     }
 
+    // Add wordAnimation if defined
+    const wordAnimation =
+      this.originalOpts?.caption?.wordAnimation ??
+      this.originalOpts?.wordAnimation;
+    if (wordAnimation !== undefined) {
+      caption.wordAnimation = wordAnimation;
+    }
+
     return {
       ...base,
       type: "Caption",
@@ -2003,9 +2107,16 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       };
     }
 
+    if (style.wordAnimation !== undefined) {
+      captionOpts.wordAnimation = style.wordAnimation;
+    }
+
     // Handle new nested structure vs old flat structure
     if (json.caption) {
       captionOpts.caption = json.caption;
+      if (json.caption.wordAnimation) {
+        captionOpts.wordAnimation = json.caption.wordAnimation;
+      }
     } else {
       // Old flat structure (backward compatibility)
       if (json.bottomOffset !== undefined) {

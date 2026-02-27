@@ -82,6 +82,7 @@ const CaptionPresetPicker = () => {
         distance: Math.sqrt(x * x + y * y) ?? 4,
         angle: Math.PI / 4,
       },
+      wordAnimation: preset.wordAnimation,
     };
 
     // Apply to all selected caption clips and other clips with the same mediaId
