@@ -758,11 +758,11 @@ function createSpritesRender(opts: {
     if (isMirrored && tempSprite instanceof TilingSprite) {
       tempSprite.width = textureWidth * 5;
       tempSprite.height = textureHeight * 5;
+
       tempSprite.tilePosition.set(
         (tempSprite.width - textureWidth) / 2,
         (tempSprite.height - textureHeight) / 2,
       );
-    }
 
       if (clip.flip === "horizontal") {
         tempSprite.scale.x = -baseScaleX * scaleMultiplier * scaleXMultiplier;
