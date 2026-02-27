@@ -699,23 +699,17 @@ function createSpritesRender(opts: {
 
   const renderClipToTransitionTexture = (
     clip: IClip,
-    // Example: new Image(imageBitmap), or Texture
     frame: ImageBitmap | Texture,
     target: RenderTexture,
   ) => {
     if (!pixiApp) return;
 
-    // 1. Clear with Background
-    pixiApp.renderer.render({
-      container: transBgGraphics,
-      target: target,
-      clear: true,
-    });
-
-    // 2. Render Clip Frame
+    const style = (clip as any).style || {};
     const { renderTransform } = clip;
-    let tempSprite: Sprite | TilingSprite;
     const isMirrored = (renderTransform?.mirror ?? 0) > 0.5;
+
+    // 1. Create temporary sprite
+    let tempSprite: Sprite | TilingSprite;
 
     if (isMirrored) {
       tempSprite = new TilingSprite({
@@ -762,15 +756,13 @@ function createSpritesRender(opts: {
         : 1;
 
     if (isMirrored && tempSprite instanceof TilingSprite) {
-      // Override width/height to be larger
       tempSprite.width = textureWidth * 5;
       tempSprite.height = textureHeight * 5;
-
-      // Center the texture within the large box
       tempSprite.tilePosition.set(
         (tempSprite.width - textureWidth) / 2,
         (tempSprite.height - textureHeight) / 2,
       );
+    }
 
       if (clip.flip === "horizontal") {
         tempSprite.scale.x = -baseScaleX * scaleMultiplier * scaleXMultiplier;
@@ -800,24 +792,24 @@ function createSpritesRender(opts: {
       180;
     tempSprite.alpha = clip.opacity * opacityMultiplier;
 
+    // Apply Filters
+    const filters: any[] = [];
     if (blurOffset > 0) {
       const blurFilter = new BlurFilter();
       blurFilter.strength = blurOffset;
       blurFilter.quality = 4;
       (blurFilter as any).repeatEdgePixels = true;
-      tempSprite.filters = [blurFilter];
+      filters.push(blurFilter);
     }
 
     if (brightnessMultiplier !== 1) {
       const brightnessFilter = new ColorMatrixFilter();
       brightnessFilter.brightness(brightnessMultiplier, false);
-      const currentFilters = tempSprite.filters || [];
-      tempSprite.filters = [...currentFilters, brightnessFilter];
+      filters.push(brightnessFilter);
     }
+    tempSprite.filters = filters;
 
-    const style = (clip as any).style || {};
-
-    // 2.5 Apply Mask (Border Radius)
+    // Apply Styles (Border Radius, Stroke, Shadow)
     const borderRadius = style.borderRadius || 0;
     let maskGraphics: Graphics | null = null;
     if (borderRadius > 0) {
@@ -834,17 +826,13 @@ function createSpritesRender(opts: {
       tempSprite.mask = maskGraphics;
     }
 
-    // 3. Render Stroke if present
     const stroke = style.stroke;
     let strokeGraphics: Graphics | null = null;
-
     if (stroke && stroke.width > 0) {
       strokeGraphics = new Graphics();
       const color = parseColor(stroke.color) ?? 0xffffff;
-      const width = stroke.width;
-
       strokeGraphics.setStrokeStyle({
-        width: width,
+        width: stroke.width,
         color: color,
         alignment: 1,
       });
@@ -870,7 +858,6 @@ function createSpritesRender(opts: {
       tempSprite.addChild(strokeGraphics);
     }
 
-    // 4. Render Shadow if present
     const shadow = style.dropShadow;
     let shadowGraphics: Graphics | null = null;
     if (shadow && (shadow.blur > 0 || shadow.distance > 0)) {
@@ -901,14 +888,13 @@ function createSpritesRender(opts: {
         );
       }
       shadowGraphics.fill({ color, alpha });
-      // Add as first child to be behind
       tempSprite.addChildAt(shadowGraphics, 0);
     }
 
     pixiApp.renderer.render({
       container: tempSprite,
       target: target,
-      clear: false,
+      clear: true,
     });
 
     if (!(frame instanceof Texture)) {
@@ -1256,6 +1242,15 @@ function createSpritesRender(opts: {
                   clipsEffectContainer.addChild(root);
                   processedClips.add(sprite.id);
                 }
+              }
+
+              // Also check for Transition Sprite
+              const transSprite = transitionSprites.get(sprite.id);
+              if (transSprite) {
+                if (transSprite.parent)
+                  (transSprite.parent as Container).removeChild(transSprite);
+                clipsEffectContainer.addChild(transSprite);
+                processedClips.add(sprite.id);
               }
             }
           }

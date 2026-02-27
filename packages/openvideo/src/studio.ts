@@ -7,6 +7,7 @@ import {
   RenderTexture,
   BlurFilter,
   ColorMatrixFilter,
+  TilingSprite,
 } from "pixi.js";
 
 import { Caption } from "./clips/caption-clip";
@@ -24,6 +25,7 @@ import { Transformer } from "./transfomer/transformer";
 import type { EffectKey } from "./effect/glsl/gl-effect";
 import { makeEffect } from "./effect/effect";
 import { makeTransition } from "./transition/transition";
+import { parseColor } from "./utils/color";
 
 import EventEmitter from "./event-emitter";
 
@@ -1454,11 +1456,11 @@ export class Studio extends EventEmitter<StudioEvents> {
             });
 
             // Mostrar transición
-            let transSprite = this.transitionSprites.get(transKey);
+            let transSprite = this.transitionSprites.get(clip.id);
             if (!transSprite) {
               transSprite = new Sprite();
-              transSprite.label = `TransitionSprite_${transKey}`;
-              this.transitionSprites.set(transKey, transSprite);
+              transSprite.label = `TransitionSprite_${clip.id}`;
+              this.transitionSprites.set(clip.id, transSprite);
               if (this.clipsNormalContainer) {
                 this.clipsNormalContainer.addChild(transSprite);
               }
@@ -1808,16 +1810,30 @@ export class Studio extends EventEmitter<StudioEvents> {
   ): void {
     if (!this.pixiApp) return;
 
-    // 1. Render Clip Frame with its current transforms and CLEAR the target
-    // We use a temporary sprite for this to avoid disrupting the main scene's sprites
-    const tempSprite = new Sprite(
-      frame instanceof Texture ? frame : Texture.from(frame),
-    );
+    const style = (clip as any).style || {};
+    const { renderTransform } = clip;
+    const isMirrored = (renderTransform?.mirror ?? 0) > 0.5;
+
+    // 1. Create temporary sprite
+    let tempSprite: Sprite | TilingSprite;
+
+    if (isMirrored) {
+      tempSprite = new TilingSprite({
+        texture: frame instanceof Texture ? frame : Texture.from(frame),
+        width: 1, // Placeholder
+        height: 1,
+      });
+      if (tempSprite.texture.source) {
+        tempSprite.texture.source.style.addressMode = "mirror-repeat";
+        tempSprite.texture.source.update();
+      }
+    } else {
+      tempSprite = new Sprite(
+        frame instanceof Texture ? frame : Texture.from(frame),
+      );
+    }
 
     // Apply transforms similar to PixiSpriteRenderer.applySpriteTransforms
-    // Note: textures in transitions are expected to be artboard-sized at the end
-    // so we render this sprite into the RenderTexture (which is artboard-sized).
-    const { renderTransform } = clip;
     const xOffset = renderTransform?.x ?? 0;
     const yOffset = renderTransform?.y ?? 0;
     const angleOffset = renderTransform?.angle ?? 0;
@@ -1833,12 +1849,25 @@ export class Studio extends EventEmitter<StudioEvents> {
     const textureWidth = tempSprite.texture.width || 1;
     const textureHeight = tempSprite.texture.height || 1;
 
+    const isCaption = (clip as any).type === "Caption";
+
     const baseScaleX =
-      clip.width && clip.width !== 0 ? Math.abs(clip.width) / textureWidth : 1;
+      !isCaption && clip.width && clip.width !== 0
+        ? Math.abs(clip.width) / textureWidth
+        : 1;
     const baseScaleY =
-      clip.height && clip.height !== 0
+      !isCaption && clip.height && clip.height !== 0
         ? Math.abs(clip.height) / textureHeight
         : 1;
+
+    if (isMirrored && tempSprite instanceof TilingSprite) {
+      tempSprite.width = textureWidth * 5;
+      tempSprite.height = textureHeight * 5;
+      tempSprite.tilePosition.set(
+        (tempSprite.width - textureWidth) / 2,
+        (tempSprite.height - textureHeight) / 2,
+      );
+    }
 
     if (clip.flip === "horizontal") {
       tempSprite.scale.x = -baseScaleX * scaleMultiplier;
@@ -1856,19 +1885,103 @@ export class Studio extends EventEmitter<StudioEvents> {
       180;
     tempSprite.alpha = clip.opacity * opacityMultiplier;
 
+    // Apply Filters
+    const filters: any[] = [];
     if (blurOffset > 0) {
       const blurFilter = new BlurFilter();
       blurFilter.strength = blurOffset;
       blurFilter.quality = 4;
       (blurFilter as any).repeatEdgePixels = true;
-      tempSprite.filters = [blurFilter];
+      filters.push(blurFilter);
     }
 
     if (brightnessMultiplier !== 1) {
       const brightnessFilter = new ColorMatrixFilter();
       brightnessFilter.brightness(brightnessMultiplier, false);
-      const currentFilters = tempSprite.filters || [];
-      tempSprite.filters = [...currentFilters, brightnessFilter];
+      filters.push(brightnessFilter);
+    }
+    tempSprite.filters = filters;
+
+    // Apply Styles (Border Radius, Stroke, Shadow)
+    const borderRadius = style.borderRadius || 0;
+    let maskGraphics: Graphics | null = null;
+    if (borderRadius > 0) {
+      maskGraphics = new Graphics();
+      maskGraphics.roundRect(
+        -textureWidth / 2,
+        -textureHeight / 2,
+        textureWidth,
+        textureHeight,
+        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
+      );
+      maskGraphics.fill({ color: 0xffffff, alpha: 1 });
+      tempSprite.addChild(maskGraphics);
+      tempSprite.mask = maskGraphics;
+    }
+
+    const stroke = style.stroke;
+    let strokeGraphics: Graphics | null = null;
+    if (stroke && stroke.width > 0) {
+      strokeGraphics = new Graphics();
+      const color = parseColor(stroke.color) ?? 0xffffff;
+      strokeGraphics.setStrokeStyle({
+        width: stroke.width,
+        color: color,
+        alignment: 1,
+      });
+
+      if (borderRadius > 0) {
+        const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
+        strokeGraphics.roundRect(
+          -textureWidth / 2,
+          -textureHeight / 2,
+          textureWidth,
+          textureHeight,
+          r,
+        );
+      } else {
+        strokeGraphics.rect(
+          -textureWidth / 2,
+          -textureHeight / 2,
+          textureWidth,
+          textureHeight,
+        );
+      }
+      strokeGraphics.stroke();
+      tempSprite.addChild(strokeGraphics);
+    }
+
+    const shadow = style.dropShadow;
+    let shadowGraphics: Graphics | null = null;
+    if (shadow && (shadow.blur > 0 || shadow.distance > 0)) {
+      shadowGraphics = new Graphics();
+      const color = parseColor(shadow.color) ?? 0x000000;
+      const alpha = shadow.alpha ?? 0.5;
+      const distance = shadow.distance ?? 0;
+      const angle = shadow.angle ?? 0; // already in radians in style? check PixiSpriteRenderer
+
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance;
+
+      if (borderRadius > 0) {
+        const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
+        shadowGraphics.roundRect(
+          -textureWidth / 2 + dx,
+          -textureHeight / 2 + dy,
+          textureWidth,
+          textureHeight,
+          r,
+        );
+      } else {
+        shadowGraphics.rect(
+          -textureWidth / 2 + dx,
+          -textureHeight / 2 + dy,
+          textureWidth,
+          textureHeight,
+        );
+      }
+      shadowGraphics.fill({ color, alpha });
+      tempSprite.addChildAt(shadowGraphics, 0);
     }
 
     // Render onto target and CLEAR the texture first
@@ -1878,10 +1991,13 @@ export class Studio extends EventEmitter<StudioEvents> {
       clear: true,
     });
 
-    // Clean up temporary texture/sprite
+    // Clean up temporary objects
     if (!(frame instanceof Texture)) {
       tempSprite.texture.destroy(true);
     }
+    if (maskGraphics) maskGraphics.destroy();
+    if (strokeGraphics) strokeGraphics.destroy();
+    if (shadowGraphics) shadowGraphics.destroy();
     tempSprite.destroy();
   }
 
@@ -1970,8 +2086,8 @@ export class Studio extends EventEmitter<StudioEvents> {
       const { key, startTime, duration, trackIndex } = effect;
       const elapsed = timestamp - startTime;
       const progress = Math.min(Math.max(elapsed / duration, 0), 1);
-
-      if (progress <= 0 || progress >= 1) continue;
+      
+      if (progress < 0 || progress >= 1) continue;
 
       // Ensure effect container is ready for this pass
       this.clipsEffectContainer.visible = true;
