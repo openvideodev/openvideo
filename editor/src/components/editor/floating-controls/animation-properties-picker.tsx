@@ -34,6 +34,13 @@ import { Switch } from "@/components/ui/switch";
 
 type PropertyKey = keyof typeof ANIMATABLE_PROPERTIES;
 
+const SPECIAL_ANIMATIONS_CAPTIONS = [
+  "charTypewriter",
+  "upDownCaption",
+  "upLeftCaption",
+  "fadeByWord",
+];
+
 export function AnimationPropertiesPicker() {
   const { floatingControlData, setFloatingControl } = useLayoutStore();
   const { studio } = useStudioStore();
@@ -45,6 +52,7 @@ export function AnimationPropertiesPicker() {
     ? clip?.animations.find((a: any) => a.id === animationId)
     : null;
   const clipDuration = clip?.duration || 0;
+  const typeClip = clip?.type || "";
 
   const [activeTab, setActiveTab] = useState<string>("in");
   const [preset, setPreset] = useState<string>(animation?.type || "");
@@ -56,9 +64,15 @@ export function AnimationPropertiesPicker() {
   const [keyframes, setKeyframes] = useState<
     Record<string, Partial<AnimationProps>>
   >(animation?.params || { "0%": {}, "100%": {} });
-  const [duration, setDuration] = useState<number>(
-    (animation?.options.duration || 1000000) / 1000,
-  );
+  const [duration, setDuration] = useState<number>(() => {
+    if (animation?.options.duration) {
+      return animation.options.duration / 1000;
+    }
+    if (typeClip === "Caption") {
+      return (clipDuration * 0.2) / 1000;
+    }
+    return 1000;
+  });
   const [delay, setDelay] = useState<number>(
     (animation?.options.delay || 0) / 1000,
   );
@@ -245,7 +259,7 @@ export function AnimationPropertiesPicker() {
     });
   };
 
-  const handleSave = () => {
+  const buildAnimationConfig = () => {
     const opts: AnimationOptions = {
       duration: duration * 1000,
       delay: delay * 1000,
@@ -253,31 +267,34 @@ export function AnimationPropertiesPicker() {
       easing,
     };
 
-    const finalParams = { ...keyframes };
+    const finalParams: any = structuredClone(keyframes);
 
-    // Apply global mirror setting to all keyframes
     Object.keys(finalParams).forEach((key) => {
       if (key.includes("%")) {
-        finalParams[key] = {
-          ...finalParams[key],
-          mirror: mirrorEnabled ? 1 : 0,
-        };
+        finalParams[key].mirror = mirrorEnabled ? 1 : 0;
       }
     });
 
     if (preset !== "custom") {
-      // Filter presetParams to only include relevant values
       const filteredParams: any = {};
+
       if (preset === "slideIn" || preset === "slideOut") {
         filteredParams.direction = presetParams.direction;
         filteredParams.distance = presetParams.distance;
       } else if (preset.startsWith("char")) {
         filteredParams.stagger = presetParams.stagger;
       }
-      (finalParams as any).presetParams = filteredParams;
+
+      finalParams.presetParams = filteredParams;
     }
 
     const type = preset === "custom" || preset === "" ? "keyframes" : preset;
+
+    return { type, opts, finalParams };
+  };
+
+  const handleSave = () => {
+    const { type, opts, finalParams } = buildAnimationConfig();
 
     if (mode === "edit" && animationId) {
       clip.updateAnimation(animationId, type, opts, finalParams);
@@ -289,6 +306,33 @@ export function AnimationPropertiesPicker() {
     setFloatingControl("");
   };
 
+  const handleApplyToAllCaptions = () => {
+    if (!studio) return;
+
+    const { type, opts, finalParams } = buildAnimationConfig();
+
+    studio.clips.forEach((c: any) => {
+      if (c.type === "Caption") {
+        c.animations = [];
+        const special = SPECIAL_ANIMATIONS_CAPTIONS.includes(type);
+        const targetDuration = special ? c.duration : c.duration * 0.2;
+        let targetDelay = opts.delay;
+        if (type.toLowerCase().includes("out") || activeTab === "out") {
+          targetDelay = Math.max(0, c.duration - targetDuration);
+        }
+
+        c.addAnimation(
+          type,
+          { ...opts, duration: targetDuration, delay: targetDelay },
+          finalParams,
+        );
+        c.emit("propsChange", {});
+      }
+    });
+
+    setFloatingControl("");
+  };
+
   const sortedKeyframes = Object.keys(keyframes)
     .filter((k) => k.includes("%"))
     .sort((a, b) => {
@@ -297,7 +341,7 @@ export function AnimationPropertiesPicker() {
       return aNum - bNum;
     });
 
-  const isTextLike = clip?.type === "Text" || clip?.type === "Caption";
+  const isTextLike = typeClip === "Text" || typeClip === "Caption";
 
   const inPresets = [
     { label: "Fade In", value: "fadeIn" },
@@ -307,13 +351,16 @@ export function AnimationPropertiesPicker() {
     { label: "Pulse", value: "pulse" },
     ...(isTextLike
       ? [
-          { label: "Pop Caption", value: "popCaption" },
-          { label: "Bounce Caption", value: "bounceCaption" },
-          { label: "Scale Caption", value: "scaleCaption" },
-          { label: "Slide Left Caption", value: "slideLeftCaption" },
-          { label: "Slide Right Caption", value: "slideRightCaption" },
-          { label: "Slide Up Caption", value: "slideUpCaption" },
-          { label: "Slide Down Caption", value: "slideDownCaption" },
+          { label: "Pop", value: "popCaption" },
+          { label: "Bounce", value: "bounceCaption" },
+          { label: "Scale", value: "scaleCaption" },
+          { label: "Slide Left", value: "slideLeftCaption" },
+          { label: "Slide Right", value: "slideRightCaption" },
+          { label: "Slide Up", value: "slideUpCaption" },
+          { label: "Slide Down", value: "slideDownCaption" },
+          { label: "Slide Fade By Word", value: "slideFadeByWord" },
+          { label: "Up Down", value: "upDownCaption" },
+          { label: "Up Left", value: "upLeftCaption" },
           { label: "Char Fade In", value: "charFadeIn" },
           { label: "Char Slide Up", value: "charSlideUp" },
           { label: "Char Typewriter", value: "charTypewriter" },
@@ -368,286 +415,250 @@ export function AnimationPropertiesPicker() {
           </div>
 
           {/* Tabs */}
-          <Tabs
-            value={activeTab}
-            onValueChange={handleTabChange}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="in">In</TabsTrigger>
-              <TabsTrigger value="out">Out</TabsTrigger>
-              <TabsTrigger value="custom">Custom</TabsTrigger>
-            </TabsList>
 
+          {typeClip === "Caption" ? (
             <div className="mt-4 flex flex-col gap-4">
-              {/* Preset Selector */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Preset
-                </label>
-                <Select value={preset} onValueChange={handlePresetChange}>
-                  <SelectTrigger className="w-full h-9">
-                    <SelectValue placeholder="Select a preset" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[250] max-h-60">
-                    {activeTab === "in" &&
-                      inPresets.map((p) => (
-                        <SelectItem key={p.value} value={p.value}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    {activeTab === "out" &&
-                      outPresets.map((p) => (
-                        <SelectItem key={p.value} value={p.value}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    {activeTab === "custom" && (
-                      <>
-                        <SelectItem value="custom">Keyframes Only</SelectItem>
-                        {Array.from(
-                          new Map(
-                            [...inPresets, ...outPresets].map((p) => [
-                              p.value,
-                              p,
-                            ]),
-                          ).values(),
-                        ).map((p) => (
-                          <SelectItem key={p.value} value={p.value}>
-                            {p.label}
-                          </SelectItem>
-                        ))}
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+              <PresetOptions
+                preset={preset}
+                activeTab={activeTab}
+                inPresets={inPresets}
+                outPresets={outPresets}
+                handlePresetChange={handlePresetChange}
+              />
+              <EasingOptions easing={easing} setEasing={setEasing} />
+            </div>
+          ) : (
+            <Tabs
+              value={activeTab}
+              onValueChange={handleTabChange}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="in">In</TabsTrigger>
+                <TabsTrigger value="out">Out</TabsTrigger>
+                <TabsTrigger value="custom">Custom</TabsTrigger>
+              </TabsList>
 
-              {/* Preset Parameters (Slide Only) */}
-              {(preset === "slideIn" || preset === "slideOut") && (
-                <div className="grid grid-cols-2 gap-2 p-2 bg-secondary/20 rounded-md">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-muted-foreground">
-                      Direction
-                    </label>
-                    <Select
-                      value={presetParams.direction}
-                      onValueChange={(val) =>
-                        setPresetParams((prev: any) => ({
-                          ...prev,
-                          direction: val,
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="z-[250]">
-                        <SelectItem value="left">Left</SelectItem>
-                        <SelectItem value="right">Right</SelectItem>
-                        <SelectItem value="top">Top</SelectItem>
-                        <SelectItem value="bottom">Bottom</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-muted-foreground">
-                      Distance (px)
-                    </label>
-                    <NumberInput
-                      value={presetParams.distance}
-                      onChange={(val) =>
-                        setPresetParams((prev: any) => ({
-                          ...prev,
-                          distance: val,
-                        }))
-                      }
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Stagger (for character animations) */}
-              {preset.startsWith("char") && (
-                <div className="flex flex-col gap-2 p-2 bg-secondary/20 rounded-md">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] text-muted-foreground">
-                      Stagger: {presetParams.stagger}s
-                    </label>
-                  </div>
-                  <Slider
-                    value={[presetParams.stagger || 0.05]}
-                    min={0}
-                    max={0.5}
-                    step={0.01}
-                    onValueChange={([val]) =>
-                      setPresetParams((prev: any) => ({
-                        ...prev,
-                        stagger: val,
-                      }))
-                    }
-                  />
-                </div>
-              )}
-
-              {/* Keyframes */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Keyframes
-                </label>
-
-                {sortedKeyframes.map((keyframe) => (
-                  <KeyframeItem
-                    key={keyframe}
-                    keyframe={keyframe}
-                    properties={keyframes[keyframe] || {}}
-                    onPropertyChange={(prop, val) =>
-                      handlePropertyChange(keyframe, prop, val)
-                    }
-                    onPropertyToggle={(prop, enabled) =>
-                      handlePropertyToggle(keyframe, prop, enabled)
-                    }
-                    onRemove={() => handleRemoveKeyframe(keyframe)}
-                    canRemove={keyframe !== "0%" && keyframe !== "100%"}
-                  />
-                ))}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddKeyframe}
-                  className="w-full"
-                >
-                  <IconPlus className="size-3.5 mr-1" />
-                  Add Keyframe
-                </Button>
-              </div>
-
-              {/* Mirror Effect */}
-              <div className="flex items-center justify-between p-2 bg-secondary/20 rounded-md border border-dashed">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium">Mirror Effect</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    Repeat edges to fill frame
-                  </span>
-                </div>
-                <Switch
-                  checked={mirrorEnabled}
-                  onCheckedChange={setMirrorEnabled}
+              <div className="mt-4 flex flex-col gap-4">
+                {/* Preset Selector */}
+                <PresetOptions
+                  preset={preset}
+                  activeTab={activeTab}
+                  inPresets={inPresets}
+                  outPresets={outPresets}
+                  handlePresetChange={handlePresetChange}
                 />
-              </div>
 
-              {/* Timing */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Timing
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <InputGroup>
-                    <InputGroupAddon align="inline-start">
-                      <span className="text-[10px] font-medium text-muted-foreground">
-                        Duration
-                      </span>
-                    </InputGroupAddon>
-                    <NumberInput
-                      value={duration}
-                      onChange={setDuration}
-                      className="p-0"
-                    />
-                    <InputGroupAddon align="inline-end">
-                      <span className="text-[10px] text-muted-foreground">
-                        ms
-                      </span>
-                    </InputGroupAddon>
-                  </InputGroup>
-
-                  <InputGroup
-                    className={cn(
-                      activeTab !== "custom" &&
-                        "opacity-60 pointer-events-none",
-                    )}
-                  >
-                    <InputGroupAddon align="inline-start">
-                      <span className="text-[10px] font-medium text-muted-foreground">
-                        Delay
-                      </span>
-                    </InputGroupAddon>
-                    <NumberInput
-                      value={delay}
-                      onChange={setDelay}
-                      className="p-0"
-                    />
-                    <InputGroupAddon align="inline-end">
-                      <span className="text-[10px] text-muted-foreground">
-                        ms
-                      </span>
-                    </InputGroupAddon>
-                  </InputGroup>
-                </div>
-
-                {activeTab === "out" && (
-                  <div className="text-[10px] text-muted-foreground italic px-1">
-                    * Delay matches clip end automatically
+                {/* Preset Parameters (Slide Only) */}
+                {(preset === "slideIn" || preset === "slideOut") && (
+                  <div className="grid grid-cols-2 gap-2 p-2 bg-secondary/20 rounded-md">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-muted-foreground">
+                        Direction
+                      </label>
+                      <Select
+                        value={presetParams.direction}
+                        onValueChange={(val) =>
+                          setPresetParams((prev: any) => ({
+                            ...prev,
+                            direction: val,
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[250]">
+                          <SelectItem value="left">Left</SelectItem>
+                          <SelectItem value="right">Right</SelectItem>
+                          <SelectItem value="top">Top</SelectItem>
+                          <SelectItem value="bottom">Bottom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-muted-foreground">
+                        Distance (px)
+                      </label>
+                      <NumberInput
+                        value={presetParams.distance}
+                        onChange={(val) =>
+                          setPresetParams((prev: any) => ({
+                            ...prev,
+                            distance: val,
+                          }))
+                        }
+                        className="h-7 text-xs"
+                      />
+                    </div>
                   </div>
                 )}
 
-                <InputGroup>
-                  <InputGroupAddon align="inline-start">
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      Iterations
-                    </span>
-                  </InputGroupAddon>
-                  <NumberInput
-                    value={iterCount}
-                    onChange={setIterCount}
-                    className="p-0"
-                  />
-                </InputGroup>
-              </div>
+                {/* Stagger (for character animations) */}
+                {preset.startsWith("char") && (
+                  <div className="flex flex-col gap-2 p-2 bg-secondary/20 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] text-muted-foreground">
+                        Stagger: {presetParams.stagger}s
+                      </label>
+                    </div>
+                    <Slider
+                      value={[presetParams.stagger || 0.05]}
+                      min={0}
+                      max={0.5}
+                      step={0.01}
+                      onValueChange={([val]) =>
+                        setPresetParams((prev: any) => ({
+                          ...prev,
+                          stagger: val,
+                        }))
+                      }
+                    />
+                  </div>
+                )}
 
-              {/* Easing */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Easing
-                </label>
-                <Select value={easing} onValueChange={setEasing}>
-                  <SelectTrigger className="w-full h-9">
-                    <SelectValue placeholder="Select easing" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[250]">
-                    <SelectItem value="linear">Linear</SelectItem>
-                    <SelectItem value="slow">Slow</SelectItem>
-                    <SelectItem value="easeInQuad">Ease In Quad</SelectItem>
-                    <SelectItem value="easeOutQuad">Ease Out Quad</SelectItem>
-                    <SelectItem value="easeInOutQuad">
-                      Ease In Out Quad
-                    </SelectItem>
-                    <SelectItem value="easeInCubic">Ease In Cubic</SelectItem>
-                    <SelectItem value="easeOutCubic">Ease Out Cubic</SelectItem>
-                    <SelectItem value="easeInOutCubic">
-                      Ease In Out Cubic
-                    </SelectItem>
-                    <SelectItem value="easeInBack">Ease In Back</SelectItem>
-                    <SelectItem value="easeOutBack">Ease Out Back</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Keyframes */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Keyframes
+                  </label>
+
+                  {sortedKeyframes.map((keyframe) => (
+                    <KeyframeItem
+                      key={keyframe}
+                      keyframe={keyframe}
+                      properties={keyframes[keyframe] || {}}
+                      onPropertyChange={(prop, val) =>
+                        handlePropertyChange(keyframe, prop, val)
+                      }
+                      onPropertyToggle={(prop, enabled) =>
+                        handlePropertyToggle(keyframe, prop, enabled)
+                      }
+                      onRemove={() => handleRemoveKeyframe(keyframe)}
+                      canRemove={keyframe !== "0%" && keyframe !== "100%"}
+                    />
+                  ))}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddKeyframe}
+                    className="w-full"
+                  >
+                    <IconPlus className="size-3.5 mr-1" />
+                    Add Keyframe
+                  </Button>
+                </div>
+
+                {/* Mirror Effect */}
+                {typeClip !== "Text" && (
+                  <div className="flex items-center justify-between p-2 bg-secondary/20 rounded-md border border-dashed">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-medium">Mirror Effect</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Repeat edges to fill frame
+                      </span>
+                    </div>
+                    <Switch
+                      checked={mirrorEnabled}
+                      onCheckedChange={setMirrorEnabled}
+                    />
+                  </div>
+                )}
+
+                {/* Timing */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Timing
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          Duration
+                        </span>
+                      </InputGroupAddon>
+                      <NumberInput
+                        value={duration}
+                        onChange={setDuration}
+                        className="p-0"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <span className="text-[10px] text-muted-foreground">
+                          ms
+                        </span>
+                      </InputGroupAddon>
+                    </InputGroup>
+
+                    <InputGroup
+                      className={cn(
+                        activeTab !== "custom" &&
+                          "opacity-60 pointer-events-none",
+                      )}
+                    >
+                      <InputGroupAddon align="inline-start">
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          Delay
+                        </span>
+                      </InputGroupAddon>
+                      <NumberInput
+                        value={delay}
+                        onChange={setDelay}
+                        className="p-0"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <span className="text-[10px] text-muted-foreground">
+                          ms
+                        </span>
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </div>
+
+                  {activeTab === "out" && (
+                    <div className="text-[10px] text-muted-foreground italic px-1">
+                      * Delay matches clip end automatically
+                    </div>
+                  )}
+
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        Iterations
+                      </span>
+                    </InputGroupAddon>
+                    <NumberInput
+                      value={iterCount}
+                      onChange={setIterCount}
+                      className="p-0"
+                    />
+                  </InputGroup>
+                </div>
+
+                {/* Easing */}
+                <EasingOptions easing={easing} setEasing={setEasing} />
               </div>
-            </div>
-          </Tabs>
+            </Tabs>
+          )}
 
           {/* Actions */}
-          <div className="flex gap-2 pt-2 border-t mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setFloatingControl("")}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSave} className="flex-1">
-              {mode === "add" ? "Add" : "Save"}
-            </Button>
+          <div className="flex flex-col gap-2 pt-2 border-t mt-4">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setFloatingControl("")}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={
+                  typeClip === "Caption" ? handleApplyToAllCaptions : handleSave
+                }
+                className="flex-1"
+              >
+                {mode === "add" ? "Add" : "Save"}
+              </Button>
+            </div>
           </div>
         </div>
       </ScrollArea>
@@ -747,3 +758,91 @@ function KeyframeItem({
     </div>
   );
 }
+
+const EasingOptions = ({
+  easing,
+  setEasing,
+}: {
+  easing: string;
+  setEasing: (easing: string) => void;
+}) => {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+        Easing
+      </label>
+      <Select value={easing} onValueChange={setEasing}>
+        <SelectTrigger className="w-full h-9">
+          <SelectValue placeholder="Select easing" />
+        </SelectTrigger>
+        <SelectContent className="z-[250]">
+          <SelectItem value="linear">Linear</SelectItem>
+          <SelectItem value="slow">Slow</SelectItem>
+          <SelectItem value="easeInQuad">Ease In Quad</SelectItem>
+          <SelectItem value="easeOutQuad">Ease Out Quad</SelectItem>
+          <SelectItem value="easeInOutQuad">Ease In Out Quad</SelectItem>
+          <SelectItem value="easeInCubic">Ease In Cubic</SelectItem>
+          <SelectItem value="easeOutCubic">Ease Out Cubic</SelectItem>
+          <SelectItem value="easeInOutCubic">Ease In Out Cubic</SelectItem>
+          <SelectItem value="easeInBack">Ease In Back</SelectItem>
+          <SelectItem value="easeOutBack">Ease Out Back</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+};
+
+const PresetOptions = ({
+  preset,
+  activeTab,
+  inPresets,
+  outPresets,
+  handlePresetChange,
+}: {
+  preset: string;
+  activeTab: string;
+  inPresets: { label: string; value: string }[];
+  outPresets: { label: string; value: string }[];
+  handlePresetChange: (preset: string) => void;
+}) => {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+        Preset
+      </label>
+      <Select value={preset} onValueChange={handlePresetChange}>
+        <SelectTrigger className="w-full h-9">
+          <SelectValue placeholder="Select a preset" />
+        </SelectTrigger>
+        <SelectContent className="z-[250] max-h-60">
+          {activeTab === "in" &&
+            inPresets.map((p) => (
+              <SelectItem key={p.value} value={p.value}>
+                {p.label}
+              </SelectItem>
+            ))}
+          {activeTab === "out" &&
+            outPresets.map((p) => (
+              <SelectItem key={p.value} value={p.value}>
+                {p.label}
+              </SelectItem>
+            ))}
+          {activeTab === "custom" && (
+            <>
+              <SelectItem value="custom">Keyframes Only</SelectItem>
+              {Array.from(
+                new Map(
+                  [...inPresets, ...outPresets].map((p) => [p.value, p]),
+                ).values(),
+              ).map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+};
