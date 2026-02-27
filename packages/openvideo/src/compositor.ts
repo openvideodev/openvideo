@@ -731,6 +731,8 @@ function createSpritesRender(opts: {
     const yOffset = renderTransform?.y ?? 0;
     const angleOffset = renderTransform?.angle ?? 0;
     const scaleMultiplier = renderTransform?.scale ?? 1;
+    const scaleXMultiplier = renderTransform?.scaleX ?? 1;
+    const scaleYMultiplier = renderTransform?.scaleY ?? 1;
     const opacityMultiplier = renderTransform?.opacity ?? 1;
     const blurOffset = renderTransform?.blur ?? 0;
     const brightnessMultiplier = renderTransform?.brightness ?? 1;
@@ -762,15 +764,27 @@ function createSpritesRender(opts: {
       );
     }
 
-    if (clip.flip === "horizontal") {
-      tempSprite.scale.x = -baseScaleX * scaleMultiplier;
-      tempSprite.scale.y = baseScaleY * scaleMultiplier;
-    } else if (clip.flip === "vertical") {
-      tempSprite.scale.x = baseScaleX * scaleMultiplier;
-      tempSprite.scale.y = -baseScaleY * scaleMultiplier;
+      if (clip.flip === "horizontal") {
+        tempSprite.scale.x = -baseScaleX * scaleMultiplier * scaleXMultiplier;
+        tempSprite.scale.y = baseScaleY * scaleMultiplier * scaleYMultiplier;
+      } else if (clip.flip === "vertical") {
+        tempSprite.scale.x = baseScaleX * scaleMultiplier * scaleXMultiplier;
+        tempSprite.scale.y = -baseScaleY * scaleMultiplier * scaleYMultiplier;
+      } else {
+        tempSprite.scale.x = baseScaleX * scaleMultiplier * scaleXMultiplier;
+        tempSprite.scale.y = baseScaleY * scaleMultiplier * scaleYMultiplier;
+      }
     } else {
-      tempSprite.scale.x = baseScaleX * scaleMultiplier;
-      tempSprite.scale.y = baseScaleY * scaleMultiplier;
+      if (clip.flip === "horizontal") {
+        tempSprite.scale.x = -baseScaleX * scaleMultiplier * scaleXMultiplier;
+        tempSprite.scale.y = baseScaleY * scaleMultiplier * scaleYMultiplier;
+      } else if (clip.flip === "vertical") {
+        tempSprite.scale.x = baseScaleX * scaleMultiplier * scaleXMultiplier;
+        tempSprite.scale.y = -baseScaleY * scaleMultiplier * scaleYMultiplier;
+      } else {
+        tempSprite.scale.x = baseScaleX * scaleMultiplier * scaleXMultiplier;
+        tempSprite.scale.y = baseScaleY * scaleMultiplier * scaleYMultiplier;
+      }
     }
 
     tempSprite.rotation =

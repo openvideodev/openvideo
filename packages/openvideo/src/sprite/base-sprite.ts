@@ -250,6 +250,8 @@ export abstract class BaseSprite<
     width: 0,
     height: 0,
     scale: 1,
+    scaleX: 1,
+    scaleY: 1,
     opacity: 1,
     angle: 0,
     blur: 0,
@@ -286,9 +288,11 @@ export abstract class BaseSprite<
     const y = this.renderTransform.y ?? 0;
     const angleOffset = this.renderTransform.angle ?? 0;
     const scale = this.renderTransform.scale ?? 1;
+    const scaleX = this.renderTransform.scaleX ?? 1;
+    const scaleY = this.renderTransform.scaleY ?? 1;
 
     ctx.translate(x, y);
-    ctx.scale(scale, scale);
+    ctx.scale(scale * scaleX, scale * scaleY);
     ctx.rotate(((this.flip == null ? 1 : -1) * (angleOffset * Math.PI)) / 180);
   }
 
@@ -334,6 +338,8 @@ export abstract class BaseSprite<
       width: 0,
       height: 0,
       scale: 1,
+      scaleX: 1,
+      scaleY: 1,
       opacity: 1,
       angle: 0,
       blur: 0,
@@ -356,6 +362,10 @@ export abstract class BaseSprite<
         this.renderTransform.blur! += transform.blur;
       if (transform.scale !== undefined)
         this.renderTransform.scale! *= transform.scale;
+      if (transform.scaleX !== undefined)
+        this.renderTransform.scaleX! *= transform.scaleX;
+      if (transform.scaleY !== undefined)
+        this.renderTransform.scaleY! *= transform.scaleY;
       if (transform.opacity !== undefined)
         this.renderTransform.opacity! *= transform.opacity;
       if (transform.brightness !== undefined)

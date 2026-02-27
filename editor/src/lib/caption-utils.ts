@@ -13,6 +13,16 @@ interface RegenerateCaptionClipsOptions {
   styleUpdate?: any;
 }
 
+const CUSTOM_ANIMATIONS_CAPTIONS = [
+  "charTypewriter",
+  "scaleMidCaption",
+  "scaleDownCaption",
+  "upDownCaption",
+  "upLeftCaption",
+  "fadeByWord",
+  "slideFadeByWord",
+];
+
 export async function regenerateCaptionClips({
   studio,
   captionClip,
@@ -23,6 +33,25 @@ export async function regenerateCaptionClips({
   styleUpdate,
 }: RegenerateCaptionClipsOptions) {
   if (!studio || !captionClip?.mediaId) return;
+  console.log("styleUpdate", styleUpdate);
+
+  const getAnimationObjects = (
+    animation: string | string[],
+    clipDuration: number,
+  ) => {
+    const animations = Array.isArray(animation) ? animation : [animation];
+    return animations
+      .filter((a) => a !== "undefined")
+      .map((a) => ({
+        type: a,
+        opts: {
+          duration: CUSTOM_ANIMATIONS_CAPTIONS.includes(a)
+            ? clipDuration
+            : clipDuration * 0.2,
+          delay: 0,
+        },
+      }));
+  };
 
   const mediaId = captionClip.mediaId;
   const tracks = studio.getTracks();
@@ -108,12 +137,36 @@ export async function regenerateCaptionClips({
         ...(json.originalOpts || {}),
         wordsPerLine: mode,
         ...(styleUpdate?.caption ? { caption: styleUpdate.caption } : {}),
+        ...(styleUpdate?.animation && {
+          animations: getAnimationObjects(
+            styleUpdate.animation,
+            json.display.to - json.display.from,
+          ),
+        }),
+        ...(styleUpdate?.wordAnimation
+          ? { wordAnimation: styleUpdate.wordAnimation }
+          : {}),
       },
       opts: {
         ...(json.opts || {}),
         wordsPerLine: mode,
         ...(styleUpdate?.caption ? { caption: styleUpdate.caption } : {}),
+        ...(styleUpdate?.animation && {
+          animations: getAnimationObjects(
+            styleUpdate.animation,
+            json.display.to - json.display.from,
+          ),
+        }),
+        ...(styleUpdate?.wordAnimation
+          ? { wordAnimation: styleUpdate.wordAnimation }
+          : {}),
       },
+      animations: styleUpdate?.animation
+        ? getAnimationObjects(
+            styleUpdate.animation,
+            json.display.to - json.display.from,
+          )
+        : [],
       display: {
         from: json.display.from + mediaStartUs,
         to: json.display.to + mediaStartUs,
@@ -163,6 +216,9 @@ export async function regenerateCaptionClips({
 
       if (styleUpdate.textCase)
         enrichedJson.style.textCase = styleUpdate.textCase;
+
+      if (styleUpdate.wordAnimation)
+        enrichedJson.style.wordAnimation = styleUpdate.wordAnimation;
 
       if (styleUpdate.caption) {
         if (!enrichedJson.caption) enrichedJson.caption = {};

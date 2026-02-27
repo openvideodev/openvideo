@@ -136,7 +136,10 @@ export class KeyframeAnimation implements IAnimation {
 
     for (const prop of props) {
       const p = prop as keyof AnimationProps;
-      const def = p === "scale" || p === "opacity" ? 1 : 0;
+      const def =
+        p === "scale" || p === "scaleX" || p === "scaleY" || p === "opacity"
+          ? 1
+          : 0;
       const s = startFrame.props[p] ?? def;
       const e = endFrame.props[p] ?? def;
       (transform as any)[p] = s + (e - s) * easedProgress;

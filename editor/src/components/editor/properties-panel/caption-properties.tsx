@@ -116,8 +116,30 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
   };
 
   const handleAnimationRemove = (id: string) => {
-    captionClip.removeAnimation(id);
-    captionClip.emit("propsChange", {});
+    if (captionClip.type === "Caption" && studio) {
+      const anim = captionClip.animations.find((a: any) => a.id === id);
+      const typeToRemove = anim?.type;
+
+      studio.clips.forEach((c: any) => {
+        if (c.type === "Caption") {
+          if (typeToRemove) {
+            const targetAnim = c.animations.find(
+              (a: any) => a.type === typeToRemove,
+            );
+            if (targetAnim) {
+              c.removeAnimation(targetAnim.id);
+              c.emit("propsChange", {});
+            }
+          } else {
+            c.removeAnimation(id);
+            c.emit("propsChange", {});
+          }
+        }
+      });
+    } else {
+      captionClip.removeAnimation(id);
+      captionClip.emit("propsChange", {});
+    }
   };
 
   const animations = captionClip.animations || [];
