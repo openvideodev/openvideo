@@ -1,0 +1,59 @@
+---
+title: Chroma Key
+description: Remove backgrounds from video and image clips in real-time.
+---
+
+Chroma Key (also known as green screening) allows you to remove a specific background color from video or image clips, making them transparent.
+
+OpenVideo provides a native Chroma Key implementation that is GPU-accelerated and includes spill suppression for professional results.
+
+## Enabling Chroma Key
+
+Chroma Key is a property of individual clips (like `Video` or `Image`). You can enable it by modifying the `chromaKey` object on the clip.
+
+```ts
+import { Video } from "openvideo";
+
+const clip = await Video.fromUrl("green-screen.mp4");
+
+// Enable Chroma Key
+clip.chromaKey = {
+  enabled: true,
+  color: "#00FF00", // The color to remove (Green)
+  similarity: 0.15, // How closely colors must match (0.0 to 1.0)
+  spill: 0.05, // Amount of spill suppression to apply (0.0 to 1.0)
+};
+```
+
+## Configuration Parameters
+
+| Parameter      | Type      | Default     | Description                                                              |
+| :------------- | :-------- | :---------- | :----------------------------------------------------------------------- |
+| **enabled**    | `boolean` | `false`     | Whether the chroma key filter is active.                                 |
+| **color**      | `string`  | `"#00FF00"` | The background color to remove in hex format.                            |
+| **similarity** | `number`  | `0.1`       | Tolerance for color matching. Higher values remove more similar colors.  |
+| **spill**      | `number`  | `0.0`       | Removes the color "halo" reflected onto the subject from the background. |
+
+## Advanced Features
+
+### Automatic Channel Detection
+
+The engine automatically detects whether your key color is predominantly **Red**, **Green**, or **Blue**. It then applies specialized logic for each channel to ensure optimal masking and spill removal.
+
+### Spill Suppression
+
+Spill occurs when the background color reflects onto the subject (e.g., a green tint on a person's hair). The `spill` parameter intelligently removes these reflections by desaturating the affected areas while maintaining the subject's natural colors.
+
+## Usage in Studio
+
+When used in a `Studio` instance, Chroma Key updates are rendered in real-time as you modify the properties.
+
+```ts
+// Update similarity in response to a slider change
+studio.updateClip(clipId, {
+  chromaKey: {
+    ...clip.chromaKey,
+    similarity: 0.2,
+  },
+});
+```

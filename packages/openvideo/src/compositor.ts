@@ -816,7 +816,7 @@ function createSpritesRender(opts: {
       const chromaUniforms = new UniformGroup({
         uKeyColor: { value: [0, 1, 0], type: "vec3<f32>" },
         uSimilarity: { value: 0.1, type: "f32" },
-        uSmoothness: { value: 0.05, type: "f32" },
+        uSpill: { value: 0.0, type: "f32" },
       });
 
       const rgb = hexToRgb(clip.chromaKey.color);
@@ -826,7 +826,7 @@ function createSpritesRender(opts: {
         chromaUniforms.uniforms.uKeyColor[2] = rgb.b / 255;
       }
       chromaUniforms.uniforms.uSimilarity = clip.chromaKey.similarity;
-      chromaUniforms.uniforms.uSmoothness = clip.chromaKey.smoothness;
+      chromaUniforms.uniforms.uSpill = clip.chromaKey.spill;
 
       const chromaFilter = new Filter({
         glProgram: new GlProgram({

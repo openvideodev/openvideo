@@ -225,7 +225,7 @@ export abstract class BaseSprite<
     enabled: false,
     color: "#00FF00",
     similarity: 0.1,
-    smoothness: 0.05,
+    spill: 0.0,
   };
 
   /**

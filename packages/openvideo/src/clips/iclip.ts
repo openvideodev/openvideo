@@ -25,7 +25,7 @@ export interface IChromaKeyOpts {
   enabled: boolean;
   color: string;
   similarity: number;
-  smoothness: number;
+  spill: number;
 }
 
 /**

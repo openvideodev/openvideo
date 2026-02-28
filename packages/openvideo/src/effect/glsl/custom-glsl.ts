@@ -3509,6 +3509,7 @@ export const FAST_ZOOM_UNIFORMS = {
   uBlurStrength: { value: 0.01, type: "f32" },
 };
 
+
 export const CHROMA_KEY_FRAGMENT = `
 precision highp float;
 
@@ -3517,20 +3518,17 @@ uniform sampler2D uTexture;
 
 uniform vec3 uKeyColor;     
 uniform float uSimilarity;  
-uniform float uSmoothness;  
 uniform float uSpill;       
 
 void main() {
     vec4 color = texture2D(uTexture, vTextureCoord);
     
-    // Determinar qué canal es el más alto en uKeyColor
     float maxChannel = max(max(uKeyColor.r, uKeyColor.g), uKeyColor.b);
     
     float diff;
     float spillAmount = 0.0;
     
     if (maxChannel == uKeyColor.g && uKeyColor.g > uKeyColor.r && uKeyColor.g > uKeyColor.b) {
-        // Es verde - usar lógica de verde
         diff = color.g - max(color.r, color.b);
         spillAmount = max(0.0, color.g - max(color.r, color.b));
         color.g -= spillAmount * uSpill;
@@ -3540,7 +3538,6 @@ void main() {
         color.b = mix(color.b, avg, spillAmount);
     } 
     else if (maxChannel == uKeyColor.b && uKeyColor.b > uKeyColor.r && uKeyColor.b > uKeyColor.g) {
-        // Es azul - lógica para azul
         diff = color.b - max(color.r, color.g);
         spillAmount = max(0.0, color.b - max(color.r, color.g));
         color.b -= spillAmount * uSpill;
@@ -3550,7 +3547,6 @@ void main() {
         color.g = mix(color.g, avg, spillAmount);
     } 
     else {
-        // Es rojo - lógica para rojo
         diff = color.r - max(color.g, color.b);
         spillAmount = max(0.0, color.r - max(color.g, color.b));
         color.r -= spillAmount * uSpill;
@@ -3575,6 +3571,5 @@ void main() {
 export const CHROMA_KEY_UNIFORMS = {
   uKeyColor: { value: [0.176, 0.792, 0.098], type: "vec3<f32>" },
   uSimilarity: { value: 0.0, type: "f32" },
-  uSmoothness: { value: 0.0, type: "f32" },
   uSpill: { value: 0.0, type: "f32" },
 };

@@ -181,11 +181,11 @@ const STATIC_EFFECTS = {
     fragment: ROTATION_MOVEMENT_FRAGMENT,
     uniforms: ROTATION_MOVEMENT_UNIFORMS,
   },
-  chromaKey: {
-    label: "Chroma Key",
-    fragment: CHROMA_KEY_FRAGMENT,
-    uniforms: CHROMA_KEY_UNIFORMS,
-  },
+  // chromaKey: {
+  //   label: "Chroma Key",
+  //   fragment: CHROMA_KEY_FRAGMENT,
+  //   uniforms: CHROMA_KEY_UNIFORMS,
+  // },
   redGradient: {
     label: "Red Gradient",
     fragment: RED_GRADIENT_FRAGMENT,
