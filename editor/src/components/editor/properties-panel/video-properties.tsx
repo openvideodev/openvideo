@@ -46,6 +46,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import color from "color";
 import { NumberInput } from "@/components/ui/number-input";
+import { Switch } from "@/components/ui/switch";
 import useLayoutStore from "../store/use-layout-store";
 
 interface VideoPropertiesProps {
@@ -129,6 +130,14 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
           ...currentShadow,
           ...finalUpdates,
         },
+      },
+    });
+  };
+  const handleChromaKeyUpdate = (chromaUpdates: any) => {
+    videoClip.update({
+      chromaKey: {
+        ...videoClip.chromaKey,
+        ...chromaUpdates,
       },
     });
   };
@@ -347,6 +356,115 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
             ))
           )}
         </div>
+      </div>
+
+      {/* Chroma Key Section */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Chroma Key
+          </label>
+          <Switch
+            checked={videoClip.chromaKey?.enabled ?? false}
+            onCheckedChange={(checked) =>
+              handleChromaKeyUpdate({ enabled: checked })
+            }
+          />
+        </div>
+
+        {(videoClip.chromaKey?.enabled ?? false) && (
+          <div className="flex flex-col gap-3 pt-1">
+            <div className="flex gap-2">
+              <InputGroup className="flex-1">
+                <InputGroupAddon align="inline-start" className="relative p-0">
+                  <Popover modal={true}>
+                    <PopoverTrigger asChild>
+                      <InputGroupButton
+                        variant="ghost"
+                        size="icon-xs"
+                        className="h-full w-8"
+                      >
+                        <div
+                          className="h-4 w-4 rounded-full border border-white/10 shadow-sm"
+                          style={{
+                            backgroundColor:
+                              videoClip.chromaKey?.color || "#00FF00",
+                          }}
+                        />
+                      </InputGroupButton>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3" align="start">
+                      <ColorPicker
+                        onChange={(colorValue) => {
+                          const hexColor = color.rgb(colorValue).hex();
+                          handleChromaKeyUpdate({ color: hexColor });
+                        }}
+                        className="w-72 h-72 rounded-md border bg-background p-4 shadow-sm"
+                      >
+                        <ColorPickerSelection />
+                        <div className="flex items-center gap-4">
+                          <ColorPickerEyeDropper />
+                          <div className="grid w-full gap-1">
+                            <ColorPickerHue />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <ColorPickerOutput />
+                          <ColorPickerFormat />
+                        </div>
+                      </ColorPicker>
+                    </PopoverContent>
+                  </Popover>
+                </InputGroupAddon>
+                <InputGroupInput
+                  value={videoClip.chromaKey?.color?.toUpperCase() || "#00FF00"}
+                  onChange={(e) =>
+                    handleChromaKeyUpdate({ color: e.target.value })
+                  }
+                  className="text-sm p-0 text-[10px] font-mono"
+                />
+              </InputGroup>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">
+                  Similarity
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {Math.round((videoClip.chromaKey?.similarity ?? 0.1) * 100)}%
+                </span>
+              </div>
+              <Slider
+                value={[(videoClip.chromaKey?.similarity ?? 0.1) * 100]}
+                onValueChange={(v) =>
+                  handleChromaKeyUpdate({ similarity: v[0] / 100 })
+                }
+                max={100}
+                step={1}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">
+                  Smoothness
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {Math.round((videoClip.chromaKey?.smoothness ?? 0.05) * 100)}%
+                </span>
+              </div>
+              <Slider
+                value={[(videoClip.chromaKey?.smoothness ?? 0.05) * 100]}
+                onValueChange={(v) =>
+                  handleChromaKeyUpdate({ smoothness: v[0] / 100 })
+                }
+                max={100}
+                step={1}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Radius Section */}

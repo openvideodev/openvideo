@@ -1,8 +1,8 @@
-import type { BaseSprite, BaseSpriteEvents } from '../sprite/base-sprite';
+import type { BaseSprite, BaseSpriteEvents } from "../sprite/base-sprite";
 import {
   getDefaultAudioCodec,
   getCachedAudioCodec,
-} from '../utils/audio-codec-detector';
+} from "../utils/audio-codec-detector";
 
 export interface IClipMeta {
   width: number;
@@ -21,6 +21,13 @@ export interface ITransitionInfo {
   end?: number;
 }
 
+export interface IChromaKeyOpts {
+  enabled: boolean;
+  color: string;
+  similarity: number;
+  smoothness: number;
+}
+
 /**
  * Interface that all clips must implement
  *
@@ -30,8 +37,9 @@ export interface ITransitionInfo {
  * You only need to implement this interface to create custom clips, giving you maximum flexibility to generate video content such as animations and transition effects
  *
  */
-export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
-  extends Omit<BaseSprite<T>, 'destroy' | 'ready'> {
+export interface IClip<
+  T extends BaseSpriteEvents = BaseSpriteEvents,
+> extends Omit<BaseSprite<T>, "destroy" | "ready"> {
   // Override destroy to be public (BaseSprite has it as protected)
   // Override ready to return IClipMeta instead of Promise<void>
   destroy: () => void;
@@ -60,7 +68,7 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   tick: (time: number) => Promise<{
     video?: VideoFrame | ImageBitmap | null;
     audio?: Float32Array[];
-    state: 'done' | 'success';
+    state: "done" | "success";
   }>;
 
   /**
@@ -128,7 +136,7 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * @returns Array of handle kinds that should be visible
    */
   getVisibleHandles?: () => Array<
-    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
+    "tl" | "tr" | "bl" | "br" | "ml" | "mr" | "mt" | "mb" | "rot"
   >;
 
   /**
@@ -168,6 +176,11 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * List of active animations
    */
   readonly animations: any[];
+
+  /**
+   * Chroma key settings (green screen removal)
+   */
+  chromaKey: IChromaKeyOpts;
 }
 
 /**
@@ -191,7 +204,7 @@ export interface IPlaybackCapable {
    */
   play(
     element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
+    timeSeconds: number,
   ): Promise<void>;
 
   /**
@@ -207,7 +220,7 @@ export interface IPlaybackCapable {
    */
   seek(
     element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
+    timeSeconds: number,
   ): Promise<void>;
 
   /**
@@ -219,7 +232,7 @@ export interface IPlaybackCapable {
   syncPlayback(
     element: HTMLVideoElement | HTMLAudioElement,
     isPlaying: boolean,
-    timeSeconds: number
+    timeSeconds: number,
   ): void;
 
   /**
@@ -229,7 +242,7 @@ export interface IPlaybackCapable {
    */
   cleanupPlayback(
     element: HTMLVideoElement | HTMLAudioElement,
-    objectUrl?: string
+    objectUrl?: string,
   ): void;
 }
 
@@ -265,10 +278,10 @@ export async function getDefaultAudioConf() {
  */
 export const DEFAULT_AUDIO_CONF = {
   get codec() {
-    return getCachedAudioCodec()?.codec ?? 'mp4a.40.2';
+    return getCachedAudioCodec()?.codec ?? "mp4a.40.2";
   },
-  get codecType(): 'aac' | 'opus' {
-    return getCachedAudioCodec()?.codecType ?? 'aac';
+  get codecType(): "aac" | "opus" {
+    return getCachedAudioCodec()?.codecType ?? "aac";
   },
   get sampleRate() {
     return getCachedAudioCodec()?.sampleRate ?? 48000;

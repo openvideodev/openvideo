@@ -4,6 +4,7 @@ import {
   AnimationTransform,
   animationRegistry,
 } from "../animation";
+import { IChromaKeyOpts } from "../clips/iclip";
 type IRectBaseProps = any;
 interface IAnimationOpts {
   duration: number;
@@ -216,6 +217,16 @@ export abstract class BaseSprite<
     duration: number;
     targets?: number[];
   }> = [];
+
+  /**
+   * Chroma key settings (green screen removal)
+   */
+  chromaKey: IChromaKeyOpts = {
+    enabled: false,
+    color: "#00FF00",
+    similarity: 0.1,
+    smoothness: 0.05,
+  };
 
   /**
    * Styling properties (e.g., stroke, dropShadow, borderRadius)
@@ -484,6 +495,7 @@ export abstract class BaseSprite<
     target.trim = { ...this.trim };
     target.style = JSON.parse(JSON.stringify(this.style || {}));
     target.animations = [...this.animations];
+    target.chromaKey = { ...this.chromaKey };
     // Copy src if target is a BaseClip
     if ("src" in this && "src" in target) {
       (target as any).src = (this as any).src;

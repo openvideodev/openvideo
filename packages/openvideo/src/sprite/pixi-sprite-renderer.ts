@@ -7,10 +7,15 @@ import {
   BlurFilter,
   ColorMatrixFilter,
   TilingSprite,
+  Filter,
+  GlProgram,
+  UniformGroup,
 } from "pixi.js";
 
 import type { IClip } from "../clips/iclip";
-import { parseColor } from "../utils/color";
+import { parseColor, hexToRgb } from "../utils/color";
+import { CHROMA_KEY_FRAGMENT } from "../effect/glsl/custom-glsl";
+import { vertex } from "../effect/vertex";
 
 /**
  * Update sprite transform based on clip properties
@@ -285,6 +290,7 @@ export class PixiSpriteRenderer {
       );
       this.applyBlur(blurOffset);
       this.applyBrightness(brightnessMultiplier);
+      this.applyChromaKey();
     }
 
     // 3. Handle Sprite vs TilingSprite for Mirroring
@@ -668,6 +674,63 @@ export class PixiSpriteRenderer {
     }
 
     brightnessFilter.brightness(brightness, false);
+  }
+
+  private applyChromaKey(): void {
+    if (!this.animationContainer || this.destroyed) return;
+
+    const { chromaKey } = this.sprite;
+
+    if (!chromaKey || !chromaKey.enabled) {
+      if (this.animationContainer.filters) {
+        this.animationContainer.filters =
+          this.animationContainer.filters.filter(
+            (f) => (f as any).label !== "ChromaKeyFilter",
+          );
+      }
+      return;
+    }
+
+    let chromaFilter = this.animationContainer.filters?.find(
+      (f) => (f as any).label === "ChromaKeyFilter",
+    ) as Filter;
+
+    if (!chromaFilter) {
+      const program = new GlProgram({
+        vertex,
+        fragment: CHROMA_KEY_FRAGMENT,
+        name: "ChromaKeyShader",
+      });
+
+      const chromaUniforms = new UniformGroup({
+        uKeyColor: { value: [0, 1, 0], type: "vec3<f32>" },
+        uSimilarity: { value: 0.1, type: "f32" },
+        uSmoothness: { value: 0.05, type: "f32" },
+        uSpill: { value: 0.0, type: "f32" },
+      });
+
+      chromaFilter = new Filter({
+        glProgram: program,
+        resources: {
+          chromaUniforms,
+        },
+      });
+      (chromaFilter as any).label = "ChromaKeyFilter";
+
+      const currentFilters = this.animationContainer.filters || [];
+      this.animationContainer.filters = [...currentFilters, chromaFilter];
+    }
+
+    // Update uniforms
+    const uniforms = (chromaFilter.resources as any).chromaUniforms.uniforms;
+    const rgb = hexToRgb(chromaKey.color);
+    if (rgb) {
+      uniforms.uKeyColor[0] = rgb.r / 255;
+      uniforms.uKeyColor[1] = rgb.g / 255;
+      uniforms.uKeyColor[2] = rgb.b / 255;
+    }
+    uniforms.uSimilarity = chromaKey.similarity;
+    uniforms.uSmoothness = chromaKey.smoothness;
   }
 
   updateTransforms(): void {

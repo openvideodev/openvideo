@@ -1,12 +1,12 @@
-import { Texture } from 'pixi.js';
-import { Log } from '../utils/log';
-import { decodeImg } from '../utils';
-import { BaseClip } from './base-clip';
-import { type IClip } from './iclip';
-import { type ClipJSON, type ImageJSON } from '../json-serialization';
-import { ResourceManager } from '../studio/resource-manager';
+import { Texture } from "pixi.js";
+import { Log } from "../utils/log";
+import { decodeImg } from "../utils";
+import { BaseClip } from "./base-clip";
+import { type IClip } from "./iclip";
+import { type ClipJSON, type ImageJSON } from "../json-serialization";
+import { ResourceManager } from "../studio/resource-manager";
 
-type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
+type AnimateImgType = "avif" | "webp" | "png" | "gif";
 
 /**
  * Image clip supporting animated images
@@ -31,8 +31,8 @@ type AnimateImgType = 'avif' | 'webp' | 'png' | 'gif';
  *
  */
 export class Image extends BaseClip implements IClip {
-  readonly type = 'Image';
-  ready: IClip['ready'];
+  readonly type = "Image";
+  ready: IClip["ready"];
 
   private _meta = {
     // microseconds
@@ -91,12 +91,12 @@ export class Image extends BaseClip implements IClip {
     let imageBitmap: ImageBitmap | undefined;
 
     // Optimized handling for blob URLs to avoid PixiJS warnings about unknown extensions
-    if (url.startsWith('blob:')) {
+    if (url.startsWith("blob:")) {
       try {
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch image: ${response.status} ${response.statusText}`
+            `Failed to fetch image: ${response.status} ${response.statusText}`,
           );
         }
         const blob = await response.blob();
@@ -105,7 +105,7 @@ export class Image extends BaseClip implements IClip {
         try {
           texture = Texture.from(imageBitmap);
         } catch (e) {
-          Log.warn('Failed to create Pixi texture from bitmap:', e);
+          Log.warn("Failed to create Pixi texture from bitmap:", e);
         }
       } catch (err) {
         Log.error(`Failed to load blob image from ${url}`, err);
@@ -147,11 +147,11 @@ export class Image extends BaseClip implements IClip {
       | ImageBitmap
       | VideoFrame[]
       | { type: `image/${AnimateImgType}`; stream: ReadableStream },
-    src?: string
+    src?: string,
   ) {
     super();
     // Always set src, defaulting to empty string if not provided
-    this.src = src !== undefined ? src : '';
+    this.src = src !== undefined ? src : "";
     const initWithImgBitmap = (imgBitmap: ImageBitmap) => {
       this.img = imgBitmap;
       this._meta.width = imgBitmap.width;
@@ -184,13 +184,13 @@ export class Image extends BaseClip implements IClip {
     ) {
       this.frames = dataSource;
       const frame = this.frames[0];
-      if (frame == null) throw Error('The frame count must be greater than 0');
+      if (frame == null) throw Error("The frame count must be greater than 0");
       this._meta = {
         width: frame.displayWidth,
         height: frame.displayHeight,
         duration: this.frames.reduce(
           (acc, cur) => acc + (cur.duration ?? 0),
-          0
+          0,
         ),
       };
       const meta = { ...this._meta, duration: Infinity };
@@ -205,7 +205,7 @@ export class Image extends BaseClip implements IClip {
         this.display.to = this.display.from + this.duration;
       }
       this.ready = Promise.resolve(meta);
-    } else if ('type' in dataSource) {
+    } else if ("type" in dataSource) {
       this.ready = this.initAnimateImg(dataSource.stream, dataSource.type).then(
         () => {
           const meta = {
@@ -224,42 +224,42 @@ export class Image extends BaseClip implements IClip {
             this.display.to = this.display.from + this.duration;
           }
           return meta;
-        }
+        },
       );
     } else {
-      throw Error('Illegal arguments');
+      throw Error("Illegal arguments");
     }
   }
 
   private async initAnimateImg(
     stream: ReadableStream,
-    type: `image/${AnimateImgType}`
+    type: `image/${AnimateImgType}`,
   ) {
     this.frames = await decodeImg(stream, type);
     const firstVf = this.frames[0];
-    if (firstVf == null) throw Error('No frame available in gif');
+    if (firstVf == null) throw Error("No frame available in gif");
 
     this._meta = {
       duration: this.frames.reduce((acc, cur) => acc + (cur.duration ?? 0), 0),
       width: firstVf.codedWidth,
       height: firstVf.codedHeight,
     };
-    Log.info('Image ready:', this._meta);
+    Log.info("Image ready:", this._meta);
   }
 
-  tickInterceptor: <T extends Awaited<ReturnType<Image['tick']>>>(
+  tickInterceptor: <T extends Awaited<ReturnType<Image["tick"]>>>(
     time: number,
-    tickRet: T
+    tickRet: T,
   ) => Promise<T> = async (_, tickRet) => tickRet;
 
   async tick(time: number): Promise<{
     video: ImageBitmap | VideoFrame;
-    state: 'success';
+    state: "success";
   }> {
     if (this.img != null) {
       return await this.tickInterceptor(time, {
         video: await createImageBitmap(this.img),
-        state: 'success',
+        state: "success",
       });
     }
     const targetTime = time % this._meta.duration;
@@ -268,10 +268,10 @@ export class Image extends BaseClip implements IClip {
         this.frames.find(
           (f) =>
             targetTime >= f.timestamp &&
-            targetTime <= f.timestamp + (f.duration ?? 0)
+            targetTime <= f.timestamp + (f.duration ?? 0),
         ) ?? this.frames[0]
       ).clone(),
-      state: 'success',
+      state: "success",
     });
   }
 
@@ -290,7 +290,7 @@ export class Image extends BaseClip implements IClip {
       hitIdx = i;
       break;
     }
-    if (hitIdx === -1) throw Error('Not found frame by time');
+    if (hitIdx === -1) throw Error("Not found frame by time");
     const preSlice = this.frames
       .slice(0, hitIdx)
       .map((vf) => new VideoFrame(vf));
@@ -298,7 +298,7 @@ export class Image extends BaseClip implements IClip {
       (vf) =>
         new VideoFrame(vf, {
           timestamp: vf.timestamp - time,
-        })
+        }),
     );
     return [new Image(preSlice, this.src), new Image(postSlice, this.src)] as [
       this,
@@ -339,7 +339,7 @@ export class Image extends BaseClip implements IClip {
       key: string;
       startTime: number;
       duration: number;
-    }>
+    }>,
   ) {
     const effect = this.effects.find((e) => e.id === effectId);
     if (effect) {
@@ -355,7 +355,7 @@ export class Image extends BaseClip implements IClip {
   }
 
   destroy(): void {
-    Log.info('Image destroy');
+    Log.info("Image destroy");
     this.img?.close();
     this.frames.forEach((f) => f.close());
     // Note: We don't destroy the Texture here as it's managed by Assets cache
@@ -368,7 +368,7 @@ export class Image extends BaseClip implements IClip {
     const base = super.toJSON(main);
     return {
       ...base,
-      type: 'Image',
+      type: "Image",
       id: this.id,
       effects: this.effects,
     } as ImageJSON;
@@ -380,12 +380,12 @@ export class Image extends BaseClip implements IClip {
    * @returns Promise that resolves to an Image instance
    */
   static async fromObject(json: ClipJSON): Promise<Image> {
-    if (json.type !== 'Image') {
+    if (json.type !== "Image") {
       throw new Error(`Expected Image, got ${json.type}`);
     }
-    if (!json.src || json.src.trim() === '') {
+    if (!json.src || json.src.trim() === "") {
       throw new Error(
-        'Image requires a valid source URL. Generated clips (like text-to-image) cannot be loaded from JSON without their source data.'
+        "Image requires a valid source URL. Generated clips (like text-to-image) cannot be loaded from JSON without their source data.",
       );
     }
 
@@ -396,10 +396,10 @@ export class Image extends BaseClip implements IClip {
     } catch (error) {
       if (
         error instanceof Error &&
-        error.message.includes('could not be decoded')
+        error.message.includes("could not be decoded")
       ) {
         throw new Error(
-          `Failed to decode image from ${json.src}. The image may be corrupted, in an unsupported format, or there may be CORS issues.`
+          `Failed to decode image from ${json.src}. The image may be corrupted, in an unsupported format, or there may be CORS issues.`,
         );
       }
       throw error;
@@ -442,6 +442,10 @@ export class Image extends BaseClip implements IClip {
 
     if (json.transition) {
       clip.transition = json.transition;
+    }
+
+    if ((json as any).chromaKey) {
+      clip.chromaKey = { ...clip.chromaKey, ...(json as any).chromaKey };
     }
 
     return clip;

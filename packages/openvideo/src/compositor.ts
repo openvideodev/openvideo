@@ -2,10 +2,12 @@ import {
   Application,
   Container,
   Filter,
+  GlProgram,
   RenderTexture,
   Sprite,
   TilingSprite,
   Texture,
+  UniformGroup,
   Graphics,
   BlurFilter,
   ColorMatrixFilter,
@@ -22,7 +24,9 @@ import { recodemux } from "wrapbox";
 import { Log } from "./utils/log";
 import EventEmitter from "./event-emitter";
 import { PixiSpriteRenderer } from "./sprite/pixi-sprite-renderer";
-import { parseColor } from "./utils/color";
+import { parseColor, hexToRgb } from "./utils/color";
+import { vertex } from "./effect/vertex";
+import { CHROMA_KEY_FRAGMENT } from "./effect/glsl/custom-glsl";
 import { sleep } from "./utils";
 import {
   clipToJSON,
@@ -807,6 +811,36 @@ function createSpritesRender(opts: {
       brightnessFilter.brightness(brightnessMultiplier, false);
       filters.push(brightnessFilter);
     }
+
+    if (clip.chromaKey && clip.chromaKey.enabled) {
+      const chromaUniforms = new UniformGroup({
+        uKeyColor: { value: [0, 1, 0], type: "vec3<f32>" },
+        uSimilarity: { value: 0.1, type: "f32" },
+        uSmoothness: { value: 0.05, type: "f32" },
+      });
+
+      const rgb = hexToRgb(clip.chromaKey.color);
+      if (rgb) {
+        chromaUniforms.uniforms.uKeyColor[0] = rgb.r / 255;
+        chromaUniforms.uniforms.uKeyColor[1] = rgb.g / 255;
+        chromaUniforms.uniforms.uKeyColor[2] = rgb.b / 255;
+      }
+      chromaUniforms.uniforms.uSimilarity = clip.chromaKey.similarity;
+      chromaUniforms.uniforms.uSmoothness = clip.chromaKey.smoothness;
+
+      const chromaFilter = new Filter({
+        glProgram: new GlProgram({
+          vertex,
+          fragment: CHROMA_KEY_FRAGMENT,
+          name: "ChromaKeyShader",
+        }),
+        resources: {
+          chromaUniforms,
+        },
+      });
+      filters.push(chromaFilter);
+    }
+
     tempSprite.filters = filters;
 
     // Apply Styles (Border Radius, Stroke, Shadow)

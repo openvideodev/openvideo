@@ -339,6 +339,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       ...(animation && { animation }),
       ...(animations.length > 0 && { animations }),
       ...(main && { main: true }),
+      chromaKey: this.chromaKey,
     } as ClipJSON;
   }
 

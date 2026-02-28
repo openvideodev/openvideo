@@ -12,6 +12,7 @@ import { vertex } from "./vertex";
 import { getAllEffects } from "./glsl/gl-effect";
 
 export function makeEffect({ name, renderer }: EffectOptions) {
+  console.log("makeEffect", name);
   let effect: undefined | any = undefined;
   const effects = getAllEffects();
   const localKey = Object.keys(effects).find(

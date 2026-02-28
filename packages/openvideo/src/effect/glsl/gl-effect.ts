@@ -12,6 +12,8 @@ import {
   BRIGHT_PULSE_UNIFORMS,
   BUBBLE_SPARKLES_FRAGMENT,
   BUBBLE_SPARKLES_UNIFORMS,
+  CHROMA_KEY_FRAGMENT,
+  CHROMA_KEY_UNIFORMS,
   BUTTERFLY_SPARKLES_FRAGMENT,
   BUTTERFLY_SPARKLES_UNIFORMS,
   CAMERA_MOVE_FRAGMENT,
@@ -178,6 +180,11 @@ const STATIC_EFFECTS = {
     label: "Rotation Movement",
     fragment: ROTATION_MOVEMENT_FRAGMENT,
     uniforms: ROTATION_MOVEMENT_UNIFORMS,
+  },
+  chromaKey: {
+    label: "Chroma Key",
+    fragment: CHROMA_KEY_FRAGMENT,
+    uniforms: CHROMA_KEY_UNIFORMS,
   },
   redGradient: {
     label: "Red Gradient",
