@@ -1474,9 +1474,10 @@ export class Studio extends EventEmitter<StudioEvents> {
             transSprite.height = this.opts.height;
             transSprite.anchor.set(0, 0);
             transSprite.zIndex = clip.zIndex;
-            usedTransitionSprites.add(transKey);
+            usedTransitionSprites.add(clip.id);
 
             // Ocultar clips reales durante la transición
+
             const renderer = this.spriteRenderers.get(clip);
             if (renderer?.getRoot()) renderer.getRoot()!.visible = false;
             const videoSprite = this.videoSprites.get(clip);
@@ -2086,7 +2087,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       const { key, startTime, duration, trackIndex } = effect;
       const elapsed = timestamp - startTime;
       const progress = Math.min(Math.max(elapsed / duration, 0), 1);
-      
+
       if (progress < 0 || progress >= 1) continue;
 
       // Ensure effect container is ready for this pass

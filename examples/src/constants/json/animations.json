@@ -1,0 +1,113 @@
+{
+  "tracks": [
+    {
+      "id": "track_1772252042089_9iw860cfe",
+      "name": "Track 1",
+      "type": "Image",
+      "clipIds": [
+        "clip_1772252042088_1eu5k9pvm"
+      ]
+    }
+  ],
+  "clips": [
+    {
+      "type": "Image",
+      "id": "clip_1772252042088_1eu5k9pvm",
+      "name": "Photo by Zak Mogel",
+      "src": "https://images.pexels.com/photos/35762815/pexels-photo-35762815.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "display": {
+        "from": 0,
+        "to": 3040000
+      },
+      "playbackRate": 1,
+      "duration": 3040000,
+      "left": -153.77027027027646,
+      "top": -48.216216216219664,
+      "width": 1387.5405405405495,
+      "height": 2016.4324324324389,
+      "angle": 0,
+      "zIndex": 10,
+      "opacity": 1,
+      "flip": null,
+      "style": {},
+      "trim": {
+        "from": 0,
+        "to": 0
+      },
+      "animations": [
+        {
+          "type": "pulse",
+          "opts": {
+            "duration": 1000000,
+            "delay": 0,
+            "easing": "easeOutQuad",
+            "iterCount": 3,
+            "id": "keyframe_b7ter3za3",
+            "disableGlobalEasing": false
+          },
+          "params": {
+            "0%": {
+              "scale": 1,
+              "mirror": 0
+            },
+            "25%": {
+              "scale": 0.9,
+              "mirror": 0
+            },
+            "50%": {
+              "scale": 1,
+              "mirror": 0
+            },
+            "75%": {
+              "scale": 0.9,
+              "mirror": 0
+            },
+            "100%": {
+              "scale": 1,
+              "mirror": 0
+            },
+            "presetParams": {}
+          }
+        },
+        {
+          "type": "slideOut",
+          "opts": {
+            "duration": 1000000,
+            "delay": 2040000,
+            "easing": "easeInCubic",
+            "iterCount": 1,
+            "id": "keyframe_pk939y1bw",
+            "disableGlobalEasing": false
+          },
+          "params": {
+            "direction": "left",
+            "distance": 300,
+            "0%": {
+              "x": 0,
+              "y": 0,
+              "opacity": 1,
+              "mirror": 0
+            },
+            "100%": {
+              "x": -300,
+              "y": 0,
+              "opacity": 0,
+              "mirror": 0
+            },
+            "presetParams": {
+              "direction": "left",
+              "distance": 300
+            }
+          }
+        }
+      ],
+      "effects": []
+    }
+  ],
+  "settings": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "bgColor": "#181818"
+  }
+}
