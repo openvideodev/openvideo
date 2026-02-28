@@ -21,6 +21,13 @@ export interface ITransitionInfo {
   end?: number;
 }
 
+export interface IChromaKeyOpts {
+  enabled: boolean;
+  color: string;
+  similarity: number;
+  spill: number;
+}
+
 /**
  * Interface that all clips must implement
  *
@@ -168,6 +175,11 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * List of active animations
    */
   readonly animations: any[];
+
+  /**
+   * Chroma key settings (green screen removal)
+   */
+  chromaKey: IChromaKeyOpts;
 }
 
 /**

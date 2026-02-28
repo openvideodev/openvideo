@@ -7,10 +7,15 @@ import {
   BlurFilter,
   ColorMatrixFilter,
   TilingSprite,
-} from "pixi.js";
+  Filter,
+  GlProgram,
+  UniformGroup,
+} from 'pixi.js';
 
-import type { IClip } from "../clips/iclip";
-import { parseColor } from "../utils/color";
+import type { IClip } from '../clips/iclip';
+import { parseColor, hexToRgb } from '../utils/color';
+import { CHROMA_KEY_FRAGMENT } from '../effect/glsl/custom-glsl';
+import { vertex } from '../effect/vertex';
 
 /**
  * Update sprite transform based on clip properties
@@ -36,9 +41,9 @@ export function updateSpriteTransform(clip: IClip, sprite: Sprite): void {
   sprite.zIndex = zIndex;
 
   // Flip
-  if (flip === "horizontal") {
+  if (flip === 'horizontal') {
     sprite.scale.x = -Math.abs(sprite.scale.x);
-  } else if (flip === "vertical") {
+  } else if (flip === 'vertical') {
     sprite.scale.y = -Math.abs(sprite.scale.y);
   }
 }
@@ -65,7 +70,7 @@ export class PixiSpriteRenderer {
   constructor(
     _pixiApp: Application | null,
     private sprite: IClip,
-    private targetContainer: Container | null = null,
+    private targetContainer: Container | null = null
   ) {
     // If targetContainer is not provided, try to use pixiApp.stage (fallback/legacy)
     if (!targetContainer && _pixiApp) {
@@ -78,20 +83,20 @@ export class PixiSpriteRenderer {
     // Create a canvas for drawing video frames
     // We'll initialize it when we get the first frame
     this.canvas = new OffscreenCanvas(1, 1);
-    const ctx = this.canvas.getContext("2d");
+    const ctx = this.canvas.getContext('2d');
     if (ctx == null) {
-      throw new Error("Failed to create 2d context for PixiSpriteRenderer");
+      throw new Error('Failed to create 2d context for PixiSpriteRenderer');
     }
     this.context = ctx;
 
     // Initialize Root Container immediately
     this.root = new Container();
-    this.root.label = "RootContainer";
+    this.root.label = 'RootContainer';
     this.root.visible = false; // Hidden until first frame
 
     // Initialize Animation Container (isolation layer for animations)
     this.animationContainer = new Container();
-    this.animationContainer.label = "AnimationContainer";
+    this.animationContainer.label = 'AnimationContainer';
     this.root.addChild(this.animationContainer);
 
     // If we have a target container, add root to it
@@ -122,22 +127,22 @@ export class PixiSpriteRenderer {
     // This is critical because sometimes RenderTexture instance checks fail across module boundaries
     const isTexture =
       frame instanceof Texture ||
-      (frame && typeof (frame as any).source !== "undefined");
+      (frame && typeof (frame as any).source !== 'undefined');
 
     if (isTexture) {
       // Validate texture dimensions
       if (frame.width === 0 || frame.height === 0) {
         console.warn(
-          "PixiSpriteRenderer: Texture has zero dimensions",
+          'PixiSpriteRenderer: Texture has zero dimensions',
           frame.width,
-          frame.height,
+          frame.height
         );
         return;
       }
 
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(frame as Texture);
-        this.pixiSprite.label = "MainSprite";
+        this.pixiSprite.label = 'MainSprite';
         // Add to animationContainer instead of root directly
         this.animationContainer!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
@@ -159,15 +164,15 @@ export class PixiSpriteRenderer {
     const height = (frame as any).height;
 
     if (
-      typeof width !== "number" ||
-      typeof height !== "number" ||
+      typeof width !== 'number' ||
+      typeof height !== 'number' ||
       width <= 0 ||
       height <= 0
     ) {
       console.warn(
-        "PixiSpriteRenderer: Invalid frame dimensions",
+        'PixiSpriteRenderer: Invalid frame dimensions',
         width,
-        height,
+        height
       );
       return;
     }
@@ -197,13 +202,13 @@ export class PixiSpriteRenderer {
       // Validate texture was created successfully
       // Use Texture.source instead of baseTexture (PixiJS v8.0.0+)
       if (!this.texture || !this.texture.source) {
-        console.error("PixiSpriteRenderer: Failed to create valid texture");
+        console.error('PixiSpriteRenderer: Failed to create valid texture');
         return;
       }
 
       if (this.pixiSprite == null) {
         this.pixiSprite = new Sprite(this.texture);
-        this.pixiSprite.label = "MainSprite";
+        this.pixiSprite.label = 'MainSprite';
         this.animationContainer!.addChild(this.pixiSprite);
         this.applySpriteTransforms();
       } else {
@@ -225,7 +230,7 @@ export class PixiSpriteRenderer {
         }
       }
 
-      if (typeof source.update === "function") {
+      if (typeof source.update === 'function') {
         source.update();
       }
     }
@@ -281,10 +286,11 @@ export class PixiSpriteRenderer {
       this.animationContainer.alpha = opacityMultiplier;
       this.animationContainer.scale.set(
         scaleMultiplier * scaleXMultiplier,
-        scaleMultiplier * scaleYMultiplier,
+        scaleMultiplier * scaleYMultiplier
       );
       this.applyBlur(blurOffset);
       this.applyBrightness(brightnessMultiplier);
+      this.applyChromaKey();
     }
 
     // 3. Handle Sprite vs TilingSprite for Mirroring
@@ -297,7 +303,7 @@ export class PixiSpriteRenderer {
           width: 0, // Will be set below
           height: 0,
         });
-        this.pixiSprite.label = "MainSprite-Tiling";
+        this.pixiSprite.label = 'MainSprite-Tiling';
 
         // Replace in container
         if (this.animationContainer) {
@@ -309,7 +315,7 @@ export class PixiSpriteRenderer {
 
         // Set texture wrap mode to mirror-repeat
         if (this.pixiSprite.texture.source) {
-          this.pixiSprite.texture.source.style.addressMode = "mirror-repeat";
+          this.pixiSprite.texture.source.style.addressMode = 'mirror-repeat';
           this.pixiSprite.texture.source.update();
         }
       }
@@ -318,7 +324,7 @@ export class PixiSpriteRenderer {
         // Switch back to regular Sprite
         const oldSprite = this.pixiSprite;
         this.pixiSprite = new Sprite(oldSprite.texture);
-        this.pixiSprite.label = "MainSprite";
+        this.pixiSprite.label = 'MainSprite';
 
         // Replace in container
         if (this.animationContainer) {
@@ -330,7 +336,7 @@ export class PixiSpriteRenderer {
 
         // Reset texture wrap mode (optional, but good practice)
         if (this.pixiSprite.texture.source) {
-          this.pixiSprite.texture.source.style.addressMode = "clamp-to-edge";
+          this.pixiSprite.texture.source.style.addressMode = 'clamp-to-edge';
           this.pixiSprite.texture.source.update();
         }
       }
@@ -342,7 +348,7 @@ export class PixiSpriteRenderer {
     const textureWidth = this.pixiSprite.texture?.width ?? 1;
     const textureHeight = this.pixiSprite.texture?.height ?? 1;
 
-    const isCaption = (this.sprite as any).type === "Caption";
+    const isCaption = (this.sprite as any).type === 'Caption';
 
     // Base scale to fit texture into clip dimensions
     const baseScaleX =
@@ -376,7 +382,7 @@ export class PixiSpriteRenderer {
       // If we want texture center to be at sprite center:
       this.pixiSprite.tilePosition.set(
         (this.pixiSprite.width - textureWidth) / 2,
-        (this.pixiSprite.height - textureHeight) / 2,
+        (this.pixiSprite.height - textureHeight) / 2
       );
 
       // And we need to adjust scale so the 'central' tile matches the expected size
@@ -385,10 +391,10 @@ export class PixiSpriteRenderer {
       // But we just set width/height to textureWidth * 5.
 
       // Let's rely on standard scaling for the whole object
-      if (flip === "horizontal") {
+      if (flip === 'horizontal') {
         this.pixiSprite.scale.x = -baseScaleX;
         this.pixiSprite.scale.y = baseScaleY;
-      } else if (flip === "vertical") {
+      } else if (flip === 'vertical') {
         this.pixiSprite.scale.x = baseScaleX;
         this.pixiSprite.scale.y = -baseScaleY;
       } else {
@@ -397,10 +403,10 @@ export class PixiSpriteRenderer {
       }
     } else {
       // Standard Sprite behavior
-      if (flip === "horizontal") {
+      if (flip === 'horizontal') {
         this.pixiSprite.scale.x = -baseScaleX;
         this.pixiSprite.scale.y = baseScaleY;
-      } else if (flip === "vertical") {
+      } else if (flip === 'vertical') {
         this.pixiSprite.scale.x = baseScaleX;
         this.pixiSprite.scale.y = -baseScaleY;
       } else {
@@ -438,7 +444,7 @@ export class PixiSpriteRenderer {
         -textureHeight / 2,
         textureWidth,
         textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
+        Math.min(borderRadius, textureWidth / 2, textureHeight / 2)
       );
       this.maskGraphics.fill({ color: 0xffffff, alpha: 1 });
       this.maskGraphics.visible = true;
@@ -449,14 +455,14 @@ export class PixiSpriteRenderer {
       }
     }
 
-    if (this.sprite.type !== "Text" && this.sprite.type !== "Caption") {
+    if (this.sprite.type !== 'Text' && this.sprite.type !== 'Caption') {
       this.applyStroke(style, textureWidth, textureHeight);
     } else if (this.strokeGraphics) {
       this.strokeGraphics.visible = false;
     }
 
     // 3. Apply Drop Shadow (Media only)
-    if (this.sprite.type !== "Text" && this.sprite.type !== "Caption") {
+    if (this.sprite.type !== 'Text' && this.sprite.type !== 'Caption') {
       this.applyShadow(style);
     } else if (this.shadowContainer) {
       this.shadowContainer.visible = false;
@@ -467,7 +473,7 @@ export class PixiSpriteRenderer {
   private applyStroke(
     style: any,
     textureWidth: number,
-    textureHeight: number,
+    textureHeight: number
   ): void {
     const stroke = style.stroke;
     if (stroke && stroke.width > 0) {
@@ -494,14 +500,14 @@ export class PixiSpriteRenderer {
           -textureHeight / 2,
           textureWidth,
           textureHeight,
-          r,
+          r
         );
       } else {
         this.strokeGraphics.rect(
           -textureWidth / 2,
           -textureHeight / 2,
           textureWidth,
-          textureHeight,
+          textureHeight
         );
       }
 
@@ -525,7 +531,7 @@ export class PixiSpriteRenderer {
     ) {
       if (this.shadowContainer == null) {
         this.shadowContainer = new Container();
-        this.shadowContainer.label = "ShadowContainer";
+        this.shadowContainer.label = 'ShadowContainer';
         this.shadowGraphics = new Graphics();
         this.shadowContainer.addChild(this.shadowGraphics);
         // Add shadow container to animationContainer at index 0
@@ -554,7 +560,7 @@ export class PixiSpriteRenderer {
           -height / 2,
           width,
           height,
-          r,
+          r
         );
       } else {
         this.shadowGraphics!.rect(-width / 2, -height / 2, width, height);
@@ -576,7 +582,7 @@ export class PixiSpriteRenderer {
         // Use worldTransform to get the effective scale on screen
         const worldScale = this.root
           ? Math.sqrt(
-              this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2,
+              this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2
             )
           : 1;
 
@@ -604,7 +610,7 @@ export class PixiSpriteRenderer {
     if (!this.animationContainer || this.destroyed) return;
 
     // Safety check for valid number
-    if (typeof blur !== "number" || !isFinite(blur) || blur <= 0) {
+    if (typeof blur !== 'number' || !isFinite(blur) || blur <= 0) {
       if (
         this.animationContainer.filters &&
         this.animationContainer.filters.length > 0
@@ -630,7 +636,7 @@ export class PixiSpriteRenderer {
     // Calculate global scale
     const worldScale = this.root
       ? Math.sqrt(
-          this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2,
+          this.root.worldTransform.a ** 2 + this.root.worldTransform.b ** 2
         )
       : 1;
 
@@ -651,14 +657,14 @@ export class PixiSpriteRenderer {
       if (this.animationContainer.filters) {
         this.animationContainer.filters =
           this.animationContainer.filters.filter(
-            (f) => !(f instanceof ColorMatrixFilter),
+            (f) => !(f instanceof ColorMatrixFilter)
           );
       }
       return;
     }
 
     let brightnessFilter = this.animationContainer.filters?.find(
-      (f) => f instanceof ColorMatrixFilter,
+      (f) => f instanceof ColorMatrixFilter
     ) as ColorMatrixFilter;
 
     if (!brightnessFilter) {
@@ -668,6 +674,62 @@ export class PixiSpriteRenderer {
     }
 
     brightnessFilter.brightness(brightness, false);
+  }
+
+  private applyChromaKey(): void {
+    if (!this.animationContainer || this.destroyed) return;
+
+    const { chromaKey } = this.sprite;
+
+    if (!chromaKey || !chromaKey.enabled) {
+      if (this.animationContainer.filters) {
+        this.animationContainer.filters =
+          this.animationContainer.filters.filter(
+            (f) => (f as any).label !== 'ChromaKeyFilter'
+          );
+      }
+      return;
+    }
+
+    let chromaFilter = this.animationContainer.filters?.find(
+      (f) => (f as any).label === 'ChromaKeyFilter'
+    ) as Filter;
+
+    if (!chromaFilter) {
+      const program = new GlProgram({
+        vertex,
+        fragment: CHROMA_KEY_FRAGMENT,
+        name: 'ChromaKeyShader',
+      });
+
+      const chromaUniforms = new UniformGroup({
+        uKeyColor: { value: [0, 1, 0], type: 'vec3<f32>' },
+        uSimilarity: { value: 0.1, type: 'f32' },
+        uSpill: { value: 0.0, type: 'f32' },
+      });
+
+      chromaFilter = new Filter({
+        glProgram: program,
+        resources: {
+          chromaUniforms,
+        },
+      });
+      (chromaFilter as any).label = 'ChromaKeyFilter';
+
+      const currentFilters = this.animationContainer.filters || [];
+      this.animationContainer.filters = [...currentFilters, chromaFilter];
+    }
+
+    // Update uniforms
+    const uniforms = (chromaFilter.resources as any).chromaUniforms.uniforms;
+    const rgb = hexToRgb(chromaKey.color);
+    if (rgb) {
+      uniforms.uKeyColor[0] = rgb.r / 255;
+      uniforms.uKeyColor[1] = rgb.g / 255;
+      uniforms.uKeyColor[2] = rgb.b / 255;
+    }
+    uniforms.uSimilarity = chromaKey.similarity;
+    uniforms.uSpill = chromaKey.spill;
   }
 
   updateTransforms(): void {

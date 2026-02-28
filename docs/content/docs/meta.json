@@ -15,6 +15,7 @@
     "animations",
     "transitions",
     "effects",
+    "chroma-key",
     "---Export & Persistence---",
     "serialization",
     "rendering",

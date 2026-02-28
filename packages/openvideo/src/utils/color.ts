@@ -46,3 +46,22 @@ export const resolveColor = (color?: string, fallback = 0xffffff) => {
     alpha: 1,
   };
 };
+
+/**
+ * Convert hex color string to RGB object
+ */
+export function hexToRgb(
+  hex: string
+): { r: number; g: number; b: number } | null {
+  try {
+    const colorObj = new Color(hex);
+    const rgb = colorObj.toRgbArray(); // Pixi v8 Color returns [r, g, b] in 0-1 range
+    return {
+      r: Math.round(rgb[0] * 255),
+      g: Math.round(rgb[1] * 255),
+      b: Math.round(rgb[2] * 255),
+    };
+  } catch (e) {
+    return null;
+  }
+}

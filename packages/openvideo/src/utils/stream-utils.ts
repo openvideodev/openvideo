@@ -30,4 +30,3 @@ export function autoReadStream<ST extends ReadableStream>(
     stoped = true;
   };
 }
-

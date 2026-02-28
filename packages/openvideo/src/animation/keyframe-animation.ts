@@ -1,11 +1,11 @@
-import { getEasing } from "./easings";
+import { getEasing } from './easings';
 import {
   AnimationOptions,
   AnimationProps,
   AnimationTransform,
   IAnimation,
   KeyframeData,
-} from "./types";
+} from './types';
 
 export class KeyframeAnimation implements IAnimation {
   readonly id: string;
@@ -21,7 +21,7 @@ export class KeyframeAnimation implements IAnimation {
   constructor(
     data: KeyframeData | any[],
     opts: AnimationOptions,
-    type: string = "keyframes",
+    type: string = 'keyframes'
   ) {
     this.id = opts.id || `keyframe_${Math.random().toString(36).substr(2, 9)}`;
     this.type = type;
@@ -29,7 +29,7 @@ export class KeyframeAnimation implements IAnimation {
     this.options = {
       duration: opts.duration,
       delay: opts.delay ?? 0,
-      easing: opts.easing ?? "linear",
+      easing: opts.easing ?? 'linear',
       iterCount: opts.iterCount ?? 1,
       id: this.id,
       disableGlobalEasing: opts.disableGlobalEasing ?? false,
@@ -46,13 +46,13 @@ export class KeyframeAnimation implements IAnimation {
       // Handle object format (percentage keys)
       this.frames = Object.entries(data)
         .filter(([k]) => {
-          if (k === "from" || k === "to") return true;
-          const num = Number(k.replace("%", ""));
+          if (k === 'from' || k === 'to') return true;
+          const num = Number(k.replace('%', ''));
           return !isNaN(num) && num >= 0 && num <= 100;
         })
         .map(([k, val]) => {
           const progress =
-            { from: 0, to: 100 }[k] ?? Number(k.replace("%", ""));
+            { from: 0, to: 100 }[k] ?? Number(k.replace('%', ''));
 
           const { easing, ...props } = val;
           return {
@@ -86,7 +86,7 @@ export class KeyframeAnimation implements IAnimation {
     // If iterCount is finite, the whole animation must finish at precisely 'duration'
     if (iterCount !== Infinity && offsetTime >= duration) {
       const transform = this.interpolateProps(1);
-      if ("mirror" in transform) {
+      if ('mirror' in transform) {
         (transform as any).mirror = 0;
       }
       return transform;
@@ -96,7 +96,7 @@ export class KeyframeAnimation implements IAnimation {
       iterCount === Infinity ? duration : duration / iterCount;
     let progress = (offsetTime % cycleDuration) / cycleDuration;
 
-    if (!disableGlobalEasing && easing !== "linear") {
+    if (!disableGlobalEasing && easing !== 'linear') {
       const easingFn = getEasing(easing);
       progress = easingFn(progress);
     }
@@ -122,7 +122,7 @@ export class KeyframeAnimation implements IAnimation {
     // unless a specific per-segment easing is provided.
     const easingSource =
       endFrame.easing ??
-      (this.options.disableGlobalEasing ? this.options.easing : "linear");
+      (this.options.disableGlobalEasing ? this.options.easing : 'linear');
 
     const easingFn = getEasing(easingSource);
 
@@ -137,7 +137,7 @@ export class KeyframeAnimation implements IAnimation {
     for (const prop of props) {
       const p = prop as keyof AnimationProps;
       const def =
-        p === "scale" || p === "scaleX" || p === "scaleY" || p === "opacity"
+        p === 'scale' || p === 'scaleX' || p === 'scaleY' || p === 'opacity'
           ? 1
           : 0;
       const s = startFrame.props[p] ?? def;

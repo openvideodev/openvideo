@@ -444,6 +444,10 @@ export class Image extends BaseClip implements IClip {
       clip.transition = json.transition;
     }
 
+    if ((json as any).chromaKey) {
+      clip.chromaKey = { ...clip.chromaKey, ...(json as any).chromaKey };
+    }
+
     return clip;
   }
 }

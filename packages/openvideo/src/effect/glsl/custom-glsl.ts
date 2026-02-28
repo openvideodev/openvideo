@@ -3508,3 +3508,67 @@ export const FAST_ZOOM_UNIFORMS = {
   uMaxZoom: { value: 2.0, type: 'f32' },
   uBlurStrength: { value: 0.01, type: 'f32' },
 };
+
+export const CHROMA_KEY_FRAGMENT = `
+precision highp float;
+
+varying vec2 vTextureCoord;
+uniform sampler2D uTexture;
+
+uniform vec3 uKeyColor;     
+uniform float uSimilarity;  
+uniform float uSpill;       
+
+void main() {
+    vec4 color = texture2D(uTexture, vTextureCoord);
+    
+    float maxChannel = max(max(uKeyColor.r, uKeyColor.g), uKeyColor.b);
+    
+    float diff;
+    float spillAmount = 0.0;
+    
+    if (maxChannel == uKeyColor.g && uKeyColor.g > uKeyColor.r && uKeyColor.g > uKeyColor.b) {
+        diff = color.g - max(color.r, color.b);
+        spillAmount = max(0.0, color.g - max(color.r, color.b));
+        color.g -= spillAmount * uSpill;
+        
+        float avg = (color.r + color.b) * 0.5;
+        color.r = mix(color.r, avg, spillAmount);
+        color.b = mix(color.b, avg, spillAmount);
+    } 
+    else if (maxChannel == uKeyColor.b && uKeyColor.b > uKeyColor.r && uKeyColor.b > uKeyColor.g) {
+        diff = color.b - max(color.r, color.g);
+        spillAmount = max(0.0, color.b - max(color.r, color.g));
+        color.b -= spillAmount * uSpill;
+        
+        float avg = (color.r + color.g) * 0.5;
+        color.r = mix(color.r, avg, spillAmount);
+        color.g = mix(color.g, avg, spillAmount);
+    } 
+    else {
+        diff = color.r - max(color.g, color.b);
+        spillAmount = max(0.0, color.r - max(color.g, color.b));
+        color.r -= spillAmount * uSpill;
+        
+        float avg = (color.g + color.b) * 0.5;
+        color.g = mix(color.g, avg, spillAmount);
+        color.b = mix(color.b, avg, spillAmount);
+    }
+    
+    float mask = step(uSimilarity, diff); 
+    float alpha = 1.0 - mask;
+
+    if (diff > uSimilarity) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+    }
+
+    gl_FragColor = vec4(color.rgb, color.a * alpha);
+}
+`;
+
+export const CHROMA_KEY_UNIFORMS = {
+  uKeyColor: { value: [0.176, 0.792, 0.098], type: 'vec3<f32>' },
+  uSimilarity: { value: 0.0, type: 'f32' },
+  uSpill: { value: 0.0, type: 'f32' },
+};

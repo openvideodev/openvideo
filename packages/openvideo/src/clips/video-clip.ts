@@ -744,6 +744,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
       clip.volume = json.volume;
     }
 
+    if ((json as any).chromaKey) {
+      clip.chromaKey = { ...clip.chromaKey, ...(json as any).chromaKey };
+    }
+
     return clip;
   }
 

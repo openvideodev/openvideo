@@ -2,38 +2,42 @@ import {
   Application,
   Container,
   Filter,
+  GlProgram,
   RenderTexture,
   Sprite,
   TilingSprite,
   Texture,
+  UniformGroup,
   Graphics,
   BlurFilter,
   ColorMatrixFilter,
-} from "pixi.js";
-import { makeEffect } from "./effect/effect";
+} from 'pixi.js';
+import { makeEffect } from './effect/effect';
 import {
   DEFAULT_AUDIO_CONF,
   getDefaultAudioConf,
   type IClip,
   Effect,
   Transition,
-} from "./clips";
-import { recodemux } from "wrapbox";
-import { Log } from "./utils/log";
-import EventEmitter from "./event-emitter";
-import { PixiSpriteRenderer } from "./sprite/pixi-sprite-renderer";
-import { parseColor } from "./utils/color";
-import { sleep } from "./utils";
+} from './clips';
+import { recodemux } from 'wrapbox';
+import { Log } from './utils/log';
+import EventEmitter from './event-emitter';
+import { PixiSpriteRenderer } from './sprite/pixi-sprite-renderer';
+import { parseColor, hexToRgb } from './utils/color';
+import { vertex } from './effect/vertex';
+import { CHROMA_KEY_FRAGMENT } from './effect/glsl/custom-glsl';
+import { sleep } from './utils';
 import {
   clipToJSON,
   jsonToClip,
   type ClipJSON,
   type ProjectJSON,
   type GlobalTransitionJSON as TransitionJSON,
-} from "./json-serialization";
-import { Video } from "./clips/video-clip";
-import { Image } from "./clips/image-clip";
-import { makeTransition } from "./transition/transition";
+} from './json-serialization';
+import { Video } from './clips/video-clip';
+import { Image } from './clips/image-clip';
+import { makeTransition } from './transition/transition';
 
 export interface ICompositorOpts {
   width?: number;
@@ -105,7 +109,7 @@ export class Compositor extends EventEmitter<{
       width?: number;
       height?: number;
       bitrate?: number;
-    } = {},
+    } = {}
   ): Promise<boolean> {
     return (
       (self.OffscreenCanvas != null &&
@@ -117,7 +121,7 @@ export class Compositor extends EventEmitter<{
         self.AudioData != null &&
         ((
           await self.VideoEncoder.isConfigSupported({
-            codec: args.videoCodec ?? "avc1.42E032",
+            codec: args.videoCodec ?? 'avc1.42E032',
             width: args.width ?? 1920,
             height: args.height ?? 1080,
             bitrate: args.bitrate ?? 7e6,
@@ -159,34 +163,34 @@ export class Compositor extends EventEmitter<{
   constructor(opts: ICompositorOpts = {}) {
     super();
 
-    console.log("Compositor constructor", opts);
+    console.log('Compositor constructor', opts);
     const { width = 0, height = 0 } = opts;
     this.canvas = new OffscreenCanvas(width, height);
     // this.canvas = document.querySelector('#canvas') as HTMLCanvasElement
 
     this.opts = Object.assign(
       {
-        bgColor: "#000",
+        bgColor: '#000',
         width: 0,
         height: 0,
-        format: "mp4",
-        videoCodec: "avc1.42E032",
+        format: 'mp4',
+        videoCodec: 'avc1.42E032',
         audio: true,
-        audioCodec: "aac",
+        audioCodec: 'aac',
         audioSampleRate: 48000,
         bitrate: 5e6,
         fps: 30,
         metaDataTags: null,
       },
-      opts,
+      opts
     );
 
-    console.log("Compositor opts", this.opts);
+    console.log('Compositor opts', this.opts);
     this.hasVideoTrack = width * height > 0;
 
     // Initialize codec detection early
     getDefaultAudioConf().catch((err) => {
-      this.logger.warn("Failed to detect audio codec:", err);
+      this.logger.warn('Failed to detect audio codec:', err);
     });
   }
 
@@ -201,19 +205,19 @@ export class Compositor extends EventEmitter<{
       antialias: false,
       autoDensity: false,
       resolution: 1,
-      preference: "webgl", // Force WebGL to avoid WebGPU overhead/failures in Docker
+      preference: 'webgl', // Force WebGL to avoid WebGPU overhead/failures in Docker
     });
 
     // Verify that the app is fully initialized
     if (this.pixiApp.renderer == null || this.pixiApp.stage == null) {
-      throw new Error("Pixi.js Application failed to initialize properly");
+      throw new Error('Pixi.js Application failed to initialize properly');
     }
 
     // Stop the ticker - we manually call render() in the compositor
     // This prevents the ticker from trying to render after cleanup
     try {
       const anyApp = this.pixiApp as any;
-      if (anyApp.ticker && typeof anyApp.ticker.stop === "function") {
+      if (anyApp.ticker && typeof anyApp.ticker.stop === 'function') {
         anyApp.ticker.stop();
       }
     } catch (e) {
@@ -241,7 +245,7 @@ export class Compositor extends EventEmitter<{
       playbackRate: clip.playbackRate,
       zIndex: clip.zIndex,
     };
-    this.logger.info("Compositor add clip", logAttrs);
+    this.logger.info('Compositor add clip', logAttrs);
 
     const cloned = await clip.clone();
 
@@ -249,17 +253,17 @@ export class Compositor extends EventEmitter<{
     if (
       this.pixiApp != null &&
       this.pixiApp.renderer != null &&
-      typeof cloned.setRenderer === "function"
+      typeof cloned.setRenderer === 'function'
     ) {
       cloned.setRenderer(this.pixiApp.renderer);
     }
 
-    this.logger.info("Compositor add clip ready");
+    this.logger.info('Compositor add clip ready');
     this.sprites.push(
       Object.assign(cloned, {
         main: opts.main ?? false,
         expired: false,
-      }),
+      })
     );
     this.sprites.sort((a, b) => a.zIndex - b.zIndex);
   }
@@ -281,14 +285,14 @@ export class Compositor extends EventEmitter<{
     // Check if any sprites actually have video capabilities (width > 0 && height > 0)
     // This handles cases where width/height are set but all sprites are audio-only
     const hasVideoSprites = this.sprites.some(
-      (sprite) => sprite.width > 0 && sprite.height > 0,
+      (sprite) => sprite.width > 0 && sprite.height > 0
     );
 
     // Only create video track if we have video track configured AND we have video sprites
     const shouldCreateVideoTrack = this.hasVideoTrack && hasVideoSprites;
 
     const muxer = recodemux({
-      format: format || "mp4",
+      format: format || 'mp4',
       video: shouldCreateVideoTrack
         ? {
             width,
@@ -319,8 +323,8 @@ export class Compositor extends EventEmitter<{
    * @param opts.maxTime Maximum duration allowed for output video, content exceeding this will be ignored
    */
   output(opts: { maxTime?: number } = {}): ReadableStream<Uint8Array> {
-    console.log("Compositor output", opts);
-    if (this.sprites.length === 0) throw Error("No sprite added");
+    console.log('Compositor output', opts);
+    if (this.sprites.length === 0) throw Error('No sprite added');
 
     const mainSprite = this.sprites.find((it) => it.main);
     // Max time: prefer main sprite, otherwise use maximum value
@@ -338,13 +342,13 @@ export class Compositor extends EventEmitter<{
 
     if (maxTime === Infinity || maxTime <= 0) {
       throw Error(
-        "Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio",
+        'Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio'
       );
     }
     // Main video's (main) videoTrack duration value is 0
     if (maxTime === -1) {
       this.logger.warn(
-        "Unable to determine the end time, process value don't update",
+        "Unable to determine the end time, process value don't update"
       );
     }
 
@@ -353,20 +357,20 @@ export class Compositor extends EventEmitter<{
     let startTime = performance.now();
     const stopMuxer = this.runEncoding(muxer, maxTime, {
       onProgress: (prog) => {
-        this.logger.debug("OutputProgress:", prog);
-        this.emit("OutputProgress", prog);
+        this.logger.debug('OutputProgress:', prog);
+        this.emit('OutputProgress', prog);
       },
       onEnded: async () => {
         await muxer.flush();
         this.logger.info(
-          "===== output ended =====, cost:",
-          performance.now() - startTime,
+          '===== output ended =====, cost:',
+          performance.now() - startTime
         );
-        this.emit("OutputProgress", 1);
+        this.emit('OutputProgress', 1);
         this.destroy();
       },
       onError: (err) => {
-        this.emit("error", err);
+        this.emit('error', err);
         muxer.close();
         this.destroy();
       },
@@ -388,8 +392,8 @@ export class Compositor extends EventEmitter<{
     this.destroyed = true;
 
     this.stopOutput?.();
-    this.off("OutputProgress");
-    this.off("error");
+    this.off('OutputProgress');
+    this.off('error');
 
     // Clean up Pixi.js resources
     if (this.pixiApp != null) {
@@ -401,7 +405,7 @@ export class Compositor extends EventEmitter<{
           return;
         }
         // Stop ticker if present
-        if (anyApp.ticker && typeof anyApp.ticker.stop === "function") {
+        if (anyApp.ticker && typeof anyApp.ticker.stop === 'function') {
           try {
             anyApp.ticker.stop();
           } catch (e) {
@@ -422,7 +426,7 @@ export class Compositor extends EventEmitter<{
       } catch (err) {
         // Swallow errors during destroy - context may be lost or already destroyed
         // eslint-disable-next-line no-console
-        console.warn("Error while destroying Pixi application:", err);
+        console.warn('Error while destroying Pixi application:', err);
       } finally {
         this.pixiApp = null;
       }
@@ -440,7 +444,7 @@ export class Compositor extends EventEmitter<{
       onProgress: (prog: number) => void;
       onEnded: () => Promise<void>;
       onError: (err: Error) => void;
-    },
+    }
   ): () => void {
     let progress = 0;
     const aborter = { aborted: false };
@@ -453,7 +457,7 @@ export class Compositor extends EventEmitter<{
 
       // Check if any sprites actually have video capabilities
       const hasVideoSprites = this.sprites.some(
-        (sprite) => sprite.width > 0 && sprite.height > 0,
+        (sprite) => sprite.width > 0 && sprite.height > 0
       );
 
       renderSprites = createSpritesRender({
@@ -557,7 +561,7 @@ export class Compositor extends EventEmitter<{
               c.id !== clip.id &&
               c.zIndex === clip.zIndex &&
               c.display.from < clip.display.from &&
-              (c instanceof Video || c instanceof Image),
+              (c instanceof Video || c instanceof Image)
           )
           .sort((a, b) => b.display.to - a.display.to)[0];
 
@@ -683,11 +687,11 @@ function createSpritesRender(opts: {
   const getClipFrameAtTimestamp = async (
     clip: IClip,
     timestamp: number,
-    getFrameCached: (clip: IClip, timestamp: number) => Promise<any>,
+    getFrameCached: (clip: IClip, timestamp: number) => Promise<any>
   ) => {
     const relTime = Math.max(
       0,
-      Math.min(timestamp - clip.display.from, clip.duration),
+      Math.min(timestamp - clip.display.from, clip.duration)
     );
     // Ensure animation state is updated for the sampled timestamp
     // This is critical for modular animations during transitions
@@ -700,7 +704,7 @@ function createSpritesRender(opts: {
   const renderClipToTransitionTexture = (
     clip: IClip,
     frame: ImageBitmap | Texture,
-    target: RenderTexture,
+    target: RenderTexture
   ) => {
     if (!pixiApp) return;
 
@@ -718,12 +722,12 @@ function createSpritesRender(opts: {
         height: 1,
       });
       if (tempSprite.texture.source) {
-        tempSprite.texture.source.style.addressMode = "mirror-repeat";
+        tempSprite.texture.source.style.addressMode = 'mirror-repeat';
         tempSprite.texture.source.update();
       }
     } else {
       tempSprite = new Sprite(
-        frame instanceof Texture ? frame : Texture.from(frame),
+        frame instanceof Texture ? frame : Texture.from(frame)
       );
     }
 
@@ -744,7 +748,7 @@ function createSpritesRender(opts: {
     const textureWidth = tempSprite.texture.width || 1;
     const textureHeight = tempSprite.texture.height || 1;
 
-    const isCaption = (clip as any).type === "Caption";
+    const isCaption = (clip as any).type === 'Caption';
 
     const baseScaleX =
       !isCaption && clip.width && clip.width !== 0
@@ -761,13 +765,13 @@ function createSpritesRender(opts: {
 
       tempSprite.tilePosition.set(
         (tempSprite.width - textureWidth) / 2,
-        (tempSprite.height - textureHeight) / 2,
+        (tempSprite.height - textureHeight) / 2
       );
 
-      if (clip.flip === "horizontal") {
+      if (clip.flip === 'horizontal') {
         tempSprite.scale.x = -baseScaleX * scaleMultiplier * scaleXMultiplier;
         tempSprite.scale.y = baseScaleY * scaleMultiplier * scaleYMultiplier;
-      } else if (clip.flip === "vertical") {
+      } else if (clip.flip === 'vertical') {
         tempSprite.scale.x = baseScaleX * scaleMultiplier * scaleXMultiplier;
         tempSprite.scale.y = -baseScaleY * scaleMultiplier * scaleYMultiplier;
       } else {
@@ -775,10 +779,10 @@ function createSpritesRender(opts: {
         tempSprite.scale.y = baseScaleY * scaleMultiplier * scaleYMultiplier;
       }
     } else {
-      if (clip.flip === "horizontal") {
+      if (clip.flip === 'horizontal') {
         tempSprite.scale.x = -baseScaleX * scaleMultiplier * scaleXMultiplier;
         tempSprite.scale.y = baseScaleY * scaleMultiplier * scaleYMultiplier;
-      } else if (clip.flip === "vertical") {
+      } else if (clip.flip === 'vertical') {
         tempSprite.scale.x = baseScaleX * scaleMultiplier * scaleXMultiplier;
         tempSprite.scale.y = -baseScaleY * scaleMultiplier * scaleYMultiplier;
       } else {
@@ -807,6 +811,36 @@ function createSpritesRender(opts: {
       brightnessFilter.brightness(brightnessMultiplier, false);
       filters.push(brightnessFilter);
     }
+
+    if (clip.chromaKey && clip.chromaKey.enabled) {
+      const chromaUniforms = new UniformGroup({
+        uKeyColor: { value: [0, 1, 0], type: 'vec3<f32>' },
+        uSimilarity: { value: 0.1, type: 'f32' },
+        uSpill: { value: 0.0, type: 'f32' },
+      });
+
+      const rgb = hexToRgb(clip.chromaKey.color);
+      if (rgb) {
+        chromaUniforms.uniforms.uKeyColor[0] = rgb.r / 255;
+        chromaUniforms.uniforms.uKeyColor[1] = rgb.g / 255;
+        chromaUniforms.uniforms.uKeyColor[2] = rgb.b / 255;
+      }
+      chromaUniforms.uniforms.uSimilarity = clip.chromaKey.similarity;
+      chromaUniforms.uniforms.uSpill = clip.chromaKey.spill;
+
+      const chromaFilter = new Filter({
+        glProgram: new GlProgram({
+          vertex,
+          fragment: CHROMA_KEY_FRAGMENT,
+          name: 'ChromaKeyShader',
+        }),
+        resources: {
+          chromaUniforms,
+        },
+      });
+      filters.push(chromaFilter);
+    }
+
     tempSprite.filters = filters;
 
     // Apply Styles (Border Radius, Stroke, Shadow)
@@ -819,7 +853,7 @@ function createSpritesRender(opts: {
         -textureHeight / 2,
         textureWidth,
         textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
+        Math.min(borderRadius, textureWidth / 2, textureHeight / 2)
       );
       maskGraphics.fill({ color: 0xffffff, alpha: 1 });
       tempSprite.addChild(maskGraphics);
@@ -844,14 +878,14 @@ function createSpritesRender(opts: {
           -textureHeight / 2,
           textureWidth,
           textureHeight,
-          r,
+          r
         );
       } else {
         strokeGraphics.rect(
           -textureWidth / 2,
           -textureHeight / 2,
           textureWidth,
-          textureHeight,
+          textureHeight
         );
       }
       strokeGraphics.stroke();
@@ -877,14 +911,14 @@ function createSpritesRender(opts: {
           -textureHeight / 2 + dy,
           textureWidth,
           textureHeight,
-          r,
+          r
         );
       } else {
         shadowGraphics.rect(
           -textureWidth / 2 + dx,
           -textureHeight / 2 + dy,
           textureWidth,
-          textureHeight,
+          textureHeight
         );
       }
       shadowGraphics.fill({ color, alpha });
@@ -1004,24 +1038,24 @@ function createSpritesRender(opts: {
               const fromFrame = await getClipFrameAtTimestamp(
                 fromClip,
                 timestamp,
-                getFrameCached,
+                getFrameCached
               );
               const toFrame = await getClipFrameAtTimestamp(
                 toClip,
                 timestamp,
-                getFrameCached,
+                getFrameCached
               );
 
               if (fromFrame && toFrame) {
                 const progress = Math.min(
                   Math.max(relativeTime / sprite.duration, 0),
-                  1,
+                  1
                 );
 
                 renderClipToTransitionTexture(
                   fromClip,
                   fromFrame,
-                  transFromTexture,
+                  transFromTexture
                 );
                 renderClipToTransitionTexture(toClip, toFrame, transToTexture);
 
@@ -1083,7 +1117,7 @@ function createSpritesRender(opts: {
           renderer = new PixiSpriteRenderer(
             pixiApp,
             sprite,
-            clipsNormalContainer,
+            clipsNormalContainer
           );
           spriteRenderers.set(sprite, renderer);
         }
@@ -1206,7 +1240,7 @@ function createSpritesRender(opts: {
 
           // Check if this is an Adjustment Layer Effect
           const isAdjustmentLayer = sprites.some(
-            (s) => s.id === id && s instanceof Effect,
+            (s) => s.id === id && s instanceof Effect
           );
 
           clipsEffectContainer.removeChildren();
@@ -1268,7 +1302,7 @@ function createSpritesRender(opts: {
                   effectCache.set(id, effectCached);
                 }
               } catch (e) {
-                console.warn("Failed to create effect", key, e);
+                console.warn('Failed to create effect', key, e);
               }
             }
 
@@ -1394,8 +1428,8 @@ function createAVEncoder(opts: {
         // If canvas is not ready, skip this frame
         // This can happen if the canvas hasn't been rendered to yet
         console.warn(
-          "Failed to create VideoFrame from canvas, skipping frame:",
-          err,
+          'Failed to create VideoFrame from canvas, skipping frame:',
+          err
         );
       }
     }
@@ -1430,9 +1464,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
           numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
           numberOfFrames: framesPerChunk,
           sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-          format: "f32",
+          format: 'f32',
           data: channelBuf.subarray(readPos, readPos + dataSize),
-        }),
+        })
       );
       readPos += dataSize;
       audioTimestamp += chunkDuration;
@@ -1448,9 +1482,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
           numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
           numberOfFrames: framesPerChunk,
           sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-          format: "f32",
+          format: 'f32',
           data: placeholderData,
-        }),
+        })
       );
       audioTimestamp += chunkDuration;
     }
