@@ -1,11 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Film,
   Music,
@@ -16,7 +16,7 @@ import {
   Play,
   Pipette,
   Download,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface ActionCard {
   title: string;
@@ -28,32 +28,32 @@ interface ActionCard {
 
 const actions: ActionCard[] = [
   {
-    title: "Effects",
-    description: "Apply GPU-accelerated GLSL effects to any clip.",
-    route: "/effects",
+    title: 'Effects',
+    description: 'Apply GPU-accelerated GLSL effects to any clip.',
+    route: '/effects',
     icon: <Sparkles className="h-8 w-8" />,
-    gradient: "from-cyan-500/20 to-teal-600/20",
+    gradient: 'from-cyan-500/20 to-teal-600/20',
   },
   {
-    title: "Transitions",
-    description: "Smooth transitions between clips using GLSL shaders.",
-    route: "/transitions",
+    title: 'Transitions',
+    description: 'Smooth transitions between clips using GLSL shaders.',
+    route: '/transitions',
     icon: <ArrowRightLeft className="h-8 w-8" />,
-    gradient: "from-blue-500/20 to-indigo-600/20",
+    gradient: 'from-blue-500/20 to-indigo-600/20',
   },
   {
-    title: "Animations",
-    description: "Keyframe-based animations for position, scale, and opacity.",
-    route: "/animations",
+    title: 'Animations',
+    description: 'Keyframe-based animations for position, scale, and opacity.',
+    route: '/animations',
     icon: <Play className="h-8 w-8" />,
-    gradient: "from-fuchsia-500/20 to-pink-600/20",
+    gradient: 'from-fuchsia-500/20 to-pink-600/20',
   },
   {
-    title: "Chroma Key",
-    description: "Remove green screen backgrounds in real time.",
-    route: "/chromakey",
+    title: 'Chroma Key',
+    description: 'Remove green screen backgrounds in real time.',
+    route: '/chromakey',
     icon: <Pipette className="h-8 w-8" />,
-    gradient: "from-lime-500/20 to-emerald-600/20",
+    gradient: 'from-lime-500/20 to-emerald-600/20',
   },
 ];
 

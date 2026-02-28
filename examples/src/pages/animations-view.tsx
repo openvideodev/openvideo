@@ -1,4 +1,4 @@
-import ActionLayout from "@/components/action-layout";
+import ActionLayout from '@/components/action-layout';
 
 export default function AnimationsView() {
   return (

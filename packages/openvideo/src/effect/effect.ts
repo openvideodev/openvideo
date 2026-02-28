@@ -5,18 +5,18 @@ import {
   Texture,
   RenderTexture,
   UniformGroup,
-} from "pixi.js";
+} from 'pixi.js';
 
-import type { EffectOptions, EffectRendererOptions } from "./types";
-import { vertex } from "./vertex";
-import { getAllEffects } from "./glsl/gl-effect";
+import type { EffectOptions, EffectRendererOptions } from './types';
+import { vertex } from './vertex';
+import { getAllEffects } from './glsl/gl-effect';
 
 export function makeEffect({ name, renderer }: EffectOptions) {
-  console.log("makeEffect", name);
+  console.log('makeEffect', name);
   let effect: undefined | any = undefined;
   const effects = getAllEffects();
   const localKey = Object.keys(effects).find(
-    (key) => key.toLowerCase() === name.toLowerCase(),
+    (key) => key.toLowerCase() === name.toLowerCase()
   ) as string | undefined;
   if (localKey) {
     effect = effects[localKey] as any;
@@ -49,7 +49,7 @@ export function makeEffect({ name, renderer }: EffectOptions) {
   });
 
   const effectUniforms = new UniformGroup({
-    uTime: { value: 0, type: "f32" },
+    uTime: { value: 0, type: 'f32' },
     ...uniforms,
   });
 

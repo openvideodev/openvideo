@@ -1,10 +1,10 @@
-import { Routes, Route } from "react-router-dom";
-import HomePage from "@/pages/home-page";
-import EffectsView from "@/pages/effects-view";
-import TransitionsView from "@/pages/transitions-view";
-import AnimationsView from "@/pages/animations-view";
-import ChromakeyView from "@/pages/chromakey-view";
-import { ThemeProvider } from "./components/theme-provider";
+import { Routes, Route } from 'react-router-dom';
+import HomePage from '@/pages/home-page';
+import EffectsView from '@/pages/effects-view';
+import TransitionsView from '@/pages/transitions-view';
+import AnimationsView from '@/pages/animations-view';
+import ChromakeyView from '@/pages/chromakey-view';
+import { ThemeProvider } from './components/theme-provider';
 
 function App() {
   return (
@@ -15,7 +15,7 @@ function App() {
         <Route path="/transitions" element={<TransitionsView />} />
         <Route path="/animations" element={<AnimationsView />} />
         <Route path="/chromakey" element={<ChromakeyView />} />
-      </Routes>{" "}
+      </Routes>{' '}
     </ThemeProvider>
   );
 }

@@ -1,13 +1,19 @@
 import { KeyframeAnimation } from './keyframe-animation';
 import { AnimationOptions, IAnimation, KeyframeData } from './types';
 
-export type AnimationFactory = (opts: AnimationOptions, params?: any) => IAnimation;
+export type AnimationFactory = (
+  opts: AnimationOptions,
+  params?: any
+) => IAnimation;
 
 class AnimationRegistry {
   private factories = new Map<string, AnimationFactory>();
 
   constructor() {
-    this.register('keyframes', (opts, params: KeyframeData) => new KeyframeAnimation(params, opts));
+    this.register(
+      'keyframes',
+      (opts, params: KeyframeData) => new KeyframeAnimation(params, opts)
+    );
   }
 
   register(name: string, factory: AnimationFactory) {

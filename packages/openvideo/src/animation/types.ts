@@ -65,16 +65,16 @@ export interface KeyframeData {
 }
 
 export const ANIMATABLE_PROPERTIES = {
-  x: { label: "X Position", min: -2000, max: 2000, step: 1, default: 0 },
-  y: { label: "Y Position", min: -2000, max: 2000, step: 1, default: 0 },
-  width: { label: "Width", min: -1000, max: 1000, step: 1, default: 0 },
-  height: { label: "Height", min: -1000, max: 1000, step: 1, default: 0 },
-  scale: { label: "Scale", min: 0, max: 3, step: 0.1, default: 1 },
-  scaleX: { label: "Scale X", min: 0, max: 3, step: 0.1, default: 1 },
-  scaleY: { label: "Scale Y", min: 0, max: 3, step: 0.1, default: 1 },
-  opacity: { label: "Opacity", min: 0, max: 1, step: 0.01, default: 1 },
-  angle: { label: "Rotation", min: -360, max: 360, step: 1, default: 0 },
-  blur: { label: "Blur", min: 0, max: 100, step: 1, default: 0 },
-  brightness: { label: "Brightness", min: 0, max: 5, step: 0.1, default: 1 },
-  mirror: { label: "Mirror", min: 0, max: 1, step: 1, default: 0 },
+  x: { label: 'X Position', min: -2000, max: 2000, step: 1, default: 0 },
+  y: { label: 'Y Position', min: -2000, max: 2000, step: 1, default: 0 },
+  width: { label: 'Width', min: -1000, max: 1000, step: 1, default: 0 },
+  height: { label: 'Height', min: -1000, max: 1000, step: 1, default: 0 },
+  scale: { label: 'Scale', min: 0, max: 3, step: 0.1, default: 1 },
+  scaleX: { label: 'Scale X', min: 0, max: 3, step: 0.1, default: 1 },
+  scaleY: { label: 'Scale Y', min: 0, max: 3, step: 0.1, default: 1 },
+  opacity: { label: 'Opacity', min: 0, max: 1, step: 0.01, default: 1 },
+  angle: { label: 'Rotation', min: -360, max: 360, step: 1, default: 0 },
+  blur: { label: 'Blur', min: 0, max: 100, step: 1, default: 0 },
+  brightness: { label: 'Brightness', min: 0, max: 5, step: 0.1, default: 1 },
+  mirror: { label: 'Mirror', min: 0, max: 1, step: 1, default: 0 },
 } as const;

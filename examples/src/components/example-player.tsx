@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { Studio, type ProjectJSON } from "openvideo";
-import { Play, Pause } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from 'react';
+import { Studio, type ProjectJSON } from 'openvideo';
+import { Play, Pause } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ExamplePlayerProps {
   project?: ProjectJSON;
@@ -41,9 +41,9 @@ export function ExamplePlayer({ project }: ExamplePlayerProps) {
       setCurrentTime(currentTime);
     };
 
-    studio.on("play", onPlay);
-    studio.on("pause", onPause);
-    studio.on("currentTime", onTimeUpdate);
+    studio.on('play', onPlay);
+    studio.on('pause', onPause);
+    studio.on('currentTime', onTimeUpdate);
 
     // Initial layout
     studio.updateArtboardLayout();
@@ -132,7 +132,7 @@ function formatTime(microseconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const ms = Math.floor((microseconds % 1000000) / 10000);
-  return `${minutes.toString().padStart(2, "0")}:${seconds
+  return `${minutes.toString().padStart(2, '0')}:${seconds
     .toString()
-    .padStart(2, "0")}.${ms.toString().padStart(2, "0")}`;
+    .padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
 }

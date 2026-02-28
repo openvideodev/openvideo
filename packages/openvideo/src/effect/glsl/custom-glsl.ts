@@ -34,8 +34,8 @@ export const ROTATION_MOVEMENT_UNIFORMS: Record<
   string,
   { value: any; type: string }
 > = {
-  uTime: { value: 0, type: "f32" },
-  rotationCount: { value: 4.0, type: "f32" },
+  uTime: { value: 0, type: 'f32' },
+  rotationCount: { value: 4.0, type: 'f32' },
 };
 
 export const RED_GRADIENT_FRAGMENT = `
@@ -62,7 +62,7 @@ export const RED_GRADIENT_UNIFORMS: Record<
   string,
   { value: any; type: string }
 > = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const BUBBLE_SPARKLES_FRAGMENT = `
@@ -136,9 +136,9 @@ export const BUBBLE_SPARKLES_UNIFORMS: Record<
   string,
   { value: any; type: string }
 > = {
-  uTime: { value: 0.0, type: "f32" },
-  bubbleColor: { value: [1.0, 0.85, 0.4], type: "vec3<f32>" },
-  bubbleCount: { value: 150.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  bubbleColor: { value: [1.0, 0.85, 0.4], type: 'vec3<f32>' },
+  bubbleCount: { value: 150.0, type: 'f32' },
 };
 
 export const SEPIA_FRAGMENT = `
@@ -168,8 +168,8 @@ void main(void)
 `;
 
 export const SEPIA_UNIFORMS: Record<string, { value: any; type: string }> = {
-  uTime: { value: 0.0, type: "f32" },
-  maxIntensity: { value: 1.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  maxIntensity: { value: 1.0, type: 'f32' },
 };
 
 export const UV_GRADIENT_FRAGMENT = `
@@ -207,9 +207,9 @@ export const UV_GRADIENT_UNIFORMS: Record<
   string,
   { value: any; type: string }
 > = {
-  colorStart: { value: [1.0, 0.0, 0.0], type: "vec3<f32>" },
-  colorEnd: { value: [0.0, 0.0, 1.0], type: "vec3<f32>" },
-  direction: { value: 0, type: "i32" },
+  colorStart: { value: [1.0, 0.0, 0.0], type: 'vec3<f32>' },
+  colorEnd: { value: [0.0, 0.0, 1.0], type: 'vec3<f32>' },
+  direction: { value: 0, type: 'i32' },
 };
 
 export const RAINBOW_FRAGMENT = `
@@ -250,8 +250,8 @@ void main(void)
 `;
 
 export const RAINBOW_UNIFORMS: Record<string, { value: any; type: string }> = {
-  intensity: { value: 1.0, type: "f32" },
-  direction: { value: 0, type: "i32" },
+  intensity: { value: 1.0, type: 'f32' },
+  direction: { value: 0, type: 'i32' },
 };
 
 export const GLITCH_FRAGMENT = `
@@ -295,10 +295,10 @@ void main(void)
 `;
 
 export const GLITCH_UNIFORMS: Record<string, { value: any; type: string }> = {
-  uTime: { value: 0.0, type: "f32" },
-  intensity: { value: 0.5, type: "f32" },
-  sliceCount: { value: 12.0, type: "f32" },
-  rgbShift: { value: 0.01, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  intensity: { value: 0.5, type: 'f32' },
+  sliceCount: { value: 12.0, type: 'f32' },
+  rgbShift: { value: 0.01, type: 'f32' },
 };
 
 export const PIXELATE_FRAGMENT = `
@@ -335,9 +335,9 @@ void main(void)
 `;
 
 export const PIXELATE_UNIFORMS = {
-  pixelSize: { value: 0.02, type: "f32" },
-  uTime: { value: 0, type: "f32" },
-  jitterStrength: { value: 0.8, type: "f32" },
+  pixelSize: { value: 0.02, type: 'f32' },
+  uTime: { value: 0, type: 'f32' },
+  jitterStrength: { value: 0.8, type: 'f32' },
 };
 export const RGB_GLITCH_FRAGMENT = `
 precision highp float;
@@ -402,9 +402,9 @@ void main(void)
 `;
 
 export const RGB_GLITCH_UNIFORMS = {
-  uTime: { value: 0, type: "f32" },
-  glitchStrength: { value: 0.02, type: "f32" },
-  glitchSpeed: { value: 2.0, type: "f32" },
+  uTime: { value: 0, type: 'f32' },
+  glitchStrength: { value: 0.02, type: 'f32' },
+  glitchSpeed: { value: 2.0, type: 'f32' },
 };
 export const RGB_SHIFT_FRAGMENT = `
 precision highp float;
@@ -449,11 +449,11 @@ void main(void)
 `;
 
 export const RGB_SHIFT_UNIFORMS = {
-  shiftAmount: { value: 0.01, type: "f32" },
-  angle: { value: 0.0, type: "f32" },
-  uTime: { value: 0.0, type: "f32" },
-  wobbleAmount: { value: 0.003, type: "f32" },
-  wobbleSpeed: { value: 20.0, type: "f32" },
+  shiftAmount: { value: 0.01, type: 'f32' },
+  angle: { value: 0.0, type: 'f32' },
+  uTime: { value: 0.0, type: 'f32' },
+  wobbleAmount: { value: 0.003, type: 'f32' },
+  wobbleSpeed: { value: 20.0, type: 'f32' },
 };
 
 export const HALFTONE_FRAGMENT = `
@@ -499,11 +499,11 @@ void main(void)
 `;
 
 export const HALFTONE_UNIFORMS = {
-  dotSize: { value: 0.03, type: "f32" },
-  intensity: { value: 1.0, type: "f32" },
-  angle: { value: 0.0, type: "f32" },
-  uTime: { value: 0.0, type: "f32" },
-  vibrateStrength: { value: 0.2, type: "f32" },
+  dotSize: { value: 0.03, type: 'f32' },
+  intensity: { value: 1.0, type: 'f32' },
+  angle: { value: 0.0, type: 'f32' },
+  uTime: { value: 0.0, type: 'f32' },
+  vibrateStrength: { value: 0.2, type: 'f32' },
 };
 
 export const SINEWAVE_FRAGMENT = `
@@ -535,11 +535,11 @@ void main(void)
 `;
 
 export const SINEWAVE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  amplitude: { value: 0.02, type: "f32" },
-  frequency: { value: 3.0, type: "f32" },
-  speed: { value: 0.5, type: "f32" },
-  direction: { value: 0, type: "i32" },
+  uTime: { value: 0.0, type: 'f32' },
+  amplitude: { value: 0.02, type: 'f32' },
+  frequency: { value: 3.0, type: 'f32' },
+  speed: { value: 0.5, type: 'f32' },
+  direction: { value: 0, type: 'i32' },
 };
 
 export const SHINE_FRAGMENT = `
@@ -579,11 +579,11 @@ void main(void)
 `;
 
 export const SHINE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  shineColor: { value: [1.0, 1.0, 1.0], type: "vec3<f32>" },
-  rayWidth: { value: 0.05, type: "f32" },
-  rayCount: { value: 12.0, type: "f32" },
-  rotationSpeed: { value: 0.5, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  shineColor: { value: [1.0, 1.0, 1.0], type: 'vec3<f32>' },
+  rayWidth: { value: 0.05, type: 'f32' },
+  rayCount: { value: 12.0, type: 'f32' },
+  rotationSpeed: { value: 0.5, type: 'f32' },
 };
 
 export const BLINK_FRAGMENT = `
@@ -610,10 +610,10 @@ void main(void)
 `;
 
 export const BLINK_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  blinkSpeed: { value: 2.0, type: "f32" },
-  minIntensity: { value: 0.3, type: "f32" },
-  maxIntensity: { value: 1.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  blinkSpeed: { value: 2.0, type: 'f32' },
+  minIntensity: { value: 0.3, type: 'f32' },
+  maxIntensity: { value: 1.0, type: 'f32' },
 };
 
 export const SPRING_FRAGMENT = `
@@ -643,10 +643,10 @@ void main(void)
 `;
 
 export const SPRING_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  frequency: { value: 2.0, type: "f32" },
-  damping: { value: 0.8, type: "f32" },
-  strength: { value: 0.04, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  frequency: { value: 2.0, type: 'f32' },
+  damping: { value: 0.8, type: 'f32' },
+  strength: { value: 0.04, type: 'f32' },
 };
 
 export const DUOTONE_FRAGMENT = `
@@ -671,9 +671,9 @@ void main(void)
 `;
 
 export const DUOTONE_UNIFORMS = {
-  colorA: { value: [0.1, 0.1, 0.5], type: "vec3<f32>" },
-  colorB: { value: [1.0, 0.8, 0.2], type: "vec3<f32>" },
-  intensity: { value: 1.0, type: "f32" },
+  colorA: { value: [0.1, 0.1, 0.5], type: 'vec3<f32>' },
+  colorB: { value: [1.0, 0.8, 0.2], type: 'vec3<f32>' },
+  intensity: { value: 1.0, type: 'f32' },
 };
 
 export const TRITONE_FRAGMENT = `
@@ -704,10 +704,10 @@ void main(void)
 `;
 
 export const TRITONE_UNIFORMS = {
-  colorShadow: { value: [0.1, 0.0, 0.3], type: "vec3<f32>" },
-  colorMid: { value: [0.2, 0.8, 0.8], type: "vec3<f32>" },
-  colorHighlight: { value: [1.0, 0.9, 0.4], type: "vec3<f32>" },
-  intensity: { value: 1.0, type: "f32" },
+  colorShadow: { value: [0.1, 0.0, 0.3], type: 'vec3<f32>' },
+  colorMid: { value: [0.2, 0.8, 0.8], type: 'vec3<f32>' },
+  colorHighlight: { value: [1.0, 0.9, 0.4], type: 'vec3<f32>' },
+  intensity: { value: 1.0, type: 'f32' },
 };
 
 export const HUE_SHIFT_FRAGMENT = `
@@ -752,8 +752,8 @@ void main(void)
 `;
 
 export const HUE_SHIFT_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  amount: { value: 1.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  amount: { value: 1.0, type: 'f32' },
 };
 
 export const WARP_TRANSITION_FRAGMENT = `
@@ -786,9 +786,9 @@ void main(void)
 `;
 
 export const WARP_TRANSITION_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uStrength: { value: 0.8, type: "f32" },
-  swirl: { value: 0.3, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uStrength: { value: 0.8, type: 'f32' },
+  swirl: { value: 0.3, type: 'f32' },
 };
 
 export const SLIT_SCAN_FRAGMENT = `
@@ -819,9 +819,9 @@ void main(void)
 `;
 
 export const SLIT_SCAN_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uStrength: { value: 0.2, type: "f32" },
-  direction: { value: 0, type: "i32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uStrength: { value: 0.2, type: 'f32' },
+  direction: { value: 0, type: 'i32' },
 };
 
 export const SLIT_SCAN_GLITCH_FRAGMENT = `
@@ -875,10 +875,10 @@ void main(void)
 `;
 
 export const SLIT_SCAN_GLITCH_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uStrength: { value: 0.2, type: "f32" },
-  uNoise: { value: 0.05, type: "f32" },
-  direction: { value: 0, type: "i32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uStrength: { value: 0.2, type: 'f32' },
+  uNoise: { value: 0.05, type: 'f32' },
+  direction: { value: 0, type: 'i32' },
 };
 
 export const PIXELATE_TRANSITION_FRAGMENT = `
@@ -903,8 +903,8 @@ void main(void)
 `;
 
 export const PIXELATE_TRANSITION_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  maxPixelSize: { value: 0.05, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  maxPixelSize: { value: 0.05, type: 'f32' },
 };
 
 export const FOCUS_TRANSITION_FRAGMENT = `
@@ -947,8 +947,8 @@ void main(void)
 `;
 
 export const FOCUS_TRANSITION_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  maxBlur: { value: 0.01, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  maxBlur: { value: 0.01, type: 'f32' },
 };
 export const INVERT_FRAGMENT = `
 precision highp float;
@@ -974,7 +974,7 @@ void main(void)
 `;
 
 export const INVERT_UNIFORMS = {
-  amount: { value: 1.0, type: "f32" },
+  amount: { value: 1.0, type: 'f32' },
 };
 
 export const GRAYSCALE_FRAGMENT = `
@@ -998,7 +998,7 @@ void main(void)
 `;
 
 export const GRAYSCALE_UNIFORMS = {
-  amount: { value: 1.0, type: "f32" },
+  amount: { value: 1.0, type: 'f32' },
 };
 
 export const VIGNETTE_FRAGMENT = `
@@ -1023,8 +1023,8 @@ void main(void)
 `;
 
 export const VIGNETTE_UNIFORMS = {
-  uIntensity: { value: 0.5, type: "f32" },
-  uSoftness: { value: 0.2, type: "f32" },
+  uIntensity: { value: 0.5, type: 'f32' },
+  uSoftness: { value: 0.2, type: 'f32' },
 };
 
 export const CHROMATIC_FRAGMENT = `
@@ -1048,8 +1048,8 @@ void main(void)
 `;
 
 export const CHROMATIC_UNIFORMS = {
-  uIntensity: { value: 0.005, type: "f32" },
-  uDirection: { value: [1.0, 0.0], type: "vec2<f32>" },
+  uIntensity: { value: 0.005, type: 'f32' },
+  uDirection: { value: [1.0, 0.0], type: 'vec2<f32>' },
 };
 
 export const SWIRL_MOVEMENT_FRAGMENT = `
@@ -1148,13 +1148,13 @@ void main(void)
 `;
 
 export const SWIRL_MOVEMENT_UNIFORMS = {
-  uTime: { value: 0, type: "f32" },
-  rotationCount: { value: 4.0, type: "f32" },
+  uTime: { value: 0, type: 'f32' },
+  rotationCount: { value: 4.0, type: 'f32' },
 
-  swirlStrength: { value: 0.9, type: "f32" },
-  swirlRadius: { value: 1.0, type: "f32" },
+  swirlStrength: { value: 0.9, type: 'f32' },
+  swirlRadius: { value: 1.0, type: 'f32' },
 
-  rainbowIntensity: { value: 0.25, type: "f32" },
+  rainbowIntensity: { value: 0.25, type: 'f32' },
 };
 
 export const HEART_SPARKLES_FRAGMENT = `
@@ -1224,9 +1224,9 @@ export const HEART_SPARKLES_UNIFORMS: Record<
   string,
   { value: any; type: string }
 > = {
-  uTime: { value: 0.0, type: "f32" },
-  heartColor: { value: [1.0, 0.2, 0.5], type: "vec3<f32>" },
-  heartCount: { value: 150.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  heartColor: { value: [1.0, 0.2, 0.5], type: 'vec3<f32>' },
+  heartCount: { value: 150.0, type: 'f32' },
 };
 
 export const BUTTERFLY_SPARKLES_FRAGMENT = `
@@ -1302,9 +1302,9 @@ export const BUTTERFLY_SPARKLES_UNIFORMS: Record<
   string,
   { value: any; type: string }
 > = {
-  uTime: { value: 0.0, type: "f32" },
-  butterflyColor: { value: [0.5, 0.6, 1.0], type: "vec3<f32>" },
-  butterflyCount: { value: 120.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  butterflyColor: { value: [0.5, 0.6, 1.0], type: 'vec3<f32>' },
+  butterflyCount: { value: 120.0, type: 'f32' },
 };
 
 export const DISTORT_EFFECT_FRAGMENT = `
@@ -1333,9 +1333,9 @@ void main() {
 `;
 
 export const DISTORT_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  amplitude: { value: 30.0, type: "f32" },
-  speed: { value: 30.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  amplitude: { value: 30.0, type: 'f32' },
+  speed: { value: 30.0, type: 'f32' },
 };
 
 export const PERSPECTIVE_SINGLE_FRAGMENT = `
@@ -1406,11 +1406,11 @@ void main() {
 `;
 
 export const PERSPECTIVE_SINGLE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  persp: { value: 0.7, type: "f32" },
-  unzoom: { value: 0.3, type: "f32" },
-  reflection: { value: 0.0, type: "f32" },
-  floating: { value: 3.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  persp: { value: 0.7, type: 'f32' },
+  unzoom: { value: 0.3, type: 'f32' },
+  reflection: { value: 0.0, type: 'f32' },
+  floating: { value: 3.0, type: 'f32' },
 };
 
 export const DISTORT_SPIN_FRAGMENT = `
@@ -1451,10 +1451,10 @@ void main() {
 `;
 
 export const DISTORT_SPIN_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  radius: { value: 1.0, type: "f32" },
-  spinPower: { value: 18.0, type: "f32" },
-  speed: { value: 4.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  radius: { value: 1.0, type: 'f32' },
+  spinPower: { value: 18.0, type: 'f32' },
+  speed: { value: 4.0, type: 'f32' },
 };
 
 export const DISTORT_GRID_FRAGMENT = `
@@ -1511,11 +1511,11 @@ void main() {
 `;
 
 export const DISTORT_GRID_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  speed: { value: 2.0, type: "f32" },
-  intensity: { value: 1.5, type: "f32" },
-  endx: { value: 2, type: "i32" },
-  endy: { value: -1, type: "i32" },
+  uTime: { value: 0.0, type: 'f32' },
+  speed: { value: 2.0, type: 'f32' },
+  intensity: { value: 1.5, type: 'f32' },
+  endx: { value: 2, type: 'i32' },
+  endy: { value: -1, type: 'i32' },
 };
 
 export const DISTORT_RIP_FRAGMENT = `
@@ -1555,11 +1555,11 @@ void main() {
 `;
 
 export const DISTORT_RIP_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  intensity: { value: 0.05, type: "f32" },
-  speed: { value: 2.0, type: "f32" },
-  slices: { value: 10, type: "i32" },
-  randomness: { value: 1.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  intensity: { value: 0.05, type: 'f32' },
+  speed: { value: 2.0, type: 'f32' },
+  slices: { value: 10, type: 'i32' },
+  randomness: { value: 1.0, type: 'f32' },
 };
 
 export const TWO_CURTAIN_FRAGMENT = `
@@ -1590,8 +1590,8 @@ void main() {
 }
 `;
 export const TWO_CURTAIN_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  softness: { value: 0.2, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  softness: { value: 0.2, type: 'f32' },
 };
 
 export const TRIANGLE_PATTERN_EFFECT_FRAGMENT = `
@@ -1672,9 +1672,9 @@ void main() {
 `;
 
 export const TRIANGLE_PATTERN_EFFECT_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  softness: { value: 0.2, type: "f32" },
-  zoom: { value: 8.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  softness: { value: 0.2, type: 'f32' },
+  zoom: { value: 8.0, type: 'f32' },
 };
 
 export const MIRROR_TILE_FRAGMENT = `
@@ -1719,7 +1719,7 @@ void main() {
 `;
 
 export const MIRROR_TILE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const FLASH_LOOP_FRAGMENT = `
@@ -1749,9 +1749,9 @@ void main(void)
 `;
 
 export const FLASH_LOOP_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  speed: { value: 10.2, type: "f32" },
-  intensity: { value: 1.5, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  speed: { value: 10.2, type: 'f32' },
+  intensity: { value: 1.5, type: 'f32' },
 };
 
 export const FILM_STRIP_PRO_FRAGMENT = `
@@ -1838,10 +1838,10 @@ void main() {
 `;
 
 export const FILM_STRIP_PRO_UNIFORMS = {
-  uTime: { value: 0, type: "f32" },
-  framesPerScreen: { value: 2.0, type: "f32" },
-  scrollSpeed: { value: 0.35, type: "f32" },
-  gateWeave: { value: 0.6, type: "f32" },
+  uTime: { value: 0, type: 'f32' },
+  framesPerScreen: { value: 2.0, type: 'f32' },
+  scrollSpeed: { value: 0.35, type: 'f32' },
+  gateWeave: { value: 0.6, type: 'f32' },
 };
 
 export const BAD_SIGNAL_FRAGMENT = `
@@ -1890,7 +1890,7 @@ void main(void)
 `;
 
 export const BAD_SIGNAL_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const OMNIFLEXION_FRAGMENT = `
@@ -1929,11 +1929,11 @@ void main(void)
 `;
 
 export const OMNIFLEXION_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 
-  strength: { value: 0.08, type: "f32" },
-  frequency: { value: 18.0, type: "f32" },
-  speed: { value: 3.5, type: "f32" },
+  strength: { value: 0.08, type: 'f32' },
+  frequency: { value: 18.0, type: 'f32' },
+  speed: { value: 3.5, type: 'f32' },
 };
 
 export const INVERSE_APERTURE_FRAGMENT = `
@@ -1973,8 +1973,8 @@ void main(void)
 `;
 
 export const INVERSE_APERTURE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  feather: { value: 0.03, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  feather: { value: 0.03, type: 'f32' },
 };
 
 export const CURTAIN_OPEN_FRAGMENT = `
@@ -2013,7 +2013,7 @@ void main(void)
 `;
 
 export const CURTAIN_OPEN_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const CURTAIN_BLUR_FRAGMENT = `
@@ -2078,7 +2078,7 @@ void main(void)
 `;
 
 export const CURTAIN_BLUR_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const DISTORT_V2_FRAGMENT = `
@@ -2111,10 +2111,10 @@ void main(void)
 `;
 
 export const DISTORT_V2_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 
-  strength: { value: 0.015, type: "f32" },
-  frequency: { value: 10.0, type: "f32" },
+  strength: { value: 0.015, type: 'f32' },
+  frequency: { value: 10.0, type: 'f32' },
 };
 export const LIGHTNING_FRAGMENT = `
 precision mediump float;
@@ -2155,7 +2155,7 @@ void main(void)
 `;
 
 export const LIGHTNING_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const LIGHTNING_VEINS_FRAGMENT = `
@@ -2227,7 +2227,7 @@ void main(void)
 `;
 
 export const LIGHTNING_VEINS_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const PIXEL_ERROR_FRAGMENT = `
@@ -2267,7 +2267,7 @@ void main(void)
 `;
 
 export const PIXEL_ERROR_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const NEON_FLASH_FRAGMENT = `
@@ -2307,12 +2307,12 @@ void main(void)
 `;
 
 export const NEON_FLASH_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uIntensity: { value: 1.8, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uIntensity: { value: 1.8, type: 'f32' },
 
-  neonR: { value: 0.1, type: "f32" },
-  neonG: { value: 0.9, type: "f32" },
-  neonB: { value: 1.0, type: "f32" },
+  neonR: { value: 0.1, type: 'f32' },
+  neonG: { value: 0.9, type: 'f32' },
+  neonB: { value: 1.0, type: 'f32' },
 };
 
 export const WAVE_DISTORT_FRAGMENT = `
@@ -2345,9 +2345,9 @@ void main(void)
 `;
 
 export const WAVE_DISTORT_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uStrength: { value: 0.02, type: "f32" },
-  uSpeed: { value: 20.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uStrength: { value: 0.02, type: 'f32' },
+  uSpeed: { value: 20.0, type: 'f32' },
 };
 
 export const BOUNCING_BALLS_FRAGMENT = `
@@ -2407,7 +2407,7 @@ void main(void)
 `;
 
 export const BOUNCING_BALLS_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const WATER_REFLECTION_FRAGMENT = `
@@ -2452,9 +2452,9 @@ void main(void)
 `;
 
 export const WATER_REFLECTION_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uWaveStrength: { value: 0.02, type: "f32" },
-  uWaveSpeed: { value: 2.5, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uWaveStrength: { value: 0.02, type: 'f32' },
+  uWaveSpeed: { value: 2.5, type: 'f32' },
 };
 
 export const DARK_ERROR_FRAGMENT = `
@@ -2504,8 +2504,8 @@ void main(void)
 `;
 
 export const DARK_ERROR_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uStrength: { value: 0.08, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uStrength: { value: 0.08, type: 'f32' },
 };
 
 export const SCALE_MOVE_BLUR_FRAGMENT = `
@@ -2584,7 +2584,7 @@ void main(void)
 `;
 
 export const SCALE_MOVE_BLUR_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const PAPER_BREAK_REVEAL_FRAGMENT = `
@@ -2689,8 +2689,8 @@ void main(void)
 `;
 
 export const PAPER_BREAK_REVEAL_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uCutPos: { value: 0.28, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uCutPos: { value: 0.28, type: 'f32' },
 };
 
 export const GRAFFITI_FRAGMENT = `
@@ -2781,7 +2781,7 @@ void main(void)
 `;
 
 export const GRAFFITI_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
 };
 
 export const LASER_FRAGMENT = `
@@ -2825,10 +2825,10 @@ void main() {
 `;
 
 export const LASER_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uColor: { value: [1.0, 0.0, 0.2], type: "vec3<f32>" },
-  uThickness: { value: 0.02, type: "f32" },
-  uIntensity: { value: 1.5, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uColor: { value: [1.0, 0.0, 0.2], type: 'vec3<f32>' },
+  uThickness: { value: 0.02, type: 'f32' },
+  uIntensity: { value: 1.5, type: 'f32' },
 };
 
 export const WAVE_FRAGMENT = `
@@ -2865,10 +2865,10 @@ void main() {
 `;
 
 export const WAVE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uStrength: { value: 0.02, type: "f32" },
-  uFrequency: { value: 20.0, type: "f32" },
-  uSpeed: { value: 4.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uStrength: { value: 0.02, type: 'f32' },
+  uFrequency: { value: 20.0, type: 'f32' },
+  uSpeed: { value: 4.0, type: 'f32' },
 };
 
 export const SPARKS_FRAGMENT = `
@@ -2927,10 +2927,10 @@ void main() {
 `;
 
 export const SPARKS_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uDensity: { value: 30.0, type: "f32" },
-  uSpeed: { value: 2.5, type: "f32" },
-  uSize: { value: 0.15, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uDensity: { value: 30.0, type: 'f32' },
+  uSpeed: { value: 2.5, type: 'f32' },
+  uSize: { value: 0.15, type: 'f32' },
 };
 
 export const HOLOGRAM_SCAN_FRAGMENT = `
@@ -2980,10 +2980,10 @@ void main() {
 `;
 
 export const HOLOGRAM_SCAN_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uColor: { value: [0.0, 1.0, 1.0], type: "vec3<f32>" },
-  uScanWidth: { value: 0.02, type: "f32" },
-  uIntensity: { value: 1.2, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uColor: { value: [0.0, 1.0, 1.0], type: 'vec3<f32>' },
+  uScanWidth: { value: 0.02, type: 'f32' },
+  uIntensity: { value: 1.2, type: 'f32' },
 };
 
 export const RETRO_70S_FRAGMENT = `
@@ -3027,10 +3027,10 @@ void main() {
 `;
 
 export const RETRO_70S_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uGrain: { value: 0.08, type: "f32" },
-  uFade: { value: 0.6, type: "f32" },
-  uVignette: { value: 1.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uGrain: { value: 0.08, type: 'f32' },
+  uFade: { value: 0.6, type: 'f32' },
+  uVignette: { value: 1.0, type: 'f32' },
 };
 
 export const IG_OUTLINE_FRAGMENT = `
@@ -3070,8 +3070,8 @@ void main() {
 `;
 
 export const IG_OUTLINE_UNIFORMS = {
-  uThickness: { value: 1.5, type: "f32" },
-  uOutlineColor: { value: [1.0, 1.0, 1.0], type: "vec3<f32>" },
+  uThickness: { value: 1.5, type: 'f32' },
+  uOutlineColor: { value: [1.0, 1.0, 1.0], type: 'vec3<f32>' },
 };
 
 export const RANDOM_ACCENTS_FRAGMENT = `
@@ -3125,12 +3125,12 @@ void main() {
 `;
 
 export const RANDOM_ACCENTS_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uDensity: { value: 20.0, type: "f32" },
-  uSize: { value: 0.25, type: "f32" },
-  uIntensity: { value: 1.2, type: "f32" },
-  uColorA: { value: [1.0, 0.2, 0.6], type: "vec3<f32>" },
-  uColorB: { value: [0.2, 0.8, 1.0], type: "vec3<f32>" },
+  uTime: { value: 0.0, type: 'f32' },
+  uDensity: { value: 20.0, type: 'f32' },
+  uSize: { value: 0.25, type: 'f32' },
+  uIntensity: { value: 1.2, type: 'f32' },
+  uColorA: { value: [1.0, 0.2, 0.6], type: 'vec3<f32>' },
+  uColorB: { value: [0.2, 0.8, 1.0], type: 'vec3<f32>' },
 };
 
 export const SOLUTION_EFFECT_FRAGMENT = `
@@ -3174,10 +3174,10 @@ void main() {
 `;
 
 export const SOLUTION_EFFECT_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uColorA: { value: [0.2, 0.8, 1.0], type: "vec3<f32>" },
-  uColorB: { value: [1.0, 0.2, 0.6], type: "vec3<f32>" },
-  uIntensity: { value: 0.8, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uColorA: { value: [0.2, 0.8, 1.0], type: 'vec3<f32>' },
+  uColorB: { value: [1.0, 0.2, 0.6], type: 'vec3<f32>' },
+  uIntensity: { value: 0.8, type: 'f32' },
 };
 
 export const TV_SCANLINES_FRAGMENT = `
@@ -3215,11 +3215,11 @@ void main() {
 `;
 
 export const TV_SCANLINES_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uLineThickness: { value: 2.0, type: "f32" },
-  uLineIntensity: { value: 0.6, type: "f32" },
-  uNoiseIntensity: { value: 0.05, type: "f32" },
-  uLineColor: { value: [0.8, 1.0, 0.8], type: "vec3<f32>" },
+  uTime: { value: 0.0, type: 'f32' },
+  uLineThickness: { value: 2.0, type: 'f32' },
+  uLineIntensity: { value: 0.6, type: 'f32' },
+  uNoiseIntensity: { value: 0.05, type: 'f32' },
+  uLineColor: { value: [0.8, 1.0, 0.8], type: 'vec3<f32>' },
 };
 
 export const HDR_FRAGMENT = `
@@ -3259,9 +3259,9 @@ void main() {
 `;
 
 export const HDR_UNIFORMS = {
-  uExposure: { value: 1.2, type: "f32" },
-  uSaturation: { value: 4.3, type: "f32" },
-  uContrast: { value: 2.2, type: "f32" },
+  uExposure: { value: 1.2, type: 'f32' },
+  uSaturation: { value: 4.3, type: 'f32' },
+  uContrast: { value: 2.2, type: 'f32' },
 };
 
 export const BLACK_FLASH_FRAGMENT = `
@@ -3290,9 +3290,9 @@ void main() {
 `;
 
 export const BLACK_FLASH_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uIntensity: { value: 0.7, type: "f32" },
-  uDuration: { value: 0.2, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uIntensity: { value: 0.7, type: 'f32' },
+  uDuration: { value: 0.2, type: 'f32' },
 };
 
 export const BRIGHT_PULSE_FRAGMENT = `
@@ -3336,10 +3336,10 @@ void main() {
 `;
 
 export const BRIGHT_PULSE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uPulseScale: { value: 0.2, type: "f32" },
-  uBlurStrength: { value: 0.02, type: "f32" },
-  uGlowBoost: { value: 2.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uPulseScale: { value: 0.2, type: 'f32' },
+  uBlurStrength: { value: 0.02, type: 'f32' },
+  uGlowBoost: { value: 2.0, type: 'f32' },
 };
 export const NEGATIVE_DIVISION_FRAGMENT = `
 precision highp float;
@@ -3367,8 +3367,8 @@ void main() {
 `;
 
 export const NEGATIVE_DIVISION_UNIFORMS = {
-  uIntensity: { value: 1.0, type: "f32" },
-  uContrast: { value: 2.5, type: "f32" },
+  uIntensity: { value: 1.0, type: 'f32' },
+  uContrast: { value: 2.5, type: 'f32' },
 };
 
 export const CAMERA_MOVE_FRAGMENT = `
@@ -3406,9 +3406,9 @@ void main() {
 `;
 
 export const CAMERA_MOVE_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uIntensity: { value: 1.0, type: "f32" },
-  uSpeed: { value: 1.0, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uIntensity: { value: 1.0, type: 'f32' },
+  uSpeed: { value: 1.0, type: 'f32' },
 };
 export const HDR_V2_FRAGMENT = `
 precision highp float;
@@ -3451,9 +3451,9 @@ void main() {
 `;
 
 export const HDR_V2_UNIFORMS = {
-  uExposure: { value: 1.0, type: "f32" },
-  uBloom: { value: 1.5, type: "f32" },
-  uContrast: { value: 2.0, type: "f32" },
+  uExposure: { value: 1.0, type: 'f32' },
+  uBloom: { value: 1.5, type: 'f32' },
+  uContrast: { value: 2.0, type: 'f32' },
 };
 
 export const FAST_ZOOM_FRAGMENT = `
@@ -3503,12 +3503,11 @@ void main() {
 `;
 
 export const FAST_ZOOM_UNIFORMS = {
-  uTime: { value: 0.0, type: "f32" },
-  uZoomSpeed: { value: 5.0, type: "f32" },
-  uMaxZoom: { value: 2.0, type: "f32" },
-  uBlurStrength: { value: 0.01, type: "f32" },
+  uTime: { value: 0.0, type: 'f32' },
+  uZoomSpeed: { value: 5.0, type: 'f32' },
+  uMaxZoom: { value: 2.0, type: 'f32' },
+  uBlurStrength: { value: 0.01, type: 'f32' },
 };
-
 
 export const CHROMA_KEY_FRAGMENT = `
 precision highp float;
@@ -3569,7 +3568,7 @@ void main() {
 `;
 
 export const CHROMA_KEY_UNIFORMS = {
-  uKeyColor: { value: [0.176, 0.792, 0.098], type: "vec3<f32>" },
-  uSimilarity: { value: 0.0, type: "f32" },
-  uSpill: { value: 0.0, type: "f32" },
+  uKeyColor: { value: [0.176, 0.792, 0.098], type: 'vec3<f32>' },
+  uSimilarity: { value: 0.0, type: 'f32' },
+  uSpill: { value: 0.0, type: 'f32' },
 };

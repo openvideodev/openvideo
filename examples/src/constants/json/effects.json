@@ -4,17 +4,13 @@
       "id": "track_1772251820638_wduvy3trx",
       "name": "Track 2",
       "type": "Effect",
-      "clipIds": [
-        "clip_1772251820638_cg52nmek9"
-      ]
+      "clipIds": ["clip_1772251820638_cg52nmek9"]
     },
     {
       "id": "track_1772251728903_uj9k84vmo",
       "name": "Track 2",
       "type": "Image",
-      "clipIds": [
-        "clip_1772251728903_sjn1utsaa"
-      ]
+      "clipIds": ["clip_1772251728903_sjn1utsaa"]
     }
   ],
   "clips": [

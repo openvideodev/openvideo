@@ -4,17 +4,13 @@
       "id": "track_1772241122294_5m91ibtz9",
       "name": "Track 2",
       "type": "Video",
-      "clipIds": [
-        "clip_1772241122183_c5kl1om1l"
-      ]
+      "clipIds": ["clip_1772241122183_c5kl1om1l"]
     },
     {
       "id": "track_1772241099713_wi7994tbs",
       "name": "Track 1",
       "type": "Video",
-      "clipIds": [
-        "clip_1772241099584_ncqkfzve4"
-      ]
+      "clipIds": ["clip_1772241099584_ncqkfzve4"]
     }
   ],
   "clips": [

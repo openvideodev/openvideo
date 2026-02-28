@@ -232,9 +232,9 @@ export class Transformer extends Container {
       // and Root.pivot is (0,0), and AnimationContainer.pivot is (0,0),
       // the "Stable" position of MainSprite relative to Root is just its local position
       // as if AnimationContainer had identity transform.
-      
+
       const t = mainSprite.localTransform.clone();
-      
+
       // If the parent is AnimationContainer, we ignore the parent's transform
       // to get the "Reference" position.
       // Actually, in our case, MainSprite's localTransform is already relative to AnimationContainer.
@@ -261,7 +261,8 @@ export class Transformer extends Container {
 
     const contentChildren = container.children.filter(
       (child) =>
-        child.label !== 'ShadowContainer' && child.label !== 'AnimationContainer'
+        child.label !== 'ShadowContainer' &&
+        child.label !== 'AnimationContainer'
     );
 
     if (contentChildren.length === 0 && container.children.length > 0) {

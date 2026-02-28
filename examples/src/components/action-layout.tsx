@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import type { ProjectJSON } from "openvideo";
-import { ExamplePlayer } from "./example-player";
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import type { ProjectJSON } from 'openvideo';
+import { ExamplePlayer } from './example-player';
 
 interface ActionLayoutProps {
   title: string;
@@ -25,7 +25,7 @@ export default function ActionLayout({
       const slug = title
         .toLowerCase()
         .replace(/\s+(.)/g, (_, c) => c.toUpperCase())
-        .replace(/\s/g, "");
+        .replace(/\s/g, '');
 
       setLoading(true);
       try {
@@ -38,7 +38,7 @@ export default function ActionLayout({
           console.warn(`No JSON found for example: ${slug}`);
         }
       } catch (error) {
-        console.error("Error loading project JSON:", error);
+        console.error('Error loading project JSON:', error);
       } finally {
         setLoading(false);
       }
@@ -54,7 +54,7 @@ export default function ActionLayout({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => navigate("/")}
+            onClick={() => navigate('/')}
             className="shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />

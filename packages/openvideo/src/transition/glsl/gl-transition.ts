@@ -1,6 +1,6 @@
 //@ts-ignore
-import glTransitions from "gl-transitions";
-import { RADIAL_SWIPE_FRAGMENT } from "./custom-glsl";
+import glTransitions from 'gl-transitions';
+import { RADIAL_SWIPE_FRAGMENT } from './custom-glsl';
 
 export interface GlTransition {
   label: string;
@@ -13,7 +13,7 @@ export interface GlTransition {
 // Custom transitions that override or extend the library
 const STATIC_CUSTOM_TRANSITIONS = {
   radialSwipe: {
-    label: "Radial Swipe",
+    label: 'Radial Swipe',
     fragment: RADIAL_SWIPE_FRAGMENT,
   },
 } as const satisfies Record<string, GlTransition>;
@@ -26,7 +26,7 @@ const REGISTERED_TRANSITIONS: Record<string, GlTransition> = {};
  */
 export function registerCustomTransition(
   name: string,
-  transition: GlTransition,
+  transition: GlTransition
 ) {
   REGISTERED_TRANSITIONS[name] = transition;
 }
@@ -48,7 +48,7 @@ export function getAllTransitions(): Record<string, GlTransition> {
         label: t.name,
         fragment: t.glsl,
         uniforms: t.defaultParams,
-        previewDynamic: "",
+        previewDynamic: '',
       };
       return acc;
     }, {}),
