@@ -87,7 +87,7 @@ studio.play();
 
 ## Contact
 
-For inquiries, support, or custom solutions, reach out to us at [cloud@designcombo.dev](mailto:cloud@designcombo.dev).
+For inquiries, support, or custom solutions, reach out to us at [hello@openvideo.dev](mailto:hello@openvideo.dev).
 
 ## License
 
