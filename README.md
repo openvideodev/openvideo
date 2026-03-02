@@ -21,7 +21,12 @@ A high-performance video rendering and processing library for the web, built wit
 
 [![](https://cdn.scenify.io/openvideo-editor.png)](https://github.com/openvideodev/openvideo)
 
+## Official Editors
 
+The editor has been removed from this core repository and moved to dedicated repositories. We now offer two official, open-source video editors built on top of OpenVideo:
+
+- **React Video Editor**: [GitHub Repository](https://github.com/openvideodev/video-editor) | [Live Demo](https://editor.openvideo.dev/)
+- **Vue Video Editor**: [GitHub Repository](https://github.com/openvideodev/vue-video-editor) | [Live Demo](https://vue-video-editor.vercel.app/)
 
 ## Features
 
