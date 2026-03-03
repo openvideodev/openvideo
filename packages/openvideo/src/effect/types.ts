@@ -1,9 +1,10 @@
-import type { Renderer, RenderTexture } from 'pixi.js';
-import { EffectKey } from './glsl/gl-effect';
+import type { Renderer, RenderTexture } from "pixi.js";
+import { EffectKey } from "./glsl/gl-effect";
 
 export interface EffectOptions {
   name: EffectKey;
   renderer: Renderer;
+  values?: Record<string, any>;
 }
 
 export interface EffectRendererOptions {

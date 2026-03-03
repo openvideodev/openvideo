@@ -1,12 +1,12 @@
-import { BaseClip } from './base-clip';
-import { type IClip } from './iclip';
-import { type EffectKey } from '../effect/glsl/gl-effect';
+import { BaseClip } from "./base-clip";
+import { type IClip } from "./iclip";
+import { type EffectKey } from "../effect/glsl/gl-effect";
 
 // Since Effect is an adjustment layer, it doesn't render visual content directly.
 // We can use a minimal dummy implementation for BaseClip abstract methods.
 export class Effect extends BaseClip {
-  readonly type = 'Effect';
-  ready: IClip['ready'];
+  readonly type = "Effect";
+  ready: IClip["ready"];
 
   private _meta = {
     duration: 5e6, // Default 5 seconds
@@ -30,6 +30,7 @@ export class Effect extends BaseClip {
     id: string;
     key: EffectKey;
     name: string;
+    values?: Record<string, any>;
   };
 
   constructor(effectKey: EffectKey) {
@@ -48,6 +49,7 @@ export class Effect extends BaseClip {
   async clone() {
     const newClip = new Effect(this.effect.key);
     this.copyStateTo(newClip);
+    newClip.effect = { ...this.effect };
     newClip.id = this.id; // Or generate new ID? Usually clone gets new ID if fully new instance, but `copyStateTo` copies props.
     // But in Studio `studio.addClip` ensures unique ID if needed.
     // Let's generate new ID for the clone naturally in constructor, and override if needed by caller.
@@ -66,11 +68,11 @@ export class Effect extends BaseClip {
   // Effect is invisible, so it returns empty/dummy data
   async tick(_time: number): Promise<{
     video: ImageBitmap | undefined;
-    state: 'success';
+    state: "success";
   }> {
     return {
       video: undefined,
-      state: 'success',
+      state: "success",
     };
   }
 
@@ -84,7 +86,7 @@ export class Effect extends BaseClip {
     const base = super.toJSON(main);
     return {
       ...base,
-      type: 'Effect',
+      type: "Effect",
       effect: this.effect,
       id: this.id,
       effects: this.effects,
@@ -95,7 +97,7 @@ export class Effect extends BaseClip {
    * Create an Effect instance from a JSON object
    */
   static async fromObject(json: any): Promise<Effect> {
-    if (json.type !== 'Effect') {
+    if (json.type !== "Effect") {
       throw new Error(`Expected Effect, got ${json.type}`);
     }
 
