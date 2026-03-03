@@ -25,17 +25,145 @@ clip.effects.push({
 
 ## Supported Effect Keys
 
-The compositor supports various effect keys, including:
+OpenVideo supports a wide range of visual effects, categorized into built-in GLSL effects and specialized Pixi Filters.
 
-- `brightness`
-- `contrast`
-- `saturation`
-- `blur`
-- `hue-rotate`
-- `invert`
-- `grayscale`
-- `sepia`
-- `pixelate`
+### Built-in GLSL Effects
+
+These effects are implemented using custom GLSL shaders and often include dynamic time-based animations.
+
+- `badSignal`: Simulates a distorted analog TV signal.
+- `blackFlash`: Periodic black flashes.
+- `blink`: Simple blinking/pulsing opacity.
+- `bouncingBalls`: Overlay of bouncing circles.
+- `brightPulse`: Periodic bright flashes.
+- `bubbleSparkles`: Generates rising bubble-like sparkles.
+- `butterflySparkles`: Animated butterfly-shaped sparkles.
+- `cameraMove`: Simulates camera movement/shake.
+- `chromatic`: Chromatic aberration effect.
+- `curtainBlur`: Blur transition resembling closing curtains.
+- `curtainOpen`: Transition that opens like a curtain.
+- `darkError`: Intense glitchy "error" aesthetic.
+- `distort`: General wave/swirl distortion.
+- `distortGrid`: Distorts the image along a grid.
+- `distortRip`: Horizontal ripping distortion.
+- `distortSpin`: Spinning/swirling distortion.
+- `distortV2`: Enhanced distortion algorithm.
+- `duotone`: Maps image colors to a two-color palette.
+- `fastZoom`: Rapid zoom-in/out effect.
+- `filmStripPro`: Professional film strip overlay.
+- `flashLoop`: Looping flash effect.
+- `focusTransition`: Blur-based focus shift.
+- `glitch`: Standard digital glitch effect.
+- `graffiti`: Stylized graffiti overlay.
+- `grayscale`: Classic black and white filter.
+- `halftone`: CMYK-style halftone dot pattern.
+- `hdr` / `hdrV2`: High Dynamic Range simulation.
+- `heartSparkles`: Animated heart-shaped sparkles.
+- `hologramScan`: Futuristic hologram scanning lines.
+- `hueShift`: Continuously shifts the hue of the image.
+- `igOutline`: Instagram-style glowing outline.
+- `inverseAperture`: Vignette-like aperture closing.
+- `invert`: Inverts image colors.
+- `laser`: Glowing laser beam effect.
+- `lightning` / `lightningVeins`: Electric discharge overlays.
+- `mirrorTile`: Tiles the image with mirroring.
+- `negativeDivision`: Stylized color inversion.
+- `neonFlash`: Vivid neon-colored flashes.
+- `omniflexion`: Complex multi-axis distortion.
+- `paperBreakReveal`: Transition resembling tearing paper.
+- `perspectiveSingle`: Simple 3D perspective shift.
+- `pixelate`: Customizable pixelation.
+- `pixelError`: Simulates digital compression errors.
+- `pixelateTransition`: Transition using pixelation.
+- `rainbow`: Applies a moving rainbow gradient.
+- `randomAccents`: Subtle random color highlights.
+- `redGradient`: Simple red-tinted gradient.
+- `retro70s`: Stylized 70s vintage aesthetic.
+- `rgbGlitch`: RGB split glitching.
+- `rgbShift`: Separates R, G, and B channels.
+- `rotationMovement`: Rotates the entire clip over time.
+- `scaleMoveBlur`: Combination of scaling and motion blur.
+- `sepia`: Warm vintage brown tint.
+- `shine`: Moving light rays/gleam.
+- `sinewave`: Wavy water-like distortion.
+- `slitScan`: Distinctive "slit-scan" time-distortion.
+- `slitScanGlitch`: Slit-scan combined with glitching.
+- `solution`: Stylized chemical/fluid effect.
+- `sparks`: Animated particles/sparks.
+- `spring`: Elastic "bouncing" animation.
+- `swirlMovement`: Swirling animation.
+- `trianglePattern`: Overlays a geometric triangle pattern.
+- `tritone`: Maps image colors to a three-color palette (shadows, mids, highlights).
+- `tvScanlines`: Classic CRT scanline overlay.
+- `uvGradient`: Visualizes UV coordinates as a gradient.
+- `vignette`: Darkens the edges of the clip.
+- `warpTransition`: Spiraling warp transition.
+- `waterReflection`: Simulates reflection on a water surface.
+- `wave` / `waveDistort`: Fluid wave animations.
+
+### Pixi Filters
+
+These are specialized filters provided by the `pixi-filters` library. Note that some keys end in `Filter` to avoid collisions.
+
+- `adjustmentFilter`: Gamma, saturation, contrast, brightness, and color channel adjustments.
+- `advancedBloomFilter`: High-quality glow/bloom control.
+- `asciiFilter`: Converts the image to ASCII characters.
+- `backdropBlurFilter`: Blurs everything behind the clip (useful for overlays).
+- `bevelFilter`: Adds a 3D bevel/shadow effect to the edges.
+- `bloomFilter`: Standard blurring glow.
+- `bulgePinchFilter`: Bulge or pinch distortion at a specific point.
+- `colorGradientFilter`: Advanced multi-stop color gradients.
+- `colorMapFilter`: Uses a texture map for color lookup.
+- `colorOverlayFilter`: Simple solid color tint.
+- `colorReplaceFilter`: Replaces a specific color with another.
+- `convolutionFilter`: Generic 3x3 convolution matrix (sharpen, emboss, etc.).
+- `crossHatchFilter`: Stylized cross-hatch drawing effect.
+- `crtFilter`: Comprehensive old-school monitor simulation (noise, curvature, scanlines).
+- `dotFilter`: Halftone dot pattern.
+- `dropShadowFilter`: Adds a drop shadow to the clip.
+- `embossFilter`: 3D embossed texture effect.
+- `glitchFilter`: Intense digital glitching with slices and offsets.
+- `glowFilter`: Configurable outer and inner glow.
+- `godrayFilter`: Volumetric light ray effect.
+- `grayscaleFilter`: Simple grayscale filter.
+- `hslAdjustmentFilter`: Hue, saturation, and lightness control.
+- `kawaseBlurFilter`: High-performance blur.
+- `motionBlurFilter`: Directional blur based on velocity.
+- `multiColorReplaceFilter`: Batch color replacement.
+- `oldFilmFilter`: Scratches, noise, and sepia for a vintage look.
+- `outlineFilter`: Adds a solid outline around the clip content.
+- `pixelateFilter`: Standard blocky pixelation.
+- `radialBlurFilter`: Blur that radiates from a specific center point.
+- `reflectionFilter`: Dynamic water-like reflection with waves.
+- `rgbSplitFilter`: Standard RGB channel splitting.
+- `shockwaveFilter`: Expanding shockwave ripple animation.
+- `simpleLightmapFilter`: Uses a lightmap texture for lighting.
+- `simplexNoiseFilter`: Generates and applies simplex noise.
+- `tiltShiftFilter`: Simulates a tilt-shift camera lens (partial blur).
+- `twistFilter`: Twists the image around a center point.
+- `zoomBlurFilter`: Blur that zooms in/out from a center point.
+
+## Using Effect Values
+
+Many effects allow you to customize their appearance by passing a `values` object.
+
+```ts
+clip.effects.push({
+  id: "custom-glow",
+  key: "glowFilter",
+  startTime: 0,
+  duration: 5e6,
+  values: {
+    distance: 20,
+    outerStrength: 3,
+    color: "#ff0000",
+  },
+});
+```
+
+### Animating Values
+
+While built-in effects often handle animations internally (using `uTime`), you can also manually update values or use the internal animation system for complex transitions.
 
 ## Managing Effects
 
