@@ -58,6 +58,7 @@
     "mediabunny": "^1.26.0",
     "microdiff": "^1.4.0",
     "opfs-tools": "^0.7.2",
+    "pixi-filters": "^6.1.5",
     "pixi.js": "^8.14.3",
     "wave-resampler": "^1.0.0",
     "wrapbox": "^0.1.0"
