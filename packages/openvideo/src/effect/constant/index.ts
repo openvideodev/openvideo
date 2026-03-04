@@ -286,10 +286,7 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
     knockout: false,
   },
   pixelateFilter: {
-    size: {
-      x: 10,
-      y: 10,
-    },
+    size: 10,
   },
   radialBlurFilter: {
     angle: 20,
@@ -435,8 +432,8 @@ export const VALUES_FILTER_SPECIAL_LIMITS = {
     tolerance: { min: 0, max: 1, step: 0.013 },
   },
   convolutionFilter: {
-    width: { min: 0, max: 500, step: 6.0 },
-    height: { min: 0, max: 500, step: 6.0 },
+    width: { min: 0, max: 500, step: 1.0 },
+    height: { min: 0, max: 500, step: 1.0 },
     matrix: [
       {
         max: 0,
@@ -588,16 +585,13 @@ export const VALUES_FILTER_SPECIAL_LIMITS = {
     alpha: { min: 0, max: 1, step: 0.001 },
   },
   pixelateFilter: {
-    size: {
-      x: { min: 4, max: 40, step: 0.013 },
-      y: { min: 4, max: 40, step: 0.013 },
-    },
+    size: { min: 4, max: 40, step: 0.013 },
   },
   radialBlurFilter: {
     angle: { min: -180, max: 180, step: 0.1 },
     center: {
-      x: { min: 0, max: 860, step: 0.1 },
-      y: { min: 0, max: 812, step: 0.1 },
+      x: { min: 0, max: 2000, step: 0.1 },
+      y: { min: 0, max: 2000, step: 0.1 },
     },
     radius: { min: -1, max: 860, step: 0.1 },
     kernelSize: { min: 0, max: 25, step: 3 },
@@ -663,8 +657,8 @@ export const VALUES_FILTER_SPECIAL_LIMITS = {
     brightness: { min: 0.2, max: 2, step: 0.01 },
     radius: { min: 100, max: 2000, step: 0.7 },
     center: {
-      x: { min: 0, max: 860, step: 0.013 },
-      y: { min: 0, max: 812, step: 0.013 },
+      x: { min: 0, max: 2000, step: 0.013 },
+      y: { min: 0, max: 2000, step: 0.013 },
     },
   },
   simpleLightmapFilter: {
@@ -682,27 +676,27 @@ export const VALUES_FILTER_SPECIAL_LIMITS = {
     blur: { min: 0, max: 200, step: 0.1 },
     gradientBlur: { min: 0, max: 1000, step: 1 },
     start: {
-      x: { min: 0, max: 860, step: 0.1 },
-      y: { min: 0, max: 812, step: 0.1 },
+      x: { min: 0, max: 2000, step: 0.1 },
+      y: { min: 0, max: 2000, step: 0.1 },
     },
     end: {
-      x: { min: 0, max: 860, step: 0.1 },
-      y: { min: 0, max: 812, step: 0.1 },
+      x: { min: 0, max: 2000, step: 0.1 },
+      y: { min: 0, max: 2000, step: 0.1 },
     },
   },
   twistFilter: {
     angle: { min: -10, max: 10, step: 0.1 },
-    radius: { min: 0, max: 860, step: 0.1 },
+    radius: { min: 0, max: 2000, step: 0.1 },
     offset: {
-      x: { min: 0, max: 860, step: 0.1 },
-      y: { min: 0, max: 812, step: 0.1 },
+      x: { min: 0, max: 2000, step: 0.1 },
+      y: { min: 0, max: 2000, step: 0.1 },
     },
   },
   zoomBlurFilter: {
     strength: { min: 0.01, max: 0.5, step: 0.001 },
     center: {
-      x: { min: 0, max: 860, step: 0.1 },
-      y: { min: 0, max: 812, step: 0.1 },
+      x: { min: 0, max: 2000, step: 0.1 },
+      y: { min: 0, max: 2000, step: 0.1 },
     },
     innerRadius: { min: 0, max: 430, step: 0.1 },
     radius: { min: 0, max: 430, step: 0.1 },

@@ -2134,7 +2134,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       if (!effectFilter) {
         try {
           effectFilter = await makeEffect({
-            name: key.toLowerCase() as any,
+            name: key as any,
             renderer: this.pixiApp.renderer,
             values,
           });
@@ -2163,6 +2163,7 @@ export class Studio extends EventEmitter<StudioEvents> {
         progress,
         width,
         height,
+        values,
       });
 
       // Hide input clips from this container after rendering to texture

@@ -17,6 +17,7 @@ export interface EffectRendererOptions {
   progress: number;
   width: number;
   height: number;
+  values?: Record<string, any>;
 }
 
 export interface GLEffect {
