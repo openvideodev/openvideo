@@ -338,7 +338,7 @@ export class Compositor extends EventEmitter<{
         ? mainSprite.display.from + mainSprite.duration
         : finiteDurations.length > 0
           ? Math.max(...finiteDurations)
-          : Infinity);
+          : 0);
 
     if (maxTime === Infinity || maxTime <= 0) {
       throw Error(
@@ -489,8 +489,7 @@ export class Compositor extends EventEmitter<{
         }
         progress = timestamp / maxTime;
 
-        const { audios, mainSprDone, hasVideo } =
-          await renderSprites.render(timestamp);
+        const { audios, mainSprDone } = await renderSprites.render(timestamp);
         if (mainSprDone) {
           exit();
           await onEnded();
@@ -501,12 +500,12 @@ export class Compositor extends EventEmitter<{
 
         // Ensure canvas rendering is complete before creating VideoFrame
         // This is critical for OffscreenCanvas to be in a valid state
-        if (this.hasVideoTrack && hasVideo) {
+        if (this.hasVideoTrack) {
           // Wait for next animation frame to ensure render is complete
           await new Promise((resolve) => requestAnimationFrame(resolve));
         }
 
-        encodeFrame(timestamp, audios, hasVideo);
+        encodeFrame(timestamp, audios, true);
 
         timestamp += timeSlice;
 
@@ -652,8 +651,12 @@ function createSpritesRender(opts: {
   }>;
   cleanup: () => void;
 } {
-  const { pixiApp, sprites, aborter } = opts;
+  const { pixiApp, sprites, aborter, bgColor } = opts;
   const hasVideoTrack = pixiApp != null;
+
+  // if (pixiApp) {
+  //   pixiApp.renderer.background.color = bgColor;
+  // }
 
   // Map to store PixiSpriteRenderer instances for each clip (only for video)
   const spriteRenderers = new Map<
@@ -1123,10 +1126,13 @@ function createSpritesRender(opts: {
         }
 
         if (renderer != null) {
+          const root = renderer.getRoot();
           if (video != null) {
             hasVideo = true;
+            if (root) root.visible = true;
             await renderer.updateFrame(video);
           } else {
+            if (root) root.visible = false;
             await renderer.updateFrame(null);
           }
 
