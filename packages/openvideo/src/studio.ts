@@ -527,8 +527,12 @@ export class Studio extends EventEmitter<StudioEvents> {
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
+      autoStart: false, // Prevent auto-rendering to avoid race conditions during async updates
     });
     this.pixiApp = app;
+
+    // Trigger initial render to avoid black screen
+    app.render();
 
     // Make stage interactive to handle clicks on empty space
     app.stage.eventMode = "static";
@@ -629,6 +633,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     if (this.pixiApp) {
       this.pixiApp.renderer.background.color = colorNum;
+      this.pixiApp.render();
     }
 
     this.updateFrame(this.currentTime);
@@ -717,6 +722,9 @@ export class Studio extends EventEmitter<StudioEvents> {
       // Center the artboard within the updated container dimensions
       this.artboard.x = (containerWidth - artboardWidth * scale) / 2;
       this.artboard.y = (containerHeight - artboardHeight * scale) / 2;
+
+      // Ensure we render the layout change if ticker is not running
+      this.pixiApp.render();
     } finally {
       this._isUpdatingLayout = false;
     }
@@ -1195,13 +1203,19 @@ export class Studio extends EventEmitter<StudioEvents> {
         const zIndex = (totalTracks - trackIndex) * 10;
         clip.zIndex = zIndex;
 
-        // Also update sprite zIndex immediately so Pixi sortableChildren works
+        // Also update renderer root zIndex
         const renderer = this.spriteRenderers.get(clip);
         if (renderer) {
           const root = renderer.getRoot();
           if (root) {
             root.zIndex = zIndex;
           }
+        }
+
+        // Also update video sprite zIndex immediately
+        const videoSprite = this.videoSprites.get(clip);
+        if (videoSprite) {
+          videoSprite.zIndex = zIndex;
         }
       }
     }
