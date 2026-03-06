@@ -352,21 +352,6 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   if (json.id) clip.id = json.id;
   if (json.name) clip.name = json.name;
 
-  // Post-process timing units: if values are suspiciously small (< 10,000),
-  // they are likely in seconds and should be converted to microseconds.
-  // This heuristic aligns with how trim is handled in VideoClip.fromObject.
-  const SECOND_TO_MICRO = 1e6;
-  const THRESHOLD = 10000;
-
-  if (clip.display.from > 0 && clip.display.from < THRESHOLD) {
-    clip.display.from *= SECOND_TO_MICRO;
-  }
-  if (clip.display.to > 0 && clip.display.to < THRESHOLD) {
-    clip.display.to *= SECOND_TO_MICRO;
-  }
-  if (clip.duration > 0 && clip.duration < THRESHOLD) {
-    clip.duration *= SECOND_TO_MICRO;
-  }
 
   return clip;
 }
