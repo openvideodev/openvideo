@@ -129,6 +129,7 @@ export interface TextStyleJSON {
   wordsPerLine?: "single" | "multiple";
   verticalAlign?: "top" | "center" | "bottom";
   wordAnimation?: ICaptionWordAnimation;
+  textBoxStyle?: TextBoxStyleJSON;
 }
 
 export interface ICaptionWordAnimation {
@@ -136,6 +137,14 @@ export interface ICaptionWordAnimation {
   application: "active" | "keyword" | "none";
   value: number;
   mode?: "static" | "dynamic";
+}
+
+export interface TextBoxStyleJSON {
+  style?: "tiktok" | "none";
+  textAlign?: "left" | "center" | "right" | "";
+  maxLines?: number;
+  borderRadius?: number;
+  horizontalPadding?: number;
 }
 
 // Text clip specific
@@ -174,6 +183,7 @@ export interface CaptionDataJSON {
   preserveKeywordColor?: boolean;
   positioning?: CaptionPositioningJSON;
   wordAnimation?: ICaptionWordAnimation;
+  textBoxStyle?: TextBoxStyleJSON;
 }
 
 // Caption clip specific
@@ -203,6 +213,7 @@ export interface CaptionJSON extends BaseClipJSON {
   fontUrl?: string;
   mediaId?: string;
   wordsPerLine?: "single" | "multiple";
+  textBoxStyle?: TextBoxStyleJSON;
 }
 
 // Effect clip specific
