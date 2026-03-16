@@ -145,6 +145,7 @@ export interface TextBoxStyleJSON {
   maxLines?: number;
   borderRadius?: number;
   horizontalPadding?: number;
+  verticalPadding?: number;
 }
 
 // Text clip specific
