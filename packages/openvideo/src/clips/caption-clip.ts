@@ -65,6 +65,7 @@ export interface ITextBoxStyle {
   maxLines?: number;
   borderRadius?: number;
   horizontalPadding?: number;
+  verticalPadding?: number;
 }
 
 export interface ICaptionStyle {
@@ -1242,6 +1243,12 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         height: number;
       }[] = [];
 
+      const align = this.opts.textBoxStyle.textAlign || this.opts.align;
+      const tbs = this.opts.textBoxStyle;
+      const isTiktok = tbs.style === "tiktok";
+      const lineRects: { x: number; y: number; w: number; h: number }[] = [];
+      const hPadding = tbs.horizontalPadding ?? 0;
+      const vPadding = tbs.verticalPadding ?? 0;
       let currentLine: CaptionSplitBitmapText[] = [];
       let currentLineWidth = 0;
       let currentLineHeight = 0;
@@ -1288,7 +1295,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
             lines.push({
               words: currentLine,
               width: currentLineWidth,
-              height: Math.max(currentLineHeight, lineHeight),
+              height: Math.max(currentLineHeight, lineHeight) + vPadding * 2,
             });
           }
           currentLine = [wordText];
@@ -1301,7 +1308,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         lines.push({
           words: currentLine,
           width: currentLineWidth,
-          height: Math.max(currentLineHeight, lineHeight),
+          height: Math.max(currentLineHeight, lineHeight) + vPadding * 2,
         });
       }
 
@@ -1325,12 +1332,14 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       const logicalContentWidth = maxLineWidthBase;
       const logicalContentHeight = totalHeight;
 
+      // Determine padded dimensions
+      const contentWidthWithPadding =
+        logicalContentWidth + Math.max(paddingX, hPadding) * 2;
+      const contentHeightWithPadding = logicalContentHeight;
+
       // Determine Target Width (Selection Box & Texture Size)
       const textChanged = this._text !== this._lastProcessedText;
       this._lastProcessedText = this._text;
-
-      const contentWidthWithPadding = logicalContentWidth + paddingX * 2;
-      const contentHeightWithPadding = logicalContentHeight + paddingY * 2;
 
       let targetWidth = contentWidthWithPadding;
       let targetHeight = contentHeightWithPadding;
@@ -1359,19 +1368,14 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       // 7. Positioning
       // Apply Vertical Alignment for the block as a whole
       let startY = 0;
+      const effectiveVOffset = Math.max(paddingY, vPadding);
       if (finalVAlign === "top") {
-        startY = paddingY;
+        startY = effectiveVOffset;
       } else if (finalVAlign === "bottom") {
-        startY = containerHeight - textBlockHeight - paddingY;
+        startY = containerHeight - textBlockHeight - effectiveVOffset;
       } else {
         startY = (containerHeight - textBlockHeight) / 2;
       }
-
-      const align = this.opts.textBoxStyle.textAlign || this.opts.align;
-      const tbs = this.opts.textBoxStyle;
-      const isTiktok = tbs.style === "tiktok";
-      const lineRects: { x: number; y: number; w: number; h: number }[] = [];
-      const hPadding = tbs.horizontalPadding ?? 20;
 
       let currentY = startY;
 
@@ -2334,8 +2338,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       const r1 = rects[i];
       const r2 = rects[i + 1];
       if (Math.abs(r1.x + r1.w - (r2.x + r2.w)) > 0.1) {
-        points.push({ x: r1.x + r1.w, y: r2.y });
-        points.push({ x: r2.x + r2.w, y: r2.y });
+        const midY = (r1.y + r1.h + r2.y) / 2;
+        points.push({ x: r1.x + r1.w, y: midY });
+        points.push({ x: r2.x + r2.w, y: midY });
       }
     }
 
@@ -2353,8 +2358,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       const r1 = rects[i];
       const r2 = rects[i - 1];
       if (Math.abs(r1.x - r2.x) > 0.1) {
-        points.push({ x: r1.x, y: r2.y + r2.h });
-        points.push({ x: r2.x, y: r2.y + r2.h });
+        const midY = (r1.y + r2.y + r2.h) / 2;
+        points.push({ x: r1.x, y: midY });
+        points.push({ x: r2.x, y: midY });
       }
     }
 
