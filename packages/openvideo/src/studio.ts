@@ -7,7 +7,6 @@ import {
   RenderTexture,
   BlurFilter,
   ColorMatrixFilter,
-  TilingSprite,
 } from "pixi.js";
 
 import { Caption } from "./clips/caption-clip";
@@ -1833,24 +1832,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     const { renderTransform } = clip;
     const isMirrored = (renderTransform?.mirror ?? 0) > 0.5;
 
-    // 1. Create temporary sprite
-    let tempSprite: Sprite | TilingSprite;
-
-    if (isMirrored) {
-      tempSprite = new TilingSprite({
-        texture: frame instanceof Texture ? frame : Texture.from(frame),
-        width: 1, // Placeholder
-        height: 1,
-      });
-      if (tempSprite.texture.source) {
-        tempSprite.texture.source.style.addressMode = "mirror-repeat";
-        tempSprite.texture.source.update();
-      }
-    } else {
-      tempSprite = new Sprite(
-        frame instanceof Texture ? frame : Texture.from(frame),
-      );
-    }
+    const tex = frame instanceof Texture ? frame : Texture.from(frame);
 
     // Apply transforms similar to PixiSpriteRenderer.applySpriteTransforms
     const xOffset = renderTransform?.x ?? 0;
@@ -1861,12 +1843,8 @@ export class Studio extends EventEmitter<StudioEvents> {
     const blurOffset = renderTransform?.blur ?? 0;
     const brightnessMultiplier = renderTransform?.brightness ?? 1;
 
-    tempSprite.x = clip.center.x + xOffset;
-    tempSprite.y = clip.center.y + yOffset;
-    tempSprite.anchor.set(0.5, 0.5);
-
-    const textureWidth = tempSprite.texture.width || 1;
-    const textureHeight = tempSprite.texture.height || 1;
+    const textureWidth = tex.width || 1;
+    const textureHeight = tex.height || 1;
 
     const isCaption = (clip as any).type === "Caption";
 
@@ -1879,30 +1857,83 @@ export class Studio extends EventEmitter<StudioEvents> {
         ? Math.abs(clip.height) / textureHeight
         : 1;
 
-    if (isMirrored && tempSprite instanceof TilingSprite) {
-      tempSprite.width = textureWidth * 5;
-      tempSprite.height = textureHeight * 5;
-      tempSprite.tilePosition.set(
-        (tempSprite.width - textureWidth) / 2,
-        (tempSprite.height - textureHeight) / 2,
-      );
-    }
-
-    if (clip.flip === "horizontal") {
-      tempSprite.scale.x = -baseScaleX * scaleMultiplier;
-      tempSprite.scale.y = baseScaleY * scaleMultiplier;
-    } else if (clip.flip === "vertical") {
-      tempSprite.scale.x = baseScaleX * scaleMultiplier;
-      tempSprite.scale.y = -baseScaleY * scaleMultiplier;
-    } else {
-      tempSprite.scale.x = baseScaleX * scaleMultiplier;
-      tempSprite.scale.y = baseScaleY * scaleMultiplier;
-    }
-
-    tempSprite.rotation =
+    // Create a root container that holds everything
+    const rootContainer = new Container();
+    rootContainer.x = clip.center.x + xOffset;
+    rootContainer.y = clip.center.y + yOffset;
+    rootContainer.rotation =
       ((clip.flip == null ? 1 : -1) * ((clip.angle + angleOffset) * Math.PI)) /
       180;
-    tempSprite.alpha = clip.opacity * opacityMultiplier;
+    rootContainer.alpha = clip.opacity * opacityMultiplier;
+
+    // Create the main sprite
+    const tempSprite = new Sprite(tex);
+    tempSprite.anchor.set(0.5, 0.5);
+
+    let mirrorSprites: Sprite[] = [];
+
+    if (isMirrored) {
+      // True reflection: original at normal position, mirrors on all sides
+      const sX = baseScaleX * scaleMultiplier;
+      const sY = baseScaleY * scaleMultiplier;
+      const scaledW = textureWidth * sX;
+      const scaledH = textureHeight * sY;
+
+      // Original sprite at normal position
+      tempSprite.position.set(0, 0);
+      tempSprite.scale.set(sX, sY);
+
+      // Mirror layout: [dx, dy, scaleX, scaleY]
+      const mirrors: [number, number, number, number][] = [
+        [ scaledW,  0,      -sX,  sY],  // right
+        [-scaledW,  0,      -sX,  sY],  // left
+        [ 0,        scaledH, sX, -sY],  // bottom
+        [ 0,       -scaledH, sX, -sY],  // top
+        [ scaledW,  scaledH,-sX, -sY],  // bottom-right
+        [-scaledW,  scaledH,-sX, -sY],  // bottom-left
+        [ scaledW, -scaledH,-sX, -sY],  // top-right
+        [-scaledW, -scaledH,-sX, -sY],  // top-left
+      ];
+
+      for (const [dx, dy, sx, sy] of mirrors) {
+        const ms = new Sprite(tex);
+        ms.anchor.set(0.5, 0.5);
+        ms.position.set(dx, dy);
+        ms.scale.set(sx, sy);
+        mirrorSprites.push(ms);
+      }
+
+      // Apply flip
+      if (clip.flip === "horizontal") {
+        tempSprite.scale.x = -sX;
+        for (let i = 0; i < 8; i++) {
+          mirrorSprites[i].scale.x = -mirrors[i][2];
+        }
+      } else if (clip.flip === "vertical") {
+        tempSprite.scale.y = -sY;
+        for (let i = 0; i < 8; i++) {
+          mirrorSprites[i].scale.y = -mirrors[i][3];
+        }
+      }
+
+      rootContainer.addChild(tempSprite);
+      for (const ms of mirrorSprites) {
+        rootContainer.addChild(ms);
+      }
+    } else {
+      // Standard single sprite
+      if (clip.flip === "horizontal") {
+        tempSprite.scale.x = -baseScaleX * scaleMultiplier;
+        tempSprite.scale.y = baseScaleY * scaleMultiplier;
+      } else if (clip.flip === "vertical") {
+        tempSprite.scale.x = baseScaleX * scaleMultiplier;
+        tempSprite.scale.y = -baseScaleY * scaleMultiplier;
+      } else {
+        tempSprite.scale.x = baseScaleX * scaleMultiplier;
+        tempSprite.scale.y = baseScaleY * scaleMultiplier;
+      }
+      rootContainer.addChild(tempSprite);
+    }
 
     // Apply Filters
     const filters: any[] = [];
@@ -1919,7 +1950,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       brightnessFilter.brightness(brightnessMultiplier, false);
       filters.push(brightnessFilter);
     }
-    tempSprite.filters = filters;
+    rootContainer.filters = filters;
 
     // Apply Styles (Border Radius, Stroke, Shadow)
     const borderRadius = style.borderRadius || 0;
@@ -1977,7 +2008,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       const color = parseColor(shadow.color) ?? 0x000000;
       const alpha = shadow.alpha ?? 0.5;
       const distance = shadow.distance ?? 0;
-      const angle = shadow.angle ?? 0; // already in radians in style? check PixiSpriteRenderer
+      const angle = shadow.angle ?? 0;
 
       const dx = Math.cos(angle) * distance;
       const dy = Math.sin(angle) * distance;
@@ -2000,12 +2031,12 @@ export class Studio extends EventEmitter<StudioEvents> {
         );
       }
       shadowGraphics.fill({ color, alpha });
-      tempSprite.addChildAt(shadowGraphics, 0);
+      rootContainer.addChildAt(shadowGraphics, 0);
     }
 
     // Render onto target and CLEAR the texture first
     this.pixiApp.renderer.render({
-      container: tempSprite,
+      container: rootContainer,
       target: target,
       clear: true,
     });
@@ -2017,7 +2048,9 @@ export class Studio extends EventEmitter<StudioEvents> {
     if (maskGraphics) maskGraphics.destroy();
     if (strokeGraphics) strokeGraphics.destroy();
     if (shadowGraphics) shadowGraphics.destroy();
+    for (const ms of mirrorSprites) ms.destroy();
     tempSprite.destroy();
+    rootContainer.destroy();
   }
 
   removeGlobalEffect(id: string): void {
