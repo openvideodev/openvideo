@@ -30,6 +30,7 @@ export interface BaseSpriteEvents {
     zIndex: number;
     opacity: number;
     volume: number;
+    animations: IAnimation[];
   }>;
   [key: string]: any;
   [key: symbol]: any;
@@ -268,6 +269,7 @@ export abstract class BaseSprite<
     blur: 0,
     brightness: 1,
     mirror: 0,
+    motionBlur: 0,
   };
 
   /**
@@ -336,6 +338,7 @@ export abstract class BaseSprite<
       delay: opts.delay ?? 0,
       iterCount: opts.iterCount ?? Infinity,
     });
+    this.emit('propsChange', { animations: this.animations } as any);
   }
 
   /**
@@ -356,6 +359,7 @@ export abstract class BaseSprite<
       blur: 0,
       brightness: 1,
       mirror: 0,
+      motionBlur: 0,
     };
 
     // 1. Process new modular animations
@@ -371,6 +375,8 @@ export abstract class BaseSprite<
         this.renderTransform.angle! += transform.angle;
       if (transform.blur !== undefined)
         this.renderTransform.blur! += transform.blur;
+      if (transform.motionBlur !== undefined)
+        this.renderTransform.motionBlur! += transform.motionBlur;
       if (transform.scale !== undefined)
         this.renderTransform.scale! *= transform.scale;
       if (transform.scaleX !== undefined)
@@ -440,6 +446,7 @@ export abstract class BaseSprite<
   addAnimation(name: string, opts: any, params?: any): string {
     const anim = animationRegistry.create(name, opts, params);
     this.animations.push(anim);
+    this.emit('propsChange', { animations: this.animations } as any);
     return anim.id;
   }
 
@@ -448,6 +455,7 @@ export abstract class BaseSprite<
    */
   removeAnimation(id: string): void {
     this.animations = this.animations.filter((a) => a.id !== id);
+    this.emit('propsChange', { animations: this.animations } as any);
   }
 
   /**
@@ -455,6 +463,7 @@ export abstract class BaseSprite<
    */
   clearAnimations(): void {
     this.animations = [];
+    this.emit('propsChange', { animations: this.animations } as any);
   }
 
   /**
@@ -470,6 +479,7 @@ export abstract class BaseSprite<
 
     const newAnim = animationRegistry.create(type, { ...opts, id }, params);
     this.animations[index] = newAnim;
+    this.emit('propsChange', { animations: this.animations } as any);
   }
 
   /**

@@ -10,6 +10,7 @@ import {
   GlProgram,
   UniformGroup,
 } from "pixi.js";
+import { ZoomBlurFilter } from "pixi-filters";
 
 import type { IClip } from "../clips/iclip";
 import { parseColor, hexToRgb } from "../utils/color";
@@ -268,6 +269,7 @@ export class PixiSpriteRenderer {
     const scaleYMultiplier = renderTransform?.scaleY ?? 1;
     const opacityMultiplier = renderTransform?.opacity ?? 1;
     const blurOffset = renderTransform?.blur ?? 0;
+    const motionBlurOffset = renderTransform?.motionBlur ?? 0;
     const brightnessMultiplier = renderTransform?.brightness ?? 1;
     const isMirrored = (renderTransform?.mirror ?? 0) > 0.5;
 
@@ -291,6 +293,7 @@ export class PixiSpriteRenderer {
         scaleMultiplier * scaleYMultiplier,
       );
       this.applyBlur(blurOffset);
+      this.applyMotionBlur(motionBlurOffset);
       this.applyBrightness(brightnessMultiplier);
       this.applyChromaKey();
     }
@@ -356,14 +359,14 @@ export class PixiSpriteRenderer {
       // Mirror layout: [dx, dy, scaleX, scaleY]
       // We flip horizontally for sides, vertically for top/bottom, and both for corners
       const mirrors: [number, number, number, number][] = [
-        [scaledW,  0,       -baseScaleX,  baseScaleY],  // right
-        [-scaledW, 0,       -baseScaleX,  baseScaleY],  // left
-        [0,        scaledH,  baseScaleX, -baseScaleY],  // bottom
-        [0,       -scaledH,  baseScaleX, -baseScaleY],  // top
-        [scaledW,  scaledH, -baseScaleX, -baseScaleY],  // bottom-right
-        [-scaledW, scaledH, -baseScaleX, -baseScaleY],  // bottom-left
-        [scaledW, -scaledH, -baseScaleX, -baseScaleY],  // top-right
-        [-scaledW, -scaledH, -baseScaleX, -baseScaleY],  // top-left
+        [scaledW, 0, -baseScaleX, baseScaleY], // right
+        [-scaledW, 0, -baseScaleX, baseScaleY], // left
+        [0, scaledH, baseScaleX, -baseScaleY], // bottom
+        [0, -scaledH, baseScaleX, -baseScaleY], // top
+        [scaledW, scaledH, -baseScaleX, -baseScaleY], // bottom-right
+        [-scaledW, scaledH, -baseScaleX, -baseScaleY], // bottom-left
+        [scaledW, -scaledH, -baseScaleX, -baseScaleY], // top-right
+        [-scaledW, -scaledH, -baseScaleX, -baseScaleY], // top-left
       ];
 
       for (let i = 0; i < 8; i++) {
@@ -654,6 +657,48 @@ export class PixiSpriteRenderer {
     blurFilter.padding = Math.max(blur * 2 * effectiveScale, 20);
     blurFilter.quality = 4;
     (blurFilter as any).repeatEdgePixels = true;
+  }
+
+  private applyMotionBlur(motionBlur: number): void {
+    if (!this.animationContainer || this.destroyed) return;
+
+    // Safety check for valid number
+    if (
+      typeof motionBlur !== "number" ||
+      !isFinite(motionBlur) ||
+      motionBlur <= 0
+    ) {
+      if (this.animationContainer.filters) {
+        this.animationContainer.filters =
+          this.animationContainer.filters.filter(
+            (f) => !(f instanceof ZoomBlurFilter),
+          );
+      }
+      return;
+    }
+
+    let zoomBlurFilter = this.animationContainer.filters?.find(
+      (f) => f instanceof ZoomBlurFilter,
+    ) as ZoomBlurFilter;
+
+    if (!zoomBlurFilter) {
+      zoomBlurFilter = new ZoomBlurFilter();
+      const currentFilters = this.animationContainer.filters || [];
+      this.animationContainer.filters = [...currentFilters, zoomBlurFilter];
+    }
+
+    zoomBlurFilter.strength = motionBlur / 200;
+
+    if (this.pixiSprite) {
+      const bounds = this.pixiSprite.getBounds();
+      zoomBlurFilter.center = {
+        x: bounds.width / 2,
+        y: bounds.height / 2,
+      };
+    }
+
+    zoomBlurFilter.innerRadius = 0;
+    zoomBlurFilter.radius = -1; // Infinite
   }
 
   private applyBrightness(brightness: number): void {

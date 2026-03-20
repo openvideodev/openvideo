@@ -129,6 +129,43 @@ export const blurOut: AnimationFactory = (opts, params) => {
   return new KeyframeAnimation(defaultParams, { ...opts, easing }, "blurOut");
 };
 
+export const motionBlurIn: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("motionBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "motionBlurIn",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    { ...opts, easing },
+    "motionBlurIn",
+  );
+};
+
+export const motionBlurOut: AnimationFactory = (opts, params) => {
+  const normalized = normalizeParams(params);
+  const easing = normalized?.easing || opts.easing || "easeInQuad";
+  const defaultParams = getPresetTemplate("motionBlurOut", params);
+
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(
+      normalized,
+      { ...opts, easing },
+      "motionBlurOut",
+    );
+  }
+  return new KeyframeAnimation(
+    defaultParams,
+    { ...opts, easing },
+    "motionBlurOut",
+  );
+};
+
 export const charFadeIn: AnimationFactory = (opts, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
@@ -3006,6 +3043,8 @@ animationRegistry.register("collapseRotateZoomIn", collapseRotateZoomIn);
 animationRegistry.register("collapseRotateZoomOut", collapseRotateZoomOut);
 animationRegistry.register("ultraCinematicIn", ultraCinematicIn);
 animationRegistry.register("ultraCinematicOut", ultraCinematicOut);
+animationRegistry.register("motionBlurIn", motionBlurIn);
+animationRegistry.register("motionBlurOut", motionBlurOut);
 
 //register animations captions
 animationRegistry.register("popCaption", popCaption);
@@ -3056,6 +3095,8 @@ export function getPresetTemplate(type: string, params?: any): any {
   const scaleEnd = normalized?.scaleEnd || null;
   const brightnessInit = normalized?.brightnessInit || null;
   const brightnessEnd = normalized?.brightnessEnd || null;
+  const motionBlurInit = normalized?.motionBlurInit || null;
+  const motionBlurEnd = normalized?.motionBlurEnd || null;
 
   switch (type) {
     case "fadeIn":
@@ -3180,6 +3221,32 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
         "100%": {
           blur: blurEnd ?? 20,
+          opacity: opacityEnd ?? 0,
+          mirror: defaultMirror,
+        },
+      };
+    case "motionBlurIn":
+      return {
+        "0%": {
+          motionBlur: motionBlurInit ?? 40,
+          opacity: opacityInit ?? 0,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          motionBlur: motionBlurEnd ?? 0,
+          opacity: opacityEnd ?? 1,
+          mirror: defaultMirror,
+        },
+      };
+    case "motionBlurOut":
+      return {
+        "0%": {
+          motionBlur: motionBlurInit ?? 0,
+          opacity: opacityInit ?? 1,
+          mirror: defaultMirror,
+        },
+        "100%": {
+          motionBlur: motionBlurEnd ?? 40,
           opacity: opacityEnd ?? 0,
           mirror: defaultMirror,
         },
@@ -4751,26 +4818,26 @@ export function getPresetTemplate(type: string, params?: any): any {
     case "comboZoom1":
       return {
         "0%": {
-          scale: scaleInit ?? 3,
-          blur: blurInit ?? 5,
+          scale: scaleInit ?? 2.5,
+          motionBlur: motionBlurInit ?? 8,
           angle: angleInit ?? 0,
           mirror: 1,
         },
         "30%": {
           scale: 1.2,
-          blur: 0,
+          motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
         "60%": {
           scale: 1,
-          blur: 0,
+          motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
         "100%": {
-          scale: scaleEnd ?? 3,
-          blur: blurEnd ?? 5,
+          scale: scaleEnd ?? 2.5,
+          motionBlur: motionBlurEnd ?? 8,
           angle: angleEnd ?? 0,
           mirror: 1,
         },
@@ -4780,25 +4847,25 @@ export function getPresetTemplate(type: string, params?: any): any {
       return {
         "0%": {
           scale: scaleInit ?? 0.7,
-          blur: blurInit ?? 5,
+          motionBlur: motionBlurInit ?? 8,
           angle: angleInit ?? 0,
           mirror: 1,
         },
         "30%": {
           scale: 1,
-          blur: 0,
+          motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
         "60%": {
           scale: 1,
-          blur: 0,
+          motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
         "100%": {
           scale: scaleEnd ?? 0.7,
-          blur: blurEnd ?? 5,
+          motionBlur: motionBlurEnd ?? 8,
           angle: angleEnd ?? 0,
           mirror: 1,
         },
@@ -4808,7 +4875,7 @@ export function getPresetTemplate(type: string, params?: any): any {
       return {
         "0%": {
           x: -250,
-          blur: blurInit ?? 5,
+          blur: blurInit ?? 7,
           angle: angleInit ?? 5,
           mirror: 1,
         },
@@ -4832,13 +4899,13 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
         "85%": {
           x: -40,
-          blur: 1,
+          blur: 0,
           angle: -2,
           mirror: 1,
         },
         "100%": {
           x: -250,
-          blur: blurEnd ?? 5,
+          blur: blurEnd ?? 0,
           angle: angleEnd ?? -5,
           mirror: 1,
         },
@@ -4848,7 +4915,7 @@ export function getPresetTemplate(type: string, params?: any): any {
       return {
         "0%": {
           x: 250,
-          blur: blurInit ?? 5,
+          blur: blurInit ?? 7,
           angle: angleInit ?? -5,
           mirror: 1,
         },
@@ -4872,13 +4939,13 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
         "85%": {
           x: 40,
-          blur: 1,
+          blur: 0,
           angle: 2,
           mirror: 1,
         },
         "100%": {
           x: 250,
-          blur: blurEnd ?? 5,
+          blur: blurEnd ?? 0,
           angle: angleEnd ?? 5,
           mirror: 1,
         },
