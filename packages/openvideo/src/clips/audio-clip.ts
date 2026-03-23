@@ -87,7 +87,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
   static async fromUrl(url: string, opts: IAudioOpts = {}): Promise<Audio> {
     const stream = await ResourceManager.getReadableStream(url);
     const clip = new Audio(stream, opts, url);
-    await clip.ready;
+    // await clip.ready; - Removed for performance
     return clip;
   }
 
@@ -109,6 +109,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     if (json.loop !== undefined) options.loop = json.loop;
     if (json.volume !== undefined) options.volume = json.volume;
     const clip = await Audio.fromUrl(json.src, options);
+    // clip.ready is not awaited here for performance
 
     // Apply properties
     clip.left = json.left;

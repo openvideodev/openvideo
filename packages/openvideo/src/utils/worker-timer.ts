@@ -41,7 +41,7 @@ export const workerTimer = (
   handler: () => void,
   time: number
 ): (() => void) => {
-  const groupId = Math.round(time / 16.6);
+  const groupId = Math.max(1, Math.round(time / 16.6));
   const fns = handlerMap.get(groupId) ?? new Set();
   fns.add(handler);
   handlerMap.set(groupId, fns);

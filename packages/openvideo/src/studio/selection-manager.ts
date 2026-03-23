@@ -95,6 +95,25 @@ export class SelectionManager {
       this.selectionGraphics
         .rect(x, y, width, height)
         .stroke({ width: 2, color: 0x0abde3 });
+
+      // Calculate current selection bounds for real-time preview
+      const bounds = this.selectionGraphics.getBounds();
+      const selectionRect = new Rectangle(
+        bounds.x,
+        bounds.y,
+        bounds.width,
+        bounds.height,
+      );
+
+      if (selectionRect.width > 2 || selectionRect.height > 2) {
+        const intersectingClips = this.getIntersectingClips(selectionRect);
+        this.updatePreviewSelection(intersectingClips);
+      } else {
+        // If drag is too small, hide preview if we aren't shift-selecting
+        if (this.selectedClips.size === 0) {
+          this.destroyTransformer();
+        }
+      }
     }
   }
 
@@ -104,13 +123,8 @@ export class SelectionManager {
       this.selectionGraphics &&
       this.studio.artboard
     ) {
-      // Calculate final selection bounds
-      const bounds = this.selectionGraphics.getBounds(); // Global bounds
-
-      // Find intersecting clips
-      const intersectingClips: IClip[] = [];
-
-      // Standardize bounds for intersection check
+      // Finalize selection
+      const bounds = this.selectionGraphics.getBounds();
       const selectionRect = new Rectangle(
         bounds.x,
         bounds.y,
@@ -118,41 +132,129 @@ export class SelectionManager {
         bounds.height,
       );
 
-      // Minimum drag distance check to avoid selecting on accidental micro-drags
       if (selectionRect.width > 2 || selectionRect.height > 2) {
-        for (const clip of this.studio.clips) {
-          const renderer = this.studio.spriteRenderers.get(clip);
-          if (!renderer) continue;
-
-          const root = renderer.getRoot();
-          if (!root || !root.visible) continue;
-
-          const clipBounds = root.getBounds();
-
-          // Simple AABB intersection
-          const intersects =
-            selectionRect.x < clipBounds.x + clipBounds.width &&
-            selectionRect.x + selectionRect.width > clipBounds.x &&
-            selectionRect.y < clipBounds.y + clipBounds.height &&
-            selectionRect.y + selectionRect.height > clipBounds.y;
-
-          if (intersects) {
-            intersectingClips.push(clip);
-          }
-        }
-
+        const intersectingClips = this.getIntersectingClips(selectionRect);
         if (intersectingClips.length > 0) {
+          // Batch select and refresh once
           for (const clip of intersectingClips) {
-            this.selectClip(clip, true); // true = addToSelection
+            this.selectedClips.add(clip);
           }
+          this.recreateTransformer();
+
+          this.studio.emit("selection:created", {
+            selected: Array.from(this.selectedClips),
+          });
+        } else if (this.selectedClips.size === 0) {
+          // If we finished dragging but nothing was selected,
+          // and we aren't adding to a selection, make sure it's gone
+          this.destroyTransformer();
         }
+      } else if (this.selectedClips.size === 0) {
+        // Accidental micro-drag, ensure no stray preview remains
+        this.destroyTransformer();
       }
 
-      // Cleanup
+      // Cleanup marquee
       this.selectionGraphics.clear();
       this.selectionGraphics.visible = false;
       this.isDragSelecting = false;
+      this.studio.pixiApp?.render();
     }
+  }
+
+  /**
+   * Find clips that intersect with the given selection rectangle
+   */
+  private getIntersectingClips(selectionRect: Rectangle): IClip[] {
+    const intersectingClips: IClip[] = [];
+
+    for (const clip of this.studio.clips) {
+      const renderer = this.studio.spriteRenderers.get(clip);
+      if (!renderer) continue;
+
+      const root = renderer.getRoot();
+      if (!root || !root.visible) continue;
+
+      const clipBounds = root.getBounds();
+
+      // Simple AABB intersection
+      const intersects =
+        selectionRect.x < clipBounds.x + clipBounds.width &&
+        selectionRect.x + selectionRect.width > clipBounds.x &&
+        selectionRect.y < clipBounds.y + clipBounds.height &&
+        selectionRect.y + selectionRect.height > clipBounds.y;
+
+      if (intersects) {
+        intersectingClips.push(clip);
+      }
+    }
+
+    return intersectingClips;
+  }
+
+  /**
+   * Update the transformer to show a preview of what will be selected
+   */
+  private updatePreviewSelection(clips: IClip[]) {
+    if (clips.length === 0) {
+      // If we have an existing selection (e.g. shift-selecting), don't destroy it
+      // but if we are just drag-selecting from scratch, hide it
+      if (this.selectedClips.size === 0) {
+        this.destroyTransformer();
+      } else {
+        // Just refresh the existing selection transformer
+        this.recreateTransformer();
+      }
+      return;
+    }
+
+    // Combine preview clips with already selected clips if shift is held
+    // (though drag-selection usually starts fresh unless we want to support additive drag)
+    // For now, let's just show what IS in the marquee.
+    const previewSet = new Set(clips);
+    // If we want additive selection during drag, we could do:
+    // for (const c of this.selectedClips) previewSet.add(c);
+
+    const sprites: Container[] = [];
+    let singleClip: IClip | null = null;
+
+    for (const clip of previewSet) {
+      const renderer = this.studio.spriteRenderers.get(clip);
+      if (renderer == null) continue;
+
+      const root = renderer.getRoot();
+      if (root == null) continue;
+
+      sprites.push(root);
+      if (previewSet.size === 1) {
+        singleClip = clip;
+      }
+    }
+
+    if (sprites.length === 0) {
+      if (this.selectedClips.size === 0) this.destroyTransformer();
+      return;
+    }
+
+    if (this.activeTransformer) {
+      this.activeTransformer.group = sprites;
+      this.activeTransformer.opts.group = sprites;
+      this.activeTransformer.opts.clip = singleClip;
+      this.activeTransformer.updateBounds();
+      this.activeTransformer.showImmediate();
+    } else {
+      // Create transformer (temp group)
+      this.activeTransformer = new Transformer({
+        group: sprites,
+        clip: singleClip,
+        artboardWidth: this.studio.opts.width,
+        artboardHeight: this.studio.opts.height,
+      });
+      this.studio.artboard?.addChild(this.activeTransformer);
+      this.activeTransformer.showImmediate();
+    }
+
+    this.studio.pixiApp?.render();
   }
 
   /**

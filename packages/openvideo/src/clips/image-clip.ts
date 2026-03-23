@@ -399,13 +399,13 @@ export class Image extends BaseClip implements IClip {
         error.message.includes('could not be decoded')
       ) {
         throw new Error(
-          `Failed to decode image from ${json.src}. The image may be corrupted, in an unsupported format, or there may be CORS issues.`
+          `Failed to decode image from ${json.src}. The image may be decoded, in an unsupported format, or there may be CORS issues.`
         );
       }
       throw error;
     }
 
-    await clip.ready;
+    // clip.ready is not awaited here for performance
 
     // Apply properties
     clip.left = json.left;

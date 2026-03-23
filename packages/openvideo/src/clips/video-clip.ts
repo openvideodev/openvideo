@@ -695,7 +695,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
 
     const stream = await ResourceManager.getReadableStream(json.src);
     const clip = new Video(stream, options as any, json.src);
-    await clip.ready;
+    // await clip.ready; - Removed for performance
 
     // Apply properties
     clip.left = json.left;
