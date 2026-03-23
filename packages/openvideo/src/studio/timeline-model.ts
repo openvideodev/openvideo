@@ -944,11 +944,11 @@ export class TimelineModel {
       // 1. Load Fonts First
       await this.ensureFontsForClips(json.clips);
 
-      // 2. Preload Resources (Video, Audio, Image)
+      // 2. Preload Resources (Video, Audio, Image) - DO NOT AWAIT (Performance)
       const urlsToPreload = json.clips
         .map((clip) => clip.src)
         .filter((src) => src && src.trim() !== '');
-      await this.studio.resourceManager.preload(urlsToPreload);
+      this.studio.resourceManager.preload(urlsToPreload);
 
       // Build map of ClipID -> TrackID from json.tracks
       const clipToTrackId = new Map<string, string>();
@@ -1071,39 +1071,40 @@ export class TimelineModel {
     // Now process loaded clips (listeners, renderer, ready)
     // IMPORTANT: this.studio.pixiApp must be ready
     if (this.studio.pixiApp) {
-      await Promise.all(
-        this.clips.map(async (clip) => {
-          // A. Listen for property changes
-          const onPropsChange = async () => {
-            await this.studio.updateFrame(this.studio.currentTime);
-            const interactionManager = this.studio.selection;
-            if (
-              interactionManager.activeTransformer != null &&
-              interactionManager.selectedClips.has(clip) &&
-              typeof (interactionManager.activeTransformer as any)
-                .updateBounds === 'function'
-            ) {
-              (interactionManager.activeTransformer as any).updateBounds();
-            }
-          };
-          clip.on('propsChange', onPropsChange);
-          this.studio.clipListeners.set(clip, onPropsChange);
-
-          // B. Link Renderer
-          if (typeof clip.setRenderer === 'function') {
-            clip.setRenderer(this.studio.pixiApp!.renderer);
+      this.clips.forEach((clip) => {
+        // A. Listen for property changes
+        const onPropsChange = async () => {
+          await this.studio.updateFrame(this.studio.currentTime);
+          const interactionManager = this.studio.selection;
+          if (
+            interactionManager.activeTransformer != null &&
+            interactionManager.selectedClips.has(clip) &&
+            typeof (interactionManager.activeTransformer as any)
+              .updateBounds === 'function'
+          ) {
+            (interactionManager.activeTransformer as any).updateBounds();
           }
+        };
+        clip.on('propsChange', onPropsChange);
+        this.studio.clipListeners.set(clip, onPropsChange);
 
-          // C. Wait for Ready (Safety)
-          await clip.ready;
+        // B. Link Renderer
+        if (typeof clip.setRenderer === 'function') {
+          clip.setRenderer(this.studio.pixiApp!.renderer);
+        }
 
-          // D. Setup Visuals & Playback
-          // We can call setupClipVisuals, but we need to ensure it doesn't try to add duplicates to containers if run multiple times?
-          // setupClipVisuals just sets up renderer and playback.
-          // It creates new PixiSpriteRenderer.
-          await this.setupClipVisuals(clip);
-        })
-      );
+        // C. Wait for Ready & Setup Visuals (Background)
+        (async () => {
+          try {
+            await clip.ready;
+            await this.setupClipVisuals(clip);
+            // Trigger a frame update once a clip is visually ready
+            await this.studio.updateFrame(this.studio.currentTime);
+          } catch (err) {
+            console.warn(`[Studio] Failed to setup visuals for clip ${clip.id}:`, err);
+          }
+        })();
+      });
     }
 
     // Restore global effects from loaded clips
