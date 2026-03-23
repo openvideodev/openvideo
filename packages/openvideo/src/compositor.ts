@@ -498,10 +498,10 @@ export class Compositor extends EventEmitter<{
         if (aborter.aborted) return;
 
         // Ensure canvas rendering is complete before creating VideoFrame
-        // This is critical for OffscreenCanvas to be in a valid state
+        // Use background-resilient sleep(0) which utilizes workerTimer
+        // to ensure rendering loop continues even when tab is inactive.
         if (this.hasVideoTrack) {
-          // Wait for next animation frame to ensure render is complete
-          await new Promise((resolve) => requestAnimationFrame(resolve));
+          await sleep(0);
         }
 
         encodeFrame(timestamp, audios, true);
