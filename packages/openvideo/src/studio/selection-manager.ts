@@ -458,7 +458,7 @@ export class SelectionManager {
     this.interactiveClips.clear();
   }
 
-  private recreateTransformer() {
+  public recreateTransformer() {
     this.destroyTransformer();
     if (this.selectedClips.size > 0) {
       this.createTransformer();
@@ -506,11 +506,13 @@ export class SelectionManager {
     }
 
     // Create transformer
+    const isLocked = singleClip?.locked ?? false;
     this.activeTransformer = new Transformer({
       group: sprites,
       clip: singleClip, // Only pass clip for single selection
       artboardWidth: this.studio.opts.width,
       artboardHeight: this.studio.opts.height,
+      locked: isLocked,
     });
 
     // Listen for events
@@ -541,9 +543,16 @@ export class SelectionManager {
       for (const clip of this.selectedClips) {
         this.studio.emit("clip:updated", { clip });
       }
+      this.studio.emit("transform:end", {
+        transformer: this.activeTransformer!,
+      });
     });
 
     this.activeTransformer.on("pointerdown", (e: any) => {
+      if (e.button !== 0) return;
+      this.studio.emit("transform:start", {
+        transformer: this.activeTransformer!,
+      });
       const topmostClip = this.getTopmostClipAtPoint(e.global);
       if (topmostClip && !this.selectedClips.has(topmostClip)) {
         this.selectClip(topmostClip, e.shiftKey);

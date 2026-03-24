@@ -448,6 +448,10 @@ export class Image extends BaseClip implements IClip {
       clip.chromaKey = { ...clip.chromaKey, ...(json as any).chromaKey };
     }
 
+    if (json.locked !== undefined) {
+      clip.locked = json.locked;
+    }
+
     return clip;
   }
 }

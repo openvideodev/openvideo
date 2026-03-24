@@ -64,6 +64,7 @@ export interface StudioEvents {
   "clips:added": { clips: IClip[]; trackId?: string }; // Batch event
   "clip:removed": { clipId: string };
   "clip:updated": { clip: IClip };
+  "clip:lock-changed": { clip: IClip; locked: boolean };
   "clip:replaced": { oldClip: IClip; newClip: IClip; trackId: string };
   "studio:restored": {
     clips: IClip[];
@@ -74,6 +75,8 @@ export interface StudioEvents {
   play: { isPlaying: boolean };
   pause: { isPlaying: boolean };
   "history:changed": { canUndo: boolean; canRedo: boolean };
+  "transform:start": { transformer: Transformer };
+  "transform:end": { transformer: Transformer };
   [key: string]: any;
   [key: symbol]: any;
 }
@@ -2306,6 +2309,25 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   deselectClip(): void {
     this.selection.deselectClip();
+  }
+
+  /**
+   * Toggle lock state of a clip
+   */
+  public async lockClip(clipId: string, locked: boolean): Promise<void> {
+    const clip = this.timeline.getClipById(clipId);
+    if (!clip) return;
+
+    await this.timeline.updateClip(clipId, { locked });
+    this.emit("clip:lock-changed", { clip, locked });
+
+    // If the clip is currently selected, recreate the transformer so it
+    // shows/hides handles according to the new lock state without deselecting.
+    if (this.selection.selectedClips.has(clip)) {
+      this.selection.recreateTransformer();
+    }
+
+    await this.updateFrame(this.currentTime);
   }
 
   /**

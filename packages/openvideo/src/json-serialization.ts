@@ -42,6 +42,7 @@ interface BaseClipJSON {
   };
   transition?: ITransitionInfo;
   style?: any;
+  locked?: boolean;
 
   animation?: {
     keyFrames: Record<

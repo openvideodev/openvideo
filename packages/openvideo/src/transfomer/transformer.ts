@@ -52,6 +52,7 @@ export class Transformer extends Container {
     clip?: any;
     artboardWidth?: number;
     artboardHeight?: number;
+    locked?: boolean;
   };
 
   constructor(opts: {
@@ -60,6 +61,7 @@ export class Transformer extends Container {
     clip?: any;
     artboardWidth?: number;
     artboardHeight?: number;
+    locked?: boolean;
   }) {
     super();
     this.opts = opts;
@@ -313,6 +315,8 @@ export class Transformer extends Container {
   }
 
   #onDown = (e: FederatedPointerEvent) => {
+    if (e.button !== 0) return; // Ignore right-clicks
+    if (this.opts.locked) return; // Locked clips cannot be dragged
     // Refresh bounds/pivot to ensure we have the latest global position
     // (in case Artboard moved/zoomed since selection)
     this.#initBounds();
@@ -567,17 +571,11 @@ export class Transformer extends Container {
     const cy = r.y + r.height / 2;
 
     // Get visible handles from clip (if available)
-    const visibleHandles = this.opts.clip?.getVisibleHandles?.() ?? [
-      "tl",
-      "tr",
-      "bl",
-      "br",
-      "ml",
-      "mr",
-      "mt",
-      "mb",
-      "rot",
-    ];
+    // When locked, hide ALL handles - only show the wireframe outline
+    const isLocked = this.opts.locked;
+    const visibleHandles = isLocked ? [] : (this.opts.clip?.getVisibleHandles?.() ?? [
+      "tl", "tr", "bl", "br", "ml", "mr", "mt", "mb", "rot",
+    ]);
 
     const handles = [
       this.#handles.tl,

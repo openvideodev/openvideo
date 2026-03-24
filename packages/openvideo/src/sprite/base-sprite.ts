@@ -31,6 +31,7 @@ export interface BaseSpriteEvents {
     opacity: number;
     volume: number;
     animations: IAnimation[];
+    locked: boolean;
   }>;
   [key: string]: any;
   [key: symbol]: any;
@@ -204,6 +205,19 @@ export abstract class BaseSprite<
     const changed = this._volume !== v;
     this._volume = v;
     if (changed) this.emit('propsChange', { volume: v } as any);
+  }
+
+  private _locked = false;
+  /**
+   * Whether the sprite is locked (preventing interactions)
+   */
+  get locked(): boolean {
+    return this._locked;
+  }
+  set locked(v: boolean) {
+    const changed = this._locked !== v;
+    this._locked = v;
+    if (changed) this.emit('propsChange', { locked: v } as any);
   }
 
   /**
@@ -506,6 +520,7 @@ export abstract class BaseSprite<
     target.style = JSON.parse(JSON.stringify(this.style || {}));
     target.animations = [...this.animations];
     target.chromaKey = { ...this.chromaKey };
+    target.locked = this.locked;
     // Copy src if target is a BaseClip
     if ('src' in this && 'src' in target) {
       (target as any).src = (this as any).src;

@@ -748,6 +748,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
       clip.chromaKey = { ...clip.chromaKey, ...(json as any).chromaKey };
     }
 
+    if (json.locked !== undefined) {
+      clip.locked = json.locked;
+    }
+
     return clip;
   }
 
