@@ -1243,7 +1243,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       }
 
       // Check if clip is after its display time (display.to)
-      if (clip.display.to > 0 && timestamp >= clip.display.to) {
+      if (clip.display.to > 0 && timestamp > clip.display.to) {
         const inactiveRenderer = this.spriteRenderers.get(clip);
         if (inactiveRenderer != null) {
           await inactiveRenderer.updateFrame(null);
@@ -1266,7 +1266,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       // Check if clip has exceeded its duration (different from display.to)
       const meta = await clip.ready;
       const clipDuration = clip.duration || meta.duration;
-      if (clipDuration > 0 && relativeTime >= clipDuration) {
+      if (clipDuration > 0 && relativeTime > clipDuration) {
         const inactiveRenderer = this.spriteRenderers.get(clip);
         if (inactiveRenderer != null) {
           await inactiveRenderer.updateFrame(null);

@@ -356,7 +356,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
     state: 'success' | 'done';
   }> {
     const trimmedTime = time + this.trim.from;
-    if (trimmedTime >= this.trim.to || trimmedTime >= this._meta.duration) {
+    if (trimmedTime > this.trim.to || trimmedTime > this._meta.duration) {
       return await this.tickInterceptor(time, {
         audio: (await this.audioFrameFinder?.find(trimmedTime)) ?? [],
         state: 'done',

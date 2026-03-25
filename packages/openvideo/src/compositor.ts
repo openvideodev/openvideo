@@ -650,7 +650,7 @@ function createSpritesRender(opts: {
   }>;
   cleanup: () => void;
 } {
-  const { pixiApp, sprites, aborter, bgColor } = opts;
+  const { pixiApp, sprites, aborter } = opts;
   const hasVideoTrack = pixiApp != null;
 
   // if (pixiApp) {
@@ -1166,7 +1166,7 @@ function createSpritesRender(opts: {
 
       // Check if sprite is done or expired
 
-      if ((sprite.duration > 0 && relativeTime >= sprite.duration) || done) {
+      if ((sprite.duration > 0 && relativeTime > sprite.duration) || done) {
         if (sprite.main) mainSprDone = true;
 
         // Mark as expired but DON'T destroy yet
