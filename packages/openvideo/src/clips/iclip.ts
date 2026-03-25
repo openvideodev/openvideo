@@ -180,6 +180,11 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * Chroma key settings (green screen removal)
    */
   chromaKey: IChromaKeyOpts;
+
+  /**
+   * Whether the clip is locked (preventing interactions)
+   */
+  locked: boolean;
 }
 
 /**

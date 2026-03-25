@@ -442,6 +442,7 @@ export class TimelineModel {
     options: { permanent: boolean } = { permanent: true }
   ): Promise<void> {
     const { permanent } = options;
+    if (clip.locked) return;
     const index = this.clips.findIndex((c) => c === clip);
     if (index === -1) return;
 
@@ -550,6 +551,7 @@ export class TimelineModel {
     if (clips.length === 0) return;
 
     for (const clip of clips) {
+      if (clip.locked) continue;
       const index = this.clips.findIndex((c) => c === clip);
       if (index === -1) continue;
 
@@ -658,6 +660,19 @@ export class TimelineModel {
   async updateClip(clipId: string, updates: Partial<IClip>): Promise<void> {
     const clip = this.clips.find((c) => c.id === clipId);
     if (!clip) return;
+
+    // Allow unlocking, but block other property changes if locked
+    if (clip.locked && !('locked' in updates)) {
+      return;
+    }
+
+    // If locked and trying to change other properties through updateClip, only allow 'locked' change
+    if (clip.locked && 'locked' in updates) {
+      const onlyLocked = Object.keys(updates).length === 1;
+      if (!onlyLocked) {
+        updates = { locked: updates.locked } as any;
+      }
+    }
 
     await this.applyClipUpdate(clip, updates);
 
@@ -1191,7 +1206,7 @@ export class TimelineModel {
    */
   async duplicateSelected(): Promise<void> {
     const selectedClips = this.studio.selection.selectedClips;
-    const clipsToDuplicate = Array.from(selectedClips);
+    const clipsToDuplicate = Array.from(selectedClips).filter((c) => !c.locked);
     if (clipsToDuplicate.length === 0) return;
 
     const newClipIds: string[] = [];
@@ -1242,6 +1257,10 @@ export class TimelineModel {
     }
 
     const clip = selected[0];
+    if (clip.locked) {
+      console.warn('[Studio] Cannot split a locked clip');
+      return;
+    }
     const time = splitTime ?? this.studio.currentTime;
 
     if (
@@ -1314,6 +1333,10 @@ export class TimelineModel {
     }
 
     const clip = selected[0];
+    if (clip.locked) {
+      console.warn('[Studio] Cannot trim a locked clip');
+      return;
+    }
 
     // Convert seconds to microseconds
     const trimFromUs = trimFromSeconds * 1_000_000;
