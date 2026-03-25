@@ -1,6 +1,6 @@
 {
   "name": "openvideo",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Video rendering and processing library",
   "type": "module",
   "publishConfig": {
