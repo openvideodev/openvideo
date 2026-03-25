@@ -1,9 +1,11 @@
 import { BaseClip } from "./base-clip";
 import { type IClip } from "./iclip";
 import { type EffectKey } from "../effect/glsl/gl-effect";
+import { camelToWords } from "../utils/effect";
 
 // Since Effect is an adjustment layer, it doesn't render visual content directly.
 // We can use a minimal dummy implementation for BaseClip abstract methods.
+
 export class Effect extends BaseClip {
   readonly type = "Effect";
   ready: IClip["ready"];
@@ -40,6 +42,7 @@ export class Effect extends BaseClip {
       key: effectKey,
       name: effectKey,
     };
+    this.name = camelToWords(effectKey);
 
     // Ready immediately
     this.ready = Promise.resolve(this._meta);
