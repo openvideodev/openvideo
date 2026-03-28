@@ -114,6 +114,9 @@ export class SelectionManager {
           this.destroyTransformer();
         }
       }
+
+      // Always flush the marquee rectangle to screen, even when no clips are hit
+      this.studio.pixiApp?.render();
     }
   }
 
