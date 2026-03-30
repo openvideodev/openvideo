@@ -77,6 +77,7 @@ export interface StudioEvents {
   "history:changed": { canUndo: boolean; canRedo: boolean };
   "transform:start": { transformer: Transformer };
   "transform:end": { transformer: Transformer };
+  "clip:dblclick": { clip: IClip };
   [key: string]: any;
   [key: symbol]: any;
 }
