@@ -1,8 +1,8 @@
-import { BaseClip } from './base-clip';
-import type { IClipMeta } from './iclip';
+import { BaseClip } from "./base-clip";
+import type { IClipMeta } from "./iclip";
 
 export class Placeholder extends BaseClip {
-  type: string = 'Placeholder';
+  type: string = "Placeholder";
 
   meta: IClipMeta = {
     width: 0,
@@ -13,7 +13,7 @@ export class Placeholder extends BaseClip {
   constructor(
     src: string,
     meta: Partial<IClipMeta> = {},
-    type: string = 'Placeholder'
+    type: string = "Placeholder",
   ) {
     super();
     this.type = type;
@@ -33,39 +33,96 @@ export class Placeholder extends BaseClip {
     this.ready = Promise.resolve(this.meta);
   }
 
-  private placeholderFrame: ImageBitmap | null = null;
+  private canvas: HTMLCanvasElement | null = null;
+  private ctx: CanvasRenderingContext2D | null = null;
+  private animationRafId: number | null = null;
+  private renderPending = false;
 
   async tick(time: number): Promise<{
     video?: ImageBitmap | null;
     audio?: Float32Array[];
-    state: 'done' | 'success';
+    state: "done" | "success";
   }> {
-    if (!this.placeholderFrame) {
-      const canvas = document.createElement('canvas');
-      canvas.width = this.meta.width;
-      canvas.height = this.meta.height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#1e1e1e';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `${Math.floor(canvas.height / 10)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2);
-
-        // Add a subtle border or something to make it visible
-        ctx.strokeStyle = '#333333';
-        ctx.lineWidth = 10;
-        ctx.strokeRect(0, 0, canvas.width, canvas.height);
-      }
-      this.placeholderFrame = await createImageBitmap(canvas);
+    if (!this.canvas) {
+      this.canvas = document.createElement("canvas");
+      this.canvas.width = this.meta.width;
+      this.canvas.height = this.meta.height;
+      this.ctx = this.canvas.getContext("2d");
     }
 
+    const { canvas, ctx } = this;
+    if (ctx) {
+      const { width, height } = canvas;
+      if (width > 0 && height > 0) {
+        // 1. Clear and Draw Background
+        ctx.fillStyle = "#1e1e1e";
+        ctx.fillRect(0, 0, width, height);
+
+        // 2. Draw Spinner
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = 100;
+        const thickness = radius / 4;
+
+        // Rotation based on real-time (performance.now())
+        // ensures it spins even if the engine's time is 0
+        const rotation = (performance.now() / 2000) * Math.PI * 2;
+
+        ctx.save();
+
+        // Create a gradient for the spinner tail effect
+        const gradient = ctx.createConicGradient(rotation, centerX, centerY);
+        gradient.addColorStop(0, "#ffffff"); // Head
+        gradient.addColorStop(0.2, "#ffffff");
+        gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.4)");
+        gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)"); // Tail
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = thickness;
+        ctx.lineCap = "round";
+
+        ctx.beginPath();
+        // Draw 270 degrees of the ring starting from the current rotation
+        ctx.arc(centerX, centerY, radius, rotation, rotation + Math.PI * 1.5);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // 4. Add a subtle border
+        ctx.strokeStyle = "#333333";
+        ctx.lineWidth = 10;
+        ctx.strokeRect(0, 0, width, height);
+      }
+    }
+
+    // Schedule next render via rAF with back-pressure guard.
+    // renderPending prevents flooding: we only emit request-render
+    // once per completed render cycle (tick clears the flag below).
+    this.renderPending = false; // Current tick() is completing — allow next request
+    if (this.animationRafId === null) {
+      const scheduleNext = () => {
+        if (this.destroyed) {
+          this.animationRafId = null;
+          return;
+        }
+        if (!this.renderPending) {
+          this.renderPending = true;
+          this.emit("request-render" as any);
+        }
+        this.animationRafId = requestAnimationFrame(scheduleNext);
+      };
+      this.animationRafId = requestAnimationFrame(scheduleNext);
+    }
+
+    const frame =
+      canvas.width > 0 && canvas.height > 0
+        ? await createImageBitmap(canvas)
+        : null;
+
     return {
-      video: this.placeholderFrame,
-      state: time >= this.duration ? 'done' : 'success',
+      video: frame,
+      state: "success",
       audio: [],
     };
   }
@@ -98,7 +155,7 @@ export class Placeholder extends BaseClip {
    * Create a Placeholder instance from a JSON object
    */
   static async fromObject(json: any): Promise<Placeholder> {
-    if (json.type !== 'Placeholder') {
+    if (json.type !== "Placeholder") {
       throw new Error(`Expected Placeholder, got ${json.type}`);
     }
 
