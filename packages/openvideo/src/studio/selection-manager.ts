@@ -28,6 +28,10 @@ export class SelectionManager {
   private textClipResizeHandle: string | null = null;
   private textClipResizedSx: number | null = null;
   private textClipResizedSy: number | null = null;
+  
+  // Double-click detection state
+  private lastPointerDownTime = 0;
+  private lastPointerDownClip: IClip | null = null;
 
   constructor(private studio: Studio) {}
 
@@ -279,9 +283,22 @@ export class SelectionManager {
 
     // Add click handler that selects the topmost clip at the click position
     root.on("pointerdown", (e) => {
-      // We use the Studio's method or duplicate the logic?
-      // Let's use getTopmostClipAtPoint logic here (moved below)
+      const now = Date.now();
       const topmostClip = this.getTopmostClipAtPoint(e.global);
+
+      // Detect double-click
+      if (
+        topmostClip === clip &&
+        topmostClip === this.lastPointerDownClip &&
+        now - this.lastPointerDownTime < 350
+      ) {
+        if (topmostClip.type === "Text" || topmostClip.type === "Caption") {
+          this.studio.emit("clip:dblclick", { clip: topmostClip });
+        }
+      }
+
+      this.lastPointerDownTime = now;
+      this.lastPointerDownClip = topmostClip;
 
       if (topmostClip) {
         // Select the topmost clip (pass shift key for multi-selection)
@@ -557,6 +574,20 @@ export class SelectionManager {
         transformer: this.activeTransformer!,
       });
       const topmostClip = this.getTopmostClipAtPoint(e.global);
+      
+      const now = Date.now();
+      if (
+        topmostClip &&
+        topmostClip === this.lastPointerDownClip &&
+        now - this.lastPointerDownTime < 350
+      ) {
+        if (topmostClip.type === "Text" || topmostClip.type === "Caption") {
+          this.studio.emit("clip:dblclick", { clip: topmostClip });
+        }
+      }
+      this.lastPointerDownTime = now;
+      this.lastPointerDownClip = topmostClip;
+
       if (topmostClip && !this.selectedClips.has(topmostClip)) {
         this.selectClip(topmostClip, e.shiftKey);
         e.stopPropagation();
