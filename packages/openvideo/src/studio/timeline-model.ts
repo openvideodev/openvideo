@@ -516,11 +516,20 @@ export class TimelineModel {
     // Clean up playback element
     const playbackInfo = this.studio.transport.playbackElements.get(clip);
     if (playbackInfo != null) {
+      if (this.isPlaybackCapable(clip)) {
+        // Always stop playback immediately so removed clips can't keep producing audio.
+        // This is especially important for undo/redo where `permanent` can be false.
+        clip.pause(playbackInfo.element);
+      }
+
+      // Always unregister from the transport so it can't be driven by play/seek loops.
+      // For non-permanent removals (e.g. undo), we may skip full cleanup to keep media
+      // warm in memory, but it must not be audible.
+      this.studio.transport.playbackElements.delete(clip);
+
       if (permanent && this.isPlaybackCapable(clip)) {
         clip.cleanupPlayback(playbackInfo.element, playbackInfo.objectUrl);
-        this.studio.transport.playbackElements.delete(clip);
       }
-      // If NOT permanent, we don't cleanupPlayback, keeping the <video> alive.
     }
 
     // Clean up video sprite
@@ -614,9 +623,16 @@ export class TimelineModel {
       // Clean up playback element
       const playbackInfo = this.studio.transport.playbackElements.get(clip);
       if (playbackInfo != null) {
+        if (this.isPlaybackCapable(clip)) {
+          // Always stop playback immediately so removed clips can't keep producing audio.
+          clip.pause(playbackInfo.element);
+        }
+
+        // Always unregister from transport, regardless of permanence.
+        this.studio.transport.playbackElements.delete(clip);
+
         if (options.permanent && this.isPlaybackCapable(clip)) {
           clip.cleanupPlayback(playbackInfo.element, playbackInfo.objectUrl);
-          this.studio.transport.playbackElements.delete(clip);
         }
       }
 
