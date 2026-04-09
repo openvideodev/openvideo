@@ -200,6 +200,10 @@ export class Studio extends EventEmitter<StudioEvents> {
   private renderingSuspended = false;
   private historyPaused = false;
   private processingHistory = false;
+  /**
+   * Indicates if the studio is currently restoring state from history (undo/redo)
+   */
+  public isRestoring = false;
   private historyGroupDepth = 0;
   private clipCache = new Map<string, IClip>();
   private _isUpdatingLayout = false;
@@ -305,11 +309,15 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   public beginHistoryGroup() {
+    // During undo/redo we are replaying history patches; grouping here would
+    // incorrectly toggle `historyPaused` and push new history entries mid-restore.
+    if (this.processingHistory || this.isRestoring) return;
     this.historyGroupDepth++;
     this.historyPaused = true;
   }
 
   public endHistoryGroup() {
+    if (this.processingHistory || this.isRestoring) return;
     this.historyGroupDepth = Math.max(0, this.historyGroupDepth - 1);
     if (this.historyGroupDepth === 0) {
       this.historyPaused = false;
@@ -416,6 +424,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     // Sync all tracks at once to ensure correct order and clipIds
     this.timeline.setTracks(state.tracks);
 
+
     // Emit single restore event to sync UI (e.g. Timeline Store)
     // This ensures tracks and clips are perfectly in sync with the engine state
     this.emit("studio:restored", {
@@ -428,6 +437,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   public async undo() {
     if (!this.history.canUndo() || this.processingHistory) return;
     this.processingHistory = true;
+    this.isRestoring = true;
     this.historyPaused = true;
     try {
       const result = this.history.undo(this.exportToJSON());
@@ -440,6 +450,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       });
     } finally {
       this.historyPaused = false;
+      this.isRestoring = false;
       this.processingHistory = false;
     }
   }
@@ -447,6 +458,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   public async redo() {
     if (!this.history.canRedo() || this.processingHistory) return;
     this.processingHistory = true;
+    this.isRestoring = true;
     this.historyPaused = true;
     try {
       const result = this.history.redo(this.exportToJSON());
@@ -459,6 +471,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       });
     } finally {
       this.historyPaused = false;
+      this.isRestoring = false;
       this.processingHistory = false;
     }
   }
@@ -828,8 +841,25 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   async setTracks(tracks: StudioTrack[]): Promise<void> {
+    if (this.isRestoring) return;
+    // Stale editor sync can pass [] or tracks whose clipIds no longer match
+    // timeline.clips (e.g. redo vs Zustand timing). reconcileTracks() would drop
+    // all rows and emit track:order-changed with [], wiping the timeline UI.
+    const clipIds = new Set(this.timeline.clips.map((c) => c.id));
+    if (tracks.length === 0 && clipIds.size > 0) {
+      return;
+    }
+    if (tracks.length > 0 && clipIds.size > 0) {
+      const anyKnown = tracks.some((t) =>
+        t.clipIds.some((id) => clipIds.has(id)),
+      );
+      if (!anyKnown) {
+        return;
+      }
+    }
     return this.timeline.setTracks(tracks);
   }
+
 
   /**
    * Move a track to a new index
