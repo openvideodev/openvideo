@@ -365,6 +365,5 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   if (json.id) clip.id = json.id;
   if (json.name) clip.name = json.name;
 
-
   return clip;
 }
