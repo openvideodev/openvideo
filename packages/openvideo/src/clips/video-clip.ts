@@ -1,23 +1,23 @@
-import type { MP4Info, MP4Sample } from 'wrapbox';
-import { file, tmpfile, write } from 'opfs-tools';
-import { Log } from '../utils/log';
+import type { MP4Info, MP4Sample } from "wrapbox";
+import { file, tmpfile, write } from "opfs-tools";
+import { Log } from "../utils/log";
 import {
   createVFRotater,
   extractFileConfig,
   parseMatrix,
   quickParseMP4File,
-} from '../mp4-utils/mp4box-utils';
-import { audioResample, extractPCM4AudioData, sleep } from '../utils';
-import { BaseClip } from './base-clip';
-import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
-import { type VideoJSON } from '../json-serialization';
-import { ResourceManager } from '../studio/resource-manager';
+} from "../mp4-utils/mp4box-utils";
+import { audioResample, extractPCM4AudioData, sleep } from "../utils";
+import { BaseClip } from "./base-clip";
+import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from "./iclip";
+import { type VideoJSON } from "../json-serialization";
+import { ResourceManager } from "../studio/resource-manager";
 
 let CLIP_ID = 0;
 
 type OPFSToolFile = ReturnType<typeof file>;
 function isOTFile(obj: any): obj is OPFSToolFile {
-  return obj.kind === 'file' && obj.createReader instanceof Function;
+  return obj.kind === "file" && obj.createReader instanceof Function;
 }
 
 // Internally used for creating Video instances
@@ -38,13 +38,13 @@ export interface IMP4ClipOpts {
   __unsafe_hardwareAcceleration__?: HardwarePreference;
 }
 
-type ExtMP4Sample = Omit<MP4Sample, 'data'> & {
+type ExtMP4Sample = Omit<MP4Sample, "data"> & {
   is_idr: boolean;
   deleted?: boolean;
   data: null | Uint8Array;
 };
 
-type LocalFileReader = Awaited<ReturnType<OPFSToolFile['createReader']>>;
+type LocalFileReader = Awaited<ReturnType<OPFSToolFile["createReader"]>>;
 
 type ThumbnailOpts = {
   start: number;
@@ -76,12 +76,12 @@ type ThumbnailOpts = {
  *
  */
 export class Video extends BaseClip implements IPlaybackCapable {
-  readonly type = 'Video';
+  readonly type = "Video";
   private insId = CLIP_ID++;
 
   private logger = Log.create(`Video id:${this.insId},`);
 
-  ready: IClip['ready'];
+  ready: IClip["ready"];
 
   private _meta = {
     // microseconds
@@ -108,12 +108,12 @@ export class Video extends BaseClip implements IPlaybackCapable {
   async getFileHeaderBinData() {
     await this.ready;
     const oFile = await this.localFile.getOriginFile();
-    if (oFile == null) throw Error('Video localFile is not origin file');
+    if (oFile == null) throw Error("Video localFile is not origin file");
 
     return await new Blob(
       this.headerBoxPos.map(({ start, size }) =>
-        oFile.slice(start, start + size)
-      )
+        oFile.slice(start, start + size),
+      ),
     ).arrayBuffer();
   }
 
@@ -188,7 +188,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
       y?: number;
       width?: number;
       height?: number;
-    } = {}
+    } = {},
   ): Promise<Video> {
     const stream = await ResourceManager.getReadableStream(url);
     const clip = new Video(stream, {}, url);
@@ -206,23 +206,23 @@ export class Video extends BaseClip implements IPlaybackCapable {
   constructor(
     source: OPFSToolFile | ReadableStream<Uint8Array> | MPClipCloneArgs,
     opts: IMP4ClipOpts = {},
-    src?: string
+    src?: string,
   ) {
     super();
     // Always set src, defaulting to empty string if not provided
-    this.src = src !== undefined ? src : '';
+    this.src = src !== undefined ? src : "";
     if (
       !(source instanceof ReadableStream) &&
       !isOTFile(source) &&
       !Array.isArray(source.videoSamples)
     ) {
-      throw Error('Illegal argument');
+      throw Error("Illegal argument");
     }
 
     this.opts = { audio: true, ...opts };
-    this.audio = typeof this.opts.audio === 'boolean' ? this.opts.audio : true;
+    this.audio = typeof this.opts.audio === "boolean" ? this.opts.audio : true;
     this.volume =
-      typeof opts.audio === 'object' && 'volume' in opts.audio
+      typeof opts.audio === "object" && "volume" in opts.audio
         ? opts.audio.volume
         : ((opts as any).volume ?? 1);
 
@@ -233,7 +233,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
 
     this.localFile = isOTFile(source)
       ? source
-      : 'localFile' in source
+      : "localFile" in source
         ? source.localFile // from clone
         : tmpfile();
 
@@ -241,7 +241,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
     this.ready = (
       source instanceof ReadableStream
         ? initByStream(source).then((otFile) =>
-            mp4FileToSamples(otFile, this.opts)
+            mp4FileToSamples(otFile, this.opts),
           )
         : isOTFile(source)
           ? mp4FileToSamples(source, this.opts)
@@ -275,7 +275,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
           await this.localFile.createReader(),
           videoSamples,
           audioSamples,
-          this.opts.audio !== false ? this.volume : 0
+          this.opts.audio !== false ? this.volume : 0,
         );
         this.videoFrameFinder = videoFrameFinder;
         this.audioFrameFinder = audioFrameFinder;
@@ -285,7 +285,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
           this.vfRotater = createVFRotater(
             codedWidth,
             codedHeight,
-            parsedMatrix.rotationDeg
+            parsedMatrix.rotationDeg,
           );
         }
 
@@ -293,10 +293,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
           decoderConf,
           videoSamples,
           audioSamples,
-          parsedMatrix.rotationDeg
+          parsedMatrix.rotationDeg,
         );
 
-        this.logger.info('Video meta:', this._meta);
+        this.logger.info("Video meta:", this._meta);
         const meta = { ...this._meta };
         // Update rect and duration from meta (BaseClip pattern)
         this.width = this.width === 0 ? meta.width : this.width;
@@ -324,14 +324,14 @@ export class Video extends BaseClip implements IPlaybackCapable {
         this.display.to = this.display.from + this.duration;
 
         // Listen for volume changes to update audio finder
-        this.on('propsChange', (props) => {
+        this.on("propsChange", (props) => {
           if (props.volume !== undefined && this.audioFrameFinder) {
             this.audioFrameFinder.setVolume(props.volume);
           }
         });
 
         return meta;
-      }
+      },
     );
   }
 
@@ -341,9 +341,9 @@ export class Video extends BaseClip implements IPlaybackCapable {
    * @param tickRet Data returned by tick
    *
    *    */
-  tickInterceptor: <T extends Awaited<ReturnType<Video['tick']>>>(
+  tickInterceptor: <T extends Awaited<ReturnType<Video["tick"]>>>(
     time: number,
-    tickRet: T
+    tickRet: T,
   ) => Promise<T> = async (_, tickRet) => tickRet;
 
   /**
@@ -353,13 +353,13 @@ export class Video extends BaseClip implements IPlaybackCapable {
   async tick(time: number): Promise<{
     video?: VideoFrame;
     audio: Float32Array[];
-    state: 'success' | 'done';
+    state: "success" | "done";
   }> {
     const trimmedTime = time + this.trim.from;
     if (trimmedTime > this.trim.to || trimmedTime > this._meta.duration) {
       return await this.tickInterceptor(time, {
         audio: (await this.audioFrameFinder?.find(trimmedTime)) ?? [],
-        state: 'done',
+        state: "done",
       });
     }
 
@@ -371,14 +371,14 @@ export class Video extends BaseClip implements IPlaybackCapable {
     if (video == null) {
       return await this.tickInterceptor(time, {
         audio,
-        state: 'success',
+        state: "success",
       });
     }
 
     return await this.tickInterceptor(time, {
       video,
       audio,
-      state: 'success',
+      state: "success",
     });
   }
 
@@ -394,114 +394,119 @@ export class Video extends BaseClip implements IPlaybackCapable {
    */
   async thumbnails(
     imgWidth = 100,
-    opts?: Partial<ThumbnailOpts>
+    opts?: Partial<ThumbnailOpts>,
   ): Promise<Array<{ ts: number; img: Blob }>> {
     this.thumbAborter.abort();
     this.thumbAborter = new AbortController();
     const aborterSignal = this.thumbAborter.signal;
 
     await this.ready;
-    const abortMsg = 'generate thumbnails aborted';
+    const abortMsg = "generate thumbnails aborted";
     if (aborterSignal.aborted) throw Error(abortMsg);
 
     const { width, height } = this._meta;
     const convtr = createVF2BlobConvtr(
       imgWidth,
       Math.round(height * (imgWidth / width)),
-      { quality: 0.1, type: 'image/png' }
+      { quality: 0.1, type: "image/png" },
     );
 
     return new Promise<Array<{ ts: number; img: Blob }>>(
       async (resolve, reject) => {
-        let pngPromises: Array<{ ts: number; img: Promise<Blob> }> = [];
+        const results: Array<{ ts: number; img: Blob }> = [];
         const vc = this.decoderConf.video;
         if (vc == null || this.videoSamples.length === 0) {
-          resolver();
+          resolve([]);
           return;
         }
-        aborterSignal.addEventListener('abort', () => {
+        let localFinder: VideoFrameFinder | null = null;
+
+        aborterSignal.addEventListener("abort", () => {
           reject(Error(abortMsg));
         });
 
-        async function resolver() {
-          if (aborterSignal.aborted) return;
-          resolve(
-            await Promise.all(
-              pngPromises.map(async (it) => ({
-                ts: it.ts,
-                img: await it.img,
-              }))
-            )
-          );
-        }
+        try {
+          const { start = 0, end = this._meta.duration, step } = opts ?? {};
+          if (step) {
+            let cur = start;
 
-        function pushPngPromise(vf: VideoFrame) {
-          pngPromises.push({
-            ts: vf.timestamp,
-            img: convtr(vf),
-          });
-        }
-
-        const { start = 0, end = this._meta.duration, step } = opts ?? {};
-        if (step) {
-          let cur = start;
-
-          // Cleanup previous finder if exists
-          if (this.thumbFinder) {
-            await this.thumbFinder.destroy();
-            this.thumbFinder = null;
-          }
-
-          // Create a new VideoFrameFinder instance to avoid conflicts with the tick method
-          this.thumbFinder = new VideoFrameFinder(
-            await this.localFile.createReader(),
-            this.videoSamples,
-            {
-              ...vc,
-              hardwareAcceleration: this.opts.__unsafe_hardwareAcceleration__,
+            // Clean up any previously orphaned finder on class instance
+            if (this.thumbFinder) {
+              await this.thumbFinder.destroy();
+              this.thumbFinder = null;
             }
-          );
 
-          while (cur <= end && !aborterSignal.aborted) {
-            const vf = await this.thumbFinder.find(cur);
-            if (vf) pushPngPromise(vf);
-            cur += step;
-          }
+            localFinder = new VideoFrameFinder(
+              await this.localFile.createReader(),
+              this.videoSamples,
+              {
+                ...vc,
+                hardwareAcceleration: this.opts.__unsafe_hardwareAcceleration__,
+              },
+            );
+            
+            // Register it globally so video.destroy() can still abort it if the clip is deleted
+            this.thumbFinder = localFinder;
 
-          // Cleanup after use
-          await this.thumbFinder.destroy();
-          this.thumbFinder = null;
-
-          resolver();
-        } else {
-          await thumbnailByKeyFrame(
-            this.videoSamples,
-            this.localFile,
-            vc,
-            aborterSignal,
-            { start, end },
-            (vf, done) => {
-              if (vf != null) pushPngPromise(vf);
-              if (done) resolver();
+            while (cur <= end && !aborterSignal.aborted) {
+              const vf = await localFinder.find(cur);
+              if (vf) {
+                const blob = await convtr(vf);
+                results.push({ ts: vf.timestamp, img: blob });
+              }
+              cur += step;
             }
-          );
+
+            if (results.length === 0 && !aborterSignal.aborted) {
+              const vf = await localFinder.find(0);
+              if (vf) {
+                const blob = await convtr(vf);
+                results.push({ ts: vf.timestamp, img: blob });
+              }
+            }
+          } else {
+            await thumbnailByKeyFrame(
+              this.videoSamples,
+              this.localFile,
+              vc,
+              aborterSignal,
+              { start, end },
+              async (vf, done) => {
+                if (vf != null) {
+                  const blob = await convtr(vf);
+                  results.push({ ts: vf.timestamp, img: blob });
+                }
+              },
+            );
+          }
+        } catch (e) {
+          reject(e);
+          return;
+        } finally {
+          if (localFinder) {
+            await localFinder.destroy();
+            if (this.thumbFinder === localFinder) {
+              this.thumbFinder = null;
+            }
+          }
         }
-      }
+        resolve(results);
+      },
     );
   }
   async split(time: number) {
     await this.ready;
 
     if (time <= 0 || time >= this._meta.duration)
-      throw Error('time out of bounds');
+      throw Error("time out of bounds");
 
     const [preVideoSlice, postVideoSlice] = splitVideoSampleByTime(
       this.videoSamples,
-      time
+      time,
     );
     const [preAudioSlice, postAudioSlice] = splitAudioSampleByTime(
       this.audioSamples,
-      time
+      time,
     );
     const preClip = new Video(
       {
@@ -513,7 +518,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
         parsedMatrix: this.parsedMatrix,
       },
       this.opts,
-      this.src
+      this.src,
     );
     const postClip = new Video(
       {
@@ -525,7 +530,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
         parsedMatrix: this.parsedMatrix,
       },
       this.opts,
-      this.src
+      this.src,
     );
     await Promise.all([preClip.ready, postClip.ready]);
 
@@ -548,7 +553,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
       key: string;
       startTime: number;
       duration: number;
-    }>
+    }>,
   ) {
     const effect = this.effects.find((e) => e.id === effectId);
     if (effect) {
@@ -575,7 +580,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
         parsedMatrix: this.parsedMatrix,
       },
       this.opts,
-      this.src
+      this.src,
     );
     await clip.ready;
     clip.tickInterceptor = this.tickInterceptor;
@@ -608,7 +613,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
           parsedMatrix: this.parsedMatrix,
         },
         this.opts,
-        this.src
+        this.src,
       );
       await videoClip.ready;
       videoClip.tickInterceptor = this.tickInterceptor;
@@ -628,7 +633,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
           parsedMatrix: this.parsedMatrix,
         },
         this.opts,
-        this.src
+        this.src,
       );
       await audioClip.ready;
       audioClip.tickInterceptor = this.tickInterceptor;
@@ -652,7 +657,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
-    this.logger.info('Video destroy');
+    this.logger.info("Video destroy");
     super.destroy();
 
     // Abort thumbnail generation first
@@ -669,7 +674,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
     const base = super.toJSON(main);
     return {
       ...base,
-      type: 'Video',
+      type: "Video",
       audio: this.audio,
       volume: this.volume,
       id: this.id,
@@ -683,7 +688,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
    * @returns Promise that resolves to a Video instance
    */
   static async fromObject(json: VideoJSON): Promise<Video> {
-    if (json.type !== 'Video') {
+    if (json.type !== "Video") {
       throw new Error(`Expected Video, got ${json.type}`);
     }
 
@@ -735,9 +740,8 @@ export class Video extends BaseClip implements IPlaybackCapable {
 
     // Apply trim if present
     if (json.trim) {
-      clip.trim.from =
-        json.trim.from < 1e6 ? json.trim.from * 1e6 : json.trim.from;
-      clip.trim.to = json.trim.to < 1e6 ? json.trim.to * 1e6 : json.trim.to;
+      clip.trim.from = json.trim.from;
+      clip.trim.to = json.trim.to;
     }
 
     if (json.volume !== undefined) {
@@ -767,42 +771,42 @@ export class Video extends BaseClip implements IPlaybackCapable {
     const mp4ClipAny = this as any;
     const localFile = mp4ClipAny.localFile;
 
-    if (!localFile || typeof localFile.getOriginFile !== 'function') {
-      throw new Error('Video does not have a local file for playback');
+    if (!localFile || typeof localFile.getOriginFile !== "function") {
+      throw new Error("Video does not have a local file for playback");
     }
 
     const originFile = await localFile.getOriginFile();
     if (!originFile) {
-      throw new Error('Failed to get origin file from VideoClip');
+      throw new Error("Failed to get origin file from VideoClip");
     }
 
     const objectUrl = URL.createObjectURL(originFile);
-    const video = document.createElement('video');
+    const video = document.createElement("video");
 
-    video.crossOrigin = 'anonymous';
+    video.crossOrigin = "anonymous";
     video.muted = true;
     video.autoplay = false;
     video.playsInline = true;
-    video.preload = 'auto';
+    video.preload = "auto";
     video.loop = false;
     video.src = objectUrl;
 
     // Wait for video to be ready
     await new Promise<void>((resolve, reject) => {
       const onLoadedData = () => {
-        video.removeEventListener('loadeddata', onLoadedData);
-        video.removeEventListener('error', onError);
+        video.removeEventListener("loadeddata", onLoadedData);
+        video.removeEventListener("error", onError);
         video.pause();
         video.currentTime = 0;
         resolve();
       };
       const onError = () => {
-        video.removeEventListener('loadeddata', onLoadedData);
-        video.removeEventListener('error', onError);
-        reject(new Error('Failed to load video'));
+        video.removeEventListener("loadeddata", onLoadedData);
+        video.removeEventListener("error", onError);
+        reject(new Error("Failed to load video"));
       };
-      video.addEventListener('loadeddata', onLoadedData, { once: true });
-      video.addEventListener('error', onError, { once: true });
+      video.addEventListener("loadeddata", onLoadedData, { once: true });
+      video.addEventListener("error", onError, { once: true });
       video.load();
     });
 
@@ -811,7 +815,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
 
   async play(
     element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
+    timeSeconds: number,
   ): Promise<void> {
     const video = element as HTMLVideoElement;
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
@@ -830,7 +834,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
         try {
           await video.play();
         } catch (retryErr) {
-          console.warn('Failed to play video:', retryErr);
+          console.warn("Failed to play video:", retryErr);
         }
       }
     }
@@ -844,7 +848,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
 
   async seek(
     element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
+    timeSeconds: number,
   ): Promise<void> {
     const video = element as HTMLVideoElement;
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
@@ -859,15 +863,15 @@ export class Video extends BaseClip implements IPlaybackCapable {
       }
 
       const onSeeked = () => {
-        video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener("seeked", onSeeked);
         resolve();
       };
 
-      video.addEventListener('seeked', onSeeked, { once: true });
+      video.addEventListener("seeked", onSeeked, { once: true });
 
       // Timeout after 500ms
       setTimeout(() => {
-        video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener("seeked", onSeeked);
         resolve();
       }, 500);
     });
@@ -876,7 +880,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
   syncPlayback(
     element: HTMLVideoElement | HTMLAudioElement,
     isPlaying: boolean,
-    timeSeconds: number
+    timeSeconds: number,
   ): void {
     const video = element as HTMLVideoElement;
     const clipDuration = (this.trim.to - this.trim.from) / 1e6;
@@ -917,11 +921,11 @@ export class Video extends BaseClip implements IPlaybackCapable {
 
   cleanupPlayback(
     element: HTMLVideoElement | HTMLAudioElement,
-    objectUrl?: string
+    objectUrl?: string,
   ): void {
     const video = element as HTMLVideoElement;
     video.pause();
-    video.removeAttribute('src');
+    video.removeAttribute("src");
     video.load();
 
     if (objectUrl) {
@@ -977,7 +981,7 @@ function genMeta(
   decoderConf: MP4DecoderConf,
   videoSamples: ExtMP4Sample[],
   audioSamples: ExtMP4Sample[],
-  rotationDeg: number
+  rotationDeg: number,
 ) {
   const meta = {
     duration: 0,
@@ -1024,7 +1028,7 @@ function genDecoder(
   localFileReader: LocalFileReader,
   videoSamples: ExtMP4Sample[],
   audioSamples: ExtMP4Sample[],
-  volume: number
+  volume: number,
 ) {
   return {
     audioFrameFinder:
@@ -1037,7 +1041,7 @@ function genDecoder(
             {
               volume,
               targetSampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-            }
+            },
           ),
     videoFrameFinder:
       decoderConf.video == null || videoSamples.length === 0
@@ -1045,7 +1049,7 @@ function genDecoder(
         : new VideoFrameFinder(
             localFileReader,
             videoSamples,
-            decoderConf.video
+            decoderConf.video,
           ),
   };
 }
@@ -1082,12 +1086,12 @@ async function mp4FileToSamples(otFile: OPFSToolFile, opts: IMP4ClipOpts = {}) {
 
       let { videoDecoderConf: vc, audioDecoderConf: ac } = extractFileConfig(
         data.mp4boxFile,
-        data.info
+        data.info,
       );
       decoderConf.video = vc ?? null;
       decoderConf.audio = ac ?? null;
       if (vc == null && ac == null) {
-        Log.error('Video no video and audio track');
+        Log.error("Video no video and audio track");
       }
       if (ac != null) {
         const { supported } = await AudioDecoder.isConfigSupported(ac);
@@ -1102,41 +1106,41 @@ async function mp4FileToSamples(otFile: OPFSToolFile, opts: IMP4ClipOpts = {}) {
         }
       }
       Log.info(
-        'mp4BoxFile moov ready',
+        "mp4BoxFile moov ready",
         {
           ...data.info,
           tracks: null,
           videoTracks: null,
           audioTracks: null,
         },
-        decoderConf
+        decoderConf,
       );
     },
     (_, type, samples) => {
-      if (type === 'video') {
+      if (type === "video") {
         if (videoDeltaTS === -1) videoDeltaTS = samples[0].dts;
         for (const s of samples) {
-          videoSamples.push(normalizeTimescale(s, videoDeltaTS, 'video'));
+          videoSamples.push(normalizeTimescale(s, videoDeltaTS, "video"));
         }
-      } else if (type === 'audio' && opts.audio) {
+      } else if (type === "audio" && opts.audio) {
         if (audioDeltaTS === -1) audioDeltaTS = samples[0].dts;
         for (const s of samples) {
-          audioSamples.push(normalizeTimescale(s, audioDeltaTS, 'audio'));
+          audioSamples.push(normalizeTimescale(s, audioDeltaTS, "audio"));
         }
       }
-    }
+    },
   );
   await reader.close();
 
   const lastSampele = videoSamples.at(-1) ?? audioSamples.at(-1);
   if (mp4Info == null) {
-    throw Error('Video stream is done, but not emit ready');
+    throw Error("Video stream is done, but not emit ready");
   } else if (lastSampele == null) {
-    throw Error('Video stream not contain any sample');
+    throw Error("Video stream not contain any sample");
   }
   // Fix first black frame
   fixFirstBlackFrame(videoSamples);
-  Log.info('mp4 stream parsed');
+  Log.info("mp4 stream parsed");
   return {
     videoSamples,
     audioSamples,
@@ -1149,13 +1153,13 @@ async function mp4FileToSamples(otFile: OPFSToolFile, opts: IMP4ClipOpts = {}) {
 function normalizeTimescale(
   s: MP4Sample,
   delta = 0,
-  sampleType: 'video' | 'audio'
+  sampleType: "video" | "audio",
 ) {
   // todo: perf discard redundant fields, small objects perform better
   let offset = s.offset;
   // When IDR frame contains non-image data (like SEI) before it, decoding may fail
   const idrOffset =
-    sampleType === 'video' && s.is_sync
+    sampleType === "video" && s.is_sync
       ? idrNALUOffset(s.data, s.description.type)
       : -1;
 
@@ -1176,7 +1180,7 @@ function normalizeTimescale(
     duration: (s.duration / s.timescale) * 1e6,
     timescale: 1e6,
     // Audio data volume is controllable, save directly in memory
-    data: sampleType === 'video' ? null : s.data,
+    data: sampleType === "video" ? null : s.data,
   };
 }
 
@@ -1185,7 +1189,7 @@ class VideoFrameFinder {
   constructor(
     public localFileReader: LocalFileReader,
     public samples: ExtMP4Sample[],
-    public conf: VideoDecoderConfig
+    public conf: VideoDecoderConfig,
   ) {}
 
   private timestamp = 0;
@@ -1193,7 +1197,7 @@ class VideoFrameFinder {
   find = async (time: number): Promise<VideoFrame | null> => {
     if (
       this.decoder == null ||
-      this.decoder.state === 'closed' ||
+      this.decoder.state === "closed" ||
       time <= this.timestamp ||
       time - this.timestamp > 3e6
     ) {
@@ -1222,9 +1226,9 @@ class VideoFrameFinder {
   private parseFrame = async (
     time: number,
     dec: VideoDecoder | null,
-    aborter: { abort: boolean; st: number }
+    aborter: { abort: boolean; st: number },
   ): Promise<VideoFrame | null> => {
-    if (dec == null || dec.state === 'closed' || aborter.abort) return null;
+    if (dec == null || dec.state === "closed" || aborter.abort) return null;
 
     if (this.videoFrames.length > 0) {
       const vf = this.videoFrames[0];
@@ -1256,7 +1260,7 @@ class VideoFrameFinder {
     ) {
       if (performance.now() - aborter.st > 6e3) {
         throw Error(
-          `Video.tick video timeout, ${JSON.stringify(this.getState())}`
+          `Video.tick video timeout, ${JSON.stringify(this.getState())}`,
         );
       }
       // Decoding, wait, then retry
@@ -1299,7 +1303,7 @@ class VideoFrameFinder {
     if (hasValidFrame) {
       const samples = this.samples.slice(this.videoDecCursorIdx, endIdx);
       if (samples[0]?.is_idr !== true) {
-        Log.warn('First sample not idr frame');
+        Log.warn("First sample not idr frame");
       } else {
         const readStartTime = performance.now();
         const chunks = await videosamples2Chunks(samples, this.localFileReader);
@@ -1311,12 +1315,12 @@ class VideoFrameFinder {
           const rangSize = last.offset + last.size - first.offset;
           Log.warn(
             `Read video samples time cost: ${Math.round(
-              readCost
-            )}ms, file chunk size: ${rangSize}`
+              readCost,
+            )}ms, file chunk size: ${rangSize}`,
           );
         }
         // Wait for the previous asynchronous operation to complete, at which point the task may have already been terminated
-        if (dec.state === 'closed') return;
+        if (dec.state === "closed") return;
 
         this.lastVfDur = chunks[0]?.duration ?? 0;
         decodeGoP(dec, chunks, {
@@ -1325,7 +1329,7 @@ class VideoFrameFinder {
               throw err;
             } else if (this.outputFrameCnt === 0) {
               this.downgradeSoftDecode = true;
-              Log.warn('Downgrade to software decode');
+              Log.warn("Downgrade to software decode");
               this.reset();
             }
           },
@@ -1356,11 +1360,11 @@ class VideoFrameFinder {
     }
     this.inputChunkCnt = 0;
     this.outputFrameCnt = 0;
-    if (this.decoder?.state !== 'closed') this.decoder?.close();
+    if (this.decoder?.state !== "closed") this.decoder?.close();
     const encoderConf = {
       ...this.conf,
       ...(this.downgradeSoftDecode
-        ? { hardwareAcceleration: 'prefer-software' }
+        ? { hardwareAcceleration: "prefer-software" }
         : {}),
     } as VideoDecoderConfig;
     this.decoder = new VideoDecoder({
@@ -1380,7 +1384,7 @@ class VideoFrameFinder {
         this.videoFrames.push(rsVf);
       },
       error: (err) => {
-        if (err.message.includes('Codec reclaimed due to inactivity')) {
+        if (err.message.includes("Codec reclaimed due to inactivity")) {
           // todo: Should decoder that was auto-closed due to inactivity be auto-restarted?
           this.decoder = null;
           Log.warn(err.message);
@@ -1390,7 +1394,7 @@ class VideoFrameFinder {
         const errMsg = `VideoFinder VideoDecoder err: ${
           err.message
         }, config: ${JSON.stringify(encoderConf)}, state: ${JSON.stringify(
-          this.getState()
+          this.getState(),
         )}`;
         Log.error(errMsg);
         throw Error(errMsg);
@@ -1421,14 +1425,8 @@ class VideoFrameFinder {
     this.videoFrames.forEach((f) => f.close());
     this.videoFrames = [];
 
-    // Properly flush and close the decoder
-    if (this.decoder && this.decoder.state !== 'closed') {
-      try {
-        // Wait for pending decode operations to complete or abort
-        await this.decoder.flush();
-      } catch {
-        // Ignore flush errors during cleanup - expected when aborting
-      }
+    // Properly close the decoder
+    if (this.decoder && this.decoder.state !== "closed") {
       try {
         this.decoder.close();
       } catch {
@@ -1459,7 +1457,7 @@ class AudioFrameFinder {
     public localFileReader: LocalFileReader,
     public samples: ExtMP4Sample[],
     public conf: AudioDecoderConfig,
-    opts: { volume: number; targetSampleRate: number }
+    opts: { volume: number; targetSampleRate: number },
   ) {
     this.volume = opts.volume;
     this.sampleRate = opts.targetSampleRate;
@@ -1477,7 +1475,7 @@ class AudioFrameFinder {
       time <= this.timestamp || time - this.timestamp > 0.1e6;
     if (
       this.decoder == null ||
-      this.decoder.state === 'closed' ||
+      this.decoder.state === "closed" ||
       needResetTime
     ) {
       this.reset();
@@ -1499,7 +1497,7 @@ class AudioFrameFinder {
     const pcmData = await this.parseFrame(
       Math.ceil(deltaTime * (this.sampleRate / 1e6)),
       this.decoder,
-      this.curAborter
+      this.curAborter,
     );
     this.sleepCnt = 0;
 
@@ -1519,12 +1517,12 @@ class AudioFrameFinder {
   private parseFrame = async (
     emitFrameCnt: number,
     dec: ReturnType<typeof createAudioChunksDecoder> | null = null,
-    aborter: { abort: boolean; st: number }
+    aborter: { abort: boolean; st: number },
   ): Promise<Float32Array[]> => {
     if (
       dec == null ||
       aborter.abort ||
-      dec.state === 'closed' ||
+      dec.state === "closed" ||
       emitFrameCnt === 0
     ) {
       return [];
@@ -1544,7 +1542,7 @@ class AudioFrameFinder {
       if (performance.now() - aborter.st > 3e3) {
         aborter.abort = true;
         throw Error(
-          `Video.tick audio timeout, ${JSON.stringify(this.getState())}`
+          `Video.tick audio timeout, ${JSON.stringify(this.getState())}`,
         );
       }
       // Decoding, wait
@@ -1578,12 +1576,12 @@ class AudioFrameFinder {
       samples.map(
         (s) =>
           new EncodedAudioChunk({
-            type: 'key',
+            type: "key",
             timestamp: s.cts,
             duration: s.duration,
             data: s.data!,
-          })
-      )
+          }),
+      ),
     );
   };
 
@@ -1604,7 +1602,7 @@ class AudioFrameFinder {
       (pcmArr) => {
         this.pcmData.data.push(pcmArr as [Float32Array, Float32Array]);
         this.pcmData.frameCnt += pcmArr[0].length;
-      }
+      },
     );
   };
 
@@ -1634,7 +1632,7 @@ class AudioFrameFinder {
 function createAudioChunksDecoder(
   decoderConf: AudioDecoderConfig,
   opts: { resampleRate: number; volume: number },
-  outputCb: (pcm: Float32Array[]) => void
+  outputCb: (pcm: Float32Array[]) => void,
 ) {
   let inputCnt = 0;
   let outputCnt = 0;
@@ -1663,7 +1661,7 @@ function createAudioChunksDecoder(
           audioResample(pcm, ad.sampleRate, {
             rate: opts.resampleRate,
             chanCount: ad.numberOfChannels,
-          })
+          }),
         );
       } else {
         outputHandler(pcm);
@@ -1671,10 +1669,10 @@ function createAudioChunksDecoder(
       ad.close();
     },
     error: (err) => {
-      if (err.message.includes('Codec reclaimed due to inactivity')) {
+      if (err.message.includes("Codec reclaimed due to inactivity")) {
         return;
       }
-      handleDecodeError('Video AudioDecoder err', err as Error);
+      handleDecodeError("Video AudioDecoder err", err as Error);
     },
   });
   adec.configure(decoderConf);
@@ -1698,11 +1696,11 @@ function createAudioChunksDecoder(
       try {
         for (const chunk of chunks) adec.decode(chunk);
       } catch (err) {
-        handleDecodeError('decode audio chunk error', err as Error);
+        handleDecodeError("decode audio chunk error", err as Error);
       }
     },
     close() {
-      if (adec.state !== 'closed') adec.close();
+      if (adec.state !== "closed") adec.close();
     },
     get decoding() {
       return inputCnt > outputCnt && adec.decodeQueueSize > 0;
@@ -1747,7 +1745,7 @@ function createPromiseQueue<T extends any>(onResult: (data: T) => void) {
 
 function emitAudioFrames(
   pcmData: { frameCnt: number; data: [Float32Array, Float32Array][] },
-  emitCnt: number
+  emitCnt: number,
 ) {
   // todo: perf reuse memory space
   const audio = [new Float32Array(emitCnt), new Float32Array(emitCnt)];
@@ -1776,7 +1774,7 @@ function emitAudioFrames(
 
 async function videosamples2Chunks(
   samples: ExtMP4Sample[],
-  reader: Awaited<ReturnType<OPFSToolFile['createReader']>>
+  reader: Awaited<ReturnType<OPFSToolFile["createReader"]>>,
 ): Promise<EncodedVideoChunk[]> {
   const first = samples[0];
   const last = samples.at(-1);
@@ -1786,12 +1784,12 @@ async function videosamples2Chunks(
   if (rangSize < 30e6) {
     // Single read data < 30M, read all at once to reduce IO frequency
     const data = new Uint8Array(
-      await reader.read(rangSize, { at: first.offset })
+      await reader.read(rangSize, { at: first.offset }),
     );
     return samples.map((s) => {
       const offset = s.offset - first.offset;
       return new EncodedVideoChunk({
-        type: s.is_sync ? 'key' : 'delta',
+        type: s.is_sync ? "key" : "delta",
         timestamp: s.cts,
         duration: s.duration,
         data: data.subarray(offset, offset + s.size),
@@ -1802,14 +1800,14 @@ async function videosamples2Chunks(
   return await Promise.all(
     samples.map(async (s) => {
       return new EncodedVideoChunk({
-        type: s.is_sync ? 'key' : 'delta',
+        type: s.is_sync ? "key" : "delta",
         timestamp: s.cts,
         duration: s.duration,
         data: await reader.read(s.size, {
           at: s.offset,
         }),
       });
-    })
+    }),
   );
 }
 
@@ -1832,7 +1830,7 @@ function splitVideoSampleByTime(videoSamples: ExtMP4Sample[], time: number) {
   }
 
   const hitSample = videoSamples[hitIdx];
-  if (hitSample == null) throw Error('Not found video sample by time');
+  if (hitSample == null) throw Error("Not found video sample by time");
 
   const preSlice = videoSamples
     .slice(0, gopEndIdx === 0 ? videoSamples.length : gopEndIdx)
@@ -1870,7 +1868,7 @@ function splitAudioSampleByTime(audioSamples: ExtMP4Sample[], time: number) {
     hitIdx = i;
     break;
   }
-  if (hitIdx === -1) throw Error('Not found audio sample by time');
+  if (hitIdx === -1) throw Error("Not found audio sample by time");
   const preSlice = audioSamples.slice(0, hitIdx).map((s) => ({ ...s }));
   const postSlice = audioSamples
     .slice(hitIdx)
@@ -1884,9 +1882,9 @@ function decodeGoP(
   chunks: EncodedVideoChunk[],
   opts: {
     onDecodingError?: (err: Error) => void;
-  }
+  },
 ) {
-  if (dec.state !== 'configured') return;
+  if (dec.state !== "configured") return;
   for (let i = 0; i < chunks.length; i++) dec.decode(chunks[i]);
 
   // todo: The next frame after flush must be an IDR frame. Decide whether to call flush based on context?
@@ -1894,14 +1892,14 @@ function decodeGoP(
   dec.flush().catch((err) => {
     if (!(err instanceof Error)) throw err;
     if (
-      err.message.includes('Decoding error') &&
+      err.message.includes("Decoding error") &&
       opts.onDecodingError != null
     ) {
       opts.onDecodingError(err);
       return;
     }
     // reset interrupts the decoder, expected to throw AbortedError
-    if (!err.message.includes('Aborted due to close')) {
+    if (!err.message.includes("Aborted due to close")) {
       throw err;
     }
   });
@@ -1909,17 +1907,17 @@ function decodeGoP(
 
 function idrNALUOffset(
   u8Arr: Uint8Array,
-  type: MP4Sample['description']['type']
+  type: MP4Sample["description"]["type"],
 ) {
-  if (type !== 'avc1' && type !== 'hvc1') return 0;
+  if (type !== "avc1" && type !== "hvc1") return 0;
 
   const dv = new DataView(u8Arr.buffer);
   for (let i = 0; i < u8Arr.byteLength - 4; ) {
-    if (type === 'avc1') {
+    if (type === "avc1") {
       const nalUnitType = dv.getUint8(i + 4) & 0x1f;
       // 5: IDR frame, 7: SPS, 8: PPS
       if (nalUnitType === 5 || nalUnitType === 7 || nalUnitType === 8) return i;
-    } else if (type === 'hvc1') {
+    } else if (type === "hvc1") {
       const nalUnitType = (dv.getUint8(i + 4) >> 1) & 0x3f;
       // 19-20: IDR frame, 32-34: VPS SPS PPS
       if (
@@ -1981,15 +1979,16 @@ async function thumbnailByKeyFrame(
   decConf: VideoDecoderConfig,
   abortSingl: AbortSignal,
   time: { start: number; end: number },
-  onOutput: (vf: VideoFrame | null, done: boolean) => void
+  onOutput: (vf: VideoFrame | null, done: boolean) => void,
 ) {
   const fileReader = await localFile.createReader();
 
   const chunks = await videosamples2Chunks(
     samples.filter(
-      (s) => !s.deleted && s.is_sync && s.cts >= time.start && s.cts <= time.end
+      (s) =>
+        !s.deleted && s.is_sync && s.cts >= time.start && s.cts <= time.end,
     ),
-    fileReader
+    fileReader,
   );
   if (chunks.length === 0 || abortSingl.aborted) {
     onOutput(null, true);
@@ -1999,13 +1998,13 @@ async function thumbnailByKeyFrame(
   let outputCnt = 0;
   decodeGoP(createVideoDec(), chunks, {
     onDecodingError: (err) => {
-      Log.warn('thumbnailsByKeyFrame', err);
+      Log.warn("thumbnailsByKeyFrame", err);
       // 尝试降级一次
       if (outputCnt === 0) {
         decodeGoP(createVideoDec(true), chunks, {
           onDecodingError: (err) => {
             fileReader.close();
-            Log.error('thumbnailsByKeyFrame retry soft deocde', err);
+            Log.error("thumbnailsByKeyFrame retry soft deocde", err);
           },
         });
       } else {
@@ -2018,7 +2017,7 @@ async function thumbnailByKeyFrame(
   function createVideoDec(downgrade = false) {
     const encoderConf = {
       ...decConf,
-      ...(downgrade ? { hardwareAcceleration: 'prefer-software' } : {}),
+      ...(downgrade ? { hardwareAcceleration: "prefer-software" } : {}),
     } as VideoDecoderConfig;
     const dec = new VideoDecoder({
       output: (vf) => {
@@ -2027,7 +2026,7 @@ async function thumbnailByKeyFrame(
         onOutput(vf, done);
         if (done) {
           fileReader.close();
-          if (dec.state !== 'closed') dec.close();
+          if (dec.state !== "closed") dec.close();
         }
       },
       error: (err) => {
@@ -2037,15 +2036,15 @@ async function thumbnailByKeyFrame(
             state: dec.state,
             outputCnt,
             inputCnt: chunks.length,
-          }
+          },
         )}`;
         Log.error(errMsg);
         throw Error(errMsg);
       },
     });
-    abortSingl.addEventListener('abort', () => {
+    abortSingl.addEventListener("abort", () => {
       fileReader.close();
-      if (dec.state !== 'closed') dec.close();
+      if (dec.state !== "closed") dec.close();
     });
     dec.configure(encoderConf);
     return dec;
@@ -2055,15 +2054,36 @@ async function thumbnailByKeyFrame(
 function createVF2BlobConvtr(
   width: number,
   height: number,
-  opts?: ImageEncodeOptions
+  opts?: ImageEncodeOptions,
 ) {
-  const cvs = new OffscreenCanvas(width, height);
-  const ctx = cvs.getContext('2d')!;
-
+  // We use fresh canvas per frame to avoid any stale state or collisions
   return async (vf: VideoFrame) => {
-    ctx.drawImage(vf, 0, 0, width, height);
-    vf.close();
-    const blob = await cvs.convertToBlob(opts);
-    return blob;
+    try {
+      const targetW = Math.max(1, Math.round(width));
+      const targetH = Math.max(1, Math.round(height));
+
+      Log.info(`[Video.convtr] START: ${targetW}x${targetH}, ts: ${vf.timestamp}`);
+
+      Log.info(`[Video.convtr] Creating OffscreenCanvas`);
+      const cvs = new OffscreenCanvas(targetW, targetH);
+      
+      Log.info(`[Video.convtr] Getting Context`);
+      const ctx = cvs.getContext("2d")!;
+      
+      Log.info(`[Video.convtr] Drawing image`);
+      ctx.drawImage(vf, 0, 0, targetW, targetH);
+      
+      Log.info(`[Video.convtr] Closing VideoFrame`);
+      vf.close();
+
+      Log.info(`[Video.convtr] Calling convertToBlob`);
+      const blob = await cvs.convertToBlob(opts);
+      Log.info(`[Video.convtr] FINISHED: ${blob.size} bytes`);
+
+      return blob;
+    } catch (err: any) {
+      Log.error(`[Video.convtr] ERROR: ${err?.message || err}`);
+      throw err;
+    }
   };
 }

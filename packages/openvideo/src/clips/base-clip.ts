@@ -238,20 +238,10 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   ): this {
     if (props.display) {
       if (props.display.from !== undefined) {
-        // Convert frames to microseconds if value seems like frames (< 1 second)
-        // Otherwise assume it's already in microseconds
-        this.display.from =
-          props.display.from < 1e6
-            ? (props.display.from / fps) * 1e6
-            : props.display.from;
+        this.display.from = props.display.from;
       }
       if (props.display.to !== undefined) {
-        // Convert frames to microseconds if value seems like frames (< 1 second)
-        // Otherwise assume it's already in microseconds
-        this.display.to =
-          props.display.to < 1e6
-            ? (props.display.to / fps) * 1e6
-            : props.display.to;
+        this.display.to = props.display.to;
       }
     }
 
@@ -261,13 +251,10 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     if (props.height !== undefined) this.height = props.height;
 
     if (props.duration !== undefined) {
-      // Convert frames to microseconds if value seems like frames (< 1 second)
-      const duration =
-        props.duration < 1e6 ? (props.duration / fps) * 1e6 : props.duration;
-      this.duration = duration;
+      this.duration = props.duration;
       // Update display.to if duration is set and display.from is set
       if (this.display.from !== undefined) {
-        this.display.to = this.display.from + duration;
+        this.display.to = this.display.from + this.duration;
       }
     }
 
