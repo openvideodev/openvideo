@@ -1,5 +1,6 @@
 import diff, { Difference } from 'microdiff';
 import { ClipJSON, ProjectJSON, StudioTrackJSON } from '../json-serialization';
+import type { StudioAction } from '../actions';
 
 export interface HistoryOptions {
   maxSize?: number;
@@ -9,6 +10,8 @@ export interface HistoryState {
   clips: Record<string, ClipJSON>;
   tracks: StudioTrackJSON[];
   settings: any;
+  /** Optional: the action that produced this state (for session replay logs) */
+  action?: StudioAction;
 }
 
 export class HistoryManager {
@@ -51,8 +54,9 @@ export class HistoryManager {
 
   /**
    * Push a new state to history. Calculates the diff from the last state.
+   * Optionally pass the action that caused this state change (for replay logs).
    */
-  public push(newState: ProjectJSON) {
+  public push(newState: ProjectJSON, action?: StudioAction) {
     if (!this.lastState) {
       this.init(newState);
       return;
@@ -61,6 +65,9 @@ export class HistoryManager {
     const currentHistoryState = this.projectToHistoryState(
       JSON.parse(JSON.stringify(newState))
     );
+    if (action) {
+      currentHistoryState.action = action;
+    }
     const patches = diff(this.lastState, currentHistoryState);
 
     if (patches.length === 0) return;

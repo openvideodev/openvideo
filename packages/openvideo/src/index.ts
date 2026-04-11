@@ -67,3 +67,11 @@ export type { TransitionKey } from "./transition/glsl/gl-transition";
 
 // Animations
 export * from "./animation";
+
+// ---------------------------------------------------------------------------
+// Action system primitives
+// External layers (collab, agent, sync) depend on these two exports.
+// openvideo ships no transport adapters — those belong in separate packages.
+// ---------------------------------------------------------------------------
+export type { StudioAction, StudioActionType, ActionMeta } from "./actions";
+export { ActionDispatcher } from "./studio/action-dispatcher";
