@@ -55,6 +55,11 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   name: string;
 
   /**
+   * User-defined metadata
+   */
+  metadata: Record<string, any>;
+
+  /**
    * Source URL or identifier for this clip
    */
   src: string;

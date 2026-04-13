@@ -525,6 +525,10 @@ export abstract class BaseSprite<
     if ('src' in this && 'src' in target) {
       (target as any).src = (this as any).src;
     }
+    // Copy metadata if target is a BaseClip
+    if ('metadata' in this && 'metadata' in target) {
+      (target as any).metadata = JSON.parse(JSON.stringify((this as any).metadata || {}));
+    }
   }
 
   /**
