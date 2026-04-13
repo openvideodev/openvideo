@@ -14,6 +14,7 @@ import {
 interface BaseClipJSON {
   id?: string;
   name?: string;
+  metadata?: Record<string, any>;
   effects?: Array<{
     id: string;
     key: string;
@@ -95,7 +96,7 @@ export interface TextStyleJSON {
   fontFamily?: string;
   fontWeight?: string | number;
   fontStyle?: string;
-  color?:
+  fill?:
     | string
     | number
     | {
@@ -115,7 +116,7 @@ export interface TextStyleJSON {
     cap?: "butt" | "round" | "square";
     miterLimit?: number;
   };
-  shadow?: {
+  dropShadow?: {
     color: string | number;
     alpha: number;
     blur: number;
@@ -128,7 +129,13 @@ export interface TextStyleJSON {
   letterSpacing?: number;
   textCase?: "none" | "uppercase" | "lowercase" | "title";
   wordsPerLine?: "single" | "multiple";
-  verticalAlign?: "top" | "center" | "bottom";
+  verticalAlign?:
+    | "top"
+    | "center"
+    | "bottom"
+    | "underline"
+    | "overline"
+    | "strikethrough";
   wordAnimation?: ICaptionWordAnimation;
   textBoxStyle?: TextBoxStyleJSON;
 }
@@ -364,6 +371,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   // Ensure id and name are correct
   if (json.id) clip.id = json.id;
   if (json.name) clip.name = json.name;
+  if (json.metadata) clip.metadata = json.metadata;
 
   return clip;
 }

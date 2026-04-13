@@ -442,7 +442,10 @@ export class PixiSpriteRenderer {
 
     // 1. Apply BorderRadius (Masking)
     const borderRadius = style.borderRadius || 0;
-    if (borderRadius > 0) {
+    const width = Math.abs(this.sprite.width ?? 0);
+    const height = Math.abs(this.sprite.height ?? 0);
+
+    if (borderRadius > 0 && width > 0 && height > 0) {
       if (this.maskGraphics == null) {
         this.maskGraphics = new Graphics();
         this.animationContainer!.addChild(this.maskGraphics);
@@ -450,11 +453,11 @@ export class PixiSpriteRenderer {
       }
       this.maskGraphics.clear();
       this.maskGraphics.roundRect(
-        -textureWidth / 2,
-        -textureHeight / 2,
-        textureWidth,
-        textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
+        -width / 2,
+        -height / 2,
+        width,
+        height,
+        Math.min(borderRadius, width / 2, height / 2),
       );
       this.maskGraphics.fill({ color: 0xffffff, alpha: 1 });
       this.maskGraphics.visible = true;
@@ -466,7 +469,7 @@ export class PixiSpriteRenderer {
     }
 
     if (this.sprite.type !== "Text" && this.sprite.type !== "Caption") {
-      this.applyStroke(style, textureWidth, textureHeight);
+      this.applyStroke(style, width, height);
     } else if (this.strokeGraphics) {
       this.strokeGraphics.visible = false;
     }
@@ -482,11 +485,12 @@ export class PixiSpriteRenderer {
 
   private applyStroke(
     style: any,
-    textureWidth: number,
-    textureHeight: number,
+    width: number,
+    height: number,
   ): void {
     const stroke = style.stroke;
-    if (stroke && stroke.width > 0) {
+    const borderRadius = style.borderRadius || 0;
+    if (stroke && stroke.width > 0 && width > 0 && height > 0) {
       if (this.strokeGraphics == null) {
         this.strokeGraphics = new Graphics();
         this.animationContainer!.addChild(this.strokeGraphics);
@@ -494,30 +498,27 @@ export class PixiSpriteRenderer {
 
       this.strokeGraphics.clear();
       const color = parseColor(stroke.color) ?? 0xffffff;
-      const width = stroke.width;
-      const borderRadius = style.borderRadius || 0;
-
       this.strokeGraphics.setStrokeStyle({
-        width: width,
+        width: stroke.width,
         color: color,
-        alignment: 1,
+        alignment: 0.5,
       });
 
       if (borderRadius > 0) {
-        const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
+        const r = Math.min(borderRadius, width / 2, height / 2);
         this.strokeGraphics.roundRect(
-          -textureWidth / 2,
-          -textureHeight / 2,
-          textureWidth,
-          textureHeight,
+          -width / 2,
+          -height / 2,
+          width,
+          height,
           r,
         );
       } else {
         this.strokeGraphics.rect(
-          -textureWidth / 2,
-          -textureHeight / 2,
-          textureWidth,
-          textureHeight,
+          -width / 2,
+          -height / 2,
+          width,
+          height,
         );
       }
 

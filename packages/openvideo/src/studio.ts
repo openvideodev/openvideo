@@ -78,6 +78,13 @@ export interface StudioEvents {
   "transform:start": { transformer: Transformer };
   "transform:end": { transformer: Transformer };
   "clip:dblclick": { clip: IClip };
+  /**
+   * Emitted after every action dispatched via studio.dispatch().
+   * External layers (collab, agent, sync) should listen to this event
+   * to observe the stream of edits. Do NOT call studio.dispatch() again
+   * inside this handler for the same action — use _meta to track origin.
+   */
+  "action:dispatched": { action: StudioAction };
   [key: string]: any;
   [key: symbol]: any;
 }
@@ -116,6 +123,8 @@ import { HistoryManager, HistoryState } from "./studio/history-manager";
 import { ResourceManager } from "./studio/resource-manager";
 import { jsonToClip } from "./json-serialization";
 import { Difference } from "microdiff";
+import { ActionDispatcher } from "./studio/action-dispatcher";
+import type { StudioAction } from "./actions";
 
 export class Studio extends EventEmitter<StudioEvents> {
   public selection: SelectionManager;
@@ -123,6 +132,11 @@ export class Studio extends EventEmitter<StudioEvents> {
   public timeline: TimelineModel;
   public history: HistoryManager;
   public resourceManager: ResourceManager;
+  /**
+   * Action dispatcher — the inbound gateway for agentic and external systems.
+   * Use studio.dispatch(action) for ergonomic access.
+   */
+  public dispatcher: ActionDispatcher;
   public pixiApp: Application | null = null;
   public get tracks() {
     return this.timeline.tracks;
@@ -201,6 +215,10 @@ export class Studio extends EventEmitter<StudioEvents> {
   private historyPaused = false;
   private processingHistory = false;
   /**
+   * By asserting this flag, the next history save will silently update the baseline without adding to the undo stack.
+   */
+  public ignoreHistoryForNextAction = false;
+  /**
    * Indicates if the studio is currently restoring state from history (undo/redo)
    */
   public isRestoring = false;
@@ -259,6 +277,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.timeline = new TimelineModel(this);
     this.history = new HistoryManager();
     this.resourceManager = new ResourceManager();
+    this.dispatcher = new ActionDispatcher(this);
 
     this.ready = this.initPixiApp().then(() => {
       // Initialize history with initial state after Pixi is ready and dimensions are set correctly
@@ -301,6 +320,13 @@ export class Studio extends EventEmitter<StudioEvents> {
 
   private saveHistory() {
     if (this.historyPaused || this.processingHistory) return;
+
+    if (this.ignoreHistoryForNextAction) {
+      this.history.updateWithoutPush(this.exportToJSON());
+      this.ignoreHistoryForNextAction = false;
+      return;
+    }
+
     this.history.push(this.exportToJSON());
     this.emit("history:changed", {
       canUndo: this.history.canUndo(),
@@ -1200,6 +1226,30 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   /**
+   * Dispatch a StudioAction \u2014 the primary entry point for agentic and external systems.
+   *
+   * Actions are plain serializable JSON objects describing an edit operation.
+   * After execution, emits 'action:dispatched' so external layers (collab, agent, sync)
+   * can observe the edit stream.
+   *
+   * Direct property mutations (clip.opacity = 0.5) continue to work unchanged
+   * and go through the existing history path. Only dispatch() calls produce
+   * 'action:dispatched' events.
+   *
+   * @example
+   * // Agentic edit
+   * await studio.dispatch({ type: 'clip:update', payload: { clipId: 'x', updates: { opacity: 0.5 } } });
+   *
+   * // Observe all dispatched actions (e.g. in a collab layer)
+   * studio.on('action:dispatched', ({ action }) => {
+   *   myTransport.send(action);
+   * });
+   */
+  public dispatch(action: StudioAction): Promise<void> {
+    return this.dispatcher.dispatch(action);
+  }
+
+  /**
    * Get maximum duration (in microseconds)
    */
   getMaxDuration(): number {
@@ -2011,20 +2061,25 @@ export class Studio extends EventEmitter<StudioEvents> {
     rootContainer.filters = filters;
 
     // Apply Styles (Border Radius, Stroke, Shadow)
+    const targetWidth = Math.abs(clip.width) || textureWidth;
+    const targetHeight = Math.abs(clip.height) || textureHeight;
     const borderRadius = style.borderRadius || 0;
+
     let maskGraphics: Graphics | null = null;
     if (borderRadius > 0) {
       maskGraphics = new Graphics();
+      const r = Math.min(borderRadius, targetWidth / 2, targetHeight / 2);
       maskGraphics.roundRect(
-        -textureWidth / 2,
-        -textureHeight / 2,
-        textureWidth,
-        textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
+        -targetWidth / 2,
+        -targetHeight / 2,
+        targetWidth,
+        targetHeight,
+        r,
       );
       maskGraphics.fill({ color: 0xffffff, alpha: 1 });
-      tempSprite.addChild(maskGraphics);
-      tempSprite.mask = maskGraphics;
+      rootContainer.addChild(maskGraphics);
+      // In this transition path, we mask the rootContainer to affect mirrors too if they existed
+      rootContainer.mask = maskGraphics;
     }
 
     const stroke = style.stroke;
@@ -2035,28 +2090,28 @@ export class Studio extends EventEmitter<StudioEvents> {
       strokeGraphics.setStrokeStyle({
         width: stroke.width,
         color: color,
-        alignment: 1,
+        alignment: 0.5, // Standard centered alignment
       });
 
       if (borderRadius > 0) {
-        const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
+        const r = Math.min(borderRadius, targetWidth / 2, targetHeight / 2);
         strokeGraphics.roundRect(
-          -textureWidth / 2,
-          -textureHeight / 2,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2,
+          -targetHeight / 2,
+          targetWidth,
+          targetHeight,
           r,
         );
       } else {
         strokeGraphics.rect(
-          -textureWidth / 2,
-          -textureHeight / 2,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2,
+          -targetHeight / 2,
+          targetWidth,
+          targetHeight,
         );
       }
       strokeGraphics.stroke();
-      tempSprite.addChild(strokeGraphics);
+      rootContainer.addChild(strokeGraphics);
     }
 
     const shadow = style.dropShadow;
@@ -2072,23 +2127,24 @@ export class Studio extends EventEmitter<StudioEvents> {
       const dy = Math.sin(angle) * distance;
 
       if (borderRadius > 0) {
-        const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
+        const r = Math.min(borderRadius, targetWidth / 2, targetHeight / 2);
         shadowGraphics.roundRect(
-          -textureWidth / 2 + dx,
-          -textureHeight / 2 + dy,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2 + dx,
+          -targetHeight / 2 + dy,
+          targetWidth,
+          targetHeight,
           r,
         );
       } else {
         shadowGraphics.rect(
-          -textureWidth / 2 + dx,
-          -textureHeight / 2 + dy,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2 + dx,
+          -targetHeight / 2 + dy,
+          targetWidth,
+          targetHeight,
         );
       }
       shadowGraphics.fill({ color, alpha });
+      // Insert shadow at the bottom of the rootContainer
       rootContainer.addChildAt(shadowGraphics, 0);
     }
 
