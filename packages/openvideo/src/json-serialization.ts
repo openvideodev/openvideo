@@ -95,7 +95,7 @@ export interface TextStyleJSON {
   fontFamily?: string;
   fontWeight?: string | number;
   fontStyle?: string;
-  color?:
+  fill?:
     | string
     | number
     | {
@@ -115,7 +115,7 @@ export interface TextStyleJSON {
     cap?: "butt" | "round" | "square";
     miterLimit?: number;
   };
-  shadow?: {
+  dropShadow?: {
     color: string | number;
     alpha: number;
     blur: number;
@@ -128,7 +128,13 @@ export interface TextStyleJSON {
   letterSpacing?: number;
   textCase?: "none" | "uppercase" | "lowercase" | "title";
   wordsPerLine?: "single" | "multiple";
-  verticalAlign?: "top" | "center" | "bottom";
+  verticalAlign?:
+    | "top"
+    | "center"
+    | "bottom"
+    | "underline"
+    | "overline"
+    | "strikethrough";
   wordAnimation?: ICaptionWordAnimation;
   textBoxStyle?: TextBoxStyleJSON;
 }

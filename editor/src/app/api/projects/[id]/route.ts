@@ -10,16 +10,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     headers: await headers(),
   });
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    // For unauthenticated users, allow viewing projects (for demo purposes)
+    // In production, you might want to add proper access control or public flags
+    const whereClause = session
+      ? {
+          id: id,
+          userId: session.user.id,
+        }
+      : {
+          id: id,
+        };
+
     const project = await prisma.project.findUnique({
-      where: {
-        id: id,
-        userId: session.user.id,
-      },
+      where: whereClause,
     });
 
     if (!project) {

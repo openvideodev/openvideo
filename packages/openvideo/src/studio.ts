@@ -215,6 +215,10 @@ export class Studio extends EventEmitter<StudioEvents> {
   private historyPaused = false;
   private processingHistory = false;
   /**
+   * By asserting this flag, the next history save will silently update the baseline without adding to the undo stack.
+   */
+  public ignoreHistoryForNextAction = false;
+  /**
    * Indicates if the studio is currently restoring state from history (undo/redo)
    */
   public isRestoring = false;
@@ -316,6 +320,13 @@ export class Studio extends EventEmitter<StudioEvents> {
 
   private saveHistory() {
     if (this.historyPaused || this.processingHistory) return;
+
+    if (this.ignoreHistoryForNextAction) {
+      this.history.updateWithoutPush(this.exportToJSON());
+      this.ignoreHistoryForNextAction = false;
+      return;
+    }
+
     this.history.push(this.exportToJSON());
     this.emit("history:changed", {
       canUndo: this.history.canUndo(),
@@ -2050,20 +2061,25 @@ export class Studio extends EventEmitter<StudioEvents> {
     rootContainer.filters = filters;
 
     // Apply Styles (Border Radius, Stroke, Shadow)
+    const targetWidth = Math.abs(clip.width) || textureWidth;
+    const targetHeight = Math.abs(clip.height) || textureHeight;
     const borderRadius = style.borderRadius || 0;
+
     let maskGraphics: Graphics | null = null;
     if (borderRadius > 0) {
       maskGraphics = new Graphics();
+      const r = Math.min(borderRadius, targetWidth / 2, targetHeight / 2);
       maskGraphics.roundRect(
-        -textureWidth / 2,
-        -textureHeight / 2,
-        textureWidth,
-        textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
+        -targetWidth / 2,
+        -targetHeight / 2,
+        targetWidth,
+        targetHeight,
+        r,
       );
       maskGraphics.fill({ color: 0xffffff, alpha: 1 });
-      tempSprite.addChild(maskGraphics);
-      tempSprite.mask = maskGraphics;
+      rootContainer.addChild(maskGraphics);
+      // In this transition path, we mask the rootContainer to affect mirrors too if they existed
+      rootContainer.mask = maskGraphics;
     }
 
     const stroke = style.stroke;
@@ -2074,28 +2090,28 @@ export class Studio extends EventEmitter<StudioEvents> {
       strokeGraphics.setStrokeStyle({
         width: stroke.width,
         color: color,
-        alignment: 1,
+        alignment: 0.5, // Standard centered alignment
       });
 
       if (borderRadius > 0) {
-        const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
+        const r = Math.min(borderRadius, targetWidth / 2, targetHeight / 2);
         strokeGraphics.roundRect(
-          -textureWidth / 2,
-          -textureHeight / 2,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2,
+          -targetHeight / 2,
+          targetWidth,
+          targetHeight,
           r,
         );
       } else {
         strokeGraphics.rect(
-          -textureWidth / 2,
-          -textureHeight / 2,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2,
+          -targetHeight / 2,
+          targetWidth,
+          targetHeight,
         );
       }
       strokeGraphics.stroke();
-      tempSprite.addChild(strokeGraphics);
+      rootContainer.addChild(strokeGraphics);
     }
 
     const shadow = style.dropShadow;
@@ -2111,23 +2127,24 @@ export class Studio extends EventEmitter<StudioEvents> {
       const dy = Math.sin(angle) * distance;
 
       if (borderRadius > 0) {
-        const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
+        const r = Math.min(borderRadius, targetWidth / 2, targetHeight / 2);
         shadowGraphics.roundRect(
-          -textureWidth / 2 + dx,
-          -textureHeight / 2 + dy,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2 + dx,
+          -targetHeight / 2 + dy,
+          targetWidth,
+          targetHeight,
           r,
         );
       } else {
         shadowGraphics.rect(
-          -textureWidth / 2 + dx,
-          -textureHeight / 2 + dy,
-          textureWidth,
-          textureHeight,
+          -targetWidth / 2 + dx,
+          -targetHeight / 2 + dy,
+          targetWidth,
+          targetHeight,
         );
       }
       shadowGraphics.fill({ color, alpha });
+      // Insert shadow at the bottom of the rootContainer
       rootContainer.addChildAt(shadowGraphics, 0);
     }
 

@@ -43,11 +43,21 @@ import AutosizeInput from "../ui/autosize-input";
 import { authClient } from "@/lib/auth-client";
 import { useSearchParams } from "next/navigation";
 import { useCollabSession } from "@/hooks/use-collab-session";
-import { usePresence } from "@/hooks/use-presence";
+import { type PresenceMember } from "@/hooks/use-presence";
 import { CollabAvatars } from "./collab-avatars";
 import { Users } from "lucide-react";
 
-export default function Header() {
+interface HeaderProps {
+  presenceMembers?: PresenceMember[];
+  userId?: string;
+  sessionId?: string;
+}
+
+export default function Header({
+  presenceMembers = [],
+  userId: propUserId,
+  sessionId: propSessionId,
+}: HeaderProps) {
   const { studio } = useStudioStore();
   const { toggleCopilot, isCopilotVisible } = usePanelStore();
   const { aspectRatio, setCanvasSize } = useProjectStore();
@@ -64,38 +74,19 @@ export default function Header() {
   const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState(projectName || "Untitled video");
   const searchParams = useSearchParams();
-  const collabEnabled = searchParams.get("collab") === "1";
 
-  // Create stable fallback for anonymous users
-  const [anonId] = useState(() => "anon-" + Math.random().toString(36).substring(7));
-  const userId = session?.user?.id || anonId;
-  const userName = session?.user?.name || "Anonymous";
-  const userAvatar = session?.user?.image || undefined;
+  // userId is now passed from Editor (consistent across both components)
+  const userId = propUserId || session?.user?.id || "anon";
 
   useCollabSession(studio, {
     projectId,
     userId,
-    enabled: collabEnabled,
-  });
-
-  const presenceMembers = usePresence({
-    projectId,
-    userId,
-    name: userName,
-    avatar: userAvatar,
-    enabled: collabEnabled,
+    enabled: true,
   });
 
   const handleShareCollab = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("collab", "1");
-    navigator.clipboard.writeText(url.toString());
-    toast.success("Live Collab link copied!");
-    
-    // If not currently enabled, reload the page to enable it
-    if (!collabEnabled) {
-      window.location.href = url.toString();
-    }
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Collaboration link copied!");
   };
 
   // Sync title with store when project name changes externally (like on initial load)
@@ -151,10 +142,14 @@ export default function Header() {
       // 2. Select project template: prefer current studio if it has clips, otherwise use API template
       const currentProject = studio.exportToJSON();
       const baseProject =
-        currentProject.clips && currentProject.clips.length > 0 ? currentProject : template;
+        currentProject.clips && currentProject.clips.length > 0
+          ? currentProject
+          : template;
 
       if (!baseProject.clips || baseProject.clips.length === 0) {
-        throw new Error("No template content available. Please add a clip to the canvas.");
+        throw new Error(
+          "No template content available. Please add a clip to the canvas.",
+        );
       }
 
       const settings = baseProject.settings || {};
@@ -171,7 +166,10 @@ export default function Header() {
         // Find the first non-Audio/Transition/Effect clip to animate
         const targetClip =
           project.clips.find(
-            (c: any) => c.type !== "Audio" && c.type !== "Transition" && c.type !== "Effect",
+            (c: any) =>
+              c.type !== "Audio" &&
+              c.type !== "Transition" &&
+              c.type !== "Effect",
           ) || project.clips[0];
 
         if (targetClip) {
@@ -220,9 +218,12 @@ export default function Header() {
         if (!uploadRes.ok) throw new Error(`Failed to save ${key}`);
       }
 
-      toast.success(`Batch export complete! ${keys.length} videos saved to D:\\animations`, {
-        id: toastId,
-      });
+      toast.success(
+        `Batch export complete! ${keys.length} videos saved to D:\\animations`,
+        {
+          id: toastId,
+        },
+      );
     } catch (error: any) {
       toast.error(`Batch export failed: ${error.message}`, { id: toastId });
     } finally {
@@ -239,7 +240,13 @@ export default function Header() {
     setCanUndo(studio.history.canUndo());
     setCanRedo(studio.history.canRedo());
 
-    const handleHistoryChange = ({ canUndo, canRedo }: { canUndo: boolean; canRedo: boolean }) => {
+    const handleHistoryChange = ({
+      canUndo,
+      canRedo,
+    }: {
+      canUndo: boolean;
+      canRedo: boolean;
+    }) => {
       setCanUndo(canUndo);
       setCanRedo(canRedo);
     };
@@ -253,6 +260,14 @@ export default function Header() {
 
   const handleSave = async (showToast = true) => {
     if (!studio || !projectId) return;
+
+    // Check if user is authenticated - don't save for anonymous users
+    if (!session?.user?.id) {
+      if (showToast) {
+        toast.error("Please log in to save your project");
+      }
+      return;
+    }
 
     setIsSaving(true);
     let toastId;
@@ -278,7 +293,8 @@ export default function Header() {
   };
   // Auto-save on studio changes (with debounce)
   useEffect(() => {
-    if (!studio || !projectId) return;
+    // Only enable auto-save for authenticated users
+    if (!studio || !projectId || !session?.user?.id) return;
 
     let timeoutId: NodeJS.Timeout;
 
@@ -312,7 +328,7 @@ export default function Header() {
       });
       clearTimeout(timeoutId);
     };
-  }, [studio, projectId]);
+  }, [studio, projectId, session?.user?.id, handleSave]);
 
   const handleNew = () => {
     if (!studio) return;
@@ -397,7 +413,9 @@ export default function Header() {
         });
 
         if (validClips.length === 0) {
-          throw new Error("No valid clips found in JSON. All clips have empty source URLs.");
+          throw new Error(
+            "No valid clips found in JSON. All clips have empty source URLs.",
+          );
         }
 
         const validJson = { ...json, clips: validClips };
@@ -503,7 +521,9 @@ export default function Header() {
                             isSelected && "border-primary",
                           )}
                         >
-                          {isSelected && <div className="h-2 w-2 rounded-full bg-primary" />}
+                          {isSelected && (
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          )}
                         </div>
                       </DropdownMenuItem>
                     );
@@ -519,7 +539,9 @@ export default function Header() {
                 </p>
                 <div className="grid grid-cols-2 gap-2 px-1">
                   <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground uppercase">Width</label>
+                    <label className="text-[10px] text-muted-foreground uppercase">
+                      Width
+                    </label>
                     <input
                       type="number"
                       value={customWidth}
@@ -529,7 +551,9 @@ export default function Header() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground uppercase">Height</label>
+                    <label className="text-[10px] text-muted-foreground uppercase">
+                      Height
+                    </label>
                     <input
                       type="number"
                       value={customHeight}
@@ -552,7 +576,12 @@ export default function Header() {
         </DropdownMenu>
 
         <div className=" pointer-events-auto flex h-10 items-center px-1.5">
-          <Button onClick={() => studio?.undo()} disabled={!canUndo} variant="ghost" size="icon">
+          <Button
+            onClick={() => studio?.undo()}
+            disabled={!canUndo}
+            variant="ghost"
+            size="icon"
+          >
             <Icons.undo className="size-5" />
           </Button>
           <Button
@@ -587,9 +616,15 @@ export default function Header() {
             name="title"
             value={title}
             onChange={handleTitleChange}
+            disabled={!session?.user?.id}
             width={200}
-            inputClassName="border-none outline-none px-1 text-sm font-medium"
+            inputClassName="border-none outline-none px-1 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           />
+          {!session?.user?.id && (
+            <span className="text-xs font-semibold bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded whitespace-nowrap">
+              View Only
+            </span>
+          )}
         </div>
       </div>
 
@@ -636,14 +671,28 @@ export default function Header() {
           <span className="hidden md:block">Live</span>
         </Button>
 
-        <CollabAvatars members={presenceMembers} currentUserId={userId} />
+        <CollabAvatars
+          members={presenceMembers}
+          currentUserId={userId}
+          currentSessionId={propSessionId}
+        />
 
-        <ExportModal open={isExportModalOpen} onOpenChange={setIsExportModalOpen} />
-        <ShortcutsModal open={isShortcutsModalOpen} onOpenChange={setIsShortcutsModalOpen} />
+        <ExportModal
+          open={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        />
+        <ShortcutsModal
+          open={isShortcutsModalOpen}
+          onOpenChange={setIsShortcutsModalOpen}
+        />
 
         <ModeToggle />
 
-        <Button size="sm" className="gap-2 rounded-full" onClick={() => setIsExportModalOpen(true)}>
+        <Button
+          size="sm"
+          className="gap-2 rounded-full"
+          onClick={() => setIsExportModalOpen(true)}
+        >
           Download
         </Button>
       </div>

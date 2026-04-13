@@ -5,6 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Editor from "@/components/editor/editor";
 import { storageService } from "@/lib/storage/storage-service";
 import { useProjectStore } from "@/stores/project-store";
+import {
+  DEFAULT_ASPECT_RATIO,
+  DEFAULT_CANVAS_SIZE,
+  DEFAULT_FPS,
+} from "@/stores/project-store";
 import { registerCustomEffect, registerCustomTransition } from "openvideo";
 
 export default function EditProjectPage() {
@@ -24,8 +29,17 @@ export default function EditProjectPage() {
         const project = await storageService.loadProject({ id: projectId });
 
         if (!project) {
-          console.error("Project not found");
-          router.push("/projects");
+          // Collaborative links may point to a project the viewer doesn't have
+          // access to (or that doesn't exist yet). In that case we still boot
+          // the editor with an empty document so realtime patches can populate it.
+          console.warn("[edit] Project not found; starting empty project", {
+            projectId,
+          });
+          const projectStore = useProjectStore.getState();
+          projectStore.setCanvasSize(DEFAULT_CANVAS_SIZE, DEFAULT_ASPECT_RATIO);
+          projectStore.setFps(DEFAULT_FPS);
+          projectStore.setProjectName("Untitled video");
+          projectStore.setInitialStudioJSON(null);
           return;
         }
 

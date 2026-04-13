@@ -1141,7 +1141,7 @@ export class Text extends BaseClip<ITextEvents> {
     if (this.originalOpts.fontStyle !== undefined)
       style.fontStyle = this.originalOpts.fontStyle;
     if (this.originalOpts.fill !== undefined)
-      style.color = this.originalOpts.fill as any;
+      style.fill = this.originalOpts.fill as any;
     if (this.originalOpts.align !== undefined)
       style.align = this.originalOpts.align;
     if (this.originalOpts.wordWrap !== undefined)
@@ -1152,6 +1152,10 @@ export class Text extends BaseClip<ITextEvents> {
       style.lineHeight = this.originalOpts.lineHeight;
     if (this.originalOpts.letterSpacing !== undefined)
       style.letterSpacing = this.originalOpts.letterSpacing;
+    if (this.originalOpts.textCase !== undefined)
+      style.textCase = this.originalOpts.textCase;
+    if (this.originalOpts.verticalAlign !== undefined)
+      style.verticalAlign = this.originalOpts.verticalAlign;
 
     // Handle stroke
     if (this.originalOpts.stroke) {
@@ -1172,7 +1176,7 @@ export class Text extends BaseClip<ITextEvents> {
     }
 
     if (this.originalOpts.dropShadow) {
-      style.shadow = {
+      style.dropShadow = {
         color: (this.originalOpts.dropShadow.color ?? '#000000') as string,
         alpha: this.originalOpts.dropShadow.alpha ?? 0.5,
         blur: this.originalOpts.dropShadow.blur ?? 4,
@@ -1213,7 +1217,7 @@ export class Text extends BaseClip<ITextEvents> {
     if (style.fontWeight !== undefined)
       textClipOpts.fontWeight = style.fontWeight as any;
     if (style.fontStyle !== undefined) textClipOpts.fontStyle = style.fontStyle;
-    if (style.color !== undefined) textClipOpts.fill = style.color;
+    if (style.fill !== undefined) textClipOpts.fill = style.fill;
     if (style.align !== undefined) textClipOpts.align = style.align;
     if (style.wordWrap !== undefined) textClipOpts.wordWrap = style.wordWrap;
     if (style.wordWrapWidth !== undefined)
@@ -1222,6 +1226,10 @@ export class Text extends BaseClip<ITextEvents> {
       textClipOpts.lineHeight = style.lineHeight;
     if (style.letterSpacing !== undefined)
       textClipOpts.letterSpacing = style.letterSpacing;
+    if (style.textCase !== undefined)
+      textClipOpts.textCase = style.textCase;
+    if (style.verticalAlign !== undefined)
+      textClipOpts.verticalAlign = style.verticalAlign;
 
     // Handle stroke
     if (style.stroke) {
@@ -1243,13 +1251,13 @@ export class Text extends BaseClip<ITextEvents> {
       }
     }
 
-    if (style.shadow) {
+    if (style.dropShadow) {
       textClipOpts.dropShadow = {
-        color: style.shadow.color,
-        alpha: style.shadow.alpha,
-        blur: style.shadow.blur,
-        distance: style.shadow.distance,
-        angle: style.shadow.angle,
+        color: style.dropShadow.color,
+        alpha: style.dropShadow.alpha,
+        blur: style.dropShadow.blur,
+        distance: style.dropShadow.distance,
+        angle: style.dropShadow.angle,
       };
     }
 

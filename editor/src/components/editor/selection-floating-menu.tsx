@@ -75,6 +75,8 @@ export function SelectionFloatingMenu() {
     studio.on("selection:created", handleSelectionChanged);
     studio.on("selection:updated", handleSelectionChanged);
     studio.on("selection:cleared", handleSelectionChanged);
+    studio.on("clip:updated", handleSelectionChanged);
+    studio.on("clips:updated", handleSelectionChanged);
     studio.on("transform:start", handleTransformStart);
     studio.on("transform:end", handleTransformEnd);
     studio.on("clip:lock-changed", handleLockChanged);
@@ -87,6 +89,8 @@ export function SelectionFloatingMenu() {
       studio.off("selection:created", handleSelectionChanged);
       studio.off("selection:updated", handleSelectionChanged);
       studio.off("selection:cleared", handleSelectionChanged);
+      studio.off("clip:updated", handleSelectionChanged);
+      studio.off("clips:updated", handleSelectionChanged);
       studio.off("transform:start", handleTransformStart);
       studio.off("transform:end", handleTransformEnd);
       studio.off("clip:lock-changed", handleLockChanged);

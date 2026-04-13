@@ -82,6 +82,20 @@ export class HistoryManager {
   }
 
   /**
+   * Update the internal state without pushing a diff to the history stack.
+   * Useful for syncing remote collaborative actions without logging them in local undo.
+   */
+  public updateWithoutPush(newState: ProjectJSON) {
+    if (!this.lastState) {
+      this.init(newState);
+      return;
+    }
+    this.lastState = this.projectToHistoryState(
+      JSON.parse(JSON.stringify(newState))
+    );
+  }
+
+  /**
    * Undo the last action. Returns the patches and the new target state.
    */
   public undo(

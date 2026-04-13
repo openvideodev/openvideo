@@ -108,6 +108,9 @@ class StorageService {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Unauthorized: Please log in to save your project");
+        }
         throw new Error(`Failed to save project data: ${res.statusText}`);
       }
     } catch (e) {
@@ -125,6 +128,9 @@ class StorageService {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Unauthorized: Please log in to update your project");
+        }
         throw new Error(`Failed to update project: ${res.statusText}`);
       }
     } catch (e) {

@@ -4,6 +4,8 @@ import { useTimelineStore } from "@/stores/timeline-store";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { useStudioStore } from "@/stores/studio-store";
 import { TimelineCanvas } from "@/components/editor/timeline/timeline";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 interface UseEditorHotkeysProps {
   timelineCanvas: TimelineCanvas | null;
@@ -13,6 +15,12 @@ interface UseEditorHotkeysProps {
 export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotkeysProps) {
   const { isPlaying, toggle, currentTime } = usePlaybackStore();
   const { studio } = useStudioStore();
+  const { data: session } = authClient.useSession();
+  
+  const isAuthenticated = !!session?.user?.id;
+  const showReadOnlyMessage = () => {
+    toast.error("Please log in to edit your project");
+  };
 
   useEffect(() => {
     // Play/Pause
@@ -24,6 +32,10 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
     // Split
     hotkeys("command+b, ctrl+b", (event, handler) => {
       event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       if (studio) {
         // Studio expects microseconds
         const splitTime = currentTime * 1_000_000;
@@ -36,6 +48,11 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       // Check if active element is input
       const activeTag = document.activeElement?.tagName.toLowerCase();
       if (activeTag === "input" || activeTag === "textarea") return;
+
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
 
       if (studio) {
         studio.deleteSelected();
@@ -62,6 +79,10 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
 
     hotkeys("command+v, ctrl+v", (event) => {
       // event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       if (studio) {
         studio.duplicateSelected(); // Reuse duplicate for now as paste
       }
@@ -82,12 +103,20 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
     // Undo
     hotkeys("command+z, ctrl+z", (event) => {
       event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       studio?.undo();
     });
 
     // Redo
     hotkeys("command+shift+z, ctrl+shift+z, command+y, ctrl+y", (event) => {
       event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       studio?.redo();
     });
 
@@ -96,6 +125,10 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       const activeTag = document.activeElement?.tagName.toLowerCase();
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(0, -step);
     });
@@ -105,6 +138,10 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       const activeTag = document.activeElement?.tagName.toLowerCase();
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(0, step);
     });
@@ -114,6 +151,10 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       const activeTag = document.activeElement?.tagName.toLowerCase();
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(-step, 0);
     });
@@ -123,6 +164,10 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       const activeTag = document.activeElement?.tagName.toLowerCase();
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
+      if (!isAuthenticated) {
+        showReadOnlyMessage();
+        return;
+      }
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(step, 0);
     });
@@ -157,5 +202,5 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       hotkeys.unbind("command+left, ctrl+left");
       hotkeys.unbind("command+right, ctrl+right");
     };
-  }, [isPlaying, timelineCanvas, currentTime, toggle, setZoomLevel]);
+  }, [isPlaying, timelineCanvas, currentTime, toggle, setZoomLevel, studio, isAuthenticated]);
 }
