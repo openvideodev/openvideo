@@ -1,0 +1,107 @@
+---
+title: Collaboration
+description: Real-time collaborative video editing with OpenVideo.
+---
+
+## Overview
+
+OpenVideo supports **real-time collaborative editing**, allowing multiple users to edit the same project simultaneously. Changes are synchronized instantly across all connected clients using a robust action-based architecture.
+
+## How It Works
+
+The collaborative system is built on top of OpenVideo's action dispatcher. Every edit operation produces a `StudioAction` that gets broadcast to all participants in real-time.
+
+### Architecture
+
+- **Action-Based Sync**: All edits are represented as serializable actions (add clip, update track, etc.)
+- **Real-Time Broadcasting**: Uses Supabase Broadcast channels for instant synchronization
+- **Conflict Resolution**: Intelligent handling of concurrent edits with throttling and deduplication
+- **History Integration**: Remote actions bypass the local undo/redo stack to prevent conflicts
+
+## Enabling Collaboration
+
+### In the Editor
+
+The OpenVideo editor includes built-in collaborative editing powered by the `useCollabSession` hook:
+
+```tsx
+import { useCollabSession } from "@/hooks/use-collab-session";
+
+function Editor({ studio, projectId, userId }) {
+  useCollabSession(studio, {
+    projectId,
+    userId,
+    enabled: true, // Set to true to enable collaboration
+  });
+
+  // Your editor UI here
+}
+```
+
+### Requirements
+
+- **Supabase Setup**: Configure Supabase with Broadcast enabled
+- **Project ID**: Unique identifier for the collaborative session
+- **User ID**: Identifier for each participant
+
+## Action Types
+
+The following actions are synchronized in real-time:
+
+### Clip Actions
+- `clip:add` - Add new clips
+- `clip:remove` - Remove clips
+- `clip:update` - Update clip properties
+- `clip:split` - Split clips
+- `clip:replace` - Replace clips
+- `clip:lock` - Lock/unlock clips
+- `clip:add-animation` - Add animations
+- `clip:remove-animation` - Remove animations
+
+### Track Actions
+- `track:add` - Add tracks
+- `track:remove` - Remove tracks
+- `track:move` - Move tracks
+- `track:reorder` - Reorder tracks
+
+### Effects & Transitions
+- `transition:add` - Add transitions
+- `effect:add-global` - Add global effects
+- `effect:remove` - Remove effects
+
+### Playback & Settings
+- `playback:play/pause/seek` - Playback controls
+- `settings:bg-color` - Background color
+- `settings:size` - Canvas size
+
+## Conflict Resolution
+
+The system handles concurrent edits intelligently:
+
+- **Deduplication**: Actions with the same ID are processed only once
+- **Throttling**: Rapid updates are throttled to prevent network spam
+- **Destructive vs Non-Destructive**: Remove operations take precedence over updates
+- **Remote Flagging**: Incoming actions are marked as remote to prevent echo loops
+
+## Hybrid Synchronization
+
+The collaborative system captures both:
+
+1. **Explicit Actions**: Calls to `studio.dispatch(action)`
+2. **Native Mutations**: Direct property changes like `clip.opacity = 0.5`
+
+This ensures all changes, regardless of how they're made, are synchronized.
+
+## Best Practices
+
+### For Developers
+
+- **Use Actions**: Prefer `studio.dispatch()` for programmatic edits to ensure they're observable
+- **Handle Remote Actions**: Check `action._meta?.remote` to distinguish local vs remote actions
+- **Metadata**: Include user ID and timestamps in action metadata for attribution
+
+### For Users
+
+- **Stable Connection**: Ensure reliable internet for real-time sync
+- **Save Regularly**: While collaboration preserves state, save projects periodically
+- **Communicate**: Use external chat for coordination during complex edits
