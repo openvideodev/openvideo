@@ -14,6 +14,7 @@ import {
 interface BaseClipJSON {
   id?: string;
   name?: string;
+  metadata?: Record<string, any>;
   effects?: Array<{
     id: string;
     key: string;
@@ -370,6 +371,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   // Ensure id and name are correct
   if (json.id) clip.id = json.id;
   if (json.name) clip.name = json.name;
+  if (json.metadata) clip.metadata = json.metadata;
 
   return clip;
 }
