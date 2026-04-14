@@ -46,6 +46,7 @@ await studio.ready;
 - `studio.seek(time: number)`: Seek to time (in microseconds).
 - `studio.frameNext()`: Move to the next frame.
 - `studio.framePrev()`: Move to the previous frame.
+- `studio.renderFrame(timeMs: number): Promise<string>`: Render the scene at `timeMs` (milliseconds) and return a base64 PNG data-URL at the project's `width × height`.
 - `studio.selection.move(dx: number, dy: number)`: Move selected clips.
 - `studio.destroy()`: Clean up resources.
 
@@ -91,5 +92,6 @@ const compositor = new Compositor({
 
 ### Methods
 
-- `compositor.addClip(clip: IClip)`: Add a clip for composing.
+- `compositor.addSprite(clip: IClip, opts?: { main?: boolean })`: Add a clip for composing.
 - `compositor.output()`: Returns a `ReadableStream` of the rendered video.
+- `compositor.renderFrame(timeMs: number): Promise<string>`: Render a single frame at `timeMs` (milliseconds) using the same pipeline as `output()`, and return a base64 PNG data-URL. Initialises the Pixi app on demand; does not affect export state.
