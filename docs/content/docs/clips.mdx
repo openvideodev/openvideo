@@ -252,6 +252,21 @@ clip.on("propsChange", (changes) => {
 });
 ```
 
+## Metadata
+
+All clips include a `metadata` property, which is a key-value pair object where you can store any custom data. This data is serialized and restored automatically when exporting or importing projects.
+
+```ts
+clip.metadata = {
+  author: "Luis Santos",
+  tags: ["nature", "cinematic"],
+  originalId: "ext_1234b"
+};
+
+// Metadata is included in project JSON when calling:
+const json = studio.exportToJSON();
+```
+
 ## Cloning Clips
 
 Create an exact copy of a clip with all properties:
