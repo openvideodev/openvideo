@@ -196,6 +196,40 @@ await studio.frameNext();
 await studio.framePrev();
 ```
 
+### renderFrame()
+
+Captures the scene at a specific time and returns it as a **base64-encoded PNG data-URL**. The output image is always `opts.width × opts.height` pixels, regardless of the current viewport zoom.
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `timeMs` | `number` | Time in **milliseconds** |
+
+**Returns** `Promise<string>` — a `data:image/png;base64,...` string.
+
+```ts
+await studio.ready;
+
+// Capture the frame at t = 1.5 s
+const frame = await studio.renderFrame(1500);
+
+// Use as <img> src
+const img = document.createElement("img");
+img.src = frame;
+document.body.appendChild(img);
+```
+
+You can call `renderFrame` while the studio is paused without affecting playback state:
+
+```ts
+// Generate a thumbnail every 2 seconds
+const durationMs = studio.maxDuration / 1000; // µs → ms
+const thumbs: string[] = [];
+
+for (let t = 0; t <= durationMs; t += 2000) {
+  thumbs.push(await studio.renderFrame(t));
+}
+```
+
 ## Studio Events
 
 The studio implements an event emitter that notifies you about changes in the workspace.
@@ -397,3 +431,4 @@ studio.on('selection:created', ({ selected }) => {
 - [Working with Clips](./clips) - Load and configure media
 - [Animations](./animations) - Add motion to your videos
 - [Transitions](./transitions) - Create smooth transitions
+- [Rendering and Export](./rendering) - Export video and extract frames

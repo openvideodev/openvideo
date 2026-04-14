@@ -1,9 +1,9 @@
 ---
 title: Rendering and Export
-description: Export your compositions to video files.
+description: Export your compositions to video files, or extract individual frames as images.
 ---
 
-Learn how to render your composition and export it to video files.
+Learn how to render your composition and export it to video files, or capture single frames for thumbnails and previews.
 
 ## Preview Rendering
 
@@ -18,6 +18,77 @@ studio.pause();
 
 // Seek to time (microseconds)
 studio.seek(1500000); // 1.5 seconds
+```
+
+## Frame Extraction
+
+Both `Studio` and `Compositor` expose a `renderFrame()` method that captures the scene at any given moment and returns it as a **base64-encoded PNG data-URL**. This is useful for:
+
+- Generating timeline thumbnails
+- Exporting poster images
+- Feeding frames into AI / image-analysis pipelines
+- Headless screenshot testing
+
+### Studio — `renderFrame()`
+
+`renderFrame` renders the artboard at a specific time using the full Studio pipeline (clips, effects, transitions) and returns the result at the project's configured `width × height`.
+
+```ts
+import { Studio, Image } from "openvideo";
+
+const studio = new Studio({ width: 1280, height: 720 });
+await studio.ready;
+
+const photo = await Image.fromUrl("photo.jpg");
+await studio.addClip(photo);
+
+// Capture the frame at t = 1.5 s (1500 ms)
+const frame = await studio.renderFrame(1500);
+
+// Use as an <img> src directly
+const img = document.createElement("img");
+img.src = frame; // "data:image/png;base64,..."
+document.body.appendChild(img);
+```
+
+<Callout type="info">
+  The parameter is in **milliseconds**. Internally, the Studio timeline uses microseconds, so the conversion is handled automatically.
+</Callout>
+
+### Compositor — `renderFrame()`
+
+`renderFrame` on the `Compositor` uses the same sprite-rendering pipeline as `output()`, but for a **single frame** without starting the encoding process. The Pixi application is initialised on-demand if needed.
+
+```ts
+import { Compositor, Video } from "openvideo";
+
+const compositor = new Compositor({ width: 1920, height: 1080, fps: 30 });
+
+const videoClip = new Video(videoStream);
+await compositor.addSprite(videoClip, { main: true });
+
+// Capture the frame at t = 2 s (2000 ms)
+const frame = await compositor.renderFrame(2000);
+
+// Save or display the data-URL
+console.log(frame); // "data:image/png;base64,..."
+```
+
+<Callout type="info">
+  `renderFrame` does **not** affect the compositor's export state — clips are not marked as expired and the encoding pipeline is untouched. You can call `output()` normally after calling `renderFrame`.
+</Callout>
+
+### Generating Multiple Thumbnails
+
+```ts
+// Capture a thumbnail every second
+const duration = studio.maxDuration / 1000; // convert µs → ms
+const interval = 1000; // every 1000 ms
+const thumbnails: string[] = [];
+
+for (let t = 0; t <= duration; t += interval) {
+  thumbnails.push(await studio.renderFrame(t));
+}
 ```
 
 ## Compositor Export

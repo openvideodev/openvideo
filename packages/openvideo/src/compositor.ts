@@ -635,6 +635,68 @@ export class Compositor extends EventEmitter<{
       await this.addSprite(clip, { main: clipJSON.main || false });
     }
   }
+
+  /**
+   * Renders the frame at the given time and returns it as a base64-encoded PNG.
+   *
+   * Initialises the internal Pixi application on demand (if not already
+   * initialised), performs a single-frame render using the same sprite
+   * pipeline as {@link output}, and returns the result without modifying
+   * the compositor's encoding state.
+   *
+   * @param timeMs Time in milliseconds
+   * @returns Base64 data-URL string (e.g. "data:image/png;base64,...")
+   *
+   * @example
+   * const compositor = new Compositor({ width: 1280, height: 720 });
+   * await compositor.addSprite(videoClip);
+   * const frame = await compositor.renderFrame(2000); // frame at 2 s
+   */
+  public async renderFrame(timeMs: number): Promise<string> {
+    if (this.destroyed) {
+      throw new Error("Compositor has been destroyed.");
+    }
+
+    // Lazily initialise Pixi so callers don't have to call initPixiApp() first
+    if (this.pixiApp == null) {
+      await this.initPixiApp();
+    }
+
+    if (this.pixiApp == null) {
+      throw new Error(
+        "Compositor Pixi application could not be initialised. " +
+          "Ensure width and height are greater than 0.",
+      );
+    }
+
+    // Convert milliseconds → microseconds (internal timeline unit)
+    const timeUs = timeMs * 1000;
+
+    // Use the same rendering pipeline as the encoder, but for a single frame.
+    // Sprites must NOT be marked expired before this call — use a fresh aborter.
+    const spriteRender = createSpritesRender({
+      pixiApp: this.pixiApp,
+      bgColor: this.opts.bgColor,
+      sprites: this.sprites,
+      aborter: { aborted: false },
+    });
+
+    try {
+      await spriteRender.render(timeUs);
+    } finally {
+      // Clean up temporary containers / renderers created by createSpritesRender
+      spriteRender.cleanup();
+    }
+
+    // Extract the rendered frame from the Pixi stage as a base64 PNG
+    const base64 = await (this.pixiApp.renderer.extract as any).base64(
+      this.pixiApp.stage,
+      "image/png",
+      1,
+    );
+
+    return base64;
+  }
 }
 
 function createSpritesRender(opts: {
