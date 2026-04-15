@@ -3,6 +3,7 @@ import {
   getDefaultAudioCodec,
   getCachedAudioCodec,
 } from '../utils/audio-codec-detector';
+import type { ColorAdjustment } from '../utils/color-adjustment';
 
 export interface IClipMeta {
   width: number;
@@ -185,6 +186,11 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * Chroma key settings (green screen removal)
    */
   chromaKey: IChromaKeyOpts;
+
+  /**
+   * Clip color adjustment settings
+   */
+  colorAdjustment: ColorAdjustment;
 
   /**
    * Whether the clip is locked (preventing interactions)

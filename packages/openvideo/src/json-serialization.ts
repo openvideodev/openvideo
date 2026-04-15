@@ -10,6 +10,7 @@ import {
   type IClip,
   type ITransitionInfo,
 } from "./clips";
+import type { ColorAdjustment } from "./utils/color-adjustment";
 // Base interface for all clips
 interface BaseClipJSON {
   id?: string;
@@ -44,6 +45,7 @@ interface BaseClipJSON {
   transition?: ITransitionInfo;
   style?: any;
   locked?: boolean;
+  colorAdjustment?: ColorAdjustment;
 
   animation?: {
     keyFrames: Record<

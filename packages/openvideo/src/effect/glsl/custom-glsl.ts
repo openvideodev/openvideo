@@ -3572,3 +3572,77 @@ export const CHROMA_KEY_UNIFORMS = {
   uSimilarity: { value: 0.0, type: 'f32' },
   uSpill: { value: 0.0, type: 'f32' },
 };
+
+export const SELECTIVE_HSL_FRAGMENT = `
+in vec2 vTextureCoord;
+in vec4 vColor;
+uniform sampler2D uTexture;
+out vec4 finalColor;
+
+uniform vec3 uTargetColor;
+uniform float uHueShift;
+uniform float uSatShift;
+uniform float uLightShift;
+uniform float uTolerance;
+uniform float uSoftness;
+
+vec3 rgb2hsl(vec3 c) {
+    float maxc = max(max(c.r, c.g), c.b);
+    float minc = min(min(c.r, c.g), c.b);
+    float h = 0.0;
+    float s = 0.0;
+    float l = (maxc + minc) * 0.5;
+
+    float d = maxc - minc;
+    if (d > 0.00001) {
+        s = l > 0.5 ? d / (2.0 - maxc - minc) : d / (maxc + minc);
+        if (maxc == c.r) {
+            h = (c.g - c.b) / d + (c.g < c.b ? 6.0 : 0.0);
+        } else if (maxc == c.g) {
+            h = (c.b - c.r) / d + 2.0;
+        } else {
+            h = (c.r - c.g) / d + 4.0;
+        }
+        h /= 6.0;
+    }
+    return vec3(h, s, l);
+}
+
+float hue2rgb(float p, float q, float t) {
+    if (t < 0.0) t += 1.0;
+    if (t > 1.0) t -= 1.0;
+    if (t < 1.0 / 6.0) return p + (q - p) * 6.0 * t;
+    if (t < 1.0 / 2.0) return q;
+    if (t < 2.0 / 3.0) return p + (q - p) * (2.0 / 3.0 - t) * 6.0;
+    return p;
+}
+
+vec3 hsl2rgb(vec3 hsl) {
+    float h = hsl.x;
+    float s = hsl.y;
+    float l = hsl.z;
+    if (s <= 0.00001) return vec3(l);
+    float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
+    float p = 2.0 * l - q;
+    return vec3(
+        hue2rgb(p, q, h + 1.0 / 3.0),
+        hue2rgb(p, q, h),
+        hue2rgb(p, q, h - 1.0 / 3.0)
+    );
+}
+
+void main() {
+    vec4 src = texture(uTexture, vTextureCoord);
+    float dist = distance(src.rgb, uTargetColor);
+    float mask = 1.0 - smoothstep(uTolerance, uTolerance + uSoftness, dist);
+
+    vec3 hsl = rgb2hsl(src.rgb);
+    hsl.x = mod(hsl.x + (uHueShift / 360.0), 1.0);
+    hsl.y = clamp(hsl.y + uSatShift, 0.0, 1.0);
+    hsl.z = clamp(hsl.z + uLightShift, 0.0, 1.0);
+    vec3 adjusted = hsl2rgb(hsl);
+
+    vec3 resultColor = mix(src.rgb, adjusted, mask);
+    finalColor = vec4(resultColor, src.a);
+}
+`;
