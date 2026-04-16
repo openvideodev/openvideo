@@ -14,8 +14,16 @@ import { ZoomBlurFilter } from "pixi-filters";
 
 import type { IClip } from "../clips/iclip";
 import { parseColor, hexToRgb } from "../utils/color";
-import { CHROMA_KEY_FRAGMENT } from "../effect/glsl/custom-glsl";
+import {
+  CHROMA_KEY_FRAGMENT,
+  SELECTIVE_HSL_FRAGMENT,
+} from "../effect/glsl/custom-glsl";
 import { vertex } from "../effect/vertex";
+import {
+  applyColorAdjustmentToMatrix,
+  getAllSelectiveHsl,
+  hasColorAdjustment,
+} from "../utils/color-adjustment";
 
 /**
  * Update sprite transform based on clip properties
@@ -295,6 +303,7 @@ export class PixiSpriteRenderer {
       this.applyBlur(blurOffset);
       this.applyMotionBlur(motionBlurOffset);
       this.applyBrightness(brightnessMultiplier);
+      this.applySelectiveHsl();
       this.applyChromaKey();
     }
 
@@ -631,18 +640,14 @@ export class PixiSpriteRenderer {
       return;
     }
 
-    if (
-      !this.animationContainer.filters ||
-      this.animationContainer.filters.length === 0
-    ) {
-      const filter = new BlurFilter();
-      filter.strength = blur;
-      filter.quality = 4;
-      (filter as any).repeatEdgePixels = true;
-      this.animationContainer.filters = [filter];
+    let blurFilter = this.animationContainer.filters?.find(
+      (f) => f instanceof BlurFilter,
+    ) as BlurFilter;
+    if (!blurFilter) {
+      blurFilter = new BlurFilter();
+      const currentFilters = this.animationContainer.filters || [];
+      this.animationContainer.filters = [...currentFilters, blurFilter];
     }
-
-    const blurFilter = this.animationContainer.filters[0] as BlurFilter;
 
     // Calculate global scale
     const worldScale = this.root
@@ -705,28 +710,78 @@ export class PixiSpriteRenderer {
   private applyBrightness(brightness: number): void {
     if (!this.animationContainer || this.destroyed) return;
 
-    if (brightness === 1) {
-      // Remove brightness filter if it exists
+    const hasClipColorAdjustment = hasColorAdjustment(this.sprite.colorAdjustment);
+    if (brightness === 1 && !hasClipColorAdjustment) {
       if (this.animationContainer.filters) {
         this.animationContainer.filters =
           this.animationContainer.filters.filter(
-            (f) => !(f instanceof ColorMatrixFilter),
+            (f) => (f as any).label !== "ColorAdjustmentFilter",
           );
       }
       return;
     }
 
     let brightnessFilter = this.animationContainer.filters?.find(
-      (f) => f instanceof ColorMatrixFilter,
+      (f) => (f as any).label === "ColorAdjustmentFilter",
     ) as ColorMatrixFilter;
 
     if (!brightnessFilter) {
       brightnessFilter = new ColorMatrixFilter();
+      (brightnessFilter as any).label = "ColorAdjustmentFilter";
       const currentFilters = this.animationContainer.filters || [];
       this.animationContainer.filters = [...currentFilters, brightnessFilter];
     }
 
-    brightnessFilter.brightness(brightness, false);
+    applyColorAdjustmentToMatrix(
+      brightnessFilter,
+      this.sprite.colorAdjustment,
+      brightness,
+    );
+  }
+
+  private applySelectiveHsl(): void {
+    if (!this.animationContainer || this.destroyed) return;
+
+    const activeHslList = getAllSelectiveHsl(this.sprite.colorAdjustment);
+    const baseFilters = (this.animationContainer.filters || []).filter(
+      (f) => !(f as any).label?.startsWith("SelectiveHslFilter"),
+    );
+
+    if (activeHslList.length === 0) {
+      this.animationContainer.filters = baseFilters;
+      return;
+    }
+
+    const selectiveHslFilters: Filter[] = [];
+    for (let i = 0; i < activeHslList.length; i++) {
+      const activeHsl = activeHslList[i];
+      const hslUniforms = new UniformGroup({
+        uTargetColor: { value: [1, 1, 0], type: "vec3<f32>" },
+        uHueShift: { value: activeHsl.hue, type: "f32" },
+        uSatShift: { value: activeHsl.saturation / 100, type: "f32" },
+        uLightShift: { value: activeHsl.lightness / 100, type: "f32" },
+        uTolerance: { value: 0.22, type: "f32" },
+        uSoftness: { value: 0.12, type: "f32" },
+      });
+      const rgb = hexToRgb(activeHsl.targetColor);
+      if (rgb) {
+        hslUniforms.uniforms.uTargetColor[0] = rgb.r / 255;
+        hslUniforms.uniforms.uTargetColor[1] = rgb.g / 255;
+        hslUniforms.uniforms.uTargetColor[2] = rgb.b / 255;
+      }
+      const selectiveHslFilter = new Filter({
+        glProgram: new GlProgram({
+          vertex,
+          fragment: SELECTIVE_HSL_FRAGMENT,
+          name: `SelectiveHslShader_${i}`,
+        }),
+        resources: { hslUniforms },
+      });
+      (selectiveHslFilter as any).label = `SelectiveHslFilter_${i}`;
+      selectiveHslFilters.push(selectiveHslFilter);
+    }
+
+    this.animationContainer.filters = [...baseFilters, ...selectiveHslFilters];
   }
 
   private applyChromaKey(): void {

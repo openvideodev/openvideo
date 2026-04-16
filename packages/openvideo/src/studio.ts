@@ -7,6 +7,9 @@ import {
   RenderTexture,
   BlurFilter,
   ColorMatrixFilter,
+  Filter,
+  GlProgram,
+  UniformGroup,
 } from "pixi.js";
 
 import { Caption } from "./clips/caption-clip";
@@ -24,7 +27,14 @@ import { Transformer } from "./transfomer/transformer";
 import type { EffectKey } from "./effect/glsl/gl-effect";
 import { makeEffect } from "./effect/effect";
 import { makeTransition } from "./transition/transition";
-import { parseColor } from "./utils/color";
+import { parseColor, hexToRgb } from "./utils/color";
+import { vertex } from "./effect/vertex";
+import { SELECTIVE_HSL_FRAGMENT } from "./effect/glsl/custom-glsl";
+import {
+  applyColorAdjustmentToMatrix,
+  getAllSelectiveHsl,
+  hasColorAdjustment,
+} from "./utils/color-adjustment";
 
 import EventEmitter from "./event-emitter";
 
@@ -2111,10 +2121,47 @@ export class Studio extends EventEmitter<StudioEvents> {
       filters.push(blurFilter);
     }
 
-    if (brightnessMultiplier !== 1) {
+    const hasClipColorAdjustment = hasColorAdjustment(
+      (clip as any).colorAdjustment,
+    );
+    if (brightnessMultiplier !== 1 || hasClipColorAdjustment) {
       const brightnessFilter = new ColorMatrixFilter();
-      brightnessFilter.brightness(brightnessMultiplier, false);
+      applyColorAdjustmentToMatrix(
+        brightnessFilter,
+        (clip as any).colorAdjustment,
+        brightnessMultiplier,
+      );
       filters.push(brightnessFilter);
+    }
+
+    const activeSelectiveHslList = getAllSelectiveHsl(
+      (clip as any).colorAdjustment,
+    );
+    for (let i = 0; i < activeSelectiveHslList.length; i++) {
+      const activeSelectiveHsl = activeSelectiveHslList[i];
+      const hslUniforms = new UniformGroup({
+        uTargetColor: { value: [1, 1, 0], type: "vec3<f32>" },
+        uHueShift: { value: activeSelectiveHsl.hue, type: "f32" },
+        uSatShift: { value: activeSelectiveHsl.saturation / 100, type: "f32" },
+        uLightShift: { value: activeSelectiveHsl.lightness / 100, type: "f32" },
+        uTolerance: { value: 0.22, type: "f32" },
+        uSoftness: { value: 0.12, type: "f32" },
+      });
+      const rgb = hexToRgb(activeSelectiveHsl.targetColor);
+      if (rgb) {
+        hslUniforms.uniforms.uTargetColor[0] = rgb.r / 255;
+        hslUniforms.uniforms.uTargetColor[1] = rgb.g / 255;
+        hslUniforms.uniforms.uTargetColor[2] = rgb.b / 255;
+      }
+      const selectiveHslFilter = new Filter({
+        glProgram: new GlProgram({
+          vertex,
+          fragment: SELECTIVE_HSL_FRAGMENT,
+          name: `SelectiveHslShader_${i}`,
+        }),
+        resources: { hslUniforms },
+      });
+      filters.push(selectiveHslFilter);
     }
     rootContainer.filters = filters;
 

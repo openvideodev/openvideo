@@ -5,6 +5,7 @@ import {
   animationRegistry,
 } from '../animation';
 import { IChromaKeyOpts } from '../clips/iclip';
+import { ColorAdjustment } from '../utils/color-adjustment';
 type IRectBaseProps = any;
 interface IAnimationOpts {
   duration: number;
@@ -241,6 +242,14 @@ export abstract class BaseSprite<
     color: '#00FF00',
     similarity: 0.1,
     spill: 0.0,
+  };
+
+  colorAdjustment: ColorAdjustment = {
+    enabled: false,
+    type: 'basic',
+    basic: {},
+    hsl: {},
+    curves: {},
   };
 
   /**
@@ -520,6 +529,9 @@ export abstract class BaseSprite<
     target.style = JSON.parse(JSON.stringify(this.style || {}));
     target.animations = [...this.animations];
     target.chromaKey = { ...this.chromaKey };
+    target.colorAdjustment = JSON.parse(
+      JSON.stringify(this.colorAdjustment || {})
+    );
     target.locked = this.locked;
     // Copy src if target is a BaseClip
     if ('src' in this && 'src' in target) {

@@ -121,14 +121,12 @@ export default function Editor() {
           <Loading />
         </div>
       )}
-      <Header
-        presenceMembers={members}
-        userId={userId}
-        sessionId={sessionId}
-      />
-      <div className={`flex-1 min-h-0 min-w-0 ${
-  !session ? "pointer-events-none select-none" : ""
-}`}>
+      <Header presenceMembers={members} userId={userId} sessionId={sessionId} />
+      <div
+        className={`flex-1 min-h-0 min-w-0 ${
+          !session ? "" : ""
+        }`}
+      >
         <ResizablePanelGroup
           direction="horizontal"
           className="h-full w-full gap-0"
