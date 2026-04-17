@@ -47,6 +47,7 @@ import color from "color";
 import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
 import useLayoutStore from "../store/use-layout-store";
+import { useStudioStore } from "@/stores/studio-store";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
@@ -145,9 +146,14 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
   };
 
   const { setFloatingControl } = useLayoutStore();
+  const { studio } = useStudioStore();
 
-  const handleAnimationRemove = (id: string) => {
-    imageClip.removeAnimation(id);
+  const handleAnimationRemove = async (id: string) => {
+    if (!studio) return;
+    await studio.dispatch({
+      type: "clip:remove-animation",
+      payload: { clipId: imageClip.id, animationId: id },
+    });
     setTick((t) => t + 1);
   };
 

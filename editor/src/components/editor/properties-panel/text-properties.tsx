@@ -56,6 +56,7 @@ import { fontManager } from "openvideo";
 import { getGroupedFonts, getFontByPostScriptName } from "@/utils/font-utils";
 import { NumberInput } from "@/components/ui/number-input";
 import useLayoutStore from "../store/use-layout-store";
+import { useStudioStore } from "@/stores/studio-store";
 
 const GROUPED_FONTS = getGroupedFonts();
 
@@ -233,9 +234,14 @@ export function TextProperties({ clip }: TextPropertiesProps) {
   };
 
   const { setFloatingControl } = useLayoutStore();
+  const { studio } = useStudioStore();
 
-  const handleAnimationRemove = (id: string) => {
-    textClip.removeAnimation(id);
+  const handleAnimationRemove = async (id: string) => {
+    if (!studio) return;
+    await studio.dispatch({
+      type: "clip:remove-animation",
+      payload: { clipId: textClip.id, animationId: id },
+    });
     setTick((t) => t + 1);
   };
 

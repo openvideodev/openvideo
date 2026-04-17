@@ -50,6 +50,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import useLayoutStore from "../store/use-layout-store";
+import { useStudioStore } from "@/stores/studio-store";
 
 interface VideoPropertiesProps {
   clip: IClip;
@@ -145,9 +146,14 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
   };
 
   const { setFloatingControl } = useLayoutStore();
+  const { studio } = useStudioStore();
 
-  const handleAnimationRemove = (id: string) => {
-    videoClip.removeAnimation(id);
+  const handleAnimationRemove = async (id: string) => {
+    if (!studio) return;
+    await studio.dispatch({
+      type: "clip:remove-animation",
+      payload: { clipId: videoClip.id, animationId: id },
+    });
     setTick((t) => t + 1);
   };
 

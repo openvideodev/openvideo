@@ -38,8 +38,11 @@ export function useCollabSession(
         if (id && seen.current.has(id)) return;
         if (id) seen.current.add(id);
 
-        const isDestructive =
-          action.type === "clip:remove" || action.type === "track:remove";
+        const isPriority =
+          action.type === "clip:remove" || 
+          action.type === "track:remove" || 
+          action.type === "clip:remove-animation" ||
+          action.type === "clip:add-animation";
 
         isRemoteRef.current = true;
         remoteActionTypeRef.current = action.type;
@@ -52,8 +55,8 @@ export function useCollabSession(
             _meta: { ...action._meta, remote: true },
           });
         } finally {
-          if (isDestructive) {
-            // Los deletes liberan el lock inmediatamente
+          if (isPriority) {
+            // Acciones prioritarias/destructivas liberan el lock inmediatamente
             isRemoteRef.current = false;
             remoteActionTypeRef.current = null;
           } else {
@@ -71,8 +74,40 @@ export function useCollabSession(
 
     channelRef.current = channel;
 
+    const lastSentState = new Map<string, any>();
+    const activeState = new Map<string, any>();
+
+    const PRIORITY_ACTIONS = ["clip:add-animation", "clip:remove-animation", "clip:remove", "track:remove"];
+
     const dispatchAction = (action: StudioAction) => {
-      if (action._meta?.remote || isRemoteRef.current) return;
+      const isPriority = PRIORITY_ACTIONS.includes(action.type);
+      
+      if (action._meta?.remote) return;
+      if (isRemoteRef.current && !isPriority) {
+        console.log(`[Collab]  bloqueando dispatch de ${action.type} por isRemote lock`);
+        return;
+      }
+
+      // Only send diffed payload for updates
+      if (action.type === "clip:update") {
+        const payload = action.payload as any;
+        const currentState = payload.updates;
+        const previousState = lastSentState.get(payload.clipId);
+
+        if (previousState) {
+          const diff: Record<string, any> = {};
+          for (const key in currentState) {
+            if (!isEqual(currentState[key], previousState[key])) {
+              diff[key] = currentState[key];
+            }
+          }
+          if (Object.keys(diff).length === 0) return; // Avoid broadcasting no-ops
+          payload.updates = diff; // Mutate action to only send minimal diff
+        }
+
+        // Store the FULL current state as the baseline for the next diff
+        lastSentState.set(payload.clipId, currentState);
+      }
 
       const actionId = crypto.randomUUID();
       seen.current.add(actionId);
@@ -96,18 +131,26 @@ export function useCollabSession(
       dispatchAction(action);
     studio.on("action:dispatched", handleAction);
 
-    const lastSentState = new Map<string, any>();
-
     const handleNativeUpdate = ({ clip }: any) => {
+      if (!clip) return;
       if (isRemoteRef.current) return;
 
       const currentState = clipToJSON(clip);
-      const previousState = lastSentState.get(clip.id);
+      
+      // Modifiers like animations are explicitly managed by their respective
+      // discrete StudioActions (clip:add-animation/clip:remove-animation)
+      // Including them in full JSON updates destroys their native prototype
+      // bindings (like .getTransform) on the receiving side via Object.assign.
+      delete currentState.animations;
+
+      const previousState = activeState.get(clip.id);
 
       if (previousState && isEqual(previousState, currentState)) return;
 
-      lastSentState.set(clip.id, currentState);
+      activeState.set(clip.id, currentState);
 
+      // Send the FULL state to throttledDispatchAction so trailing calls get the complete snapshot.
+      // The actual diff computation occurs inside dispatchAction based on the successfully sent baseline.
       throttledDispatchAction({
         type: "clip:update",
         payload: {
@@ -137,11 +180,31 @@ export function useCollabSession(
 
     const handleNativeAdd = ({ clip, trackId }: any) => {
       setupClipListeners(clip);
-      lastSentState.set(clip.id, clipToJSON(clip));
+      const state = clipToJSON(clip);
+      delete state.animations; // Strip for add payload as well since clip:add might initialize it raw if the engine does not correctly instantiate
+      lastSentState.set(clip.id, state);
+      activeState.set(clip.id, state);
 
       dispatchAction({
         type: "clip:add",
-        payload: { clip: clipToJSON(clip), trackId: trackId || "" },
+        payload: { clip: state, trackId: trackId || "" },
+      });
+    };
+
+    const handleNativeAddMultiple = ({ clips, trackId }: any) => {
+      if (!Array.isArray(clips)) return;
+      clips.forEach((clip) => {
+        setupClipListeners(clip);
+        const state = clipToJSON(clip);
+        delete state.animations;
+
+        lastSentState.set(clip.id, state);
+        activeState.set(clip.id, state);
+
+        dispatchAction({
+          type: "clip:add",
+          payload: { clip: state, trackId: trackId || "" },
+        });
       });
     };
 
@@ -171,6 +234,7 @@ export function useCollabSession(
     };
 
     studio.on("clip:added", handleNativeAdd);
+    studio.on("clips:added", handleNativeAddMultiple);
     studio.on("clip:updated", handleNativeUpdate);
     studio.on("clip:removed", handleNativeRemove);
     studio.on("clips:removed", handleNativeRemoveMultiple);
@@ -183,6 +247,7 @@ export function useCollabSession(
       throttledDispatchAction.cancel();
       studio.off("action:dispatched", handleAction);
       studio.off("clip:added", handleNativeAdd);
+      studio.off("clips:added", handleNativeAddMultiple);
       studio.off("clip:updated", handleNativeUpdate);
       studio.off("clip:removed", handleNativeRemove);
       studio.off("clips:removed", handleNativeRemoveMultiple);
