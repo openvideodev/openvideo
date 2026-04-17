@@ -261,27 +261,54 @@ export function AnimationPropertiesPicker() {
     return { type, opts, finalParams };
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const { type, opts, finalParams } = buildAnimationConfig();
 
     if (mode === "edit" && animationId) {
-      clip.updateAnimation(animationId, type, opts, finalParams);
+      await studio?.dispatch({
+        type: "clip:remove-animation",
+        payload: { clipId: clip.id, animationId },
+      });
+      await studio?.dispatch({
+        type: "clip:add-animation",
+        payload: { 
+          clipId: clip.id, 
+          name: type, 
+          opts: { ...opts, id: animationId } as unknown as Record<string, unknown>, 
+          params: finalParams 
+        },
+      });
     } else {
-      clip.addAnimation(type, opts, finalParams);
+      await studio?.dispatch({
+        type: "clip:add-animation",
+        payload: { 
+          clipId: clip.id, 
+          name: type, 
+          opts: { ...opts, id: crypto.randomUUID() } as unknown as Record<string, unknown>, 
+          params: finalParams 
+        },
+      });
     }
 
-    clip.emit("propsChange", {});
     setFloatingControl("");
   };
 
-  const handleApplyToAllCaptions = () => {
+  const handleApplyToAllCaptions = async () => {
     if (!studio) return;
 
     const { type, opts, finalParams } = buildAnimationConfig();
 
-    studio.clips.forEach((c: any) => {
+    for (const c of studio.clips) {
       if (c.type === "Caption") {
-        c.animations = [];
+        // Remove existing animations properly through the action engine
+        const existingAnims = [...(c.animations || [])];
+        for (const anim of existingAnims) {
+          await studio.dispatch({
+            type: "clip:remove-animation",
+            payload: { clipId: c.id, animationId: anim.id },
+          });
+        }
+
         const special = SPECIAL_ANIMATIONS_CAPTIONS.includes(type);
         const targetDuration = special ? c.duration : c.duration * 0.2;
         let targetDelay = opts.delay;
@@ -289,14 +316,22 @@ export function AnimationPropertiesPicker() {
           targetDelay = Math.max(0, c.duration - targetDuration);
         }
 
-        c.addAnimation(
-          type,
-          { ...opts, duration: targetDuration, delay: targetDelay },
-          finalParams,
-        );
-        c.emit("propsChange", {});
+        await studio.dispatch({
+          type: "clip:add-animation",
+          payload: {
+            clipId: c.id,
+            name: type,
+            opts: { 
+              ...opts, 
+              id: crypto.randomUUID(),
+              duration: targetDuration, 
+              delay: targetDelay 
+            } as unknown as Record<string, unknown>,
+            params: finalParams,
+          },
+        });
       }
-    });
+    }
 
     setFloatingControl("");
   };

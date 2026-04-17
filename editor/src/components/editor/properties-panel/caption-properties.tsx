@@ -114,28 +114,34 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
     studio.emit("propsChange", {});
   };
 
-  const handleAnimationRemove = (id: string) => {
+  const handleAnimationRemove = async (id: string) => {
     if (captionClip.type === "Caption" && studio) {
       const anim = captionClip.animations.find((a: any) => a.id === id);
       const typeToRemove = anim?.type;
 
-      studio.clips.forEach((c: any) => {
+      for (const c of studio.clips) {
         if (c.type === "Caption") {
           if (typeToRemove) {
             const targetAnim = c.animations.find((a: any) => a.type === typeToRemove);
             if (targetAnim) {
-              c.removeAnimation(targetAnim.id);
-              c.emit("propsChange", {});
+              await studio.dispatch({
+                type: "clip:remove-animation",
+                payload: { clipId: c.id, animationId: targetAnim.id },
+              });
             }
           } else {
-            c.removeAnimation(id);
-            c.emit("propsChange", {});
+            await studio.dispatch({
+              type: "clip:remove-animation",
+              payload: { clipId: c.id, animationId: id },
+            });
           }
         }
-      });
+      }
     } else {
-      captionClip.removeAnimation(id);
-      captionClip.emit("propsChange", {});
+      await studio.dispatch({
+        type: "clip:remove-animation",
+        payload: { clipId: captionClip.id, animationId: id },
+      });
     }
   };
 

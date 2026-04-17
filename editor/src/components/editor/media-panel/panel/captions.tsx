@@ -70,14 +70,22 @@ export default function PanelCaptions() {
 
     handleUpdate();
     studio.on("clip:added", handleUpdate);
+    studio.on("clips:added", handleUpdate);
     studio.on("clip:removed", handleUpdate);
+    studio.on("clips:removed", handleUpdate);
     studio.on("clip:updated", handleUpdate);
+    studio.on("track:added", handleUpdate);
+    studio.on("track:removed", handleUpdate);
     studio.on("currentTime", handleTimeUpdate);
 
     return () => {
       studio.off("clip:added", handleUpdate);
+      studio.off("clips:added", handleUpdate);
       studio.off("clip:removed", handleUpdate);
+      studio.off("clips:removed", handleUpdate);
       studio.off("clip:updated", handleUpdate);
+      studio.off("track:added", handleUpdate);
+      studio.off("track:removed", handleUpdate);
       studio.off("currentTime", handleTimeUpdate);
     };
   }, [studio]);

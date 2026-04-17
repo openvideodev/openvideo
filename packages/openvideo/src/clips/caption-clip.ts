@@ -263,7 +263,13 @@ export interface ICaptionOpts {
    * Vertical alignment ('top', 'center', 'bottom')
    * @default 'bottom'
    */
-  verticalAlign?: "top" | "center" | "bottom";
+  verticalAlign?:
+    | "top"
+    | "center"
+    | "bottom"
+    | "underline"
+    | "overline"
+    | "strikethrough";
   /**
    * Line height (multiplier)
    * @default 1
@@ -2002,7 +2008,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       if (opts.fontFamily !== undefined) style.fontFamily = opts.fontFamily;
       if (opts.fontWeight !== undefined) style.fontWeight = opts.fontWeight;
       if (opts.fontStyle !== undefined) style.fontStyle = opts.fontStyle;
-      if (opts.fill !== undefined) style.color = opts.fill;
+      if (opts.fill !== undefined) style.fill = opts.fill;
       if (opts.align !== undefined) style.align = opts.align;
       if (opts.textCase !== undefined) style.textCase = opts.textCase;
       if (opts.fontUrl !== undefined) style.fontUrl = opts.fontUrl;
@@ -2032,7 +2038,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       }
 
       if (opts.dropShadow) {
-        style.shadow = {
+        style.dropShadow = {
           color: (opts.dropShadow.color ?? "#000000") as string,
           alpha: opts.dropShadow.alpha ?? 0.5,
           blur: opts.dropShadow.blur ?? 4,
@@ -2162,7 +2168,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         | "normal"
         | "italic"
         | "oblique";
-    if (style.color !== undefined) captionOpts.fill = style.color;
+    if (style.fill !== undefined) captionOpts.fill = style.fill;
     if (style.align !== undefined) captionOpts.align = style.align;
     if (style.textCase !== undefined) captionOpts.textCase = style.textCase;
     if (style.verticalAlign !== undefined)
@@ -2196,13 +2202,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       captionOpts.strokeWidth = style.stroke.width;
     }
 
-    if (style.shadow) {
+    if (style.dropShadow) {
       captionOpts.dropShadow = {
-        color: style.shadow.color,
-        alpha: style.shadow.alpha,
-        blur: style.shadow.blur,
-        distance: style.shadow.distance,
-        angle: style.shadow.angle,
+        color: style.dropShadow.color,
+        alpha: style.dropShadow.alpha,
+        blur: style.dropShadow.blur,
+        distance: style.dropShadow.distance,
+        angle: style.dropShadow.angle,
       };
     }
 
