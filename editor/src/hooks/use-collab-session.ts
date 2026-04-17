@@ -56,11 +56,9 @@ export function useCollabSession(
           });
         } finally {
           if (isPriority) {
-            // Acciones prioritarias/destructivas liberan el lock inmediatamente
             isRemoteRef.current = false;
             remoteActionTypeRef.current = null;
           } else {
-            // Updates/moves siguen esperando 500ms para evitar bounce
             remoteActionTimeout = setTimeout(() => {
               isRemoteRef.current = false;
               remoteActionTypeRef.current = null;
@@ -102,6 +100,7 @@ export function useCollabSession(
             }
           }
           if (Object.keys(diff).length === 0) return; // Avoid broadcasting no-ops
+          console.log(`[Collab]  diff:`, diff);
           payload.updates = diff; // Mutate action to only send minimal diff
         }
 
