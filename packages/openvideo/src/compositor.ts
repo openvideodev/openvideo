@@ -25,7 +25,10 @@ import EventEmitter from "./event-emitter";
 import { PixiSpriteRenderer } from "./sprite/pixi-sprite-renderer";
 import { parseColor, hexToRgb } from "./utils/color";
 import { vertex } from "./effect/vertex";
-import { CHROMA_KEY_FRAGMENT } from "./effect/glsl/custom-glsl";
+import {
+  CHROMA_KEY_FRAGMENT,
+  SELECTIVE_HSL_FRAGMENT,
+} from "./effect/glsl/custom-glsl";
 import { sleep } from "./utils";
 import {
   clipToJSON,
@@ -37,6 +40,11 @@ import {
 import { Video } from "./clips/video-clip";
 import { Image } from "./clips/image-clip";
 import { makeTransition } from "./transition/transition";
+import {
+  applyColorAdjustmentToMatrix,
+  getAllSelectiveHsl,
+  hasColorAdjustment,
+} from "./utils/color-adjustment";
 
 export interface ICompositorOpts {
   width?: number;
@@ -635,6 +643,68 @@ export class Compositor extends EventEmitter<{
       await this.addSprite(clip, { main: clipJSON.main || false });
     }
   }
+
+  /**
+   * Renders the frame at the given time and returns it as a base64-encoded PNG.
+   *
+   * Initialises the internal Pixi application on demand (if not already
+   * initialised), performs a single-frame render using the same sprite
+   * pipeline as {@link output}, and returns the result without modifying
+   * the compositor's encoding state.
+   *
+   * @param timeMs Time in milliseconds
+   * @returns Base64 data-URL string (e.g. "data:image/png;base64,...")
+   *
+   * @example
+   * const compositor = new Compositor({ width: 1280, height: 720 });
+   * await compositor.addSprite(videoClip);
+   * const frame = await compositor.renderFrame(2000); // frame at 2 s
+   */
+  public async renderFrame(timeMs: number): Promise<string> {
+    if (this.destroyed) {
+      throw new Error("Compositor has been destroyed.");
+    }
+
+    // Lazily initialise Pixi so callers don't have to call initPixiApp() first
+    if (this.pixiApp == null) {
+      await this.initPixiApp();
+    }
+
+    if (this.pixiApp == null) {
+      throw new Error(
+        "Compositor Pixi application could not be initialised. " +
+          "Ensure width and height are greater than 0.",
+      );
+    }
+
+    // Convert milliseconds → microseconds (internal timeline unit)
+    const timeUs = timeMs * 1000;
+
+    // Use the same rendering pipeline as the encoder, but for a single frame.
+    // Sprites must NOT be marked expired before this call — use a fresh aborter.
+    const spriteRender = createSpritesRender({
+      pixiApp: this.pixiApp,
+      bgColor: this.opts.bgColor,
+      sprites: this.sprites,
+      aborter: { aborted: false },
+    });
+
+    try {
+      await spriteRender.render(timeUs);
+    } finally {
+      // Clean up temporary containers / renderers created by createSpritesRender
+      spriteRender.cleanup();
+    }
+
+    // Extract the rendered frame from the Pixi stage as a base64 PNG
+    const base64 = await (this.pixiApp.renderer.extract as any).base64(
+      this.pixiApp.stage,
+      "image/png",
+      1,
+    );
+
+    return base64;
+  }
 }
 
 function createSpritesRender(opts: {
@@ -831,11 +901,49 @@ function createSpritesRender(opts: {
       filters.push(blurFilter);
     }
 
-    if (brightnessMultiplier !== 1) {
+    const hasClipColorAdjustment = hasColorAdjustment(
+      (clip as any).colorAdjustment,
+    );
+    if (brightnessMultiplier !== 1 || hasClipColorAdjustment) {
       const brightnessFilter = new ColorMatrixFilter();
-      brightnessFilter.brightness(brightnessMultiplier, false);
+      applyColorAdjustmentToMatrix(
+        brightnessFilter,
+        (clip as any).colorAdjustment,
+        brightnessMultiplier,
+      );
       filters.push(brightnessFilter);
     }
+
+     const activeSelectiveHslList = getAllSelectiveHsl(
+      (clip as any).colorAdjustment,
+    );
+    for (let i = 0; i < activeSelectiveHslList.length; i++) {
+      const activeSelectiveHsl = activeSelectiveHslList[i];
+      const hslUniforms = new UniformGroup({
+        uTargetColor: { value: [1, 1, 0], type: "vec3<f32>" },
+        uHueShift: { value: activeSelectiveHsl.hue, type: "f32" },
+        uSatShift: { value: activeSelectiveHsl.saturation / 100, type: "f32" },
+        uLightShift: { value: activeSelectiveHsl.lightness / 100, type: "f32" },
+        uTolerance: { value: 0.22, type: "f32" },
+        uSoftness: { value: 0.12, type: "f32" },
+      });
+      const rgb = hexToRgb(activeSelectiveHsl.targetColor);
+      if (rgb) {
+        hslUniforms.uniforms.uTargetColor[0] = rgb.r / 255;
+        hslUniforms.uniforms.uTargetColor[1] = rgb.g / 255;
+        hslUniforms.uniforms.uTargetColor[2] = rgb.b / 255;
+      }
+      const selectiveHslFilter = new Filter({
+        glProgram: new GlProgram({
+          vertex,
+          fragment: SELECTIVE_HSL_FRAGMENT,
+          name: `SelectiveHslShader_${i}`,
+        }),
+        resources: { hslUniforms },
+      });
+      filters.push(selectiveHslFilter);
+    }
+
 
     if (clip.chromaKey && clip.chromaKey.enabled) {
       const chromaUniforms = new UniformGroup({

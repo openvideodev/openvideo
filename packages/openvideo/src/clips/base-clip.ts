@@ -27,6 +27,11 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   src: string = '';
 
   /**
+   * User-defined metadata
+   */
+  metadata: Record<string, any> = {};
+
+  /**
    * Transition info (optional)
    */
   transition?: ITransitionInfo;
@@ -327,7 +332,9 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       ...(animations.length > 0 && { animations }),
       ...(main && { main: true }),
       chromaKey: this.chromaKey,
+      colorAdjustment: this.colorAdjustment,
       locked: this.locked,
+      metadata: this.metadata,
     } as ClipJSON;
   }
 

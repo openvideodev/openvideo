@@ -7,6 +7,9 @@ import {
   RenderTexture,
   BlurFilter,
   ColorMatrixFilter,
+  Filter,
+  GlProgram,
+  UniformGroup,
 } from "pixi.js";
 
 import { Caption } from "./clips/caption-clip";
@@ -24,7 +27,14 @@ import { Transformer } from "./transfomer/transformer";
 import type { EffectKey } from "./effect/glsl/gl-effect";
 import { makeEffect } from "./effect/effect";
 import { makeTransition } from "./transition/transition";
-import { parseColor } from "./utils/color";
+import { parseColor, hexToRgb } from "./utils/color";
+import { vertex } from "./effect/vertex";
+import { SELECTIVE_HSL_FRAGMENT } from "./effect/glsl/custom-glsl";
+import {
+  applyColorAdjustmentToMatrix,
+  getAllSelectiveHsl,
+  hasColorAdjustment,
+} from "./utils/color-adjustment";
 
 import EventEmitter from "./event-emitter";
 
@@ -1193,6 +1203,65 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   /**
+   * Renders the frame at the given time and returns it as a base64-encoded PNG.
+   *
+   * The artboard is temporarily reset to 1:1 scale during extraction so the
+   * output image always matches the project's configured width × height,
+   * regardless of the current viewport zoom.
+   *
+   * @param timeMs Time in milliseconds
+   * @returns Base64 data-URL string (e.g. "data:image/png;base64,...")
+   *
+   * @example
+   * await studio.ready;
+   * const frame = await studio.renderFrame(1500); // frame at 1.5 s
+   * const img = document.createElement('img');
+   * img.src = frame;
+   */
+  public async renderFrame(timeMs: number): Promise<string> {
+    await this.ready;
+    if (!this.pixiApp || !this.artboard) {
+      throw new Error(
+        "Studio is not initialized yet. Wait for studio.ready before calling renderFrame().",
+      );
+    }
+
+    // Convert milliseconds → microseconds (internal timeline unit)
+    const timeUs = timeMs * 1000;
+
+    // Render the scene at the requested time
+    await this.updateFrame(timeUs);
+
+    // Temporarily reset artboard transform so extract covers exactly the
+    // project dimensions (width × height) at pixel-perfect 1:1 resolution.
+    const prevScale = this.artboard.scale.clone();
+    const prevX = this.artboard.x;
+    const prevY = this.artboard.y;
+
+    this.artboard.scale.set(1);
+    this.artboard.x = 0;
+    this.artboard.y = 0;
+
+    let base64: string;
+    try {
+      base64 = await (this.pixiApp.renderer.extract as any).base64(
+        this.artboard,
+        "image/png",
+        1,
+      );
+    } finally {
+      // Always restore the original artboard layout
+      this.artboard.scale.set(prevScale.x, prevScale.y);
+      this.artboard.x = prevX;
+      this.artboard.y = prevY;
+      this.pixiApp.render();
+    }
+
+    return base64;
+  }
+
+
+  /**
    * Get current playback time (in microseconds)
    */
   getCurrentTime(): number {
@@ -2003,11 +2072,49 @@ export class Studio extends EventEmitter<StudioEvents> {
       filters.push(blurFilter);
     }
 
-    if (brightnessMultiplier !== 1) {
+    const hasClipColorAdjustment = hasColorAdjustment(
+      (clip as any).colorAdjustment,
+    );
+    if (brightnessMultiplier !== 1 || hasClipColorAdjustment) {
       const brightnessFilter = new ColorMatrixFilter();
-      brightnessFilter.brightness(brightnessMultiplier, false);
+      applyColorAdjustmentToMatrix(
+        brightnessFilter,
+        (clip as any).colorAdjustment,
+        brightnessMultiplier,
+      );
       filters.push(brightnessFilter);
     }
+
+    const activeSelectiveHslList = getAllSelectiveHsl(
+      (clip as any).colorAdjustment,
+    );
+    for (let i = 0; i < activeSelectiveHslList.length; i++) {
+      const activeSelectiveHsl = activeSelectiveHslList[i];
+      const hslUniforms = new UniformGroup({
+        uTargetColor: { value: [1, 1, 0], type: "vec3<f32>" },
+        uHueShift: { value: activeSelectiveHsl.hue, type: "f32" },
+        uSatShift: { value: activeSelectiveHsl.saturation / 100, type: "f32" },
+        uLightShift: { value: activeSelectiveHsl.lightness / 100, type: "f32" },
+        uTolerance: { value: 0.22, type: "f32" },
+        uSoftness: { value: 0.12, type: "f32" },
+      });
+      const rgb = hexToRgb(activeSelectiveHsl.targetColor);
+      if (rgb) {
+        hslUniforms.uniforms.uTargetColor[0] = rgb.r / 255;
+        hslUniforms.uniforms.uTargetColor[1] = rgb.g / 255;
+        hslUniforms.uniforms.uTargetColor[2] = rgb.b / 255;
+      }
+      const selectiveHslFilter = new Filter({
+        glProgram: new GlProgram({
+          vertex,
+          fragment: SELECTIVE_HSL_FRAGMENT,
+          name: `SelectiveHslShader_${i}`,
+        }),
+        resources: { hslUniforms },
+      });
+      filters.push(selectiveHslFilter);
+    }
+
     rootContainer.filters = filters;
 
     // Apply Styles (Border Radius, Stroke, Shadow)
