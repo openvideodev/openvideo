@@ -167,6 +167,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
     duration: number;
   }> = [];
 
+  getVisibleHandles(): Array<'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'> {
+    return ['tl', 'tr', 'bl', 'br', 'rot'];
+  }
+
   /**
    * Load a video clip from a URL
    * @param url Video URL

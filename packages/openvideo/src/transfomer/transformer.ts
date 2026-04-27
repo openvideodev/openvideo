@@ -690,32 +690,60 @@ export class Transformer extends Container {
   }
 
   #proposeScaledRect(handle: HandleKind, p: Point, pivot: Point) {
+    let preserveRatio = false;
+    if (this.opts.clip && (this.opts.clip.type === 'Image' || this.opts.clip.type === 'Video')) {
+      preserveRatio = true;
+    }
+
     if (this.opts.centeredScaling) {
-      const w = Math.max(this.#minW, Math.abs(p.x - pivot.x) * 2);
-      const h = Math.max(this.#minH, Math.abs(p.y - pivot.y) * 2);
+      let w = Math.abs(p.x - pivot.x) * 2;
+      let h = Math.abs(p.y - pivot.y) * 2;
+      if (preserveRatio) {
+        const origW = this.#opBounds.width;
+        const origH = this.#opBounds.height;
+        const ratio = origW / origH;
+        if (w / origW > h / origH) {
+          h = w / ratio;
+        } else {
+          w = h * ratio;
+        }
+      }
+      w = Math.max(this.#minW, w);
+      h = Math.max(this.#minH, h);
       return new Rectangle(pivot.x - w / 2, pivot.y - h / 2, w, h);
     }
 
     // Corner handles - scale in both dimensions
-    if (handle === "tl") {
-      const left = Math.min(p.x, pivot.x - this.#minW);
-      const top = Math.min(p.y, pivot.y - this.#minH);
-      return new Rectangle(left, top, pivot.x - left, pivot.y - top);
-    }
-    if (handle === "tr") {
-      const right = Math.max(p.x, pivot.x + this.#minW);
-      const top = Math.min(p.y, pivot.y - this.#minH);
-      return new Rectangle(pivot.x, top, right - pivot.x, pivot.y - top);
-    }
-    if (handle === "bl") {
-      const left = Math.min(p.x, pivot.x - this.#minW);
-      const bottom = Math.max(p.y, pivot.y + this.#minH);
-      return new Rectangle(left, pivot.y, pivot.x - left, bottom - pivot.y);
-    }
-    if (handle === "br") {
-      const right = Math.max(p.x, pivot.x + this.#minW);
-      const bottom = Math.max(p.y, pivot.y + this.#minH);
-      return new Rectangle(pivot.x, pivot.y, right - pivot.x, bottom - pivot.y);
+    if (['tl', 'tr', 'bl', 'br'].includes(handle)) {
+      let newW = Math.abs(p.x - pivot.x);
+      let newH = Math.abs(p.y - pivot.y);
+
+      if (preserveRatio) {
+        const origW = this.#opBounds.width;
+        const origH = this.#opBounds.height;
+        const ratio = origW / origH;
+        if (newW / origW > newH / origH) {
+          newH = newW / ratio;
+        } else {
+          newW = newH * ratio;
+        }
+      }
+
+      newW = Math.max(this.#minW, newW);
+      newH = Math.max(this.#minH, newH);
+
+      if (handle === "tl") {
+        return new Rectangle(pivot.x - newW, pivot.y - newH, newW, newH);
+      }
+      if (handle === "tr") {
+        return new Rectangle(pivot.x, pivot.y - newH, newW, newH);
+      }
+      if (handle === "bl") {
+        return new Rectangle(pivot.x - newW, pivot.y, newW, newH);
+      }
+      if (handle === "br") {
+        return new Rectangle(pivot.x, pivot.y, newW, newH);
+      }
     }
 
     // Mid-point handles - scale in one dimension only

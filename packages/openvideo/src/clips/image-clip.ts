@@ -75,6 +75,10 @@ export class Image extends BaseClip implements IClip {
     duration: number;
   }> = [];
 
+  getVisibleHandles(): Array<'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'> {
+    return ['tl', 'tr', 'bl', 'br', 'rot'];
+  }
+
   /**
    * Load an image clip from a URL using PixiJS Assets
    * This is optimized for Studio as it uses Texture directly
