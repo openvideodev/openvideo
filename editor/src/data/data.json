@@ -1,0 +1,44 @@
+{
+  "tracks": [
+    {
+      "id": "track_1770997655082_4laeuowj5",
+      "name": "Track 1",
+      "type": "Image",
+      "clipIds": ["clip_1770997655082_l0uih9lgh"]
+    }
+  ],
+  "clips": [
+    {
+      "type": "Image",
+      "id": "clip_1770997655082_l0uih9lgh",
+      "name": "imagen12.jpg",
+      "src": "https://cdn.scenify.io/mockuser/1ddfb785-2ede-4dd2-b5c2-8f6b8eba3aba-imagen12.jpg",
+      "display": {
+        "from": 0,
+        "to": 1000000
+      },
+      "playbackRate": 1,
+      "duration": 1000000,
+      "left": 0,
+      "top": 0,
+      "width": 1440,
+      "height": 1080,
+      "angle": 0,
+      "zIndex": 10,
+      "opacity": 1,
+      "flip": null,
+      "style": {},
+      "trim": {
+        "from": 0,
+        "to": 0
+      },
+      "effects": []
+    }
+  ],
+  "settings": {
+    "width": 1440,
+    "height": 1080,
+    "fps": 30,
+    "bgColor": "#181818"
+  }
+}

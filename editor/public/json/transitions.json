@@ -1,0 +1,125 @@
+{
+  "tracks": [
+    {
+      "id": "track_1772252592307_7jtc8geh2",
+      "name": "Track 1",
+      "type": "Image",
+      "clipIds": [
+        "clip_1772252592307_o0gpzccct",
+        "clip_1772252601445_pqnurox3c",
+        "clip_1772252617678_l0h3i67zl"
+      ]
+    }
+  ],
+  "clips": [
+    {
+      "type": "Image",
+      "id": "clip_1772252592307_o0gpzccct",
+      "name": "Photo by Stephen Leonardi",
+      "src": "https://images.pexels.com/photos/35554037/pexels-photo-35554037.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "display": {
+        "from": 0,
+        "to": 1000000
+      },
+      "playbackRate": 1,
+      "duration": 1000000,
+      "left": -147.79594723201978,
+      "top": -33.520454828209495,
+      "width": 1375.5918944640378,
+      "height": 1987.0409096564154,
+      "angle": 0,
+      "zIndex": 10,
+      "opacity": 1,
+      "flip": null,
+      "style": {},
+      "trim": {
+        "from": 0,
+        "to": 0
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "smoothness": 0.05
+      },
+      "effects": []
+    },
+    {
+      "type": "Image",
+      "id": "clip_1772252601445_pqnurox3c",
+      "name": "Photo by Jérémy Glineur",
+      "src": "https://images.pexels.com/photos/35565461/pexels-photo-35565461.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "display": {
+        "from": 1000000,
+        "to": 2000000
+      },
+      "playbackRate": 1,
+      "duration": 1000000,
+      "left": -188.35093737939292,
+      "top": -43.757528884920475,
+      "width": 1546.8199124699777,
+      "height": 2009.8818367564068,
+      "angle": 0,
+      "zIndex": 10,
+      "opacity": 1,
+      "flip": null,
+      "style": {},
+      "trim": {
+        "from": 0,
+        "to": 0
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "smoothness": 0.05
+      },
+      "effects": []
+    },
+    {
+      "type": "Transition",
+      "id": "clip_1772252617678_l0h3i67zl",
+      "name": "",
+      "src": "",
+      "display": {
+        "from": 500000,
+        "to": 1500000
+      },
+      "playbackRate": 1,
+      "duration": 1000000,
+      "left": 0,
+      "top": 0,
+      "width": 0,
+      "height": 0,
+      "angle": 0,
+      "zIndex": 10,
+      "opacity": 1,
+      "flip": null,
+      "style": {},
+      "trim": {
+        "from": 0,
+        "to": 0
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "smoothness": 0.05
+      },
+      "transitionEffect": {
+        "id": "trans_1772252617678",
+        "key": "GridFlip",
+        "name": "GridFlip"
+      },
+      "fromClipId": "clip_1772252592307_o0gpzccct",
+      "toClipId": "clip_1772252601445_pqnurox3c",
+      "effects": []
+    }
+  ],
+  "settings": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "bgColor": "#181818"
+  }
+}
