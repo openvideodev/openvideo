@@ -111,8 +111,8 @@ export interface ITransitionEffect {
 
 export interface ICompositionAnimation {
   property: string;
-  from: any;
-  to: any;
+  from: unknown;
+  to: unknown;
   durationInFrames: number;
   easing: string;
 }
@@ -229,8 +229,8 @@ export type IClip =
 /** @deprecated Use IClip instead */
 export type IComposition = IClip;
 
-/** @deprecated Use Record<string, any> */
-export type IMetadata = Record<string, any>;
+/** @deprecated Use Record<string, unknown> */
+export type IMetadata = Record<string, unknown>;
 
 // ============================================================================
 // TRACK
@@ -458,7 +458,7 @@ export type IBoxShadow = {
 };
 
 export type ITextDetails = ITextClip & ITextStyle & {
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 /** @deprecated Legacy map type */

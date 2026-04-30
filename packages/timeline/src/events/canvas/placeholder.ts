@@ -40,8 +40,8 @@ function restorePrimaryMovingObjects(canvas: Timeline) {
   draggedObjectInitalPositions = null;
 }
 
-function constrainObjectPosition(e: any) {
-  const target = e.target || e.transform?.target;
+function constrainObjectPosition(e: BasicTransformEvent<TPointerEvent>) {
+  const target = e.transform?.target;
   if (!target) return;
   const left = target.left;
   target.left = Math.max(left, 0);
@@ -445,8 +445,9 @@ function orderMagTeckWhenIsNotOver(canvas: Timeline, state: MovingState) {
   const objectsInTrack: FabricObject[] = [];
   const magneticTrack = canvas
     .getObjects()
-    .find((o) => o.id === state.updateItemsInTrack)!;
-  (magneticTrack as any).clipIds.forEach((item: string) => {
+    .find((o) => o.id === state.updateItemsInTrack) as Track | undefined;
+  if (!magneticTrack) return;
+  magneticTrack.clipIds.forEach((item: string) => {
     const itemObject = canvas.getObjects().find((o) => o.id === item);
     if (!itemObject) return;
     objectsInTrack.push(itemObject);
@@ -487,7 +488,7 @@ function setPositionMagneticObj(
   });
   const lastObject = sortedObjectByLeft[sortedObjectByLeft.length - 1];
   initialTrackPoints.push((lastObject?.left || 0) + (lastObject?.width || 0));
-  if ((overTrack as any)?.clipIds?.includes(primaryObjIds[0])) {
+  if ((overTrack as Track)?.clipIds?.includes(primaryObjIds[0])) {
     const primaryObj = state.primaryMovingObjects[0];
     const clonedArray = [...initialTrackPoints];
     if (primaryObj) {
@@ -547,9 +548,9 @@ function setPositionRegularObj(
 
 function selectClosestHelper(canvas: Canvas, pointY: number): void {
   const overTracks = canvas.getObjects("Helper");
-  const closestHelp = overTracks.reduce((prev: any, curr: any) =>
+  const closestHelp = overTracks.reduce((prev: FabricObject, curr: FabricObject) =>
     Math.abs(curr.top - pointY) < Math.abs(prev.top - pointY) ? curr : prev
-  );
+  ) as Helper;
   closestHelp.setSelected(true);
 }
 

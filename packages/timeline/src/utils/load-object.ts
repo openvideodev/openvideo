@@ -1,4 +1,4 @@
-import { classRegistry } from "fabric";
+import { classRegistry, FabricObject } from "fabric";
 import { IClip } from "../types";
 import { timeUsToUnits } from "./timeline";
 
@@ -17,7 +17,8 @@ export const loadObject = (
 
   // Convert type to PascalCase for class name
   const typeName = item.type.charAt(0).toUpperCase() + item.type.slice(1);
-  const Klass = classRegistry.getClass(typeName) as any;
+  const Klass = classRegistry.getClass(typeName);
+  const itemAny = item as unknown as Record<string, unknown>;
 
   const baseObject = {
     width,
@@ -28,20 +29,21 @@ export const loadObject = (
     left,
     display,
     duration: item.duration || display.to - display.from,
-    metadata: (item as any).metadata,
+    metadata: item.metadata,
     playbackRate: item.playbackRate || 1,
-    src: (item as any).src,
+    src: itemAny.src,
     trim: item.trim || {
       from: 0,
-      to: (item as any).duration || display.to - display.from
+      to: item.duration || display.to - display.from
     },
-    text: (item as any).text,
-    srcs: (item as any).srcs || [],
-    backgroundColorDiv: (item as any).backgroundColor,
-    svgString: (item as any).svgString,
-    preview: (item as any).preview
+    text: itemAny.text,
+    srcs: (itemAny.srcs as string[]) || [],
+    backgroundColorDiv: itemAny.backgroundColor,
+    svgString: itemAny.svgString,
+    preview: itemAny.preview
   };
 
   // Default case for all types
-  return new Klass(baseObject);
+  return new (Klass as new (options: typeof baseObject) => FabricObject)(baseObject);
 };
+

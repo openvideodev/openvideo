@@ -2,13 +2,13 @@ import {
   IClip,
   ITransitionClip,
   ITimelineScaleState,
-  IUpdateStateOptions
+  IUpdateStateOptions,
+  State
 } from "../types";
 import {
   splitClips,
   clipsToMap,
-  getDuration,
-  timeUsToUnits
+  getDuration
 } from "../utils/timeline";
 import Timeline, { ITimelineTrack } from "../timeline";
 import { cloneDeep } from "../utils/clone-deep";
@@ -44,9 +44,9 @@ class SyncManager {
       const activeId = activeIds[0];
       const timelineActiveId = timelineActiveIds[0];
       let templateId: string = "";
-      this.timeline.tracks.forEach((s: any) => {
+      this.timeline.tracks.forEach((s: ITimelineTrack) => {
         if (s.id === timelineActiveId) {
-          const items = s.clipIds!;
+          const items = s.clipIds;
           if (items.includes(activeId)) templateId = s.id;
         }
       });
@@ -74,7 +74,7 @@ class SyncManager {
     this._syncAndRender();
   }
 
-  public syncTracks(data: { tracks: ITimelineTrack[]; changedTracks: any[] }) {
+  public syncTracks(data: { tracks: ITimelineTrack[]; changedTracks: string[] }) {
     if (data.changedTracks.length) {
       this._setTracks(data.tracks);
       this.timeline.tracksManager.renderTracks();
@@ -99,9 +99,6 @@ class SyncManager {
       return;
     }
 
-    const trackItemsMap = data.state
-      ? clipsToMap(splitClips(data.state.clips).regular)
-      : this.timeline.trackItemsMap;
 
     const previousTrackItemsMap = this.timeline.trackItemsMap;
     this.timeline.trackItemsMap = updatedTrackItemsMap;
@@ -146,7 +143,7 @@ class SyncManager {
 
       // Sync Details (Src, Text, etc.)
       if (item.hasSrc) {
-        const currentSrc = item.src;
+        const currentSrc = (item as unknown as { src: string }).src;
         if (currentSrc !== itemDetail.src && item.setSrc) {
           item.setSrc(itemDetail.src);
         }
@@ -202,7 +199,7 @@ class SyncManager {
     this.timeline.duration = getDuration(this.timeline.trackItemsMap);
   }
 
-  public syncAddOrRemoveClips(currentState: any) {
+  public syncAddOrRemoveClips(currentState: State) {
     const trackItemIdsInCanvas = this.timeline.itemsManager
       .getTrackItems()
       .map((o) => o.id);

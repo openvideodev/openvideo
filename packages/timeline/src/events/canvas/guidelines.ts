@@ -17,7 +17,7 @@ import {
 } from "../../utils/guideline";
 import { clearTrackHelperGuides, isHelperTrack } from "../../utils/canvas";
 import Timeline from "../../timeline";
-import { Track } from "../../objects";
+import { Track, Helper } from "../../objects";
 
 export function onObjectMoving(
   this: Timeline,
@@ -39,7 +39,7 @@ export function onObjectMoving(
       pointer.y >= objRect.top &&
       pointer.y <= objRect.top + objRect.height
     );
-  }) as Track;
+  }) as Track | Helper | undefined;
 
   this.dragStateManager.setState({ draggingOverTrack });
 

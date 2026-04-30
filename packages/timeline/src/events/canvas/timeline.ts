@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import Timeline from "../../timeline";
-import { ITransitionClip } from "../../types";
+import { ITransitionClip, TrackType } from "../../types";
 import { removeItemsFromTrack } from "../../utils/item";
 import { IDropInfo } from "../../interfaces/canvas";
 import { generateId, unitsToTimeUs } from "../../utils";
@@ -158,7 +158,7 @@ function onTrackItemsMoved(this: Timeline, payload: IDropInfo) {
         id: nanoid(),
         clipIds: ids,
         name: "",
-        type: target.type as any,
+        type: target.type as TrackType,
         accepts: accepts,
         tempIndex: index,
         muted: false
@@ -283,7 +283,8 @@ function onMouseUpClick(this: Timeline, e: TPointerEventInfo<TPointerEvent>) {
     const canvasEl = this.getElement();
     const canvasBounds = canvasEl.getBoundingClientRect();
     const vt = this.viewportTransform;
-    const position = (e as any).e.clientX - canvasBounds.left - vt[4];
+    const clientX = (e.e as MouseEvent).clientX || ((e.e as unknown as TouchEvent).touches?.[0]?.clientX);
+    const position = clientX - canvasBounds.left - vt[4];
     const time = unitsToTimeUs(position, this.scale.zoom);
     this.emitter.emit(TIMELINE_SEEK, { payload: { time } });
   }

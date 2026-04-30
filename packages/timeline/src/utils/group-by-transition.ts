@@ -40,8 +40,8 @@ export const groupByTransition = (data: {
 
   // Initialize transition maps
   Object.values(transitionsMap).forEach((transition) => {
-    const fromId = (transition as any).fromId;
-    const toId = (transition as any).toId;
+    const fromId = transition.fromId;
+    const toId = transition.toId;
     if (!itemTransitionMap.has(fromId)) itemTransitionMap.set(fromId, []);
     if (!itemTransitionMap.has(toId)) itemTransitionMap.set(toId, []);
     itemTransitionMap.get(fromId)?.push(transition);
@@ -65,12 +65,12 @@ export const groupByTransition = (data: {
 
       // Find transition from this item, excluding 'none' transitions
       const transition = Object.values(transitionsMap).find(
-        (t) => (t as any).fromId === currentId
+        (t) => t.fromId === currentId
       );
       if (!transition) break;
 
       group.push(transition);
-      currentId = (transition as any).toId;
+      currentId = transition.toId || "";
     }
 
     return group;
@@ -83,9 +83,9 @@ export const groupByTransition = (data: {
     // If item is not part of any transition or is the start of a sequence
     if (
       !itemTransitionMap.has(itemId) ||
-      !Object.values(transitionsMap).some(
-        (t) => (t as any).toId === itemId
-      )
+        !Object.values(transitionsMap).some(
+          (t) => t.toId === itemId
+        )
     ) {
       const group = buildGroup(itemId);
       if (group.length > 0) {
@@ -123,7 +123,7 @@ export function getNextTransitionMappings(
   const newTransitionIds: string[] = [];
   tracks.forEach((track) => {
     const items = trackItems
-      .filter((trackItem) => (track as any).clipIds.includes(trackItem.id))
+      .filter((trackItem) => track.clipIds.includes(trackItem.id))
       .map((item) => {
         if (activeObjectIds.includes(item.id)) {
           const placeHolder = canvas
@@ -191,10 +191,10 @@ export const getAdjustedTrackItemDimensions = (
   const nextTransition = transitionGroup[itemIndex + 1];
   const transitionsInGroup = transitionGroup.filter(
     (t) => t.type === "Transition"
-  );
+  ) as ITransitionClip[];
 
   // get all transitioins before prevTransition
-  const prevTransitionIndex = transitionsInGroup.indexOf(prevTransition);
+  const prevTransitionIndex = transitionsInGroup.indexOf(prevTransition as ITransitionClip);
   const transitionsBeforePrev = transitionsInGroup.slice(
     0,
     prevTransitionIndex

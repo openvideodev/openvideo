@@ -26,7 +26,8 @@ import {
   IClip,
   ITransitionClip,
   IUpdateStateOptions,
-  CanvasSpacing
+  CanvasSpacing,
+  State
 } from "./types";
 export interface ITimelineTrack extends ITrack {
   accepts?: string[];
@@ -86,7 +87,7 @@ interface Timeline extends Canvas, CanvasMixin {}
 class Timeline extends Canvas {
   static objectTypes: string[] = [];
 
-  static registerItems(classes: Record<any, any>) {
+  static registerItems(classes: Record<string, any>) {
     Object.keys(classes).forEach((key) => {
       classRegistry.setClass(classes[key], key);
     });
@@ -116,7 +117,7 @@ class Timeline extends Canvas {
   public spacing: CanvasSpacing;
   public guideLineColor: string;
   public withTransitions: string[] = [];
-  public emitter: EventEmitter<any>;
+  public emitter: EventEmitter<Record<string, any>>;
   public tracksManager: TrackManager;
   public itemsManager: ItemManager;
   public transitionManager: TransitionManager;
@@ -136,7 +137,7 @@ class Timeline extends Canvas {
   ) {
     super(canvasEl, options);
     console.log("Timeline options", options);
-    this.emitter = new EventEmitter<any>();
+    this.emitter = new EventEmitter<Record<string, any>>();
     this.bounding = options.bounding || {
       width: options.width || 0,
       height: options.height || 0
@@ -388,7 +389,7 @@ class Timeline extends Canvas {
     this.syncManager.syncTracksAndClips(data);
   }
 
-  public syncTracks(data: { tracks: ITimelineTrack[]; changedTracks: any[] }) {
+  public syncTracks(data: { tracks: ITimelineTrack[]; changedTracks: string[] }) {
     this.syncManager.syncTracks(data);
   }
 
@@ -409,7 +410,7 @@ class Timeline extends Canvas {
     this.syncManager.syncHistory(data);
   }
 
-  public syncAddOrRemoveClips(currentState: any) {
+  public syncAddOrRemoveClips(currentState: State) {
     this.syncManager.syncAddOrRemoveClips(currentState);
   }
 

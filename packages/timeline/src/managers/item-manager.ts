@@ -1,6 +1,6 @@
 import { ActiveSelection, FabricObject } from "fabric";
 import Timeline from "../timeline";
-import { Transition, Track, Trimmable } from "../objects";
+import { Transition, Track } from "../objects";
 import { unitsToTimeUs } from "../utils/timeline";
 import { IClip } from "../types";
 import { removeItemsFromTrack } from "../utils/item";

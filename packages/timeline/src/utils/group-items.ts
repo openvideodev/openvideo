@@ -17,9 +17,9 @@ export const groupTrackItems = (data: {
 
   // Initialize transition maps
   Object.values(transitionsMap).forEach((transition) => {
-    const fromId = (transition as any).fromId;
-    const toId = (transition as any).toId;
-    const kind = (transition as any).kind || "none";
+    const fromId = transition.fromId;
+    const toId = transition.toId;
+    const kind = transition.kind || "none";
     if (kind === "none") return; // Skip transitions of kind 'none'
     if (!itemTransitionMap.has(fromId)) itemTransitionMap.set(fromId, []);
     if (!itemTransitionMap.has(toId)) itemTransitionMap.set(toId, []);
@@ -45,19 +45,19 @@ export const groupTrackItems = (data: {
       // Find transition from this item
       const transition = Object.values(transitionsMap).find(
         (t) =>
-          (t as any).fromId === currentId &&
-          (t as any).kind !== "none" // Filter here
+          t.fromId === currentId &&
+          t.kind !== "none" // Filter here
       );
       if (!transition) break;
 
       group.push(transition);
-      currentId = (transition as any).toId;
+      currentId = transition.toId;
     }
 
     return group;
   };
   const transitionsWitouthNone = Object.values(transitionsMap).filter(
-    (t) => (t as any).kind !== "none"
+    (t) => t.kind !== "none"
   );
 
   // Process all items
@@ -67,7 +67,7 @@ export const groupTrackItems = (data: {
     // If item is not part of any transition or is the start of a sequence
     if (
       !itemTransitionMap.has(itemId) ||
-      !transitionsWitouthNone.some((t) => (t as any).toId === itemId)
+      !transitionsWitouthNone.some((t) => t.toId === itemId)
     ) {
       const group = buildGroup(itemId);
       if (group.length > 0) {

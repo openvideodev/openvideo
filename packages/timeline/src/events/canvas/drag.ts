@@ -3,7 +3,9 @@ import {
   DropEventData,
   FabricObject,
   Point,
-  classRegistry
+  classRegistry,
+  TPointerEvent,
+  Transform
 } from "fabric";
 import { cloneDeep, pick } from "lodash-es";
 import Timeline from "../../timeline";
@@ -102,7 +104,7 @@ function onDragEnter(this: Timeline, e: DragEventData) {
   // Get the drag data
   const draggedDataString = e.e.dataTransfer?.types[0] as string;
   if (!draggedDataString) return;
-  const draggedData = JSON.parse(draggedDataString);
+  const draggedData = JSON.parse(draggedDataString) as { type: string; duration?: number };
   const draggedType = draggedData.type;
   if (draggedType !== "transition" && !this.itemTypes.includes(draggedType.toLowerCase())) return;
 
@@ -333,9 +335,9 @@ function onDragOver(this: Timeline, e: DragEventData) {
   state.activeObjects[0].type !== "transitionguide" &&
     canvas.fire("object:moving", {
       target: previewItem,
-      e: e.e as any,
+      e: e.e as unknown as TPointerEvent,
       pointer: point,
-      transform: transform as any
+      transform: transform as unknown as Transform
     });
   const itemTypes = this.itemTypes;
   if (itemTypes.includes(draggedTypeItem)) {
@@ -403,8 +405,7 @@ function onDrop(this: Timeline, e: DropEventData) {
   });
   // Get the drag data
   const draggedDataString = e.e.dataTransfer?.types[0] as string;
-  // const draggedData = JSON.parse(draggedDataString);
-  const draggedData = JSON.parse(e.e.dataTransfer!.getData(draggedDataString));
+  const draggedData = JSON.parse(e.e.dataTransfer!.getData(draggedDataString)) as { type: string; [key: string]: unknown };
   if (draggedData.type !== "transition") {
     const previewItem = state.activeObjects[0];
     // Use previewItem.left directly as it's already in canvas coordinates (considering scroll)
@@ -463,13 +464,14 @@ function onDrop(this: Timeline, e: DropEventData) {
 
   if (nextTransition) {
     const transitionId = nextTransition.id;
-    const propstoUpdate = pick(draggedData, ["kind", "direction"]);
+    const propstoUpdate = pick(draggedData, ["kind", "direction"]) as { kind: string; direction?: string };
     // assign the new props to the nextTransition
     Object.keys(propstoUpdate).forEach((key) => {
-      if (key === "kind") {
-        nextTransition.kind = propstoUpdate[key];
+      const k = key as keyof typeof propstoUpdate;
+      if (k === "kind") {
+        nextTransition.kind = propstoUpdate[k] as string;
       } else {
-        (nextTransition as any)[key] = (propstoUpdate as any)[key];
+        (nextTransition as unknown as Record<string, unknown>)[k] = propstoUpdate[k];
       }
     });
 
@@ -593,7 +595,7 @@ const getIndexHelper = (overTrack: FabricObject, tracks: FabricObject[]) => {
 
 const addItem = (
   canvas: Timeline,
-  draggedData: any,
+  draggedData: { type: string; [key: string]: unknown },
   index: number,
   position: number,
   isNewTrack?: boolean
