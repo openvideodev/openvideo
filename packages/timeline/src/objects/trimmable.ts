@@ -4,7 +4,7 @@ import {
   ACTIVE_SELECTION_WIDTH
 } from "../constants/objects";
 import { createMediaControls } from "../controls";
-import { IClip, ITrim } from "@designcombo/types";
+import { IClip, ITrim } from "../types";
 import { timeUsToUnits } from "../utils";
 interface IDisplay {
   from: number;

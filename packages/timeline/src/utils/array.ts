@@ -1,4 +1,4 @@
-import { ITrack } from "@designcombo/types";
+import { ITrack } from "../types";
 
 export function findRelativePosition(
   arr: number[],

@@ -1,4 +1,4 @@
-import { ITransitionClip } from "@designcombo/types";
+import { ITransitionClip } from "../types";
 import { Transition, Track } from "../objects";
 import Timeline from "../timeline";
 

@@ -12,7 +12,7 @@ import {
 import { Helper, Placeholder, PreviewTrackItem, Track } from "../../objects";
 import Timeline from "../../timeline";
 import { clearPlaceholderObjects } from "../../utils/canvas";
-import { IClip, ITransitionClip } from "@designcombo/types";
+import { IClip, ITransitionClip } from "../../types";
 
 import { cloneDeep, throttle } from "lodash-es";
 import TransitionGuide from "../../objects/transition-guide";

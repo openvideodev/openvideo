@@ -1,5 +1,5 @@
 import { MICROSECONDS_PER_SECOND, PIXELS_PER_SECOND } from "../constants/constants";
-import { IClip } from "@designcombo/types";
+import { IClip } from "../types";
 import { OBJECT_TYPE_TRANSITION } from "../constants/objects";
 
 export function timeUsToUnits(

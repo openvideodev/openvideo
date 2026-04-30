@@ -1,4 +1,4 @@
-import { IClip, ITransitionClip } from "@designcombo/types";
+import { IClip, ITransitionClip } from "../types";
 import Timeline from "../timeline";
 import { Transition } from "../objects";
 import { OBJECT_TYPE_TRANSITION } from "../constants/objects";

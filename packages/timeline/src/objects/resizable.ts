@@ -4,7 +4,7 @@ import {
   ACTIVE_SELECTION_WIDTH
 } from "../constants/objects";
 import { createResizeControls } from "../controls";
-import { IClip, IDisplay } from "@designcombo/types";
+import { IClip, IDisplay } from "../types";
 
 export interface ResizableBaseProps
   extends Pick<RectProps, "width" | "height" | "top" | "left"> {

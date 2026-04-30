@@ -27,7 +27,7 @@ import {
   ITransitionClip,
   IUpdateStateOptions,
   CanvasSpacing
-} from "@designcombo/types";
+} from "./types";
 export interface ITimelineTrack extends ITrack {
   accepts?: string[];
   magnetic?: boolean;

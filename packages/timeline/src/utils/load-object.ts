@@ -1,5 +1,5 @@
 import { classRegistry } from "fabric";
-import { IClip } from "@designcombo/types";
+import { IClip } from "../types";
 import { timeUsToUnits } from "./timeline";
 
 export const loadObject = (

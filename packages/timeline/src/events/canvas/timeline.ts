@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import Timeline from "../../timeline";
-import { ITransitionClip } from "@designcombo/types";
+import { ITransitionClip } from "../../types";
 import { removeItemsFromTrack } from "../../utils/item";
 import { IDropInfo } from "../../interfaces/canvas";
 import { generateId, unitsToTimeUs } from "../../utils";

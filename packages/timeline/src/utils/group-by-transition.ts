@@ -1,4 +1,4 @@
-import { IClip, ITransitionClip } from "@designcombo/types";
+import { IClip, ITransitionClip } from "../types";
 import { FabricObject, RectProps } from "fabric";
 import Timeline from "../timeline";
 

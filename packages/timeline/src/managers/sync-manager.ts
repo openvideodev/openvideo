@@ -3,7 +3,7 @@ import {
   ITransitionClip,
   ITimelineScaleState,
   IUpdateStateOptions
-} from "@designcombo/types";
+} from "../types";
 import {
   splitClips,
   clipsToMap,

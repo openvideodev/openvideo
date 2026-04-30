@@ -16,7 +16,6 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
-    "@designcombo/typescript-config": "workspace:*",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^20.11.24",
     "rollup-plugin-peer-deps-external": "^2.2.4",
@@ -32,7 +31,6 @@
     "nanoid": "^5.0.7"
   },
   "peerDependencies": {
-    "@types/lodash-es": "^4.17.12",
-    "@designcombo/types": "workspace:*"
+    "@types/lodash-es": "^4.17.12"
   }
 }

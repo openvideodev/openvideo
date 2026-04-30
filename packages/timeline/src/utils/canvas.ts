@@ -1,6 +1,6 @@
 import { Canvas, FabricObject, TPointerEvent } from "fabric";
 import { Helper } from "../objects";
-import { CanvasSpacing } from "@designcombo/types";
+import { CanvasSpacing } from "../types";
 export const clearPlaceholderObjects = (
   canvas: Canvas,
   placeholderMovingObjects: FabricObject[]

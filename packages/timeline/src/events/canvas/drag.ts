@@ -27,7 +27,7 @@ import {
   GroupElement,
   groupByTransition
 } from "../../utils/group-by-transition";
-import { IClip } from "@designcombo/types";
+import { IClip } from "../../types";
 
 // Removed hardcoded ALLOWED_DROP_TYPES
 
