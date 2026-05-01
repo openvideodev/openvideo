@@ -23,7 +23,7 @@ interface BaseClipJSON {
     duration: number;
     targets?: number[];
   }>;
-  src: string;
+  src?: string;
   display: {
     from: number;
     to: number;
@@ -37,7 +37,7 @@ interface BaseClipJSON {
   angle: number;
   zIndex: number;
   opacity: number;
-  flip: "horizontal" | "vertical" | null;
+  flip?: "horizontal" | "vertical" | null;
   trim?: {
     from: number;
     to: number;
@@ -234,13 +234,13 @@ export interface EffectJSON extends BaseClipJSON {
 // Transition clip specific
 export interface TransitionJSON extends BaseClipJSON {
   type: "Transition";
-  transitionEffect: {
+  transitionEffect?: {
     id: string;
     key: string;
     name: string;
   };
-  fromClipId: string | null;
-  toClipId: string | null;
+  fromClipId?: string | null;
+  toClipId?: string | null;
 }
 
 // Placeholder clip specific

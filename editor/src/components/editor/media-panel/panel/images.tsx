@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
-import { Image, Log } from "openvideo";
+import { engine } from "@/lib/project";
+import { Log } from "openvideo";
 import { Search, Image as ImageIcon, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { VisualsChatPanel } from "../visuals-chat-panel";
@@ -73,19 +74,15 @@ export default function PanelImages() {
   };
 
   const addItemToCanvas = async (asset: PexelsImage) => {
-    if (!studio) return;
-
     try {
-      const imageClip = await Image.fromUrl(asset.src.large2x);
-      imageClip.name = `Photo by ${asset.photographer}`;
-      imageClip.display = { from: 0, to: 5 * 1e6 };
-      imageClip.duration = 5 * 1e6;
-
-      // Scale to fit and center in scene
-      await imageClip.scaleToFit(canvasSize.width, canvasSize.height);
-      imageClip.centerInScene(canvasSize.width, canvasSize.height);
-
-      await studio.addClip(imageClip);
+      // Use the clean Engine API to add an image clip
+      engine.addClip({
+        type: "Image",
+        src: asset.src.large2x,
+        name: `Photo by ${asset.photographer}`,
+        display: { from: 0, to: 5_000_000 },
+        // The engine/bridge handles scaling and centering automatically
+      });
     } catch (error) {
       Log.error(`Failed to add image:`, error);
     }

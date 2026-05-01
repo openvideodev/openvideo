@@ -1,7 +1,8 @@
-import { createStore } from "zustand/vanilla";
+import { createStore, StoreApi } from "zustand/vanilla";
 import { IProject, AnyClip, ITrack, IScaleState } from "./types";
 import { loadClip } from "./utils/load-item";
 import { manageTracks } from "./utils/manage-tracks";
+import { nanoid } from "nanoid";
 
 export interface ProjectState extends IProject {
   selectedIds: string[];
@@ -16,11 +17,14 @@ export interface ProjectActions {
   deselect: (ids?: string | string[]) => void;
 
   // Clips
-  addClip: (clip: Partial<AnyClip> & { type: string }, trackId?: string) => AnyClip;
+  addClip: (clip: Partial<AnyClip> & { type: string }, trackId?: string) => Promise<AnyClip>;
   updateClip: (id: string, updates: Partial<AnyClip>) => void;
   removeClips: (ids: string[]) => void;
 
   // Tracks
+  addTrack: (track?: Partial<ITrack>) => ITrack;
+  removeTrack: (id: string) => void;
+  moveTrack: (id: string, newIndex: number) => void;
   setTracks: (tracks: ITrack[]) => void;
   
   // Playback
@@ -32,6 +36,7 @@ export interface ProjectActions {
 
   // Project
   updateSettings: (settings: Partial<IProject["settings"]>) => void;
+  recalculateDuration: () => void;
 }
 
 export type ProjectStore = ProjectState & ProjectActions;
@@ -95,16 +100,14 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       })),
 
     // Actions: Clips
-    addClip: (payload, trackId) => {
+    addClip: async (payload, trackId) => {
       const state = get();
       
-      // 1. Load/Prepare Clip (Modularity: Step 1)
-      const newClip = loadClip(payload, { 
+      const newClip = await loadClip(payload, { 
         canvasSize: { width: state.settings.width, height: state.settings.height } 
       });
 
       set((state) => {
-        // 2. Manage Tracks (Modularity: Step 2)
         const { tracks: nextTracks } = manageTracks(state.tracks, newClip, trackId);
         
         return { 
@@ -113,6 +116,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         };
       });
 
+      get().recalculateDuration();
       return newClip;
     },
 
@@ -130,6 +134,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
           clips: { ...state.clips, [id]: updatedClip },
         };
       });
+      get().recalculateDuration();
     },
 
     removeClips: (ids) => {
@@ -148,16 +153,69 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
           selectedIds: state.selectedIds.filter((id) => !ids.includes(id)),
         };
       });
+      get().recalculateDuration();
     },
 
     // Actions: Tracks
+    addTrack: (payload) => {
+      const newTrack: ITrack = {
+        id: payload?.id || "track_" + nanoid(10),
+        name: payload?.name || "Track " + (get().tracks.length + 1),
+        type: payload?.type || "Video",
+        clipIds: payload?.clipIds || [],
+        accepts: payload?.accepts,
+      };
+
+      set((state) => ({
+        tracks: [newTrack, ...state.tracks],
+      }));
+
+      return newTrack;
+    },
+
+    removeTrack: (id) => {
+      const track = get().tracks.find(t => t.id === id);
+      if (!track) return;
+      get().removeClips(track.clipIds);
+      set((state) => ({
+        tracks: state.tracks.filter(t => t.id !== id),
+      }));
+    },
+
+    moveTrack: (id, newIndex) => {
+      set((state) => {
+        const currentIndex = state.tracks.findIndex(t => t.id === id);
+        if (currentIndex === -1) return state;
+        const newTracks = [...state.tracks];
+        const [movedTrack] = newTracks.splice(currentIndex, 1);
+        newTracks.splice(newIndex, 0, movedTrack);
+        return { tracks: newTracks };
+      });
+    },
+
     setTracks: (tracks) => set({ tracks }),
 
     // Actions: Project
-    updateSettings: (settings) =>
+    updateSettings: (settings) => {
       set((state) => ({
         settings: { ...state.settings, ...settings },
-      })),
+      }));
+    },
+
+    recalculateDuration: () => {
+      const { clips } = get();
+      let maxUs = 0;
+      Object.values(clips).forEach((clip) => {
+        const endUs = clip.display.to > 0 ? clip.display.to : clip.display.from + clip.duration;
+        if (endUs > maxUs) maxUs = endUs;
+      });
+      
+      const finalDuration = Math.max(30_000_000, maxUs + 1_000_000);
+
+      if (get().settings.duration !== finalDuration) {
+        get().updateSettings({ duration: finalDuration });
+      }
+    }
   }));
 };
 

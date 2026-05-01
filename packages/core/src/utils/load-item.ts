@@ -17,19 +17,108 @@ const getTrim = (trim?: Partial<ITrim>, duration: number = DEFAULT_DURATION): IT
   return { from, to };
 };
 
-export const loadClip = (
+/**
+ * Helper to get image dimensions in browser
+ */
+const getImageDimensions = (src: string): Promise<{ width: number; height: number } | null> => {
+  if (typeof window === "undefined" || typeof Image === "undefined") return Promise.resolve(null);
+  
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+};
+
+/**
+ * Helper to get video metadata in browser
+ */
+const getVideoMetadata = (src: string): Promise<{ width: number; height: number; duration: number } | null> => {
+  if (typeof window === "undefined" || typeof document === "undefined") return Promise.resolve(null);
+  
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      resolve({ 
+        width: video.videoWidth, 
+        height: video.videoHeight, 
+        duration: Math.floor(video.duration * 1_000_000) 
+      });
+    };
+    video.onerror = () => resolve(null);
+    video.src = src;
+  });
+};
+
+/**
+ * Helper to get audio duration in browser
+ */
+const getAudioMetadata = (src: string): Promise<{ duration: number } | null> => {
+  if (typeof window === "undefined" || typeof Audio === "undefined") return Promise.resolve(null);
+  
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.onloadedmetadata = () => {
+      resolve({ 
+        duration: Math.floor(audio.duration * 1_000_000) 
+      });
+    };
+    audio.onerror = () => resolve(null);
+    audio.src = src;
+  });
+};
+
+export const loadClip = async (
   payload: Partial<AnyClip> & { type: string },
   options: { canvasSize: { width: number; height: number } }
-): AnyClip => {
+): Promise<AnyClip> => {
   const { canvasSize } = options;
   
-  // Basic centering logic for headless or initial placement
-  const width = payload.width ?? 600;
-  const height = payload.height ?? 124;
+  // 1. Resolve Dimensions and Duration (Async if needed)
+  let width = payload.width;
+  let height = payload.height;
+  let duration = payload.duration;
+
+  if (payload.src) {
+    if (payload.type === "Image" && (!width || !height)) {
+      const dims = await getImageDimensions(payload.src);
+      if (dims) {
+        const scale = Math.min(canvasSize.width / dims.width, canvasSize.height / dims.height, 1);
+        width = dims.width * scale;
+        height = dims.height * scale;
+      }
+    } else if (payload.type === "Video") {
+      const meta = await getVideoMetadata(payload.src);
+      if (meta) {
+        if (!width || !height) {
+          const scale = Math.min(canvasSize.width / meta.width, canvasSize.height / meta.height, 1);
+          width = meta.width * scale;
+          height = meta.height * scale;
+        }
+        if (!duration) {
+          duration = meta.duration;
+        }
+      }
+    } else if (payload.type === "Audio" && !duration) {
+      const meta = await getAudioMetadata(payload.src);
+      if (meta) {
+        duration = meta.duration;
+      }
+    }
+  }
+
+  // Fallbacks
+  width = width ?? (payload.type === "Audio" ? 0 : 600);
+  height = height ?? (payload.type === "Audio" ? 0 : 400);
+  duration = duration ?? DEFAULT_DURATION;
+
+  // 2. Centering logic
   const left = payload.left ?? (canvasSize.width - width) / 2;
   const top = payload.top ?? (canvasSize.height - height) / 2;
 
-  const trim = getTrim(payload.trim, payload.duration || DEFAULT_DURATION);
+  const trim = getTrim(payload.trim, duration);
   const display = getDisplay(payload.display, trim.to - trim.from);
 
   const baseClip = {

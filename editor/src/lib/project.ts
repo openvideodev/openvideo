@@ -1,7 +1,6 @@
-import { createProjectStore } from "@openvideo/core";
+import { CoreEngine } from "@openvideo/core";
 
-// Create a singleton instance of the vanilla Zustand store
-export const projectStore = createProjectStore({
+export const engine = new CoreEngine({
   settings: {
     width: 1920,
     height: 1080,
@@ -10,7 +9,9 @@ export const projectStore = createProjectStore({
   }
 });
 
-// For debugging
+export const projectStore = engine.store;
+export const playbackController = engine.playback;
+
 if (typeof window !== "undefined") {
-  (window as any).projectStore = projectStore;
+  (window as any).engine = engine;
 }

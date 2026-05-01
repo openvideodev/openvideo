@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Effect, getEffectOptions, VALUES_FILTER_SPECIAL, registerCustomEffect } from "openvideo";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useStudioStore } from "@/stores/studio-store";
+import { formatFilterName } from "@/utils/effects";
+import { engine } from "@/lib/project";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
-import { formatFilterName } from "@/utils/effects";
 
 const EFFECT_DURATION_DEFAULT = 5000000;
 
@@ -99,7 +99,6 @@ const EffectCard = ({ label, staticSrc, dynamicSrc, onClick, badge }: EffectCard
 // ─── Default Effects ──────────────────────────────────────────────────────────
 
 const EffectDefault = () => {
-  const { studio } = useStudioStore();
   const effects = getEffectOptions();
   const specialEffects = Object.keys(VALUES_FILTER_SPECIAL).map((filterName) => ({
     key: filterName,
@@ -109,18 +108,24 @@ const EffectDefault = () => {
   }));
   const allEffects = [...specialEffects, ...effects];
 
-  const handleClick = (key: string) => {
-    if (!studio) return;
+  const handleClick = async (key: string) => {
 
-    const clip = new Effect(key);
-    clip.duration = EFFECT_DURATION_DEFAULT;
-    if (key === "embossFilter") {
-      clip.effect.values = { strength: 5 };
-    }
-    if (key === "pixelateFilter") {
-      clip.effect.values = { size: 10 };
-    }
-    studio.addClip(clip);
+    const effectValues: Record<string, any> = {};
+    if (key === "embossFilter") effectValues.strength = 5;
+    if (key === "pixelateFilter") effectValues.size = 10;
+
+    await engine.addClip({
+      type: "Effect",
+      name: formatFilterName(key),
+      display: { from: 0, to: EFFECT_DURATION_DEFAULT },
+      duration: EFFECT_DURATION_DEFAULT,
+      effect: {
+        id: "eff_" + Date.now(),
+        key: key,
+        name: key,
+        values: effectValues,
+      },
+    });
   };
 
   return (
@@ -150,7 +155,6 @@ type CustomPreset = {
 };
 
 const EffectCustom = () => {
-  const { studio } = useStudioStore();
   const [ownPresets, setOwnPresets] = useState<CustomPreset[]>([]);
   const [publishedPresets, setPublishedPresets] = useState<CustomPreset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -176,7 +180,6 @@ const EffectCustom = () => {
   }, []);
 
   const handleClick = async (preset: CustomPreset) => {
-    if (!studio) return;
     // Use a stable key derived from the preset id
     const key = `custom_effect_${preset.id}`;
     // Register the custom GLSL shader so the engine knows how to render it
@@ -185,9 +188,20 @@ const EffectCustom = () => {
       label: preset.data.label || preset.name,
       fragment: preset.data.fragment,
     } as any);
-    const clip = new Effect(key);
-    clip.duration = EFFECT_DURATION_DEFAULT;
-    studio.addClip(clip);
+    await engine.addClip({
+      type: "Effect",
+      name: preset.data.label || preset.name,
+      display: { from: 0, to: EFFECT_DURATION_DEFAULT },
+      duration: EFFECT_DURATION_DEFAULT,
+      effect: {
+        id: "eff_" + preset.id,
+        key: key,
+        name: key,
+      },
+      metadata: {
+        fragment: preset.data.fragment,
+      },
+    });
   };
 
   if (isLoading) {

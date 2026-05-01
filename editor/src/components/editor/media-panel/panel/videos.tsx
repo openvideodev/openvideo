@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
-import { Video, Log, Placeholder } from "openvideo";
+import { Log } from "openvideo";
+import { engine } from "@/lib/project";
 import { Search, Film, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { cloneDeep, debounce } from "lodash";
-import { projectStore } from "@/lib/project";
+import { debounce } from "lodash";
 
 interface PexelsVideo {
   id: number;
@@ -75,81 +75,24 @@ export default function PanelVideos() {
   };
 
   const addItemToCanvas = async (asset: PexelsVideo) => {
-    if (!studio) return;
     try {
-      // Find the best quality mp4 link
       const videoFile = asset.video_files.find((f) => f.quality === "hd") || asset.video_files[0];
       if (!videoFile) throw new Error("No video file found");
-
-      const src = videoFile.link;
-      const clipName = `Video by ${asset.user.name}`;
-
-      // Calculate centered position and fit scale
-      const { width: canvasWidth, height: canvasHeight } = canvasSize;
-      const assetRatio = asset.width / asset.height;
-      const canvasRatio = canvasWidth / canvasHeight;
-      
-      let width, height;
-      if (assetRatio > canvasRatio) {
-        width = canvasWidth;
-        height = canvasWidth / assetRatio;
-      } else {
-        height = canvasHeight;
-        width = canvasHeight * assetRatio;
-      }
-
-      const left = (canvasWidth - width) / 2;
-      const top = (canvasHeight - height) / 2;
-
-      // [FLOW]: Add to Core first
-      projectStore.getState().addClip({
+      console.log("Adding video:", asset);
+      // Use the clean Engine API to add a video clip
+      // The engine handles centering and initial layout
+      await engine.addClip({
         type: "Video",
-        name: clipName,
-        src: src,
-        left,
-        top,
-        width,
-        height,
+        src: videoFile.link,
+        name: `Video by ${asset.user.name}`,
+        width: asset.width,
+        height: asset.height,
         display: { from: 0, to: asset.duration * 1e6 },
         trim: { from: 0, to: asset.duration * 1e6 },
+        metadata: {
+          previewUrl: asset.image,
+        },
       });
-
-      // The sync bridge in studio-to-store-sync.ts will detect this and add it to Studio
-
-      // 2. Load the real clip in the background
-      Video.fromUrl(src)
-        .then(async (videoClip) => {
-          videoClip.name = clipName;
-
-          // 3. Replace all placeholders with this source once loaded
-          await studio.timeline.replaceClipsBySource(src, async (oldClip) => {
-            const clone = await videoClip.clone();
-            // Copy state from placeholder (user might have moved/resized/split it)
-            clone.id = oldClip.id; // Keep the same ID if possible, or replaceClipsBySource handles it
-            clone.name = oldClip.name; // Keep the name from placeholder
-            clone.left = oldClip.left;
-            clone.top = oldClip.top;
-            clone.width = oldClip.width;
-            clone.height = oldClip.height;
-            const realDuration = videoClip.meta.duration;
-            const newTrim = { ...oldClip.trim };
-            newTrim.to = Math.max(newTrim.to, realDuration);
-            newTrim.from = Math.min(newTrim.from, newTrim.to);
-            console.warn(
-              "This needs to be reviewed. assets from pexels may not have the right duration",
-            );
-            clone.display = { ...oldClip.display };
-            clone.trim = newTrim;
-            clone.duration = (newTrim.to - newTrim.from) / clone.playbackRate;
-            clone.display.to = clone.display.from + clone.duration;
-            clone.zIndex = oldClip.zIndex;
-            return clone;
-          });
-        })
-        .catch((err) => {
-          Log.error("Failed to load video in background:", err);
-          // Optional: handle failure by removing placeholder or showing error
-        });
     } catch (error) {
       Log.error(`Failed to add video:`, error);
     }

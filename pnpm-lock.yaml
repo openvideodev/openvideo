@@ -409,6 +409,9 @@ importers:
 
   packages/openvideo:
     dependencies:
+      '@openvideo/core':
+        specifier: workspace:*
+        version: link:../core
       '@pixi/layout':
         specifier: ^3.2.0
         version: 3.2.0(@types/react@19.2.8)(pixi.js@8.14.3)(react@19.2.3)(yoga-layout@3.2.1)

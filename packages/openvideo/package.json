@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "@pixi/layout": "^3.2.0",
+    "@openvideo/core": "workspace:*",
     "gl-transitions": "^1.43.0",
     "gsap": "^3.12.7",
     "mediabunny": "^1.26.0",

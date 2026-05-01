@@ -5,11 +5,14 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
+  useCallback
 } from "react";
 import { timeUsToUnits, unitsToTimeUs, ITimelineScaleState } from "@openvideo/timeline";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
 import { useTheme } from "next-themes";
+import { projectStore } from "@/lib/project";
+
 const Playhead = ({
   scrollLeft,
   scale
@@ -17,20 +20,32 @@ const Playhead = ({
   scrollLeft: number;
   scale: ITimelineScaleState;
 }) => {
-  const playheadRef = useRef<HTMLDivElement>(null);
-  const { currentTime, seek } = usePlaybackStore();
-  const position =
-    timeUsToUnits(currentTime * 1_000_000, scale.zoom) - scrollLeft;
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragStartPosition, setDragStartPosition] = useState(position);
+  const { currentTime } = usePlaybackStore();
   const timelineOffsetX = useTimelineOffsetX();
-
   const { theme, resolvedTheme } = useTheme();
+  
+  // Track drag state in a ref to avoid closure issues
+  const dragRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startTimeUs: 0,
+  });
+
+  // Local state for optimistic UI updates (smooth dragging)
+  const [localTimeUs, setLocalTimeUs] = useState<number | null>(null);
+
+  // Determine which time to use for visual positioning
+  const displayTimeUs = localTimeUs !== null ? localTimeUs : currentTime * 1_000_000;
+  
+  const position = useMemo(() => {
+    return timeUsToUnits(displayTimeUs, scale.zoom) - scrollLeft;
+  }, [displayTimeUs, scale.zoom, scrollLeft]);
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
+
   const currentTheme = useMemo(() => {
     if (!mounted) return "light";
     return (theme === "system" ? resolvedTheme : theme) as "dark" | "light";
@@ -39,71 +54,73 @@ const Playhead = ({
   const color = useMemo(() => {
     return currentTheme === "dark" ? "#ffffff" : "#000000";
   }, [currentTheme]);
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
 
-  const handleMouseDown = (
-    e:
-      | MouseEvent<HTMLDivElement, globalThis.MouseEvent>
-      | TouchEvent<HTMLDivElement>
-  ) => {
-    e.preventDefault(); // Prevent default drag behavior
-    setIsDragging(true);
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    setDragStartX(clientX);
-    setDragStartPosition(position);
-  };
+  const handleMouseMove = useCallback((e: MouseEvent | TouchEvent | any) => {
+    if (!dragRef.current.isDragging) return;
 
-  const handleMouseMove = (
-    e: globalThis.MouseEvent | globalThis.TouchEvent
-  ) => {
-    if (isDragging) {
-      e.preventDefault(); // Prevent default drag behavior
-      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const delta = clientX - dragStartX + scrollLeft;
-      const newPosition = dragStartPosition + delta;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const deltaX = clientX - dragRef.current.startX;
+    
+    // Calculate new time based on pixel delta
+    const deltaTimeUs = unitsToTimeUs(deltaX, scale.zoom);
+    const newTimeUs = Math.max(0, dragRef.current.startTimeUs + deltaTimeUs);
+    
+    // 1. Update local state for INSTANT visual response
+    setLocalTimeUs(newTimeUs);
+    
+    // 2. Update CORE state (source of truth)
+    projectStore.getState().seek(newTimeUs);
+  }, [scale.zoom]);
 
-      const timeUs = unitsToTimeUs(newPosition, scale.zoom);
-      seek(timeUs / 1_000_000);
-    }
-  };
-
-  useEffect(() => {
-    const preventDefaultDrag = (e: Event) => {
-      e.preventDefault();
-    };
-
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.addEventListener("touchmove", handleMouseMove);
-      document.addEventListener("touchend", handleMouseUp);
-      document.addEventListener("dragstart", preventDefaultDrag);
-    } else {
+  const handleMouseUp = useCallback(() => {
+    if (dragRef.current.isDragging) {
+      dragRef.current.isDragging = false;
+      setLocalTimeUs(null);
+      
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("touchmove", handleMouseMove);
       document.removeEventListener("touchend", handleMouseUp);
-      document.removeEventListener("dragstart", preventDefaultDrag);
     }
+  }, [handleMouseMove]);
 
-    // Cleanup event listeners on component unmount
+  const handleMouseDown = (
+    e: MouseEvent<HTMLDivElement> | TouchEvent<HTMLDivElement>
+  ) => {
+    e.preventDefault();
+    const clientX = (e as any).touches ? (e as any).touches[0].clientX : (e as any).clientX;
+    
+    // Capture current state at the moment of interaction
+    const startTimeUs = projectStore.getState().currentTime;
+
+    dragRef.current = {
+      isDragging: true,
+      startX: clientX,
+      startTimeUs: startTimeUs,
+    };
+
+    setLocalTimeUs(startTimeUs);
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("touchmove", handleMouseMove, { passive: false });
+    document.addEventListener("touchend", handleMouseUp);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("touchmove", handleMouseMove);
       document.removeEventListener("touchend", handleMouseUp);
-      document.removeEventListener("dragstart", preventDefaultDrag);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [handleMouseMove, handleMouseUp]);
 
   return (
     <div
-      ref={playheadRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
-      onDragStart={(e) => e.preventDefault()}
       id="playhead"
       style={{
         position: "absolute",
@@ -111,23 +128,30 @@ const Playhead = ({
         top: 50,
         width: 1,
         height: "calc(100% - 50px)",
-        zIndex: 10,
-        cursor: "pointer",
-        touchAction: "none" // Prevent default touch actions
+        zIndex: 100,
+        cursor: "ew-resize",
+        touchAction: "none"
       }}
     >
+      {/* Handle */}
       <div
-        id="playhead-handle"
         style={{
           borderRadius: "0 0 4px 4px",
-          backgroundColor: color
+          backgroundColor: color,
+          height: "16px",
+          width: "12px",
+          transform: "translateX(-50%)",
+          cursor: "grab"
         }}
-        className="absolute top-0 h-4 w-2 -translate-x-1/2 transform text-xs font-semibold text-zinc-800"
-      />
-      <div className="relative h-full">
-        <div className="absolute top-0 h-full w-3 -translate-x-1/2 transform" />
+        className="absolute top-0 flex items-center justify-center shadow-lg border border-black/10"
+      >
+         <div style={{ width: 1, height: 8, backgroundColor: currentTheme === 'dark' ? '#000' : '#fff', opacity: 0.5 }} />
+      </div>
+      
+      {/* Line */}
+      <div className="relative h-full pointer-events-none">
         <div
-          className="absolute top-0 h-full w-0.5 -translate-x-1/2 transform"
+          className="absolute top-0 h-full w-[1px] -translate-x-1/2 transform shadow-sm"
           style={{ backgroundColor: color }}
         />
       </div>

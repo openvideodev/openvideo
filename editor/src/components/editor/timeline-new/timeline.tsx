@@ -29,6 +29,7 @@ import PreviewTrackItem from "./items/preview-drag-item";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
 import { addStudioSync } from "./studio-to-store-sync";
 import { TIMELINE_SCALE_CHANGED, TIMELINE_BOUNDING_CHANGED } from "@openvideo/timeline";
+import Effect from "./items/effect";
 
 CanvasTimeline.registerItems({
   Text,
@@ -42,7 +43,8 @@ CanvasTimeline.registerItems({
   LinealAudioBars,
   RadialAudioBars,
   WaveAudioBars,
-  HillAudioBars
+  HillAudioBars,
+  Effect
 });
 
 const EMPTY_SIZE = { width: 0, height: 0 };
@@ -172,6 +174,7 @@ const Timeline = () => {
       sizesMap: {
         caption: 32,
         text: 32,
+        effect: 36,
         audio: 36,
         video: 48,
         image: 48,
@@ -190,6 +193,7 @@ const Timeline = () => {
         "video",
         "caption",
         "helper",
+        "effect",
         "track",
         "composition",
         "template",
@@ -202,6 +206,7 @@ const Timeline = () => {
       ],
       acceptsMap: {
         text: ["text", "caption"],
+        effect: ["effect"],
         image: ["image", "video"],
         main: ["image", "video"],
         video: ["video", "image"],

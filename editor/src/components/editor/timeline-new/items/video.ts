@@ -83,6 +83,7 @@ class Video extends Trimmable {
 
   constructor(props: VideoProps) {
     super(props);
+    console.warn('Props', props);
     this.id = props.id;
     this.tScale = props.tScale;
     this.objectCaching = false;

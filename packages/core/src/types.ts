@@ -8,7 +8,7 @@ export interface ITrim {
   to: number;
 }
 
-export type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption";
+export type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption" | "Effect";
 
 export interface IBaseClip {
   id: string;
@@ -28,18 +28,38 @@ export interface IBaseClip {
   src?: string;
   text?: string;
   flip?: any;
+  metadata?: Record<string, any>;
   [key: string]: any;
 }
 
-// Discriminated Union for better type safety
 export interface IVideoClip extends IBaseClip { type: "Video"; src: string; }
 export interface IAudioClip extends IBaseClip { type: "Audio"; src: string; }
 export interface IImageClip extends IBaseClip { type: "Image"; src: string; }
 export interface ITextClip extends IBaseClip { type: "Text"; text: string; }
 export interface ICaptionClip extends IBaseClip { type: "Caption"; text: string; src: string; }
-export interface ITransitionClip extends IBaseClip { type: "Transition"; }
 
-export type AnyClip = IVideoClip | IAudioClip | IImageClip | ITextClip | ICaptionClip | ITransitionClip;
+export interface ITransitionClip extends IBaseClip { 
+  type: "Transition"; 
+  transitionEffect?: {
+    id: string;
+    key: string;
+    name: string;
+  };
+  fromClipId?: string | null;
+  toClipId?: string | null;
+}
+
+export interface IEffectClip extends IBaseClip {
+  type: "Effect";
+  effect: {
+    id: string;
+    key: string;
+    name: string;
+    values?: Record<string, any>;
+  };
+}
+
+export type AnyClip = IVideoClip | IAudioClip | IImageClip | ITextClip | ICaptionClip | ITransitionClip | IEffectClip;
 
 export interface ITrack {
   id: string;
@@ -62,13 +82,18 @@ export interface IProject {
   clips: Record<string, AnyClip>;
 }
 
-export interface SelectionState {
-  selectedIds: string[];
-}
-
 export interface IScaleState {
   zoom: number;
   unit: number;
   segments: number;
   index: number;
+}
+
+/**
+ * IRenderer - Platform-agnostic rendering contract.
+ */
+export interface IRenderer {
+  init(project: IProject): Promise<void>;
+  render(time: number): void;
+  dispose(): void;
 }

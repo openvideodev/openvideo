@@ -1,7 +1,6 @@
 "use client";
 
-import { useStudioStore } from "@/stores/studio-store";
-import { Audio, Log } from "openvideo";
+import { Log } from "openvideo";
 import { IconWaveSine } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { AudioItem } from "./audio-item";
@@ -10,6 +9,7 @@ import { Search, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { debounce } from "lodash";
+import { engine } from "@/lib/project";
 
 interface SoundEffect {
   id: string;
@@ -24,7 +24,6 @@ interface SoundEffect {
 }
 
 export default function PanelSFX() {
-  const { studio } = useStudioStore();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SoundEffect[]>([]);
@@ -73,12 +72,12 @@ export default function PanelSFX() {
   };
 
   const handleAddAudio = async (url: string, name: string) => {
-    if (!studio) return;
-
     try {
-      const audioClip = await Audio.fromUrl(url);
-      audioClip.name = name;
-      await studio.addClip(audioClip);
+      await engine.addClip({
+        type: "Audio",
+        src: url,
+        name: name,
+      });
     } catch (error) {
       Log.error("Failed to add audio:", error);
     }

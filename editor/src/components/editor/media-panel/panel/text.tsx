@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useStudioStore } from "@/stores/studio-store";
-import { projectStore } from "@/lib/project";
-import { Text, Log } from "openvideo";
+import { engine } from "@/lib/project";
+import { Log } from "openvideo";
 
 const TEXT_PRESETS = [
   {
@@ -102,11 +102,11 @@ export default function PanelText() {
 
   const handleAddText = async (preset?: (typeof TEXT_PRESETS)[0]) => {
     try {
-      // [FLOW]: Add to Core first
-      projectStore.getState().addClip({
+      // Use the clean Engine API to add a text clip
+      engine.addClip({
         type: "Text",
-        name: preset ? preset.name : "Text",
-        text: preset ? preset.description : "Add Text",
+        name: preset?.name || "Text",
+        text: preset?.description || "Add Text",
         style: {
           fontSize: preset?.style.fontSize || 124,
           fontFamily: preset?.style.fontFamily || "Arial",
@@ -122,13 +122,11 @@ export default function PanelText() {
         },
         display: { from: 0, to: 5_000_000 },
         trim: { from: 0, to: 5_000_000 },
-        left: 1920 / 2 - 300, // Roughly centered
+        left: 1920 / 2 - 300,
         top: 1080 / 2 - 62,
         width: 600,
         height: 124,
       });
-
-      // The sync bridge will automatically push this to Studio and Timeline
     } catch (error) {
       Log.error("Failed to add text:", error);
     }
