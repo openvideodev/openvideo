@@ -9,3 +9,4 @@ export { default as LinealAudioBars } from "./lineal-audio-bars";
 export { default as RadialAudioBars } from "./radial-audio-bars";
 export { default as WaveAudioBars } from "./wave-audio-bars";
 export { default as HillAudioBars } from "./hill-audio-bars";
+export { default as Transition } from "./transition";

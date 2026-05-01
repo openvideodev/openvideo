@@ -196,9 +196,9 @@ export interface ITextClip extends IClipBase {
 export interface ITransitionClip extends IClipBase {
   type: "Transition";
   style: ITransitionStyle;
-  kind: string;
-  fromId: string;
-  toId: string;
+  key: string;
+  fromClipId: string;
+  toClipId: string;
 }
 
 export interface ICaptionWord {

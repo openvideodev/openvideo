@@ -23,7 +23,8 @@ import {
   LinealAudioBars,
   RadialAudioBars,
   WaveAudioBars,
-  HillAudioBars
+  HillAudioBars,
+  Transition
 } from "./items";
 import PreviewTrackItem from "./items/preview-drag-item";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
@@ -44,7 +45,8 @@ CanvasTimeline.registerItems({
   RadialAudioBars,
   WaveAudioBars,
   HillAudioBars,
-  Effect
+  Effect,
+  Transition
 });
 
 const EMPTY_SIZE = { width: 0, height: 0 };
@@ -202,7 +204,8 @@ const Timeline = () => {
         "progressFrame",
         "progressBar",
         "waveAudioBars",
-        "hillAudioBars"
+        "hillAudioBars",
+        "transition"
       ],
       acceptsMap: {
         text: ["text", "caption"],
@@ -220,7 +223,8 @@ const Timeline = () => {
         waveAudioBars: ["audio", "waveAudioBars"],
         hillAudioBars: ["audio", "hillAudioBars"]
       },
-      guideLineColor: "#ffffff"
+      guideLineColor: "#ffffff",
+      withTransitions: ["image", "video"]
     });
 
     canvas.initScrollbars({

@@ -11,18 +11,18 @@ interface TransitionProps
   id: string;
   tScale: number;
   duration: number;
-  fromId: string;
-  toId: string;
-  kind: string;
+  fromClipId: string;
+  toClipId: string;
+  key: string;
   strokeDashArray?: number[];
 }
 
 class Transition extends Rect {
   static type = "Transition";
   public duration: number;
-  public fromId: string;
-  public toId: string;
-  public kind: string = "none";
+  public fromClipId: string;
+  public toClipId: string;
+  public key: string = "none";
   public isSelected = false;
   public isHovered = false;
   public availableDrop = true;
@@ -61,16 +61,16 @@ class Transition extends Rect {
     this.strokeWidth = 0;
     this.tScale = props.tScale;
     this.duration = props.duration;
-    this.fromId = props.fromId;
-    this.toId = props.toId;
-    this.kind = props.kind;
+    this.fromClipId = props.fromClipId;
+    this.toClipId = props.toClipId;
+    this.key = props.key;
     this.strokeDashArray = props.strokeDashArray || [];
 
     // Use width and height from props if provided, otherwise default to ownDefaults or super
     this.width = props.width || this.width;
     this.height = props.height || this.height;
 
-    if (this.kind === "none") {
+    if (this.key === "none") {
       this.hasControls = false;
     }
 
@@ -89,7 +89,7 @@ class Transition extends Rect {
 
   // add custom text to the track item
   public _render(ctx: CanvasRenderingContext2D) {
-    if (this.kind === "none" && !this.isHovered && !this.isSelected) {
+    if (this.key === "none" && !this.isHovered && !this.isSelected) {
       return;
     }
     const visualWidth = 24;
@@ -119,7 +119,7 @@ class Transition extends Rect {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    if (this.kind === "none") {
+    if (this.key === "none") {
       // Plus icon
       ctx.beginPath();
       ctx.moveTo(-5, 0);

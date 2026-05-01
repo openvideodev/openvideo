@@ -46,8 +46,8 @@ function onSelectionCreated(this: Timeline) {
         return true;
       } else if (obj instanceof Transition) {
         if (
-          activeObjIds.includes(obj.fromId) &&
-          activeObjIds.includes(obj.toId)
+          activeObjIds.includes(obj.fromClipId) &&
+          activeObjIds.includes(obj.toClipId)
         ) {
           return true;
         }

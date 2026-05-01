@@ -69,8 +69,10 @@ class SyncManager {
     const { regular, transitions } = splitClips(data.clips);
     this.timeline.trackItemsMap = clipsToMap(regular);
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    console.warn("review this")
-    this.timeline.transitionsMap = this._mapTransitions(transitions);
+    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
+      string,
+      ITransitionClip
+    >;
     this._syncAndRender();
   }
 
@@ -187,7 +189,10 @@ class SyncManager {
     this.timeline.trackItemIds = regular.map((c) => c.id);
 
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    this.timeline.transitionsMap = this._mapTransitions(transitions);
+    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
+      string,
+      ITransitionClip
+    >;
 
     this.timeline.tracksManager.renderTracks();
     this.timeline.tracksManager.refreshTrackLayout();
@@ -234,7 +239,10 @@ class SyncManager {
 
     this.timeline.trackItemIds = desiredTrackItemIds;
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    this.timeline.transitionsMap = this._mapTransitions(transitions);
+    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
+      string,
+      ITransitionClip
+    >;
     this.timeline.activeIds = currentState.activeIds;
 
     this.timeline.tracksManager.renderTracks();
@@ -293,19 +301,6 @@ class SyncManager {
       activeIds: this.timeline.activeIds,
       duration
     };
-  }
-
-  private _mapTransitions(transitions: IClip[]): Record<string, ITransitionClip> {
-    const map: Record<string, ITransitionClip> = {};
-    transitions.forEach((c) => {
-      map[c.id] = {
-        ...c,
-        fromId: (c as any).fromClipId || (c as any).fromId,
-        toId: (c as any).toClipId || (c as any).toId,
-        kind: (c as any).transitionEffect?.key || (c as any).kind || "none"
-      } as unknown as ITransitionClip;
-    });
-    return map;
   }
 }
 

@@ -63,7 +63,7 @@ class ItemManager {
     });
 
     transitions.forEach((transition) => {
-      const fromId = transition.fromId;
+      const fromId = transition.fromClipId;
       const fromObject = trackItems.find((o) => o.id === fromId);
       if (fromObject) {
         transition.set({ top: fromObject.top });

@@ -22,8 +22,8 @@ function formatTime(milliseconds: number) {
 class PreviewTrackItem extends Rect {
   static type = "PreviewTrackItem";
   public duration: number;
-  public fromId: string;
-  public toId: string;
+  public fromClipId: string;
+  public toClipId: string;
   public isSelected = false;
   public name: string;
   public durationString: string;

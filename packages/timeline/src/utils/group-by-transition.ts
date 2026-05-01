@@ -40,8 +40,8 @@ export const groupByTransition = (data: {
 
   // Initialize transition maps
   Object.values(transitionsMap).forEach((transition) => {
-    const fromId = transition.fromId;
-    const toId = transition.toId;
+    const fromId = transition.fromClipId;
+    const toId = transition.toClipId;
     if (!itemTransitionMap.has(fromId)) itemTransitionMap.set(fromId, []);
     if (!itemTransitionMap.has(toId)) itemTransitionMap.set(toId, []);
     itemTransitionMap.get(fromId)?.push(transition);
@@ -65,12 +65,12 @@ export const groupByTransition = (data: {
 
       // Find transition from this item, excluding 'none' transitions
       const transition = Object.values(transitionsMap).find(
-        (t) => t.fromId === currentId
+        (t) => t.fromClipId === currentId
       );
       if (!transition) break;
 
       group.push(transition);
-      currentId = transition.toId || "";
+      currentId = transition.toClipId || "";
     }
 
     return group;
@@ -84,7 +84,7 @@ export const groupByTransition = (data: {
     if (
       !itemTransitionMap.has(itemId) ||
         !Object.values(transitionsMap).some(
-          (t) => t.toId === itemId
+          (t) => t.toClipId === itemId
         )
     ) {
       const group = buildGroup(itemId);
@@ -161,9 +161,9 @@ export function getNextTransitionMappings(
           const transition: ITransitionClip = {
             id: transitionId,
             duration: 1_500_000,
-            fromId: item1.id,
-            toId: item2.id,
-            kind: "none",
+            fromClipId: item1.id,
+            toClipId: item2.id,
+            key: "none",
             trackId: track.id,
             type: "Transition"
           } as any;

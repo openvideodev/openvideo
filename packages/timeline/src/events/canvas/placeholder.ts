@@ -470,13 +470,13 @@ function setPositionMagneticObj(
   const primaryObjIds = state.primaryMovingObjects.map((obj) => obj.id);
   if (!canvas) return;
   const transitionIds = canvas.transitionIds.filter(
-    (id) => (canvas.transitionsMap[id] as ITransitionClip).kind !== "none"
+    (id) => (canvas.transitionsMap[id] as ITransitionClip).key !== "none"
   );
   sortedObjectByLeft.forEach((obj) => {
     obj.set({ left: initialPost });
     initialPost += obj.width;
     const transitionTo = transitionIds.find(
-      (id) => (canvas.transitionsMap[id] as ITransitionClip).toId === obj.id
+      (id) => (canvas.transitionsMap[id] as ITransitionClip).toClipId === obj.id
     );
     if (!transitionTo) {
       initialTrackPoints.push(obj.left);

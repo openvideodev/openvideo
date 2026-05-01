@@ -224,7 +224,7 @@ function onTrackItemsResized(
   }
 
   const relationItemTransition = transitions.filter(
-    (obj) => obj.fromId === trackItemId || obj.toId === trackItemId
+    (obj) => obj.fromClipId === trackItemId || obj.toClipId === trackItemId
   );
 
   if (relationItemTransition) {

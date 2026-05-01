@@ -18,8 +18,8 @@ class TransitionManager {
     this.removeTransitions();
     this.timeline.transitionIds.forEach((id) => {
       const transitionData = this.timeline.transitionsMap[id];
-      const fromItemId = transitionData.fromId;
-      const toItemId = transitionData.toId;
+      const fromItemId = transitionData.fromClipId;
+      const toItemId = transitionData.toClipId;
       const trackItems = this.timeline.getObjects();
       const fromObjItem = trackItems.find((t) => t.id === fromItemId);
       const toObjItem = trackItems.find((t) => t.id === toItemId);
@@ -31,7 +31,7 @@ class TransitionManager {
       const height = 26;
       const position = fromObjItem.left + fromObjItem.width - width / 2;
       const top = fromObjItem.top + (fromObjItem.height - height) / 2;
-      const kind = transitionData.kind || "none";
+      const key = (transitionData as any).transitionEffect?.key || transitionData.key || "none";
 
       const transitionItem = new Transition({
         id: transitionData.id,
@@ -41,9 +41,9 @@ class TransitionManager {
         width,
         tScale: this.timeline.tScale,
         duration: transitionData.duration,
-        fromId: fromObjItem.id,
-        toId: toObjItem.id,
-        kind
+        fromClipId: fromObjItem.id,
+        toClipId: toObjItem.id,
+        key
       });
 
       if (transitionItem) {
@@ -62,7 +62,7 @@ class TransitionManager {
       if (transitionItem instanceof Transition) {
         const fromObject = this.timeline
           .getObjects()
-          .find((o) => o.id === transitionItem.fromId);
+          .find((o) => o.id === transitionItem.fromClipId);
 
         if (!fromObject) return;
         const width = 26;
@@ -120,9 +120,9 @@ class TransitionManager {
             const transition: ITransitionClip = {
               id: nextTransitionId,
               duration: 1_500_000,
-              fromId: item1.id,
-              toId: item2.id,
-              kind: "none",
+              fromClipId: item1.id,
+              toClipId: item2.id,
+              key: "none",
               trackId: track.id,
               type: "Transition"
             } as any;

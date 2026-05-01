@@ -14,8 +14,8 @@ interface TransitionGuideProps
 class TransitionGuide extends Rect {
   static type = "TransitionGuide";
   public duration: number;
-  public fromId: string;
-  public toId: string;
+  public fromClipId: string;
+  public toClipId: string;
   public itemType: string = "none";
   public isSelected = false;
   static createControls(): { controls: Record<string, Control> } {
@@ -53,7 +53,7 @@ class TransitionGuide extends Rect {
   public updateCoords() {
     const canvas = this.canvas;
     if (!canvas) return;
-    const fromObject = canvas.getObjects().find((o) => o.id === this.fromId);
+    const fromObject = canvas.getObjects().find((o) => o.id === this.fromClipId);
     if (!fromObject) return;
     const size = timeUsToUnits(this.duration, this.tScale);
     const position = fromObject.left + fromObject.width - size / 2;

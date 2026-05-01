@@ -130,10 +130,10 @@ function onDragEnter(this: Timeline, e: DragEventData) {
   draggedTypeItem = draggedType;
   if (draggedType === "transition") {
     transitions = canvas.getObjects("Transition") as Transition[];
-    const appliedTransitions = transitions.filter((t) => t.kind !== "none");
+    const appliedTransitions = transitions.filter((t) => t.key !== "none");
     transitions.forEach((obj) => {
-      const toObj = items.find((i) => i.id === obj.toId);
-      const fromObj = items.find((i) => i.id === obj.fromId);
+      const toObj = items.find((i) => i.id === obj.toClipId);
+      const fromObj = items.find((i) => i.id === obj.fromClipId);
       const previewItemWidth = obj.width;
       if (
         !(
@@ -144,7 +144,7 @@ function onDragEnter(this: Timeline, e: DragEventData) {
         obj.availableDrop = false;
       }
       const toTransitionToObj = appliedTransitions.find(
-        (t) => t.fromId === obj.toId
+        (t) => t.fromClipId === obj.toClipId
       );
       if (toTransitionToObj) {
         if (
@@ -155,7 +155,7 @@ function onDragEnter(this: Timeline, e: DragEventData) {
         }
       }
       const fromTransitionFromObj = appliedTransitions.find(
-        (t) => t.toId === obj.fromId
+        (t) => t.toClipId === obj.fromClipId
       );
       if (fromTransitionFromObj) {
         if (
@@ -268,7 +268,7 @@ function onDragLeave(this: Timeline) {
   transitions.forEach((obj) => {
     obj.strokeDashArray = [];
     obj.setSelected(false);
-    if (obj.kind === "none") {
+    if (obj.key === "none") {
       obj.visible = false;
     }
   });
@@ -467,15 +467,15 @@ function onDrop(this: Timeline, e: DropEventData) {
         ...draggedData,
         type: "Transition",
         id: nextTransition.id,
-        fromClipId: nextTransition.fromId,
-        toClipId: nextTransition.toId
+        fromClipId: nextTransition.fromClipId,
+        toClipId: nextTransition.toClipId
       }
     });
   }
   transitions.forEach((obj) => {
     obj.strokeDashArray = [];
     obj.setSelected(false);
-    if (obj.kind === "none") {
+    if (obj.key === "none") {
       obj.visible = false;
     }
   });
