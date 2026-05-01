@@ -69,10 +69,8 @@ class SyncManager {
     const { regular, transitions } = splitClips(data.clips);
     this.timeline.trackItemsMap = clipsToMap(regular);
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
-      string,
-      ITransitionClip
-    >;
+    console.warn("review this")
+    this.timeline.transitionsMap = this._mapTransitions(transitions);
     this._syncAndRender();
   }
 
@@ -189,10 +187,7 @@ class SyncManager {
     this.timeline.trackItemIds = regular.map((c) => c.id);
 
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
-      string,
-      ITransitionClip
-    >;
+    this.timeline.transitionsMap = this._mapTransitions(transitions);
 
     this.timeline.tracksManager.renderTracks();
     this.timeline.tracksManager.refreshTrackLayout();
@@ -211,6 +206,9 @@ class SyncManager {
       .getTrackItems()
       .map((o) => o.id);
     const { regular, transitions } = splitClips(currentState.clips);
+
+    console.log("timeline syncAddOrRemoveClips regular", regular);
+    console.log("timeline syncAddOrRemoveClips transitions", transitions);
     const desiredTrackItemIds = regular.map((c) => c.id);
     const deleteIds: string[] = [];
 
@@ -236,10 +234,7 @@ class SyncManager {
 
     this.timeline.trackItemIds = desiredTrackItemIds;
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
-      string,
-      ITransitionClip
-    >;
+    this.timeline.transitionsMap = this._mapTransitions(transitions);
     this.timeline.activeIds = currentState.activeIds;
 
     this.timeline.tracksManager.renderTracks();
@@ -298,6 +293,19 @@ class SyncManager {
       activeIds: this.timeline.activeIds,
       duration
     };
+  }
+
+  private _mapTransitions(transitions: IClip[]): Record<string, ITransitionClip> {
+    const map: Record<string, ITransitionClip> = {};
+    transitions.forEach((c) => {
+      map[c.id] = {
+        ...c,
+        fromId: (c as any).fromClipId || (c as any).fromId,
+        toId: (c as any).toClipId || (c as any).toId,
+        kind: (c as any).transitionEffect?.key || (c as any).kind || "none"
+      } as unknown as ITransitionClip;
+    });
+    return map;
   }
 }
 

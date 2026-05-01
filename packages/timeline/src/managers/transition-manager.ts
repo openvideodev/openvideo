@@ -105,7 +105,10 @@ class TransitionManager {
           const nextTransitionId = `${item1.id}-${item2.id}`;
           const transitionExists =
             this.timeline.transitionIds.includes(nextTransitionId);
-
+          console.log({
+            transitionExists,
+            nextTransitionId
+          });
           if (transitionExists) {
             const transition = this.timeline.transitionsMap[nextTransitionId];
 

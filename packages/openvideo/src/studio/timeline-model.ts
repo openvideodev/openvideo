@@ -978,7 +978,7 @@ export class TimelineModel {
       const urlsToPreload = json.clips
         .map((clip) => clip.src)
         .filter((src) => src && src.trim() !== "");
-      this.studio.resourceManager.preload(urlsToPreload);
+      this.studio.resourceManager.preload(urlsToPreload as string[]);
 
       // Build map of ClipID -> TrackID from json.tracks
       const clipToTrackId = new Map<string, string>();
