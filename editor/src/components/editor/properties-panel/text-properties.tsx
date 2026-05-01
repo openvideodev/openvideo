@@ -53,6 +53,7 @@ import { getGroupedFonts, getFontByPostScriptName } from "@/utils/font-utils";
 import { NumberInput } from "@/components/ui/number-input";
 import useLayoutStore from "../store/use-layout-store";
 import { useStore } from "zustand";
+import { useEphemeralClip } from "@/hooks/use-ephemeral-clip";
 import { projectStore, engine } from "@/lib/project";
 
 const GROUPED_FONTS = getGroupedFonts();
@@ -110,7 +111,8 @@ interface TextPropertiesProps {
 }
 
 export function TextProperties({ clip }: TextPropertiesProps) {
-  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]);
+  const coreClipBase = useStore(projectStore, (s) => s.clips[clip.id]);
+  const coreClip = useEphemeralClip(clip.id, coreClipBase) as any;
 
   if (!coreClip) return null;
 

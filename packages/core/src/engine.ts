@@ -3,7 +3,7 @@ import { ProjectStore, createProjectStore } from "./project";
 import { AddClipOptions } from "./utils/manage-tracks";
 import { PlaybackController } from "./playback";
 import { EventEmitter } from "./events";
-import { IProject, AnyClip } from "./types";
+import { IProject, AnyClip, ITrack } from "./types";
 
 /**
  * CoreEngine - The central orchestrator of the OpenVideo engine.
@@ -86,5 +86,21 @@ export class CoreEngine extends EventEmitter {
 
   public removeClips(ids: string[]) {
     this.store.getState().removeClips(ids);
+  }
+
+  public addTrack(payload?: Partial<ITrack>) {
+    return this.store.getState().addTrack(payload);
+  }
+
+  public removeTrack(id: string) {
+    this.store.getState().removeTrack(id);
+  }
+
+  public moveTrack(id: string, newIndex: number) {
+    this.store.getState().moveTrack(id, newIndex);
+  }
+
+  public updateSettings(settings: Partial<IProject["settings"]>) {
+    this.store.getState().updateSettings(settings);
   }
 }

@@ -34,6 +34,7 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
 import useLayoutStore from "../store/use-layout-store";
 import { useStore } from "zustand";
+import { useEphemeralClip } from "@/hooks/use-ephemeral-clip";
 import { projectStore, engine } from "@/lib/project";
 
 interface ImagePropertiesProps {
@@ -41,7 +42,8 @@ interface ImagePropertiesProps {
 }
 
 export function ImageProperties({ clip }: ImagePropertiesProps) {
-  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]);
+  const coreClipBase = useStore(projectStore, (s) => s.clips[clip.id]);
+  const coreClip = useEphemeralClip(clip.id, coreClipBase) as any;
 
   if (!coreClip) return null;
 

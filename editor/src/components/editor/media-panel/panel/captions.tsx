@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Play, Trash2 } from "lucide-react";
-import { useStudioStore } from "@/stores/studio-store";
 import { fontManager, jsonToClip, Log, type IClip } from "openvideo";
 import { generateCaptionClips } from "@/lib/caption-generator";
 import { useStore } from "zustand";
@@ -13,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 export default function PanelCaptions() {
-  const { studio } = useStudioStore();
   const clips = useStore(projectStore, (s) => s.clips);
   const currentTime = useStore(projectStore, (s) => s.currentTime);
   
@@ -54,11 +52,11 @@ export default function PanelCaptions() {
   const updateClips = () => {}; // No longer needed but kept empty to avoid breaking other calls if any
 
   useEffect(() => {
-    if (!studio) return;
+    if (!engine) return;
 
     const handleUpdate = () => updateClips();
 
-    const handleTimeUpdate = ({ currentTime }: { currentTime: number }) => {
+    const handleTimeUpdate = (currentTime: number) => {
       // Find the currently active caption
       // We use the Ref because this closure is created once and we don't want to re-bind listener
       const activeItem = captionItemsRef.current.find(
@@ -75,21 +73,21 @@ export default function PanelCaptions() {
     };
 
     handleUpdate();
-    studio.on("clip:added", handleUpdate);
-    studio.on("clip:removed", handleUpdate);
-    studio.on("clip:updated", handleUpdate);
-    studio.on("currentTime", handleTimeUpdate);
+    engine.on("clip:added", handleUpdate);
+    engine.on("clip:removed", handleUpdate);
+    engine.on("clip:updated", handleUpdate);
+    engine.on("timeupdate", handleTimeUpdate);
 
     return () => {
-      studio.off("clip:added", handleUpdate);
-      studio.off("clip:removed", handleUpdate);
-      studio.off("clip:updated", handleUpdate);
-      studio.off("currentTime", handleTimeUpdate);
+      engine.off("clip:added", handleUpdate);
+      engine.off("clip:removed", handleUpdate);
+      engine.off("clip:updated", handleUpdate);
+      engine.off("timeupdate", handleTimeUpdate);
     };
-  }, [studio]);
+  }, [engine]);
 
   const handleGenerateCaptions = async () => {
-    if (!studio || mediaItems.length === 0) return;
+    if (mediaItems.length === 0) return;
 
     setIsGenerating(true);
     try {
@@ -101,7 +99,6 @@ export default function PanelCaptions() {
         url: fontUrl,
       });
 
-      const captionTrackId = `track_captions_${Date.now()}`;
       const clipsToAdd: any[] = [];
 
       for (const mediaClip of mediaItems) {
@@ -126,10 +123,10 @@ export default function PanelCaptions() {
 
           const words = transcriptionData.results?.main?.words || transcriptionData.words || [];
 
-          // 2. Generate caption JSON
+          const settings = engine.store.getState().settings;
           const captionClipsJSON = await generateCaptionClips({
-            videoWidth: (studio as any).opts.width,
-            videoHeight: (studio as any).opts.height,
+            videoWidth: settings.width,
+            videoHeight: settings.height,
             words,
           });
 
@@ -154,8 +151,13 @@ export default function PanelCaptions() {
         }
       }
 
+      const newTrack = engine.addTrack({
+        name: "Captions",
+        type: "caption",
+      });
+
       if (clipsToAdd.length > 0) {
-        await engine.addClips(clipsToAdd, { trackId: captionTrackId });
+        await engine.addClips(clipsToAdd, { trackId: newTrack.id });
         updateClips();
       }
     } catch (error) {
@@ -180,13 +182,13 @@ export default function PanelCaptions() {
   }
 
   const handleSplitCaption = async (id: string, cursorPosition: number, fullText: string) => {
-    if (!studio) return;
-
-    const clip = studio.getClipById(id);
+    const state = engine.store.getState();
+    const clip = state.clips[id];
     if (!clip) return;
 
-    const trackId = studio.findTrackIdByClipId(id);
-    if (!trackId) return;
+    const track = state.tracks.find(t => t.clipIds.includes(id));
+    if (!track) return;
+    const trackId = track.id;
 
     const wordsInText: { text: string; start: number; end: number }[] = [];
     const regex = /\S+/g;
@@ -281,13 +283,11 @@ export default function PanelCaptions() {
 
   // En PanelCaptions, modifica handleUpdateCaption:
   const handleUpdateCaption = async (id: string, text: string, fullUpdate = false) => {
-    if (!studio) return;
-
-    const clip = studio.getClipById(id);
+    const state = engine.store.getState();
+    const clip = state.clips[id];
     if (!clip) return;
 
-    const tracks = studio.getTracks();
-    const track = tracks.find((t) => t.clipIds.includes(id));
+    const track = state.tracks.find((t) => t.clipIds.includes(id));
     if (!track) return;
 
     if (!fullUpdate) {

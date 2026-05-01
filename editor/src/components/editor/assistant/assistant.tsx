@@ -5,8 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowUpIcon, Wand2, MessageCircle, SparkleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStudioStore } from "@/stores/studio-store";
-import { Studio } from "openvideo";
+import { engine, projectStore } from "@/lib/project";
 import { streamFlow } from "@genkit-ai/next/client";
 import * as ToolHandlers from "./tools";
 import {
@@ -17,7 +16,7 @@ import {
 } from "@/components/ui/input-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePlaybackStore } from "@/stores/playback-store";
-import { useTimelineStore } from "@/stores/timeline-store";
+import { useStore } from "zustand";
 import { IClip } from "@/types/timeline";
 import { chatFlow } from "@/genkit/chat-flow";
 import { ImportAsset } from "@/genkit/type";
@@ -42,8 +41,10 @@ const SUGGESTIONS: Suggestion[] = [
 ];
 
 export default function Assistant() {
-  const { studio } = useStudioStore();
-  const { clips, selectedClipIds, getClip, tracks } = useTimelineStore();
+  const clips = useStore(projectStore, (s) => s.clips);
+  const selectedClipIds = useStore(projectStore, (s) => s.selectedIds);
+  const tracks = useStore(projectStore, (s) => s.tracks);
+  const getClip = (id: string) => projectStore.getState().clips[id];
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -73,9 +74,9 @@ export default function Assistant() {
           },
           trim: clip.trim
             ? {
-                from: clip.trim.from / 1000,
-                to: clip.trim.to / 1000,
-              }
+              from: clip.trim.from / 1000,
+              to: clip.trim.to / 1000,
+            }
             : undefined,
         };
       });
@@ -146,9 +147,7 @@ export default function Assistant() {
 
         if (chunk.event === "tool") {
           console.log("Tool call from flow:", chunk, chunk.name, chunk.arg);
-          if (studio) {
-            handleToolAction({ action: chunk.name, ...chunk.arg, ...chunk.response }, studio);
-          }
+          handleToolAction({ action: chunk.name, ...chunk.arg, ...chunk.response }, engine);
         }
       }
 
@@ -168,7 +167,7 @@ export default function Assistant() {
     }
   };
 
-  const handleToolAction = async (input: any, studio: Studio) => {
+  const handleToolAction = async (input: any, engine: any) => {
     console.log("handleToolAction", input);
     const { action } = input;
 
@@ -179,46 +178,46 @@ export default function Assistant() {
         case "add_image":
         case "add_video":
         case "add_audio":
-          await ToolHandlers.handleAddClip(input, studio);
+          await ToolHandlers.handleAddClip(input, engine);
           break;
         case "update_clip":
         case "update_asset":
-          await ToolHandlers.handleUpdateClip(input, studio);
+          await ToolHandlers.handleUpdateClip(input, engine);
           break;
         case "remove_clip":
         case "delete_asset":
-          await ToolHandlers.handleRemoveClip(input, studio);
+          await ToolHandlers.handleRemoveClip(input, engine);
           break;
         case "split_clip":
         case "split_asset":
-          await ToolHandlers.handleSplitClip(input, studio);
+          await ToolHandlers.handleSplitClip(input, engine);
           break;
         case "add_transition":
-          await ToolHandlers.handleAddTransition(input, studio);
+          await ToolHandlers.handleAddTransition(input, engine);
           break;
         case "add_effect":
         case "apply_effect":
-          await ToolHandlers.handleAddEffect(input, studio);
+          await ToolHandlers.handleAddEffect(input, engine);
           break;
         case "trim_clip":
         case "trim_asset":
-          await ToolHandlers.handleTrimClip(input, studio);
+          await ToolHandlers.handleTrimClip(input, engine);
           break;
         case "duplicate_clip":
         case "duplicate_asset":
-          await ToolHandlers.handleDuplicateClip(input, studio);
+          await ToolHandlers.handleDuplicateClip(input, engine);
           break;
         case "search_and_add_media":
-          await ToolHandlers.handleSearchAndAddMedia(input, studio);
+          await ToolHandlers.handleSearchAndAddMedia(input, engine);
           break;
         case "generate_voiceover":
-          await ToolHandlers.handleGenerateVoiceover(input, studio);
+          await ToolHandlers.handleGenerateVoiceover(input, engine);
           break;
         case "seek_to_time":
-          await ToolHandlers.handleSeekToTime(input, studio);
+          await ToolHandlers.handleSeekToTime(input, engine);
           break;
         case "generate_captions":
-          await ToolHandlers.handleGenerateCaptions(input, studio);
+          await ToolHandlers.handleGenerateCaptions(input, engine);
           break;
         default:
           console.log("Unhandled tool action:", action);

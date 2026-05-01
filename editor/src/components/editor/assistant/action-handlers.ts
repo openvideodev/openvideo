@@ -1,160 +1,123 @@
-import { clipToJSON, Effect, IClip, jsonToClip, Studio } from "openvideo";
 import { generateUUID } from "@/utils/id";
-import { usePlaybackStore } from "@/stores/playback-store";
 
-export const duplicateClip = async (clipId: string, studio: Studio | null, timelineStore: any) => {
-  if (!studio) return;
-
-  const state = timelineStore.getState();
+export const duplicateClip = async (clipId: string, projectStore: any) => {
+  const state = projectStore.getState();
   const originalClip = state.clips[clipId];
   if (!originalClip) return;
 
   const track = state.tracks.find((t: any) => t.clipIds.includes(clipId));
   if (!track) return;
 
-  const studioClip = studio.getClip(clipId);
-  if (!studioClip) {
-    return;
-  }
-
-  const json = clipToJSON(studioClip as any);
-  const newClip = await jsonToClip(json);
   const newClipId = generateUUID();
-  newClip.id = newClipId;
+  const newClip = {
+    ...originalClip,
+    id: newClipId,
+  };
 
   const newTrackId = generateUUID();
   const newTrackName = `${track.name} (Copy)`;
 
-  studio.addTrack({
+  projectStore.getState().addTrack({
     id: newTrackId,
     name: newTrackName,
     type: track.type,
   });
 
-  await studio.addClip(newClip, { trackId: newTrackId });
-  studio.selectClipsByIds([newClipId]);
+  await projectStore.getState().addClip(newClip, newTrackId);
+  projectStore.getState().select([newClipId]);
 
   return newClipId;
 };
 
 export const deleteClip = async (
   clipId: string,
-  studio: any,
-  removeClips: (ids: string[]) => void,
+  engine: any,
 ) => {
-  removeClips([clipId]);
-  if (studio) {
-    await studio.removeClipById(clipId);
-  }
+  engine.removeClips([clipId]);
 };
 
 export const splitClip = async (
   clipId: string,
   splitTime: number,
-  studio: Studio | null,
-  timelineStore: any,
+  projectStore: any,
   updateClip: (id: string, updates: any) => void,
 ) => {
-  const splitTimeUs = splitTime * 1000;
+  const splitTimeUs = splitTime * 1000000;
+  const state = projectStore.getState();
+  const clip = state.clips[clipId];
+  
+  if (!clip) return;
 
-  if (!studio) return;
-
-  const studioClip = studio.getClip(clipId);
-  if (!studioClip) {
-    return;
-  }
-
-  const originalJson = clipToJSON(studioClip as any);
-  const splitOffset = splitTimeUs - studioClip.display.from;
-  const playbackRate = studioClip.playbackRate || 1;
+  const splitOffset = splitTimeUs - clip.display.from;
+  const playbackRate = clip.playbackRate || 1;
   const splitOffsetInSource = splitOffset * playbackRate;
 
   const updates: any = {
     duration: splitOffset,
     display: {
-      from: studioClip.display.from,
+      from: clip.display.from,
       to: splitTimeUs,
     },
   };
 
-  if (studioClip.trim) {
+  if (clip.trim) {
     updates.trim = {
-      from: studioClip.trim.from,
-      to: studioClip.trim.from + splitOffsetInSource,
+      from: clip.trim.from,
+      to: clip.trim.from + splitOffsetInSource,
     };
   }
 
-  await studio.updateClip(clipId, updates);
   updateClip(clipId, updates);
 
-  const newJson = { ...originalJson };
-  newJson.display = {
-    from: splitTimeUs,
-    to: newJson.display.to,
+  const newClip = {
+    ...clip,
+    id: generateUUID(),
+    display: {
+      from: splitTimeUs,
+      to: clip.display.to,
+    },
+    duration: clip.duration - splitOffset,
   };
-  newJson.duration = newJson.duration - splitOffset;
 
-  if (newJson.trim) {
-    newJson.trim = {
-      from: newJson.trim.from + splitOffsetInSource,
-      to: newJson.trim.to,
+  if (newClip.trim) {
+    newClip.trim = {
+      from: newClip.trim.from + splitOffsetInSource,
+      to: newClip.trim.to,
     };
   }
 
-  const newClip = await jsonToClip(newJson);
-  const newClipId = generateUUID();
-  newClip.id = newClipId;
-
-  const track = timelineStore.getState().tracks.find((t: any) => t.clipIds.includes(clipId));
+  const track = state.tracks.find((t: any) => t.clipIds.includes(clipId));
   if (track) {
-    await studio.addClip(newClip, { trackId: track.id });
-    studio.selectClipsByIds([newClipId]);
+    await projectStore.getState().addClip(newClip, track.id);
+    projectStore.getState().select([newClip.id]);
   }
 
-  return newClipId;
+  return newClip.id;
 };
 
 export const trimClip = async (
   clipId: string,
-  timeline: { from: number; to: number }, // milliseconds (source trim range)
-  display: { from: number; to: number }, // milliseconds (timeline position)
-  studio: Studio | null,
-  updateClip: (
-    clipId: string,
-    updates: {
-      displayFrom?: number;
-      duration?: number;
-      trim?: { from: number; to: number };
-    },
-  ) => void,
+  timeline: { from: number; to: number }, // seconds
+  display: { from: number; to: number }, // seconds
+  projectStore: any,
+  updateClip: (id: string, updates: any) => void,
 ) => {
-  if (!studio) return;
-
-  const currentClip = studio.getClip(clipId);
-  if (!currentClip) {
-    return;
-  }
+  const state = projectStore.getState();
+  const currentClip = state.clips[clipId];
+  if (!currentClip) return;
 
   const playbackRate = currentClip.playbackRate || 1;
 
-  // 1. Calculate Trim (Source Range) in microseconds
-  // Default to current trim if not provided
   const currentTrimFromUs = currentClip.trim?.from ?? 0;
-  const currentTrimToUs =
-    currentClip.trim?.to ?? ((currentClip as any).sourceDuration || currentClip.duration);
+  const currentTrimToUs = currentClip.trim?.to ?? currentClip.duration;
 
-  const newTrimFromUs = timeline.from !== undefined ? timeline.from * 1000 : currentTrimFromUs;
-  const newTrimToUs = timeline.to !== undefined ? timeline.to * 1000 : currentTrimToUs;
+  const newTrimFromUs = timeline.from !== undefined ? timeline.from * 1000000 : currentTrimFromUs;
+  const newTrimToUs = timeline.to !== undefined ? timeline.to * 1000000 : currentTrimToUs;
 
-  // 2. Calculate Duration based on Trim and PlaybackRate
-  // The user specified that the timeline range (trim) should predominate for duration
   const newSourceDurationUs = newTrimToUs - newTrimFromUs;
   const newDurationUs = newSourceDurationUs / playbackRate;
 
-  // 3. Calculate Display (Timeline Position) in microseconds
-  // Default to current display.from if not provided
-  const newDisplayFromUs =
-    display.from !== undefined ? display.from * 1000 : currentClip.display.from;
+  const newDisplayFromUs = display.from !== undefined ? display.from * 1000000 : currentClip.display.from;
   const newDisplayToUs = newDisplayFromUs + newDurationUs;
 
   const updates: any = {
@@ -169,30 +132,24 @@ export const trimClip = async (
     },
   };
 
-  await studio.updateClip(clipId, updates);
-
-  // 4. Sync changes back to the store
-  updateClip(clipId, {
-    displayFrom: newDisplayFromUs,
-    duration: newDurationUs,
-    trim: { from: newTrimFromUs, to: newTrimToUs },
-  });
-
-  // Update global duration
-  usePlaybackStore.getState().setDuration(studio.getMaxDuration() / 1_000_000);
+  updateClip(clipId, updates);
 };
 
 export const applyEffectClip = async (
   name: string,
   timeline: { from: number; to: number },
-  addClip: (clip: IClip, options?: any) => Promise<void>,
+  engine: any,
 ) => {
-  const from = timeline.from * 1000;
-  const to = timeline.to * 1000;
+  const from = timeline.from * 1000000;
+  const to = timeline.to * 1000000;
   const duration = to - from;
 
-  const clip = new Effect(name);
-  clip.duration = duration; // 5 seconds
-  clip.display = { from, to };
-  addClip(clip);
+  await engine.addClip({
+    id: `effect_${Date.now()}`,
+    type: "Effect",
+    name,
+    duration,
+    display: { from, to },
+  });
 };
+

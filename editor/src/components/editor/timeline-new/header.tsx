@@ -3,7 +3,6 @@ import { frameToTimeString, timeToString } from "../utils/time";
 import { SquareSplitHorizontal, Trash2, ZoomIn, ZoomOut, Copy, Scissors } from "lucide-react";
 import { useClipActions } from "../options-floating-menu";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
-import { useTimelineStore } from "@/stores/timeline-store";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";

@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
-import { jsonToClip } from "openvideo";
 import Header from "./header";
 import Ruler from "./ruler";
 import { timeUsToUnits, unitsToTimeUs, ITimelineScaleState } from "@openvideo/timeline";
 import CanvasTimeline from "./items/timeline";
-import { useTimelineStore } from "@/stores/timeline-store";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";

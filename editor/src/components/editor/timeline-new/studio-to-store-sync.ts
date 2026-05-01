@@ -1,4 +1,3 @@
-import { useTimelineStore } from "@/stores/timeline-store";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { clipToJSON, type IClip as StudioClip, Studio, jsonToClip } from "openvideo";
 import CanvasTimeline, { TIMELINE_SEEK } from "@openvideo/timeline";
@@ -20,10 +19,18 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
   
   // Captures changes from Studio (e.g. property panel or direct canvas edits)
   let isSyncingFromStudio = false;
+  const handleClipTransforming = ({ clip }: { clip: IClip }) => {
+    const serialized = clipToJSON(clip as unknown as StudioClip) as any;
+    // Emit real-time event through the engine WITHOUT updating the store
+    // This allows UI components to react without the overhead of a full state commit
+    engine.emit("clip:transforming", { id: clip.id, updates: serialized });
+  };
+
   const handleClipUpdatedFromStudio = ({ clip }: { clip: IClip }) => {
     const serialized = clipToJSON(clip as unknown as StudioClip) as any;
     isSyncingFromStudio = true;
     try {
+      // Commit to Core store only when finalized or explicitly updated
       projectStore.getState().updateClip(clip.id, serialized);
     } finally {
       isSyncingFromStudio = false;
@@ -35,14 +42,13 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
     projectStore.getState().select(ids);
   };
 
-  // Captures playback from Studio
   const handleStudioTime = ({ currentTime }: any) => projectStore.getState().seek(currentTime);
   const handleStudioPlay = () => projectStore.getState().setIsPlaying(true);
   const handleStudioPause = () => projectStore.getState().setIsPlaying(false);
   const handleSelectionClearedFromStudio = () => projectStore.getState().deselect();
 
   studio.on("clip:updated", handleClipUpdatedFromStudio as any);
-  studio.on("clip:transforming", handleClipUpdatedFromStudio as any);
+  studio.on("clip:transforming", handleClipTransforming as any);
   studio.on("selection:created", handleSelectionFromStudio);
   studio.on("selection:updated", handleSelectionFromStudio);
   studio.on("selection:cleared", handleSelectionClearedFromStudio);
@@ -115,14 +121,7 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
     prevState = state;
 
     try {
-      // 1. Sync to Zustand (React UI) - Atomic update to prevent double-sync
-      useTimelineStore.setState({
-        clips: state.clips,
-        tracks: state.tracks as any,
-        selectedClipIds: state.selectedIds
-      });
-
-      // 2. Sync to Playback Store (React UI)
+      // Sync to Playback Store (React UI)
       if (state.currentTime !== currentPrevState.currentTime || state.isPlaying !== currentPrevState.isPlaying) {
         usePlaybackStore.setState({
           currentTime: state.currentTime / 1_000_000,
@@ -182,7 +181,7 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
 
   return () => {
     studio.off("clip:updated", handleClipUpdatedFromStudio as any);
-    studio.off("clip:transforming", handleClipUpdatedFromStudio as any);
+    studio.off("clip:transforming", handleClipTransforming as any);
     studio.off("selection:created", handleSelectionFromStudio);
     studio.off("selection:updated", handleSelectionFromStudio);
     studio.off("selection:cleared", handleSelectionClearedFromStudio);

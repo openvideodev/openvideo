@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import hotkeys from "hotkeys-js";
-import { useTimelineStore } from "@/stores/timeline-store";
+import { projectStore } from "@/lib/project";
 import { usePlaybackStore } from "@/stores/playback-store";
 import { useStudioStore } from "@/stores/studio-store";
 import { TimelineCanvas } from "@/components/editor/timeline/timeline";
@@ -45,7 +45,7 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
     // Select All
     hotkeys("command+a, ctrl+a", (event, handler) => {
       event.preventDefault();
-      const { clips } = useTimelineStore.getState();
+      const { clips } = projectStore.getState();
       if (timelineCanvas) {
         timelineCanvas.selectClips(Object.keys(clips));
       }

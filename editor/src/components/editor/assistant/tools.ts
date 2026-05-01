@@ -1,81 +1,64 @@
 import { usePlaybackStore } from "@/stores/playback-store";
 import {
-  Video,
-  Image,
-  Text,
-  Audio,
-  Studio,
-  Effect,
-  IClip,
   fontManager,
-  jsonToClip,
 } from "openvideo";
 import { duplicateClip, splitClip, trimClip } from "./action-handlers";
-import { useTimelineStore } from "@/stores/timeline-store";
+import { projectStore } from "@/lib/project";
 import { generateCaptionClips } from "@/lib/caption-generator";
 
-export const handleAddClip = async (input: any, studio: Studio) => {
+export const handleAddClip = async (input: any, engine: any) => {
   const { text, prompt, assetType, targetId, duration, width, height, left, top, action } = input;
   const from = input.from ?? 0;
   const to = input.to ? (input.to - from < 1 ? 1 : input.to) : from + 5;
 
-  let clip;
   const type =
     assetType ||
     (action === "add_text"
-      ? "text"
+      ? "Text"
       : action === "add_image"
-        ? "image"
+        ? "Image"
         : action === "add_video"
-          ? "video"
+          ? "Video"
           : action === "add_audio"
-            ? "audio"
-            : "video");
+            ? "Audio"
+            : "Video");
 
-  if (type === "video" && prompt) {
-    console.log("video prompt: ", prompt);
-    const url =
-      "https://cdn.scenify.io/AUTOCROP/VIDEO/e4545b0a-56e8-4982-80af-9b51094909f7/ec042fbe-01d8-4ef2-8389-c166eae76a77.mp4";
-    clip = await Video.fromUrl(url);
-  } else if (type === "image" && prompt) {
-    console.log("image prompt: ", prompt);
-    const url = "https://picsum.photos/800/600";
-    clip = await Image.fromUrl(url);
-  } else if (type === "text" && (text || input.text)) {
-    clip = new Text(text || input.text, {
+  const clip: any = {
+    id: targetId || `clip_${Date.now()}`,
+    type,
+    name: text || prompt || `${type} clip`,
+    display: {
+      from: from * 1000000,
+      to: to * 1000000,
+    },
+    duration: (to - from) * 1000000,
+    style: {}
+  };
+
+  if (width) clip.width = width;
+  if (height) clip.height = height;
+  if (left !== undefined) clip.left = left;
+  if (top !== undefined) clip.top = top;
+
+  if (type === "Video" && prompt) {
+    clip.src = "https://cdn.scenify.io/AUTOCROP/VIDEO/e4545b0a-56e8-4982-80af-9b51094909f7/ec042fbe-01d8-4ef2-8389-c166eae76a77.mp4";
+  } else if (type === "Image" && prompt) {
+    clip.src = "https://picsum.photos/800/600";
+  } else if (type === "Text" && (text || input.text)) {
+    clip.text = text || input.text;
+    clip.style = {
       fontSize: 100,
       fill: "#ffffff",
       fontFamily: "Inter",
-    });
-  } else if (type === "audio" && prompt) {
-    console.log("audio prompt: ", prompt);
-    const url =
-      "https://cdn.scenify.io/AUTOCROP/VIDEO/e4545b0a-56e8-4982-80af-9b51094909f7/ec042fbe-01d8-4ef2-8389-c166eae76a77.mp4";
-    clip = await Audio.fromUrl(url);
+    };
+  } else if (type === "Audio" && prompt) {
+    clip.src = "https://cdn.scenify.io/AUTOCROP/VIDEO/e4545b0a-56e8-4982-80af-9b51094909f7/ec042fbe-01d8-4ef2-8389-c166eae76a77.mp4";
   }
 
-  if (clip) {
-    if (targetId) (clip as any).id = targetId;
-    if (width) clip.width = width;
-    if (height) clip.height = height;
-    if (left !== undefined) clip.left = left;
-    if (top !== undefined) clip.top = top;
-    if (duration) clip.duration = duration * 1000000;
-
-    // Apply display timing (convert to microseconds)
-    clip.update({
-      duration: (to - from) * 1000000,
-      display: {
-        from: from * 1000000,
-        to: to * 1000000,
-      },
-    });
-
-    studio.addClip(clip);
-  }
+  await engine.addClip(clip);
 };
 
-export const handleUpdateClip = async (input: any, studio: Studio) => {
+export const handleUpdateClip = async (input: any, engine: any) => {
   const {
     left,
     top,
@@ -100,133 +83,131 @@ export const handleUpdateClip = async (input: any, studio: Studio) => {
   if (width !== undefined) updates.width = width;
   if (height !== undefined) updates.height = height;
   if (start !== undefined) updates.display = { ...updates.display, from: start * 1000000 };
-  if (fontSize !== undefined) updates.fontSize = fontSize;
-  if (fontFamily !== undefined) updates.fontFamily = fontFamily;
-  if (fill !== undefined) updates.fill = fill;
-  if (opacity !== undefined) updates.opacity = opacity;
+  
+  // Style updates
+  const styleUpdates: any = {};
+  if (fontSize !== undefined) styleUpdates.fontSize = fontSize;
+  if (fontFamily !== undefined) styleUpdates.fontFamily = fontFamily;
+  if (fill !== undefined) styleUpdates.fill = fill;
+  if (opacity !== undefined) styleUpdates.opacity = opacity;
+  
+  if (Object.keys(styleUpdates).length > 0) {
+    updates.style = styleUpdates;
+  }
+
   if (volume !== undefined) updates.volume = volume;
   if (playbackRate !== undefined) updates.playbackRate = playbackRate;
 
-  await studio.updateClip(id, updates);
+  engine.updateClip(id, updates);
 };
 
-export const handleRemoveClip = async (input: any, studio: Studio) => {
+export const handleRemoveClip = async (input: any, engine: any) => {
   const id = input.targetId || input.clipId;
-  const clip = studio.getClipById(id);
-  if (clip) {
-    console.log("delete clip:", clip);
-    await studio.removeClip(id);
+  if (id) {
+    engine.removeClips([id]);
   }
 };
 
-export const handleSplitClip = async (input: any, studio: Studio) => {
+export const handleSplitClip = async (input: any, engine: any) => {
   const id = input.targetId || input.clipId;
   const splitTime = input.time || usePlaybackStore.getState().currentTime;
-  const clip = studio.getClipById(id);
+  const clip = projectStore.getState().clips[id];
+  
   if (clip && splitTime) {
     await splitClip(
       id,
       splitTime,
-      studio,
-      useTimelineStore,
-      useTimelineStore.getState().updateClip,
+      projectStore,
+      engine.updateClip.bind(engine),
     );
-  } else if (splitTime) {
-    await studio.splitSelected(splitTime * 1_000_000);
   }
 };
 
-export const handleTrimClip = async (input: any, studio: Studio) => {
+export const handleTrimClip = async (input: any, engine: any) => {
   const id = input.targetId || input.clipId;
-  const clip = studio.getClipById(id);
+  const clip = projectStore.getState().clips[id];
   if (clip) {
     await trimClip(
       id,
-      { from: input.trimFrom, to: 0 }, // This handler expects timeline and display, need to check logic
+      { from: input.trimFrom, to: 0 },
       { from: 0, to: 0 },
-      studio,
-      useTimelineStore.getState().updateClip,
+      null,
+      engine.updateClip.bind(engine),
     );
-  } else {
-    await studio.trimSelected(input.trimFrom);
   }
 };
 
-export const handleAddTransition = async (input: any, studio: Studio) => {
+export const handleAddTransition = async (input: any, engine: any) => {
   const { fromId, toId, transitionType } = input;
   if (fromId && toId && transitionType) {
-    await studio.addTransition(transitionType || "GridFlip", 2_000_000, fromId, toId);
+    await engine.addClip({
+      id: `transition_${Date.now()}`,
+      type: "transition",
+      name: transitionType || "GridFlip",
+      duration: 2_000_000,
+      metadata: { fromId, toId }
+    } as any);
   }
 };
 
-export const handleAddEffect = async (input: any, studio: Studio) => {
+export const handleAddEffect = async (input: any, engine: any) => {
   const from = input.from ?? 0;
   const to = input.to ? (input.to - from < 1 ? 1 : input.to) : from + 5;
 
-  const effectClip = new Effect(input.effectName);
-
-  // Default positioning (5 seconds)
-  effectClip.display.from = from * 1_000_000;
-  effectClip.duration = (to - from) * 1_000_000;
-  effectClip.display.to = to * 1_000_000;
-
-  // In a real scenario, we might want to attach this effect to the targetId
-  // For now, we just add it to the timeline as requested by the tool
-  await studio.addClip(effectClip);
+  await engine.addClip({
+    id: `effect_${Date.now()}`,
+    type: "effect",
+    name: input.effectName,
+    display: {
+      from: from * 1_000_000,
+      to: to * 1_000_000,
+    },
+    duration: (to - from) * 1_000_000,
+  });
 };
 
-export const handleDuplicateClip = async (input: any, studio: Studio) => {
+export const handleDuplicateClip = async (input: any, engine: any) => {
   const id = input.targetId || input.clipId;
-  const clip = studio.getClipById(id);
+  const clip = projectStore.getState().clips[id];
   if (clip) {
-    console.log("duplicate clip:", clip);
-    await duplicateClip(id, studio, useTimelineStore);
-  } else {
-    await studio.duplicateSelected();
+    await duplicateClip(id, projectStore);
   }
 };
 
-export const handleSearchAndAddMedia = async (input: any, studio: Studio) => {
+export const handleSearchAndAddMedia = async (input: any, engine: any) => {
   const { query, type, targetId, from: fromTime } = input;
   const from = fromTime ?? usePlaybackStore.getState().currentTime / 1000;
-  console.log({ input });
   try {
     const response = await fetch(
       `/api/pexels?query=${encodeURIComponent(query)}&type=${type || "video"}`,
     );
     const data = await response.json();
 
-    let clip;
+    let src = "";
     if (type === "image") {
-      const imageUrl = data.photos?.[0]?.src?.large;
-      if (imageUrl) {
-        clip = await Image.fromUrl(imageUrl);
-      }
+      src = data.photos?.[0]?.src?.large;
     } else {
-      const videoUrl = data.videos?.[0]?.video_files?.[0]?.link;
-      if (videoUrl) {
-        clip = await Video.fromUrl(videoUrl);
-      }
+      src = data.videos?.[0]?.video_files?.[0]?.link;
     }
 
-    if (clip) {
-      if (targetId) (clip as any).id = targetId;
-      // clip.update({
-      //   display: {
-      //     from: from * 1000000,
-      //     to: (from + 5) * 1000000,
-      //   },
-      // });
-      await studio.scaleToFit(clip);
-      await studio.centerClip(clip);
-      studio.addClip(clip);
+    if (src) {
+      await engine.addClip({
+        id: targetId || `clip_${Date.now()}`,
+        type: type || "video",
+        src,
+        display: {
+          from: from * 1000000,
+          to: (from + 5) * 1000000,
+        },
+        duration: 5000000,
+      });
     }
   } catch (error) {
     console.error("Failed to search and add media:", error);
   }
 };
 
-export const handleGenerateVoiceover = async (input: any, studio: Studio) => {
+export const handleGenerateVoiceover = async (input: any, engine: any) => {
   const { text, voiceId, targetId, from: fromTime } = input;
   const from = fromTime ?? usePlaybackStore.getState().currentTime / 1000;
 
@@ -239,51 +220,42 @@ export const handleGenerateVoiceover = async (input: any, studio: Studio) => {
     const data = await response.json();
 
     if (data.url) {
-      const clip = await Audio.fromUrl(data.url);
-      if (targetId) (clip as any).id = targetId;
-      clip.update({
+      await engine.addClip({
+        id: targetId || `audio_${Date.now()}`,
+        type: "audio",
+        src: data.url,
         display: {
           from: from * 1000000,
-          to: (from + clip.duration / 1000000) * 1000000,
+          to: (from + 5) * 1000000, // Default 5s if unknown
         },
+        duration: 5000000,
       });
-      studio.addClip(clip);
     }
   } catch (error) {
     console.error("Failed to generate voiceover:", error);
   }
 };
 
-export const handleSeekToTime = async (input: any, studio: Studio) => {
+export const handleSeekToTime = async (input: any, engine: any) => {
   const { time } = input;
-  usePlaybackStore.getState().seek(time * 1000); // seeks uses ms
+  engine.seek(time * 1000000);
 };
 
-export const handleGenerateCaptions = async (input: any, studio: Studio) => {
+export const handleGenerateCaptions = async (input: any, engine: any) => {
   const { clipIds } = input;
-  const targetIds =
-    clipIds ||
-    studio.clips
-      .filter((c: IClip) => c.type === "video" || c.type === "audio")
-      .map((c: IClip) => c.id);
-
-  console.log({ clipIds, targetIds });
+  const clips = projectStore.getState().clips;
+  const targetIds = clipIds || Object.keys(clips).filter(id => clips[id].type === "Video" || clips[id].type === "Audio");
 
   try {
     const fontName = "Bangers-Regular";
     const fontUrl = "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf";
 
-    await fontManager.addFont({
-      name: fontName,
-      url: fontUrl,
-    });
+    await fontManager.addFont({ name: fontName, url: fontUrl });
 
-    const captionTrackId = `track_captions_${Date.now()}`;
-    const clipsToAdd: IClip[] = [];
+    const clipsToAdd: any[] = [];
 
     for (const id of targetIds) {
-      const clip = studio.getClipById(id);
-      console.log({ clip });
+      const clip = clips[id];
       if (!clip || !clip.src) continue;
 
       try {
@@ -293,31 +265,24 @@ export const handleGenerateCaptions = async (input: any, studio: Studio) => {
           body: JSON.stringify({ url: clip.src }),
         });
         const data = await response.json();
-
         const words = data.results?.main?.words || data.words || [];
 
         if (words.length > 0) {
           const captionClipsJSON = await generateCaptionClips({
-            videoWidth: (studio as any).opts.width,
-            videoHeight: (studio as any).opts.height,
+            videoWidth: projectStore.getState().settings.width,
+            videoHeight: projectStore.getState().settings.height,
             words,
           });
 
           for (const json of captionClipsJSON) {
-            const enrichedJson = {
+            clipsToAdd.push({
               ...json,
               mediaId: clip.id,
-              metadata: {
-                ...json.metadata,
-                sourceClipId: clip.id,
-              },
               display: {
                 from: json.display.from + clip.display.from,
                 to: json.display.to + clip.display.from,
               },
-            };
-            const captionClip = await jsonToClip(enrichedJson);
-            clipsToAdd.push(captionClip);
+            });
           }
         }
       } catch (error) {
@@ -326,9 +291,11 @@ export const handleGenerateCaptions = async (input: any, studio: Studio) => {
     }
 
     if (clipsToAdd.length > 0) {
-      await studio.addClip(clipsToAdd, { trackId: captionTrackId });
+      await engine.addClips(clipsToAdd);
     }
   } catch (error) {
     console.error("Failed to generate captions:", error);
   }
 };
+
+

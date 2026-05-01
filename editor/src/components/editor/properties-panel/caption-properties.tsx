@@ -45,9 +45,9 @@ import { getGroupedFonts, getFontByPostScriptName } from "@/utils/font-utils";
 import useLayoutStore from "../store/use-layout-store";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { useStudioStore } from "@/stores/studio-store";
 import { NumberInput } from "@/components/ui/number-input";
 import { useStore } from "zustand";
+import { useEphemeralClip } from "@/hooks/use-ephemeral-clip";
 import { projectStore, engine } from "@/lib/project";
 
 const GROUPED_FONTS = getGroupedFonts();
@@ -58,10 +58,13 @@ interface CaptionPropertiesProps {
 type VerticalAlignMode = "top" | "center" | "bottom";
 
 export function CaptionProperties({ clip }: CaptionPropertiesProps) {
-  const { studio } = useStudioStore();
-  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]) as any;
-  const allCaptionIds = useStore(projectStore, (s) => 
-    Object.keys(s.clips).filter(id => s.clips[id].type === "Caption")
+  const coreClipBase = useStore(projectStore, (s) => s.clips[clip.id]) as any;
+  const coreClip = useEphemeralClip(clip.id, coreClipBase);
+  const clips = useStore(projectStore, (s) => s.clips);
+  
+  const allCaptionIds = React.useMemo(() => 
+    Object.keys(clips).filter(id => clips[id].type === "Caption"),
+    [clips]
   );
 
   if (!coreClip) return null;
@@ -144,10 +147,8 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
 
   async function changeWordsPerLine(v: string, captionClip: any, opts: any) {
     const val = v as WordsPerLineMode;
-    if (!studio) return;
 
     await regenerateCaptionClips({
-      studio,
       captionClip,
       mode: val,
       fontSize: opts.fontSize,
