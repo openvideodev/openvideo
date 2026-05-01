@@ -72,6 +72,8 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
         projectStore.getState().select(payload.activeIds);
       }
     }
+
+    console.log("Timeline state changed", {payload, options});
   };
 
   timeline.emitter.on("STATE_CHANGED", handleTimelineStateChanged);

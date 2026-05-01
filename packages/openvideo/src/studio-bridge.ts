@@ -63,16 +63,26 @@ export class StudioBridge {
 
     // 4. Sync Updates
     this.engine.on("clip:updated", this.handleClipUpdated);
+    
+    // 5. Sync Tracks
+    this.engine.on("tracks:updated", this.handleTracksUpdated);
 
     // Initial Sync
     this.syncInitialState();
   }
+
+  private handleTracksUpdated = (tracks: any[]) => {
+    this.studio.setTracks(tracks as any);
+  };
 
   private async syncInitialState() {
     const state = this.engine.store.getState();
     
     // Set initial size
     this.studio.setSize(state.settings.width, state.settings.height);
+
+    // Sync tracks initially
+    await this.studio.setTracks(state.tracks as any);
 
     // Add all clips
     for (const id in state.clips) {
@@ -126,5 +136,6 @@ export class StudioBridge {
     this.engine.off("clip:added", this.handleClipAdded);
     this.engine.off("clip:removed", this.handleClipRemoved);
     this.engine.off("clip:updated", this.handleClipUpdated);
+    this.engine.off("tracks:updated", this.handleTracksUpdated);
   }
 }

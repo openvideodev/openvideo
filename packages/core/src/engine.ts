@@ -56,6 +56,11 @@ export class CoreEngine extends EventEmitter {
         this.emit("clip:updated", state.clips[id]);
       }
     });
+
+    // 4. Structural events (Tracks)
+    if (state.tracks !== prevState.tracks) {
+      this.emit("tracks:updated", state.tracks);
+    }
   }
 
   // Convenience Proxies
