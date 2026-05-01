@@ -28,6 +28,7 @@ import {
 import PreviewTrackItem from "./items/preview-drag-item";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
 import { addStudioSync } from "./studio-to-store-sync";
+import { TIMELINE_SCALE_CHANGED, TIMELINE_BOUNDING_CHANGED } from "@openvideo/timeline";
 
 CanvasTimeline.registerItems({
   Text,
@@ -48,9 +49,7 @@ const EMPTY_SIZE = { width: 0, height: 0 };
 
 const Timeline = () => {
   // prevent duplicate scroll events
-  const canScrollRef = useRef(false);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = useRef<CanvasTimeline | null>(null);
   const horizontalScrollbarVpRef = useRef<HTMLDivElement>(null);
@@ -59,11 +58,10 @@ const Timeline = () => {
   const { fps } = useProjectStore();
   const scale = useStore(projectStore, (s) => s.scale);
   const setScale = projectStore.getState().setScale;
-  
+
   const [canvasSize, setCanvasSize] = useState(EMPTY_SIZE);
   const timelineOffsetX = useTimelineOffsetX();
   const timelineContainerRef = useRef<HTMLDivElement>(null);
-  const timelineHeight = 320; // Default or get from container
   const onMouseDown = () => { };
   const onMouseMove = () => { };
   const onMouseOut = () => { };
@@ -124,8 +122,11 @@ const Timeline = () => {
       if (!entry) return;
 
       const { height, width } = entry.contentRect;
+      // Dynamically calculate available height for the canvas
+      // Header is 50px, Ruler is 24px + 1px border = 25px. 
+      // Total UI offset = 75px.
       const containerWidth = width - timelineOffsetX;
-      const containerHeight = height - 50 - 40; // 50 is header, 40 is ruler
+      const containerHeight = height - 75;
 
       canvasRef.current?.resize(
         {
@@ -151,7 +152,7 @@ const Timeline = () => {
     const containerWidth =
       (document.getElementById("timeline-header")?.clientWidth || 0) -
       timelineOffsetX;
-    const containerHeight = timelineHeight - 50 - 40;
+    const containerHeight = (timelineContainerEl.clientHeight || 320) - 75;
     const canvas = new CanvasTimeline(canvasEl, {
       width: containerWidth,
       height: containerHeight,
@@ -227,13 +228,23 @@ const Timeline = () => {
     });
 
 
+
     canvas.onViewportChange((left: number) => {
       setScrollLeft(left + 16);
     });
 
+    canvas.emitter.on(TIMELINE_SCALE_CHANGED, (data) => {
+      const newScale = data.payload.scale;
+      if (newScale.zoom !== scale.zoom) {
+        setScale(newScale);
+      }
+    });
+
     canvasRef.current = canvas;
 
-    setCanvasSize({ width: containerWidth, height: containerHeight });
+    const initialWidth = containerWidth;
+    const initialHeight = containerHeight;
+    setCanvasSize({ width: initialWidth, height: initialHeight });
     setTimeline(canvas);
 
     return () => {
@@ -258,18 +269,15 @@ const Timeline = () => {
   };
 
   const onRulerScroll = (newScrollLeft: number) => {
-    // Update the timeline canvas scroll position
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.scrollTo({ scrollLeft: newScrollLeft });
     }
 
-    // Update the horizontal scrollbar position
     if (horizontalScrollbarVpRef.current) {
       horizontalScrollbarVpRef.current.scrollLeft = newScrollLeft;
     }
 
-    // Update the local scroll state
     setScrollLeft(newScrollLeft);
   };
 
@@ -277,7 +285,6 @@ const Timeline = () => {
     const availableScroll = horizontalScrollbarVpRef.current?.scrollWidth;
     if (!availableScroll || !canvasRef.current) return;
 
-    // Sync scale to the timeline engine
     canvasRef.current.syncScale({ scale });
 
     const canvasWidth = canvasRef.current.width;
@@ -301,14 +308,12 @@ const Timeline = () => {
         const clampedZoom = Math.max(0.1, Math.min(10, newZoom));
 
         if (oldZoom !== clampedZoom) {
-          setScale(prev => ({ ...prev, zoom: clampedZoom }));
-          // Adjust scrollLeft to keep the cursor fixed
-          const rect = containerRef.current?.getBoundingClientRect();
+          setScale((prev) => ({ ...prev, zoom: clampedZoom }));
+          const rect = timelineContainerRef.current?.getBoundingClientRect();
           if (rect) {
             const cursorX = e.clientX - rect.left - timelineOffsetX;
             const newScrollLeft =
-              (cursorX + scrollLeft - 16) *
-              (clampedZoom / oldZoom) -
+              (cursorX + scrollLeft - 16) * (clampedZoom / oldZoom) -
               (cursorX - 16);
             onRulerScroll(newScrollLeft);
           }
@@ -316,9 +321,6 @@ const Timeline = () => {
       } else {
         const delta = e.shiftKey ? e.deltaY : e.deltaX || e.deltaY;
         if (delta !== 0) {
-          // We don't preventDefault here to allow native-like scroll feeling, 
-          // but we manualy sync the scroll position.
-          // Actually, since overflow is hidden, we SHOULD preventDefault to take over.
           e.preventDefault();
           onRulerScroll(scrollLeft + delta);
         }
@@ -333,13 +335,7 @@ const Timeline = () => {
     <div
       ref={timelineContainerRef}
       id="timeline-container"
-      className="relative w-full overflow-hidden bg-card"
-      style={{
-        height: `${timelineHeight}px`,
-        borderTopWidth: "1px",
-        borderTopStyle: "solid",
-        borderTopColor: "transparent"
-      }}
+      className="flex flex-col relative w-full h-full overflow-hidden bg-card border-t border-transparent"
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseOut={onMouseOut}
@@ -352,14 +348,14 @@ const Timeline = () => {
         onScroll={onRulerScroll}
       />
       <Playhead scale={scale} scrollLeft={scrollLeft} />
-      <div className="flex">
+
+      {/* Container for Tracks and Canvas */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         <div
-          style={{
-            width: timelineOffsetX
-          }}
+          style={{ width: timelineOffsetX }}
           className="relative flex-none"
         />
-        <div style={{ height: canvasSize.height }} className="relative flex-1">
+        <div className="relative flex-1 min-h-0 overflow-hidden">
           <canvas id="designcombo-timeline-canvas" ref={canvasElRef} />
         </div>
       </div>

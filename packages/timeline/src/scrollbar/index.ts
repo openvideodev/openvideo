@@ -161,6 +161,7 @@ export class Scrollbars {
     mapRect: ScrollbarProps,
     objectRect: ScrollbarProps
   ) {
+    console.log("Rendering scrollbars", this.hideX, this.hideY);
     // Clear only scrollbar areas, not the entire canvas
     if (!this.hideX) {
       ctx.clearRect(
@@ -201,6 +202,7 @@ export class Scrollbars {
     mapRect: ScrollbarXProps,
     objectRect: ScrollbarXProps
   ) {
+    // console.log("Drawing scrollbar x", mapRect, objectRect);
     const mapWidth = mapRect.right - mapRect.left;
     const objectWidth = objectRect.right - objectRect.left;
     if (mapWidth == objectWidth) {
@@ -209,7 +211,7 @@ export class Scrollbars {
       this._barViewport.sx = 1;
       return;
     }
-
+    // console.log("Drawing scrollbar x", mapRect, objectRect);
     const scaleX = Math.min(mapWidth / objectWidth, 1);
     const w = this.canvas.width - this.scrollbarSize - this.scrollSpace * 2;
     const width = Math.max((w * scaleX) | 0, this.scrollbarMinWidth);
@@ -229,6 +231,7 @@ export class Scrollbars {
       w: width,
       h: this.scrollbarSize
     });
+    console.log("Drawing scrollbar x", x, y, width, this.scrollbarSize);
   }
   drawScrollbarY(
     ctx: CanvasRenderingContext2D,
