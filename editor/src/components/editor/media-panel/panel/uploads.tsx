@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
-import { Image, Video, Audio, Log, clipToJSON, type IClip as StudioClip } from "openvideo";
+import { engine } from "@/lib/project";
 import { Upload, Film, Search, X, HardDrive, Trash2, Music } from "lucide-react";
 import { storageService, type StorageStats } from "@/lib/storage/storage-service";
 import type { MediaFile, MediaType } from "@/types/media";
@@ -327,30 +327,20 @@ export default function PanelUploads() {
 
   // Add item to canvas
   const addItemToCanvas = async (asset: VisualAsset) => {
-    if (!studio) return;
-
     try {
-      if (asset.type === "image") {
-        const imageClip = await Image.fromUrl(asset.src);
-        imageClip.name = asset.name;
-        imageClip.display = { from: 0, to: 5 * 1e6 };
-        imageClip.duration = 5 * 1e6;
-        await imageClip.scaleToFit(canvasSize.width, canvasSize.height);
-        imageClip.centerInScene(canvasSize.width, canvasSize.height);
-        await studio.addClip(imageClip);
-      } else if (asset.type === "audio") {
-        const audioClip = await Audio.fromUrl(asset.src);
-        audioClip.name = asset.name;
-        await studio.addClip(audioClip);
-      } else {
-        const videoClip = await Video.fromUrl(asset.src);
-        videoClip.name = asset.name;
-        await videoClip.scaleToFit(canvasSize.width, canvasSize.height);
-        videoClip.centerInScene(canvasSize.width, canvasSize.height);
-        await studio.addClip(videoClip);
-      }
+      const typeMap: Record<string, string> = {
+        image: "Image",
+        video: "Video",
+        audio: "Audio",
+      };
+
+      await engine.addClip({
+        type: typeMap[asset.type] as any,
+        src: asset.src,
+        name: asset.name,
+      });
     } catch (error) {
-      Log.error(`Failed to add ${asset.type}:`, error);
+      console.error("Failed to add clip:", error);
     }
   };
 

@@ -546,6 +546,12 @@ export class SelectionManager {
       rafId = requestAnimationFrame(() => {
         rafId = null;
         this.syncSelectedClipsTransformsRealtime();
+        
+        // Emit for real-time sync to Core/UI
+        for (const clip of this.selectedClips) {
+          this.studio.emit('clip:transforming', { clip });
+        }
+        
         // Force render for real-time visual feedback
         this.studio.pixiApp?.render();
       });

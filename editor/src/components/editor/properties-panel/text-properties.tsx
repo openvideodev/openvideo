@@ -52,6 +52,8 @@ import { fontManager } from "openvideo";
 import { getGroupedFonts, getFontByPostScriptName } from "@/utils/font-utils";
 import { NumberInput } from "@/components/ui/number-input";
 import useLayoutStore from "../store/use-layout-store";
+import { useStore } from "zustand";
+import { projectStore, engine } from "@/lib/project";
 
 const GROUPED_FONTS = getGroupedFonts();
 
@@ -108,39 +110,18 @@ interface TextPropertiesProps {
 }
 
 export function TextProperties({ clip }: TextPropertiesProps) {
-  const textClip = clip as any;
-  const style = textClip.style || {};
-  const [, setTick] = useState(0);
+  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]);
 
-  // Listen to clip events for canvas sync
-  useEffect(() => {
-    if (!textClip) return;
+  if (!coreClip) return null;
 
-    const onPropsChange = () => {
-      setTick((t) => t + 1);
-    };
-
-    // Listen to propsChange to ensure updates from drag/drop on canvas
-    textClip.on?.("propsChange", onPropsChange);
-    // Also listen to common fabric events just in case
-    textClip.on?.("moving", onPropsChange);
-    textClip.on?.("scaling", onPropsChange);
-    textClip.on?.("rotating", onPropsChange);
-
-    return () => {
-      textClip.off?.("propsChange", onPropsChange);
-      textClip.off?.("moving", onPropsChange);
-      textClip.off?.("scaling", onPropsChange);
-      textClip.off?.("rotating", onPropsChange);
-    };
-  }, [textClip]);
+  const style = coreClip.style || {};
 
   const handleUpdate = (updates: any) => {
-    textClip.update(updates);
+    engine.updateClip(clip.id, updates);
   };
 
   const handleStyleUpdate = (styleUpdates: any) => {
-    textClip.update({
+    handleUpdate({
       style: {
         ...style,
         ...styleUpdates,
@@ -175,7 +156,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
   );
 
   const handleStrokeUpdate = (strokeUpdates: any) => {
-    textClip.update({
+    handleUpdate({
       style: {
         ...style,
         stroke: {
@@ -205,7 +186,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
       finalUpdates.distance = parseFloat(blurUpdates.distance) || 0;
     }
 
-    textClip.update({
+    handleUpdate({
       style: {
         ...style,
         dropShadow: {
@@ -219,11 +200,11 @@ export function TextProperties({ clip }: TextPropertiesProps) {
   const { setFloatingControl } = useLayoutStore();
 
   const handleAnimationRemove = (id: string) => {
-    textClip.removeAnimation(id);
-    setTick((t) => t + 1);
+    const animations = (coreClip.animations || []).filter((a: any) => a.id !== id);
+    handleUpdate({ animations });
   };
 
-  const animations = textClip.animations || [];
+  const animations = coreClip.animations || [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -233,7 +214,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
           Content
         </label>
         <Textarea
-          value={textClip.text || ""}
+          value={coreClip.text || ""}
           onChange={(e) => handleUpdate({ text: e.target.value })}
           className="resize-none text-sm"
           placeholder="Enter text..."
@@ -251,7 +232,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">X</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(textClip.left || 0)}
+              value={Math.round(coreClip.left || 0)}
               onChange={(val) => handleUpdate({ left: val })}
               className="p-0"
             />
@@ -261,7 +242,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">Y</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(textClip.top || 0)}
+              value={Math.round(coreClip.top || 0)}
               onChange={(val) => handleUpdate({ top: val })}
               className="p-0"
             />
@@ -273,7 +254,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">W</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(textClip.width || 0)}
+              value={Math.round(coreClip.width || 0)}
               onChange={(val) => handleUpdate({ width: val })}
               className="p-0"
             />
@@ -283,7 +264,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">H</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(textClip.height || 0)}
+              value={Math.round(coreClip.height || 0)}
               onChange={(val) => handleUpdate({ height: val })}
               className="p-0"
             />
@@ -299,7 +280,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconRotate className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round(textClip.angle ?? 0)]}
+            value={[Math.round(coreClip.angle ?? 0)]}
             onValueChange={(v) => handleUpdate({ angle: v[0] })}
             max={360}
             step={1}
@@ -307,7 +288,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
           />
           <InputGroup className="w-20">
             <NumberInput
-              value={Math.round(textClip.angle ?? 0)}
+              value={Math.round(coreClip.angle ?? 0)}
               onChange={(val) => handleUpdate({ angle: val })}
               className="p-0 text-center"
             />
@@ -366,7 +347,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               onClick={() => handleUpdate({ textAlign: item.value })}
               className={cn(
                 "flex-1 flex items-center justify-center rounded-sm py-1 transition-colors",
-                textClip.textAlign === item.value
+                coreClip.textAlign === item.value
                   ? "bg-white/10 text-white"
                   : "text-muted-foreground hover:bg-white/5",
               )}
@@ -387,7 +368,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               onClick={() => handleUpdate({ verticalAlign: item.value })}
               className={cn(
                 "flex-1 flex items-center justify-center rounded-sm py-1 transition-colors",
-                textClip.verticalAlign === item.value
+                coreClip.verticalAlign === item.value
                   ? "bg-white/10 text-white"
                   : "text-muted-foreground hover:bg-white/5",
               )}
@@ -411,7 +392,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               onClick={() => handleUpdate({ textCase: item.value })}
               className={cn(
                 "flex-1 text-[10px] font-medium flex items-center justify-center rounded-sm py-1 transition-colors",
-                (textClip.textCase || "none") === item.value
+                (coreClip.textCase || "none") === item.value
                   ? "bg-white/10 text-white"
                   : "text-muted-foreground hover:bg-white/5",
               )}
@@ -477,7 +458,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconCircle className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round((textClip.opacity ?? 1) * 100)]}
+            value={[Math.round((coreClip.opacity ?? 1) * 100)]}
             onValueChange={(v) => handleUpdate({ opacity: v[0] / 100 })}
             max={100}
             step={1}
@@ -485,7 +466,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
           />
           <InputGroup className="w-20">
             <NumberInput
-              value={Math.round((textClip.opacity ?? 1) * 100)}
+              value={Math.round((coreClip.opacity ?? 1) * 100)}
               onChange={(val) => handleUpdate({ opacity: val / 100 })}
               className="p-0 text-center"
             />
@@ -505,7 +486,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
           <button
             onClick={() => {
               setFloatingControl("animation-properties-picker", {
-                clipId: textClip.id,
+                clipId: coreClip.id,
                 mode: "add",
               });
             }}
@@ -537,7 +518,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
                   <button
                     onClick={() => {
                       setFloatingControl("animation-properties-picker", {
-                        clipId: textClip.id,
+                        clipId: coreClip.id,
                         animationId: anim.id,
                         mode: "edit",
                       });

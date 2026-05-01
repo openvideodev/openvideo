@@ -149,5 +149,39 @@ export const loadClip = async (
     effects: payload.effects ?? [],
   } as AnyClip;
 
+  if (payload.type === "Caption") {
+    const captionClip = baseClip as any;
+    captionClip.mediaId = payload.mediaId ?? "";
+    captionClip.wordsPerLine = payload.wordsPerLine ?? "multiple";
+    captionClip.caption = payload.caption ?? {
+      words: [],
+      colors: {
+        appeared: "#ffffff",
+        active: "#ffffff",
+        activeFill: "#FF5700",
+        background: "",
+        keyword: "#ffffff",
+      },
+      preserveKeywordColor: true,
+      positioning: {
+        videoWidth: canvasSize.width,
+        videoHeight: canvasSize.height,
+      },
+    };
+    if (!payload.style) {
+      captionClip.style = {
+        fontSize: 40,
+        fontFamily: "Inter",
+        fontWeight: "400",
+        fontStyle: "normal",
+        color: "#ffffff",
+        align: "center",
+        fontUrl: "",
+        wordWrapWidth: canvasSize.width * 0.8,
+        wordWrap: true,
+      };
+    }
+  }
+
   return baseClip;
 };

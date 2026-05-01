@@ -18,7 +18,9 @@ export interface ProjectActions {
 
   // Clips
   addClip: (clip: Partial<AnyClip> & { type: string }, options?: AddClipOptions | string) => Promise<AnyClip>;
+  addClips: (clips: (Partial<AnyClip> & { type: string })[], options?: AddClipOptions | string) => Promise<AnyClip[]>;
   updateClip: (id: string, updates: Partial<AnyClip>) => void;
+  updateClips: (updatesList: { id: string; updates: Partial<AnyClip> }[]) => void;
   removeClips: (ids: string[]) => void;
 
   // Tracks
@@ -143,6 +145,38 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       return newClip;
     },
 
+    addClips: async (payloads, options) => {
+      const state = get();
+      const addOptions: AddClipOptions = typeof options === "string" ? { trackId: options } : options || {};
+      
+      const newClips = await Promise.all(
+        payloads.map(payload => 
+          loadClip(payload, { 
+            canvasSize: { width: state.settings.width, height: state.settings.height } 
+          })
+        )
+      );
+
+      set((state) => {
+        let currentTracks = state.tracks;
+        const nextClips = { ...state.clips };
+
+        newClips.forEach(newClip => {
+          const { tracks: nextTracks } = manageTracks(currentTracks, newClip, addOptions);
+          currentTracks = nextTracks;
+          nextClips[newClip.id] = newClip;
+        });
+        
+        return { 
+          clips: nextClips, 
+          tracks: currentTracks 
+        };
+      });
+
+      get().recalculateDuration();
+      return newClips;
+    },
+
     updateClip: (id, updates) => {
       set((state) => {
         const clip = state.clips[id];
@@ -156,6 +190,23 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         return {
           clips: { ...state.clips, [id]: updatedClip },
         };
+      });
+      get().recalculateDuration();
+    },
+
+    updateClips: (updatesList) => {
+      set((state) => {
+        const nextClips = { ...state.clips };
+        updatesList.forEach(({ id, updates }) => {
+          const clip = nextClips[id];
+          if (!clip) return;
+          const updatedClip = { ...clip, ...updates } as AnyClip;
+          if (updates.display) {
+            updatedClip.duration = updates.display.to - updates.display.from;
+          }
+          nextClips[id] = updatedClip;
+        });
+        return { clips: nextClips };
       });
       get().recalculateDuration();
     },

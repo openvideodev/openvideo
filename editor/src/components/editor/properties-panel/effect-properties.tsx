@@ -25,6 +25,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useStore } from "zustand";
+import { projectStore, engine } from "@/lib/project";
+
 interface EffectPropertiesProps {
   clip: IClip;
 }
@@ -555,8 +558,11 @@ const PropertyRenderer = ({
   );
 };
 export function EffectProperties({ clip }: EffectPropertiesProps) {
-  const effectClip = clip as any;
-  const filterKey = effectClip.effect.key;
+  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]) as any;
+
+  if (!coreClip) return null;
+
+  const filterKey = coreClip.effect.key;
 
   const limits =
     VALUES_FILTER_SPECIAL_LIMITS[filterKey as keyof typeof VALUES_FILTER_SPECIAL_LIMITS];
@@ -564,11 +570,11 @@ export function EffectProperties({ clip }: EffectPropertiesProps) {
   const extraProperties = EXTRA_PROPERTIES[filterKey as keyof typeof EXTRA_PROPERTIES] ?? {};
 
   const handleUpdate = (property: string, value: any) => {
-    effectClip.update({
+    engine.updateClip(clip.id, {
       effect: {
-        ...effectClip.effect,
+        ...coreClip.effect,
         values: {
-          ...(effectClip.effect.values || {}),
+          ...(coreClip.effect.values || {}),
           [property]: value,
         },
       },
@@ -593,7 +599,7 @@ export function EffectProperties({ clip }: EffectPropertiesProps) {
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-6">
         {Object.entries(limits).map(([property, config]) => {
-          const currentValue = effectClip.effect.values?.[property] ?? defaultValues[property];
+          const currentValue = coreClip.effect.values?.[property] ?? defaultValues[property];
           return (
             <div key={property} className="flex flex-col gap-2">
               <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -610,7 +616,7 @@ export function EffectProperties({ clip }: EffectPropertiesProps) {
           );
         })}
         {Object.entries(extraProperties).map(([property, type]) => {
-          const currentValue = effectClip.effect.values?.[property] ?? defaultValues?.[property];
+          const currentValue = coreClip.effect.values?.[property] ?? defaultValues?.[property];
           const optionsSelect =
             property === "fillMode" ? TYPES_GLITCH_FILTER : TYPES_COLOR_GRADIENT_FILTER;
 

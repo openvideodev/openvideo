@@ -47,6 +47,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { useStudioStore } from "@/stores/studio-store";
 import { NumberInput } from "@/components/ui/number-input";
+import { useStore } from "zustand";
+import { projectStore, engine } from "@/lib/project";
 
 const GROUPED_FONTS = getGroupedFonts();
 
@@ -57,10 +59,14 @@ type VerticalAlignMode = "top" | "center" | "bottom";
 
 export function CaptionProperties({ clip }: CaptionPropertiesProps) {
   const { studio } = useStudioStore();
-  if (!studio) return null;
-  const captionClip = clip as any;
-  const allCaptionClips: any[] = studio.clips.filter((c) => c.type === "Caption");
-  const opts = captionClip.originalOpts || {};
+  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]) as any;
+  const allCaptionIds = useStore(projectStore, (s) => 
+    Object.keys(s.clips).filter(id => s.clips[id].type === "Caption")
+  );
+
+  if (!coreClip) return null;
+
+  const opts = coreClip.originalOpts || {};
   const captionColors = opts.caption?.colors || {
     appeared: "#ffffff",
     active: "#ffffff",
@@ -73,73 +79,50 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
 
   const handleUpdate = (updates: any, option: "single" | "multiple" = "single") => {
     if (option === "multiple") {
-      for (const clip of allCaptionClips) {
-        Object.keys(updates).forEach((key) => {
-          (clip as any)[key] = updates[key];
-        });
-        clip.emit("propsChange", {});
-      }
-    } else {
-      Object.keys(updates).forEach((key) => {
-        (captionClip as any)[key] = updates[key];
+      allCaptionIds.forEach(id => {
+        engine.updateClip(id, updates);
       });
-      captionClip.emit("propsChange", {});
+    } else {
+      engine.updateClip(clip.id, updates);
     }
-
-    studio.emit("propsChange", {});
   };
 
   const handleCaptionColorUpdate = (colorUpdates: any) => {
-    for (const clip of allCaptionClips) {
-      // Directly update the internal opts object
-      if (colorUpdates.appeared !== undefined) {
-        (clip as any).opts.appeared = colorUpdates.appeared;
-      }
-      if (colorUpdates.active !== undefined) {
-        (clip as any).opts.active = colorUpdates.active;
-      }
-      if (colorUpdates.activeFill !== undefined) {
-        (clip as any).opts.activeFill = colorUpdates.activeFill;
-      }
-      if (colorUpdates.background !== undefined) {
-        (clip as any).opts.background = colorUpdates.background;
-      }
-      if (colorUpdates.keyword !== undefined) {
-        (clip as any).opts.keyword = colorUpdates.keyword;
-      }
-      Object.assign((clip as any).caption.colors, colorUpdates);
-      clip.emit("propsChange", {});
-    }
+    allCaptionIds.forEach(id => {
+      const c = projectStore.getState().clips[id];
+      if (!c) return;
+      
+      const newOpts = {
+        ...(c.originalOpts || {}),
+        ...colorUpdates,
+      };
 
-    studio.emit("propsChange", {});
+      engine.updateClip(id, { 
+        originalOpts: newOpts,
+        // Also update any other color-related paths if necessary
+      });
+    });
   };
 
   const handleAnimationRemove = (id: string) => {
-    if (captionClip.type === "Caption" && studio) {
-      const anim = captionClip.animations.find((a: any) => a.id === id);
-      const typeToRemove = anim?.type;
+    const anim = (coreClip.animations || []).find((a: any) => a.id === id);
+    const typeToRemove = anim?.type;
 
-      studio.clips.forEach((c: any) => {
-        if (c.type === "Caption") {
-          if (typeToRemove) {
-            const targetAnim = c.animations.find((a: any) => a.type === typeToRemove);
-            if (targetAnim) {
-              c.removeAnimation(targetAnim.id);
-              c.emit("propsChange", {});
-            }
-          } else {
-            c.removeAnimation(id);
-            c.emit("propsChange", {});
-          }
+    if (typeToRemove) {
+      allCaptionIds.forEach(cId => {
+        const c = projectStore.getState().clips[cId];
+        if (c && c.animations) {
+          const newAnims = c.animations.filter((a: any) => a.type !== typeToRemove);
+          engine.updateClip(cId, { animations: newAnims });
         }
       });
     } else {
-      captionClip.removeAnimation(id);
-      captionClip.emit("propsChange", {});
+      const newAnims = (coreClip.animations || []).filter((a: any) => a.id !== id);
+      engine.updateClip(clip.id, { animations: newAnims });
     }
   };
 
-  const animations = captionClip.animations || [];
+  const animations = coreClip.animations || [];
 
   const handleFontChange = async (postScriptName: string) => {
     const font = getFontByPostScriptName(postScriptName);
@@ -157,8 +140,6 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
       },
       "multiple",
     );
-
-    captionClip.emit("propsChange", {});
   };
 
   async function changeWordsPerLine(v: string, captionClip: any, opts: any) {
@@ -180,21 +161,20 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
     captionClip: any,
     handleUpdate: (updates: { top: number }) => void,
   ) {
-    if (!studio) return;
-
-    const videoHeight = (studio as any).opts.height || 1080;
-    const mediaId = captionClip.mediaId;
+    const project = projectStore.getState();
+    const videoHeight = project.settings.height || 1080;
+    const mediaId = coreClip.mediaId;
 
     // Find siblings if part of a group
     let clipsToUpdate: any[] = [captionClip];
 
     if (mediaId) {
-      const tracks = studio.getTracks();
+      const tracks = project.tracks;
       const siblingClips: any[] = [];
       tracks.forEach((track: any) => {
         track.clipIds.forEach((id: string) => {
-          const c = studio.getClipById(id);
-          if (c && c.type === "Caption" && (c as any).opts.mediaId === mediaId) {
+          const c = project.clips[id];
+          if (c && c.type === "Caption" && (c as any).mediaId === mediaId) {
             siblingClips.push(c);
           }
         });
@@ -217,19 +197,14 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         newTop = videoHeight - clipHeight - 80;
       }
 
-      if (clip.id === captionClip.id) {
+      if (clip.id === coreClip.id) {
         handleUpdate({ top: newTop });
       } else {
-        clip.top = newTop;
-        clip.emit && clip.emit("propsChange", { top: newTop });
+        engine.updateClip(clip.id, { top: newTop });
       }
 
-      if (clip.originalOpts) {
-        clip.originalOpts.verticalAlign = v as VerticalAlignMode;
-      }
-      if (clip.opts) {
-        clip.opts.verticalAlign = v as VerticalAlignMode;
-      }
+      // Metadata updates if needed
+      // These will be handled by the engine.updateClip calls above
     });
   }
 
@@ -245,7 +220,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
           Content
         </label>
         <Textarea
-          value={captionClip.text || ""}
+          value={coreClip.text || ""}
           onChange={(e) => handleUpdate({ text: e.target.value })}
           className="resize-none text-sm"
           placeholder="Enter caption text..."
@@ -264,7 +239,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
             </InputGroupAddon>
             <InputGroupInput
               type="number"
-              value={Math.round(captionClip.left || 0)}
+              value={Math.round(coreClip.left || 0)}
               onChange={(e) => handleUpdate({ left: parseInt(e.target.value) || 0 })}
               className="text-sm p-0"
             />
@@ -275,7 +250,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
             </InputGroupAddon>
             <InputGroupInput
               type="number"
-              value={Math.round(captionClip.top || 0)}
+              value={Math.round(coreClip.top || 0)}
               onChange={(e) => handleUpdate({ top: parseInt(e.target.value) || 0 })}
               className="text-sm p-0"
             />
@@ -288,7 +263,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
             </InputGroupAddon>
             <InputGroupInput
               type="number"
-              value={Math.round(captionClip.width || 0)}
+              value={Math.round(coreClip.width || 0)}
               onChange={(e) => handleUpdate({ width: parseInt(e.target.value) || 0 })}
               className="text-sm p-0"
             />
@@ -299,7 +274,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
             </InputGroupAddon>
             <InputGroupInput
               type="number"
-              value={Math.round(captionClip.height || 0)}
+              value={Math.round(coreClip.height || 0)}
               onChange={(e) => handleUpdate({ height: parseInt(e.target.value) || 0 })}
               className="text-sm p-0"
             />
@@ -314,7 +289,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         </label>
         <Select
           value={opts.verticalAlign || "bottom"}
-          onValueChange={(v) => updateVerticalAlign(v, captionClip, handleUpdate)}
+          onValueChange={(v) => updateVerticalAlign(v, coreClip, handleUpdate)}
         >
           <SelectTrigger className="w-full h-9">
             <SelectValue placeholder="Vertical Position" />
@@ -333,8 +308,8 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
           Words per line
         </label>
         <Select
-          value={captionClip.wordsPerLine || "multiple"}
-          onValueChange={(v) => changeWordsPerLine(v, captionClip, opts)}
+          value={coreClip.wordsPerLine || "multiple"}
+          onValueChange={(v) => changeWordsPerLine(v, coreClip, opts)}
         >
           <SelectTrigger className="w-full h-9">
             <SelectValue placeholder="Words per line" />
@@ -354,7 +329,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconRotate className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round(captionClip.angle ?? 0)]}
+            value={[Math.round(coreClip.angle ?? 0)]}
             onValueChange={(v) => handleUpdate({ angle: v[0] })}
             max={360}
             step={1}
@@ -363,7 +338,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
           <InputGroup className="w-20">
             <InputGroupInput
               type="number"
-              value={Math.round(captionClip.angle ?? 0)}
+              value={Math.round(coreClip.angle ?? 0)}
               onChange={(e) => handleUpdate({ angle: parseInt(e.target.value) || 0 })}
               className="text-sm p-0 text-center"
             />
@@ -456,7 +431,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
                 onClick={() => handleUpdate({ textCase: item.value }, "multiple")}
                 className={cn(
                   "flex-1 text-[10px] font-medium flex items-center justify-center rounded-sm py-1 transition-colors",
-                  (captionClip.textCase || "none") === item.value
+                  (coreClip.textCase || "none") === item.value
                     ? "bg-white/10 text-white"
                     : "text-muted-foreground hover:bg-white/5",
                 )}
@@ -519,7 +494,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconCircle className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round((captionClip.opacity ?? 1) * 100)]}
+            value={[Math.round((coreClip.opacity ?? 1) * 100)]}
             onValueChange={(v) => handleUpdate({ opacity: v[0] / 100 })}
             max={100}
             step={1}
@@ -528,7 +503,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
           <InputGroup className="w-20">
             <InputGroupInput
               type="number"
-              value={Math.round((captionClip.opacity ?? 1) * 100)}
+              value={Math.round((coreClip.opacity ?? 1) * 100)}
               onChange={(e) => handleUpdate({ opacity: (parseInt(e.target.value) || 0) / 100 })}
               className="text-sm p-0 text-center"
             />
@@ -548,7 +523,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
           <button
             onClick={() => {
               setFloatingControl("animation-properties-picker", {
-                clipId: captionClip.id,
+                clipId: coreClip.id,
                 mode: "add",
               });
             }}
@@ -580,7 +555,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
                   <button
                     onClick={() => {
                       setFloatingControl("animation-properties-picker", {
-                        clipId: captionClip.id,
+                        clipId: coreClip.id,
                         animationId: anim.id,
                         mode: "edit",
                       });

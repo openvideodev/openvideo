@@ -4,15 +4,20 @@ import { IconVolume, IconGauge, IconMusic } from "@tabler/icons-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Slider } from "@/components/ui/slider";
 
+import { useStore } from "zustand";
+import { projectStore, engine } from "@/lib/project";
+
 interface AudioPropertiesProps {
   clip: IClip;
 }
 
 export function AudioProperties({ clip }: AudioPropertiesProps) {
-  const audioClip = clip as any;
+  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]);
+
+  if (!coreClip) return null;
 
   const handleUpdate = (updates: any) => {
-    audioClip.update(updates);
+    engine.updateClip(clip.id, updates);
   };
 
   return (
@@ -25,7 +30,7 @@ export function AudioProperties({ clip }: AudioPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconVolume className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round((audioClip.volume ?? 1) * 100)]}
+            value={[Math.round((coreClip.volume ?? 1) * 100)]}
             onValueChange={(v) => handleUpdate({ volume: v[0] / 100 })}
             max={100}
             step={1}
@@ -34,7 +39,7 @@ export function AudioProperties({ clip }: AudioPropertiesProps) {
           <InputGroup className="w-20">
             <InputGroupInput
               type="number"
-              value={Math.round((audioClip.volume ?? 1) * 100)}
+              value={Math.round((coreClip.volume ?? 1) * 100)}
               onChange={(e) => handleUpdate({ volume: (parseInt(e.target.value) || 0) / 100 })}
               className="text-sm p-0 text-center"
             />

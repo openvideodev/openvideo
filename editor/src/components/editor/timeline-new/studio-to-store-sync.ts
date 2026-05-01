@@ -19,9 +19,15 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
   // --- 1. ENGINES -> CORE (Interaction Capture) ---
   
   // Captures changes from Studio (e.g. property panel or direct canvas edits)
+  let isSyncingFromStudio = false;
   const handleClipUpdatedFromStudio = ({ clip }: { clip: IClip }) => {
     const serialized = clipToJSON(clip as unknown as StudioClip) as any;
-    projectStore.getState().updateClip(clip.id, serialized);
+    isSyncingFromStudio = true;
+    try {
+      projectStore.getState().updateClip(clip.id, serialized);
+    } finally {
+      isSyncingFromStudio = false;
+    }
   };
 
   const handleSelectionFromStudio = (data: { selected: any[] }) => {
@@ -36,6 +42,7 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
   const handleSelectionClearedFromStudio = () => projectStore.getState().deselect();
 
   studio.on("clip:updated", handleClipUpdatedFromStudio as any);
+  studio.on("clip:transforming", handleClipUpdatedFromStudio as any);
   studio.on("selection:created", handleSelectionFromStudio);
   studio.on("selection:updated", handleSelectionFromStudio);
   studio.on("selection:cleared", handleSelectionClearedFromStudio);
@@ -102,7 +109,7 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
   let prevState = projectStore.getState();
 
   const unsubCore = projectStore.subscribe(async (state) => {
-    if (isSyncingFromTimeline) return;
+    if (isSyncingFromTimeline || isSyncingFromStudio) return;
 
     const currentPrevState = prevState;
     prevState = state;
@@ -175,6 +182,7 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
 
   return () => {
     studio.off("clip:updated", handleClipUpdatedFromStudio as any);
+    studio.off("clip:transforming", handleClipUpdatedFromStudio as any);
     studio.off("selection:created", handleSelectionFromStudio);
     studio.off("selection:updated", handleSelectionFromStudio);
     studio.off("selection:cleared", handleSelectionClearedFromStudio);

@@ -28,6 +28,9 @@ export interface IBaseClip {
   src?: string;
   text?: string;
   flip?: any;
+  locked?: boolean;
+  textCase?: "none" | "uppercase" | "lowercase";
+  verticalAlign?: "top" | "center" | "bottom";
   metadata?: Record<string, any>;
   [key: string]: any;
 }
@@ -36,7 +39,58 @@ export interface IVideoClip extends IBaseClip { type: "Video"; src: string; }
 export interface IAudioClip extends IBaseClip { type: "Audio"; src: string; }
 export interface IImageClip extends IBaseClip { type: "Image"; src: string; }
 export interface ITextClip extends IBaseClip { type: "Text"; text: string; }
-export interface ICaptionClip extends IBaseClip { type: "Caption"; text: string; src: string; }
+
+export interface ICaptionWord {
+  text: string;
+  from: number;
+  to: number;
+  isKeyWord: boolean;
+  paragraphIndex: any;
+}
+
+export interface ICaptionClip extends IBaseClip {
+  type: "Caption";
+  text: string;
+  mediaId: string;
+  wordsPerLine: "single" | "multiple";
+  caption: {
+    words: ICaptionWord[];
+    colors: {
+      appeared: string;
+      active: string;
+      activeFill: string;
+      background: string;
+      keyword: string;
+    };
+    preserveKeywordColor: boolean;
+    positioning: {
+      videoWidth: number;
+      videoHeight: number;
+    };
+  };
+  style: {
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+    color?: string;
+    align?: "left" | "center" | "right";
+    fontUrl?: string;
+    wordWrapWidth?: number;
+    wordWrap?: boolean;
+    stroke?: {
+      color: string;
+      width: number;
+    };
+    shadow?: {
+      color: string;
+      alpha: number;
+      blur: number;
+      distance: number;
+      angle: number;
+    };
+  };
+}
 
 export interface ITransitionClip extends IBaseClip { 
   type: "Transition"; 

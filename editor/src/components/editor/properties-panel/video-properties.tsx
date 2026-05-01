@@ -44,43 +44,26 @@ import color from "color";
 import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
 import useLayoutStore from "../store/use-layout-store";
+import { useStore } from "zustand";
+import { projectStore, engine } from "@/lib/project";
 
 interface VideoPropertiesProps {
   clip: IClip;
 }
 
 export function VideoProperties({ clip }: VideoPropertiesProps) {
-  const videoClip = clip as any;
-  const style = videoClip.style || {};
-  const [, setTick] = useState(0);
+  const coreClip = useStore(projectStore, (s) => s.clips[clip.id]);
 
-  // Listen to clip events for canvas sync
-  useEffect(() => {
-    if (!videoClip) return;
+  if (!coreClip) return null;
 
-    const onPropsChange = () => {
-      setTick((t) => t + 1);
-    };
-
-    videoClip.on?.("propsChange", onPropsChange);
-    videoClip.on?.("moving", onPropsChange);
-    videoClip.on?.("scaling", onPropsChange);
-    videoClip.on?.("rotating", onPropsChange);
-
-    return () => {
-      videoClip.off?.("propsChange", onPropsChange);
-      videoClip.off?.("moving", onPropsChange);
-      videoClip.off?.("scaling", onPropsChange);
-      videoClip.off?.("rotating", onPropsChange);
-    };
-  }, [videoClip]);
+  const style = coreClip.style || {};
 
   const handleUpdate = (updates: any) => {
-    videoClip.update(updates);
+    engine.updateClip(clip.id, updates);
   };
 
   const handleStyleUpdate = (styleUpdates: any) => {
-    videoClip.update({
+    handleUpdate({
       style: {
         ...style,
         ...styleUpdates,
@@ -89,7 +72,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
   };
 
   const handleStrokeUpdate = (strokeUpdates: any) => {
-    videoClip.update({
+    handleUpdate({
       style: {
         ...style,
         stroke: {
@@ -119,7 +102,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
       finalUpdates.distance = parseFloat(shadowUpdates.distance) || 0;
     }
 
-    videoClip.update({
+    handleUpdate({
       style: {
         ...style,
         dropShadow: {
@@ -130,9 +113,9 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
     });
   };
   const handleChromaKeyUpdate = (chromaUpdates: any) => {
-    videoClip.update({
+    handleUpdate({
       chromaKey: {
-        ...videoClip.chromaKey,
+        ...coreClip.chromaKey,
         ...chromaUpdates,
       },
     });
@@ -141,11 +124,11 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
   const { setFloatingControl } = useLayoutStore();
 
   const handleAnimationRemove = (id: string) => {
-    videoClip.removeAnimation(id);
-    setTick((t) => t + 1);
+    const animations = (coreClip.animations || []).filter((a: any) => a.id !== id);
+    handleUpdate({ animations });
   };
 
-  const animations = videoClip.animations || [];
+  const animations = coreClip.animations || [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -160,7 +143,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">X</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(videoClip.left || 0)}
+              value={Math.round(coreClip.left || 0)}
               onChange={(val) => handleUpdate({ left: val })}
               className="p-0"
             />
@@ -170,7 +153,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">Y</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(videoClip.top || 0)}
+              value={Math.round(coreClip.top || 0)}
               onChange={(val) => handleUpdate({ top: val })}
               className="p-0"
             />
@@ -182,7 +165,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">W</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(videoClip.width || 0)}
+              value={Math.round(coreClip.width || 0)}
               onChange={(val) => handleUpdate({ width: val })}
               className="p-0"
             />
@@ -192,7 +175,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               <span className="text-[10px] font-medium text-muted-foreground">H</span>
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(videoClip.height || 0)}
+              value={Math.round(coreClip.height || 0)}
               onChange={(val) => handleUpdate({ height: val })}
               className="p-0"
             />
@@ -208,7 +191,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconRotate className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round(videoClip.angle ?? 0)]}
+            value={[Math.round(coreClip.angle ?? 0)]}
             onValueChange={(v) => handleUpdate({ angle: v[0] })}
             max={360}
             step={1}
@@ -216,7 +199,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
           />
           <InputGroup className="w-20">
             <NumberInput
-              value={Math.round(videoClip.angle ?? 0)}
+              value={Math.round(coreClip.angle ?? 0)}
               onChange={(val) => handleUpdate({ angle: val })}
               className="p-0 text-center"
             />
@@ -235,7 +218,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconVolume className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round((videoClip.volume ?? 1) * 100)]}
+            value={[Math.round((coreClip.volume ?? 1) * 100)]}
             onValueChange={(v) => handleUpdate({ volume: v[0] / 100 })}
             max={100}
             step={1}
@@ -243,7 +226,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
           />
           <InputGroup className="w-20">
             <NumberInput
-              value={Math.round((videoClip.volume ?? 1) * 100)}
+              value={Math.round((coreClip.volume ?? 1) * 100)}
               onChange={(val) => handleUpdate({ volume: val / 100 })}
               className="p-0 text-center"
             />
@@ -262,7 +245,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconCircle className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round((videoClip.opacity ?? 1) * 100)]}
+            value={[Math.round((coreClip.opacity ?? 1) * 100)]}
             onValueChange={(v) => handleUpdate({ opacity: v[0] / 100 })}
             max={100}
             step={1}
@@ -270,7 +253,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
           />
           <InputGroup className="w-20">
             <NumberInput
-              value={Math.round((videoClip.opacity ?? 1) * 100)}
+              value={Math.round((coreClip.opacity ?? 1) * 100)}
               onChange={(val) => handleUpdate({ opacity: val / 100 })}
               className="p-0 text-center"
             />
@@ -290,7 +273,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
           <button
             onClick={() => {
               setFloatingControl("animation-properties-picker", {
-                clipId: videoClip.id,
+                clipId: coreClip.id,
                 mode: "add",
               });
             }}
@@ -322,7 +305,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
                   <button
                     onClick={() => {
                       setFloatingControl("animation-properties-picker", {
-                        clipId: videoClip.id,
+                        clipId: coreClip.id,
                         animationId: anim.id,
                         mode: "edit",
                       });
@@ -351,12 +334,12 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
             Chroma Key
           </label>
           <Switch
-            checked={videoClip.chromaKey?.enabled ?? false}
+            checked={coreClip.chromaKey?.enabled ?? false}
             onCheckedChange={(checked) => handleChromaKeyUpdate({ enabled: checked })}
           />
         </div>
 
-        {(videoClip.chromaKey?.enabled ?? false) && (
+        {(coreClip.chromaKey?.enabled ?? false) && (
           <div className="flex flex-col gap-3 pt-1">
             <div className="flex gap-2">
               <InputGroup className="flex-1">
@@ -367,7 +350,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
                         <div
                           className="h-4 w-4 rounded-full border border-white/10 shadow-sm"
                           style={{
-                            backgroundColor: videoClip.chromaKey?.color || "#00FF00",
+                            backgroundColor: coreClip.chromaKey?.color || "#00FF00",
                           }}
                         />
                       </InputGroupButton>
@@ -396,7 +379,7 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
                   </Popover>
                 </InputGroupAddon>
                 <InputGroupInput
-                  value={videoClip.chromaKey?.color?.toUpperCase() || "#00FF00"}
+                  value={coreClip.chromaKey?.color?.toUpperCase() || "#00FF00"}
                   onChange={(e) => handleChromaKeyUpdate({ color: e.target.value })}
                   className="text-sm p-0 text-[10px] font-mono"
                 />
@@ -407,11 +390,11 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Similarity</span>
                 <span className="text-[10px] text-muted-foreground">
-                  {Math.round((videoClip.chromaKey?.similarity ?? 0.1) * 100)}%
+                  {Math.round((coreClip.chromaKey?.similarity ?? 0.1) * 100)}%
                 </span>
               </div>
               <Slider
-                value={[(videoClip.chromaKey?.similarity ?? 0.1) * 100]}
+                value={[(coreClip.chromaKey?.similarity ?? 0.1) * 100]}
                 onValueChange={(v) => handleChromaKeyUpdate({ similarity: v[0] / 100 })}
                 max={100}
                 step={1}
@@ -422,11 +405,11 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Spill</span>
                 <span className="text-[10px] text-muted-foreground">
-                  {Math.round((videoClip.chromaKey?.spill ?? 0.05) * 100)}%
+                  {Math.round((coreClip.chromaKey?.spill ?? 0.05) * 100)}%
                 </span>
               </div>
               <Slider
-                value={[(videoClip.chromaKey?.spill ?? 0.05) * 100]}
+                value={[(coreClip.chromaKey?.spill ?? 0.05) * 100]}
                 onValueChange={(v) => handleChromaKeyUpdate({ spill: v[0] / 100 })}
                 max={100}
                 step={1}

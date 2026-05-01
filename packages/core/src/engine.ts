@@ -71,9 +71,17 @@ export class CoreEngine extends EventEmitter {
   public async addClip(clip: Partial<AnyClip> & { type: string }, options?: AddClipOptions | string) {
     return this.store.getState().addClip(clip, options);
   }
-  
+
+  public async addClips(clips: (Partial<AnyClip> & { type: string })[], options?: AddClipOptions | string) {
+    return this.store.getState().addClips(clips, options);
+  }
+
   public updateClip(id: string, updates: Partial<AnyClip>) {
     this.store.getState().updateClip(id, updates);
+  }
+  
+  public updateClips(updatesList: { id: string; updates: Partial<AnyClip> }[]) {
+    this.store.getState().updateClips(updatesList);
   }
 
   public removeClips(ids: string[]) {

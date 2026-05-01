@@ -31,7 +31,7 @@ export class StudioBridge {
         coreClip.toClipId
       );
     } else {
-      const clip = await jsonToClip(coreClip);
+      const clip = await jsonToClip(coreClip as any);
       const trackId = this.findTrackIdForClip(coreClip.id);
       await this.studio.addClip(clip, { trackId });
     }
@@ -120,6 +120,28 @@ export class StudioBridge {
         changed = true;
       }
     });
+
+    // Sync complex objects if they changed
+    if (JSON.stringify(clip.style) !== JSON.stringify(coreClip.style)) {
+      clip.style = coreClip.style ? JSON.parse(JSON.stringify(coreClip.style)) : {};
+      changed = true;
+    }
+
+    if (JSON.stringify(clip.chromaKey) !== JSON.stringify(coreClip.chromaKey)) {
+      clip.chromaKey = coreClip.chromaKey ? JSON.parse(JSON.stringify(coreClip.chromaKey)) : { enabled: false, color: "#00FF00", similarity: 0.1, spill: 0 };
+      changed = true;
+    }
+
+    if (JSON.stringify(clip.animations) !== JSON.stringify(coreClip.animations)) {
+      // For animations, we might need to clear and re-add if the engine doesn't handle direct assignment
+      if (typeof clip.clearAnimations === "function") {
+        clip.clearAnimations();
+        (coreClip.animations || []).forEach((anim: any) => {
+          clip.addAnimation(anim.name, anim.opts, anim.params);
+        });
+      }
+      changed = true;
+    }
 
     if (coreClip.display && (clip.display.from !== coreClip.display.from || clip.display.to !== coreClip.display.to)) {
       clip.display = { ...coreClip.display };

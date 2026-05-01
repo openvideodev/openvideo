@@ -228,6 +228,7 @@ export interface EffectJSON extends BaseClipJSON {
     id: string;
     key: string;
     name: string;
+    values?: Record<string, any>;
   };
 }
 
