@@ -3,7 +3,7 @@ import { usePlaybackStore } from "@/stores/playback-store";
 import { clipToJSON, type IClip as StudioClip, Studio, jsonToClip } from "openvideo";
 import CanvasTimeline, { TIMELINE_SEEK } from "@openvideo/timeline";
 import { IClip } from "@/types/timeline";
-import { projectStore } from "@/lib/project";
+import { engine, projectStore } from "@/lib/project";
 
 /**
  * Connects the Timeline instance to the Zustand store for Store -> Engine sync.
@@ -44,21 +44,28 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
   studio.on("pause", handleStudioPause);
 
   // Captures changes from Timeline UI (dragging, resizing)
+  let isSyncingFromTimeline = false;
+
   const handleTimelineStateChanged = async ({ payload, options }: any) => {
     // Only propagate back to core if it's a structural or property change
     if (options?.kind !== "layer:selection") {
-      if (payload.clips) {
-        Object.values(payload.clips).forEach((clip: any) => {
-          const coreClip = projectStore.getState().clips[clip.id];
-          if (coreClip && JSON.stringify(coreClip) !== JSON.stringify(clip)) {
-            projectStore.getState().updateClip(clip.id, clip);
-          }
-        });
-      }
-      if (payload.tracks) {
-        if (JSON.stringify(payload.tracks) !== JSON.stringify(projectStore.getState().tracks)) {
-          projectStore.getState().setTracks(payload.tracks);
+      isSyncingFromTimeline = true;
+      try {
+        if (payload.clips) {
+          Object.values(payload.clips).forEach((clip: any) => {
+            const coreClip = projectStore.getState().clips[clip.id];
+            if (coreClip && JSON.stringify(coreClip) !== JSON.stringify(clip)) {
+              projectStore.getState().updateClip(clip.id, clip);
+            }
+          });
         }
+        if (payload.tracks) {
+          if (JSON.stringify(payload.tracks) !== JSON.stringify(projectStore.getState().tracks)) {
+            projectStore.getState().setTracks(payload.tracks);
+          }
+        }
+      } finally {
+        isSyncingFromTimeline = false;
       }
     } else if (payload.activeIds) {
       if (JSON.stringify(payload.activeIds) !== JSON.stringify(projectStore.getState().selectedIds)) {
@@ -75,24 +82,38 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
 
   timeline.emitter.on(TIMELINE_SEEK, handleTimelineSeek);
 
+  // Captures "Add" events from Drop interactions
+  const handleAddClip = ({ payload, options }: any) => {
+    console.log("timeline add event: ", { payload, options });
+    engine.addClip(payload, options);
+  };
+
+  timeline.emitter.on("add:video", handleAddClip);
+  timeline.emitter.on("add:image", handleAddClip);
+  timeline.emitter.on("add:audio", handleAddClip);
+  timeline.emitter.on("add:text", handleAddClip);
+  timeline.emitter.on("add:transition", handleAddClip);
+  timeline.emitter.on("add:effect", handleAddClip);
+
   // --- 2. CORE -> ENGINES (Reconciliation) ---
-  
+
   let prevState = projectStore.getState();
 
   const unsubCore = projectStore.subscribe(async (state) => {
-    
+    if (isSyncingFromTimeline) return;
+
     const currentPrevState = prevState;
     prevState = state;
 
     try {
-      // A. Sync to Zustand (React UI) - Atomic update to prevent double-sync
-      useTimelineStore.setState({ 
-        clips: state.clips, 
+      // 1. Sync to Zustand (React UI) - Atomic update to prevent double-sync
+      useTimelineStore.setState({
+        clips: state.clips,
         tracks: state.tracks as any,
-        selectedClipIds: state.selectedIds 
+        selectedClipIds: state.selectedIds
       });
 
-      // B. Sync to Playback Store (React UI)
+      // 2. Sync to Playback Store (React UI)
       if (state.currentTime !== currentPrevState.currentTime || state.isPlaying !== currentPrevState.isPlaying) {
         usePlaybackStore.setState({
           currentTime: state.currentTime / 1_000_000,
@@ -100,68 +121,22 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
         });
       }
 
-      // C. Sync to Studio (Renderer)
-      // Playback
-      if (state.currentTime !== currentPrevState.currentTime) {
-        if (Math.abs(studio.currentTime - state.currentTime) > 1000) { // 1ms threshold
-          studio.seek(state.currentTime);
-        }
-      }
-      if (state.isPlaying !== currentPrevState.isPlaying) {
-        if (state.isPlaying) studio.play();
-        else studio.pause();
-      }
-
-      // D. Sync to Timeline (Engine)
+      // 3. Sync to Timeline (Engine)
       // Scale
       if (state.scale !== currentPrevState.scale) {
         timeline.syncScale({ scale: state.scale });
       }
 
-      // Clips & Tracks
-      const studioClipsMap = new Map(studio.clips.map((c: any) => [c.id, c]));
-      const coreClips = Object.values(state.clips);
-
-      // Handle Additions & Updates
-      for (const clipJSON of coreClips) {
-        const sClip = studioClipsMap.get(clipJSON.id);
-        if (!sClip) {
-          const newClip = await jsonToClip(clipJSON as any);
-          const track = state.tracks.find(t => t.clipIds.includes(clipJSON.id));
-          await studio.addClip(newClip, { trackId: track?.id });
-        } else {
-          // Sync properties if changed
-          const hasTimingChanged = 
-            clipJSON.display.from !== sClip.display.from || 
-            clipJSON.display.to !== sClip.display.to;
-          
-          if (hasTimingChanged) {
-            studio.updateClips([{ 
-              id: clipJSON.id, 
-              updates: { display: clipJSON.display, duration: clipJSON.duration, trim: clipJSON.trim } 
-            }]);
-          }
-        }
-        studioClipsMap.delete(clipJSON.id);
-      }
-
-      // Handle Removals
-      const removedIds = Array.from(studioClipsMap.keys());
-      if (removedIds.length > 0) {
-        await studio.removeClipsById(removedIds);
-      }
-
-      // D. Sync to Timeline (Engine)
       const timelineState = timeline.getUpdatedState();
-      const isTimelineStateSynced = 
+      const isTimelineStateSynced =
         JSON.stringify(timelineState.clips) === JSON.stringify(Object.values(state.clips)) &&
         JSON.stringify(timelineState.tracks) === JSON.stringify(state.tracks);
 
       if (!isTimelineStateSynced) {
         const clipsIds = Object.keys(state.clips);
         const prevClipsIds = Object.keys(currentPrevState.clips);
-        const structuralChange = 
-          clipsIds.length !== prevClipsIds.length || 
+        const structuralChange =
+          clipsIds.length !== prevClipsIds.length ||
           !clipsIds.every(id => prevClipsIds.includes(id)) ||
           state.tracks !== currentPrevState.tracks;
 
@@ -179,14 +154,14 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
         }
       }
 
-      // E. Sync Selection
+      // 4. Sync Selection
       if (state.selectedIds !== currentPrevState.selectedIds) {
         const timelineActiveIds = timeline.activeIds;
         if (JSON.stringify(timelineActiveIds) !== JSON.stringify(state.selectedIds)) {
           timeline.syncSelection(state.selectedIds);
         }
-        
-        // Sync to Studio if not already selected
+
+        // Sync to Studio if not already selected (StudioBridge doesn't handle selection)
         const currentStudioSelection = studio.selection.getSelection().map(c => c.id);
         if (JSON.stringify(currentStudioSelection) !== JSON.stringify(state.selectedIds)) {
           studio.selectClipsByIds(state.selectedIds);

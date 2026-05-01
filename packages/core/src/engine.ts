@@ -1,5 +1,6 @@
 import { StoreApi } from "zustand/vanilla";
 import { ProjectStore, createProjectStore } from "./project";
+import { AddClipOptions } from "./utils/manage-tracks";
 import { PlaybackController } from "./playback";
 import { EventEmitter } from "./events";
 import { IProject, AnyClip } from "./types";
@@ -62,8 +63,8 @@ export class CoreEngine extends EventEmitter {
   public pause() { this.playback.pause(); }
   public seek(time: number) { this.playback.seek(time); }
   
-  public async addClip(clip: Partial<AnyClip> & { type: string }, trackId?: string) {
-    return this.store.getState().addClip(clip, trackId);
+  public async addClip(clip: Partial<AnyClip> & { type: string }, options?: AddClipOptions | string) {
+    return this.store.getState().addClip(clip, options);
   }
   
   public updateClip(id: string, updates: Partial<AnyClip>) {

@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useStudioStore } from "@/stores/studio-store";
-import { useProjectStore } from "@/stores/project-store";
-import { Log } from "openvideo";
 import { engine } from "@/lib/project";
+import { Log } from "openvideo";
 import { Search, Film, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { debounce } from "lodash";
+import Draggable from "@/components/shared/draggable";
 
 interface PexelsVideo {
   id: number;
@@ -33,8 +32,6 @@ interface PexelsVideo {
 }
 
 export default function PanelVideos() {
-  const { studio } = useStudioStore();
-  const { canvasSize } = useProjectStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [videos, setVideos] = useState<PexelsVideo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -101,7 +98,7 @@ export default function PanelVideos() {
   return (
     <div className="h-full flex flex-col">
       <div>
-        <div className="flex-1 p-4">
+        <div className="p-4">
           <InputGroup>
             <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
               <Search size={14} />
@@ -129,29 +126,52 @@ export default function PanelVideos() {
           </div>
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
-            {videos.map((video) => (
-              <div
-                key={video.id}
-                className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
-                onClick={() => addItemToCanvas(video)}
-              >
-                <div className="w-full h-full flex items-center justify-center bg-black/20 text-[0px]">
-                  <img
-                    src={video.image}
-                    className="w-full h-full object-cover pointer-events-none"
-                    alt={video.user.name}
-                  />
+            {videos.map((video) => {
+              const videoFile = video.video_files.find((f) => f.quality === "hd") || video.video_files[0];
+              return (
+                <Draggable
+                  key={video.id}
+                  data={{
+                    type: "Video",
+                    src: videoFile?.link,
+                    name: `Video by ${video.user.name}`,
+                    width: video.width,
+                    height: video.height,
+                    duration: video.duration * 1e6,
+                    metadata: {
+                      previewUrl: video.image,
+                    },
+                  }}
+                  renderCustomPreview={
+                    <div className="w-20 aspect-video rounded-md overflow-hidden shadow-xl border-2 border-primary">
+                      <img src={video.image} className="w-full h-full object-cover" />
+                    </div>
+                  }
+                >
+                  <div
+                    className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
+                    onClick={() => addItemToCanvas(video)}
+                  >
+                    <div 
+                      className="w-full h-full flex items-center justify-center bg-black/20 text-[0px]"
+                      style={{
+                        backgroundImage: `url(${video.image})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    >
+                      <span className="absolute bottom-1 right-1 text-[8px] bg-black/60 text-white px-1 rounded">
+                        {Math.floor(video.duration)}s
+                      </span>
+                    </div>
 
-                  <span className="absolute bottom-1 right-1 text-[8px] bg-black/60 text-white px-1 rounded">
-                    {Math.floor(video.duration)}s
-                  </span>
-                </div>
-
-                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-[10px] text-white truncate font-medium">{video.user.name}</p>
-                </div>
-              </div>
-            ))}
+                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-[10px] text-white truncate font-medium">{video.user.name}</p>
+                    </div>
+                  </div>
+                </Draggable>
+              );
+            })}
           </div>
         )}
         {isLoading && videos.length > 0 && (

@@ -21,7 +21,6 @@ export { Video as MP4Clip } from "./clips";
 export { Compositor } from "./compositor";
 export type { ICompositorOpts } from "./compositor";
 export { Studio } from "./studio";
-export { StudioBridge } from "./studio-bridge";
 export type { IStudioOpts } from "./studio";
 
 export { Log } from "./utils/log";

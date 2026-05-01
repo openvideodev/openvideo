@@ -1,6 +1,12 @@
 import { ITrack, AnyClip } from "../types";
 import { generateId } from "./id";
 
+export interface AddClipOptions {
+  trackId?: string;
+  trackIndex?: number;
+  isNewTrack?: boolean;
+}
+
 export interface TrackManagementResult {
   tracks: ITrack[];
 }
@@ -12,6 +18,7 @@ const ACCEPTS_MAP: Record<string, string[]> = {
   Audio: ["audio"],
   Caption: ["caption", "text"],
   Effect: ["effect"],
+  Transition: ["transition"],
 };
 
 /**
@@ -22,18 +29,45 @@ const ACCEPTS_MAP: Record<string, string[]> = {
 export const manageTracks = (
   tracks: ITrack[],
   clip: AnyClip,
-  trackId?: string
+  options?: AddClipOptions
 ): TrackManagementResult => {
   let nextTracks = [...tracks];
+  const { trackId, trackIndex, isNewTrack } = options || {};
   let targetTrackId = trackId;
+
+  if (isNewTrack) {
+    const existingType = clip.type.toLowerCase();
+    const newTrack: ITrack = {
+      id: generateId(),
+      name: `${clip.type} Track`,
+      type: existingType,
+      clipIds: [clip.id],
+      accepts: ACCEPTS_MAP[clip.type] || [existingType],
+    };
+
+    if (typeof trackIndex === "number") {
+      nextTracks.splice(trackIndex, 0, newTrack);
+    } else {
+      nextTracks.push(newTrack);
+    }
+    targetTrackId = newTrack.id;
+  } else if (typeof trackIndex === "number" && nextTracks[trackIndex]) {
+    // Force specific track if compatible
+    const targetTrack = nextTracks[trackIndex];
+    const accepts = targetTrack.accepts || [targetTrack.type];
+    const clipTypeLower = clip.type.toLowerCase();
+
+    if (accepts.includes(clipTypeLower) || (ACCEPTS_MAP[clip.type] && ACCEPTS_MAP[clip.type].some(a => accepts.includes(a)))) {
+      targetTrackId = targetTrack.id;
+    }
+  }
 
   if (!targetTrackId) {
     // For Effects, we usually want a new track every time to avoid overlapping filters
-    // unless explicitly specified.
     if (clip.type === "Effect") {
-       const newTrack: ITrack = {
+      const newTrack: ITrack = {
         id: "track_" + generateId(),
-        name: `Effect Track ${tracks.filter(t => t.type === "effect").length + 1}`,
+        name: `Effect Track ${tracks.filter((t) => t.type === "effect").length + 1}`,
         type: "effect",
         clipIds: [clip.id],
         accepts: ["effect"],
@@ -42,7 +76,11 @@ export const manageTracks = (
       targetTrackId = newTrack.id;
     } else {
       // Find first track of same type
-      const existingTrack = tracks.find((t) => t.type === clip.type.toLowerCase() || t.type === clip.type);
+      const existingType = clip.type.toLowerCase();
+      const existingTrack = tracks.find(
+        (t) => t.type === existingType || t.type === clip.type
+      );
+
       if (existingTrack) {
         targetTrackId = existingTrack.id;
       } else {
@@ -50,9 +88,9 @@ export const manageTracks = (
         const newTrack: ITrack = {
           id: generateId(),
           name: `${clip.type} Track`,
-          type: clip.type.toLowerCase(), // Timeline expects lowercase for logic
+          type: existingType,
           clipIds: [clip.id],
-          accepts: ACCEPTS_MAP[clip.type] || [clip.type.toLowerCase()],
+          accepts: ACCEPTS_MAP[clip.type] || [existingType],
         };
         nextTracks.push(newTrack);
         targetTrackId = newTrack.id;

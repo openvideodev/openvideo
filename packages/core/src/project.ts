@@ -1,7 +1,7 @@
 import { createStore, StoreApi } from "zustand/vanilla";
 import { IProject, AnyClip, ITrack, IScaleState } from "./types";
 import { loadClip } from "./utils/load-item";
-import { manageTracks } from "./utils/manage-tracks";
+import { manageTracks, AddClipOptions } from "./utils/manage-tracks";
 import { nanoid } from "nanoid";
 
 export interface ProjectState extends IProject {
@@ -17,7 +17,7 @@ export interface ProjectActions {
   deselect: (ids?: string | string[]) => void;
 
   // Clips
-  addClip: (clip: Partial<AnyClip> & { type: string }, trackId?: string) => Promise<AnyClip>;
+  addClip: (clip: Partial<AnyClip> & { type: string }, options?: AddClipOptions | string) => Promise<AnyClip>;
   updateClip: (id: string, updates: Partial<AnyClip>) => void;
   removeClips: (ids: string[]) => void;
 
@@ -100,15 +100,38 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       })),
 
     // Actions: Clips
-    addClip: async (payload, trackId) => {
+    addClip: async (payload, options) => {
       const state = get();
+      const addOptions: AddClipOptions = typeof options === "string" ? { trackId: options } : options || {};
       
+      // Auto-calculate transition timing and placement if junction clips are provided
+      if (payload.type === "Transition" && payload.fromClipId && payload.toClipId) {
+        const fromClip = state.clips[payload.fromClipId];
+        const toClip = state.clips[payload.toClipId];
+        if (fromClip && toClip) {
+          const junction = fromClip.display.to;
+          const duration = payload.duration || 1_000_000;
+          payload.display = {
+            from: junction - duration / 2,
+            to: junction + duration / 2,
+          };
+
+          // Also ensure transition is on the same track as the clips it connects
+          if (!addOptions.trackId) {
+            const track = state.tracks.find(t => t.clipIds.includes(payload.fromClipId!));
+            if (track) {
+              addOptions.trackId = track.id;
+            }
+          }
+        }
+      }
+
       const newClip = await loadClip(payload, { 
         canvasSize: { width: state.settings.width, height: state.settings.height } 
       });
 
       set((state) => {
-        const { tracks: nextTracks } = manageTracks(state.tracks, newClip, trackId);
+        const { tracks: nextTracks } = manageTracks(state.tracks, newClip, addOptions);
         
         return { 
           clips: { ...state.clips, [newClip.id]: newClip }, 

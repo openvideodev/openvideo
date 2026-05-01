@@ -5,6 +5,7 @@ import { formatFilterName } from "@/utils/effects";
 import { engine } from "@/lib/project";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import Draggable from "@/components/shared/draggable";
 
 const EFFECT_DURATION_DEFAULT = 5000000;
 
@@ -28,71 +29,73 @@ const EffectCard = ({ label, staticSrc, dynamicSrc, onClick, badge }: EffectCard
   const [isHovering, setIsHovering] = useState(false);
 
   return (
-    <div
-      className="flex w-full flex-col items-center gap-2 cursor-pointer group"
-      onClick={onClick}
-      onMouseEnter={() => {
-        setIsHovering(true);
-
-        if (!isDynamicLoaded) {
-          const img = new Image();
-          img.src = dynamicSrc;
-        }
+    <Draggable
+      data={{
+        type: "Effect",
+        name: label,
+        display: { from: 0, to: EFFECT_DURATION_DEFAULT },
+        duration: EFFECT_DURATION_DEFAULT,
+        effect: {
+          id: "eff_" + Date.now(),
+          key: label, // We use label as a placeholder if key is not passed, but cards are rendered by components that know the key
+          name: label,
+        },
       }}
-      onMouseLeave={() => setIsHovering(false)}
+      renderCustomPreview={
+        <div className="w-20 aspect-video rounded-md overflow-hidden shadow-xl border-2 border-primary bg-zinc-900 flex items-center justify-center">
+          <span className="text-[10px] text-white font-medium px-2 text-center">{label}</span>
+        </div>
+      }
     >
-      <div className="relative w-full aspect-video rounded-md bg-input/30 border overflow-hidden">
-        {staticSrc || dynamicSrc ? (
-          <>
-            {staticSrc && (
-              <img
-                src={staticSrc}
-                loading="lazy"
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
-                  isHovering && isDynamicLoaded ? "opacity-0" : "opacity-100"
-                }`}
-              />
-            )}
-            {dynamicSrc && (
-              <img
-                src={dynamicSrc}
-                loading="lazy"
-                onLoad={() => setIsDynamicLoaded(true)}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
-                  isHovering && isDynamicLoaded ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            )}
-            {isHovering && !isDynamicLoaded && dynamicSrc && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                <div className="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-xs text-muted-foreground text-center px-2 bg-primary/40 h-full w-full"></div>
-        )}
-        {isHovering && dynamicSrc && !isDynamicLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <div className="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-          </div>
-        )}
+      <div
+        className="flex w-full flex-col items-center gap-2 cursor-pointer group"
+        onClick={onClick}
+        onMouseEnter={() => {
+          setIsHovering(true);
 
-        {badge && (
-          <div className="absolute top-1 right-1 bg-primary/80 text-primary-foreground text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
-            {badge}
-          </div>
-        )}
+          if (!isDynamicLoaded) {
+            const img = new Image();
+            img.src = dynamicSrc;
+          }
+        }}
+        onMouseLeave={() => setIsHovering(false)}
+      >
+        <div className="relative w-full aspect-video rounded-md bg-input/30 border overflow-hidden">
+          {staticSrc || dynamicSrc ? (
+            <div
+              className="absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-200"
+              style={{
+                backgroundImage: `url(${isHovering && isDynamicLoaded ? dynamicSrc : staticSrc})`,
+              }}
+              onLoad={() => {
+                // Background images don't have onLoad on the div, but we preloaded the dynamic one
+                if (isHovering) setIsDynamicLoaded(true);
+              }}
+            />
+          ) : (
+            <div className="text-xs text-muted-foreground text-center px-2 bg-primary/40 h-full w-full"></div>
+          )}
+          {isHovering && dynamicSrc && !isDynamicLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <div className="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            </div>
+          )}
 
-        <div
-          className={`absolute bottom-0 left-0 w-full p-2 bg-linear-to-t from-black/80 to-transparent text-white text-xs font-medium truncate text-center transition-opacity duration-200 ${
-            dynamicSrc ? "group-hover:opacity-0" : ""
-          }`}
-        >
-          {label}
+          {badge && (
+            <div className="absolute top-1 right-1 bg-primary/80 text-primary-foreground text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
+              {badge}
+            </div>
+          )}
+
+          <div
+            className={`absolute bottom-0 left-0 w-full p-2 bg-linear-to-t from-black/80 to-transparent text-white text-xs font-medium truncate text-center transition-opacity duration-200 ${dynamicSrc ? "group-hover:opacity-0" : ""
+              }`}
+          >
+            {label}
+          </div>
         </div>
       </div>
-    </div>
+    </Draggable>
   );
 };
 

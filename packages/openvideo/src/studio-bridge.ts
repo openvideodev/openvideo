@@ -18,34 +18,51 @@ export class StudioBridge {
     this.init();
   }
 
-  private init() {
-    // 1. Sync Playback
-    this.engine.on("timeupdate", (time: number) => {
-      this.studio.updateFrame(time);
-    });
+  private handleTimeUpdate = (time: number) => {
+    this.studio.updateFrame(time);
+  };
 
-    // 2. Sync Clips
-    this.engine.on("clip:added", async (coreClip: AnyClip) => {
+  private handleClipAdded = async (coreClip: AnyClip) => {
+    if (coreClip.type === "Transition") {
+      await this.studio.addTransition(
+        coreClip.transitionEffect?.key || "none",
+        coreClip.duration,
+        coreClip.fromClipId,
+        coreClip.toClipId
+      );
+    } else {
       const clip = await jsonToClip(coreClip);
       const trackId = this.findTrackIdForClip(coreClip.id);
       await this.studio.addClip(clip, { trackId });
-    });
+    }
+  };
+
+  private handleClipRemoved = async (clipId: string) => {
+    const clip = this.studio.timeline.getClipById(clipId);
+    if (clip) {
+      await this.studio.removeClip(clip);
+    }
+  };
+
+  private handleClipUpdated = async (coreClip: AnyClip) => {
+    const clip = this.studio.timeline.getClipById(coreClip.id);
+    if (clip) {
+      this.syncClipProperties(clip, coreClip);
+    }
+  };
+
+  private init() {
+    // 1. Sync Playback
+    this.engine.on("timeupdate", this.handleTimeUpdate);
+
+    // 2. Sync Clips
+    this.engine.on("clip:added", this.handleClipAdded);
 
     // 3. Sync Removals
-    this.engine.on("clip:removed", async (clipId: string) => {
-      const clip = this.studio.timeline.getClipById(clipId);
-      if (clip) {
-        await this.studio.removeClip(clip);
-      }
-    });
+    this.engine.on("clip:removed", this.handleClipRemoved);
 
     // 4. Sync Updates
-    this.engine.on("clip:updated", async (coreClip: AnyClip) => {
-      const clip = this.studio.timeline.getClipById(coreClip.id);
-      if (clip) {
-        this.syncClipProperties(clip, coreClip);
-      }
-    });
+    this.engine.on("clip:updated", this.handleClipUpdated);
 
     // Initial Sync
     this.syncInitialState();
@@ -60,9 +77,18 @@ export class StudioBridge {
     // Add all clips
     for (const id in state.clips) {
       const coreClip = state.clips[id];
-      const clip = await jsonToClip(coreClip);
-      const trackId = this.findTrackIdForClip(id);
-      await this.studio.addClip(clip, { trackId });
+      if (coreClip.type === "Transition") {
+        await this.studio.addTransition(
+          coreClip.transitionEffect?.key || "none",
+          coreClip.duration,
+          coreClip.fromClipId,
+          coreClip.toClipId
+        );
+      } else {
+        const clip = await jsonToClip(coreClip);
+        const trackId = this.findTrackIdForClip(id);
+        await this.studio.addClip(clip, { trackId });
+      }
     }
 
     // Set initial time
@@ -96,6 +122,9 @@ export class StudioBridge {
   }
 
   public dispose() {
-    this.engine.removeAllListeners();
+    this.engine.off("timeupdate", this.handleTimeUpdate);
+    this.engine.off("clip:added", this.handleClipAdded);
+    this.engine.off("clip:removed", this.handleClipRemoved);
+    this.engine.off("clip:updated", this.handleClipUpdated);
   }
 }

@@ -139,6 +139,14 @@ export const loadClip = async (
     angle: payload.angle ?? 0,
     flip: payload.flip ?? null,
     style: payload.style ?? {},
+    chromaKey: payload.chromaKey ?? {
+      enabled: false,
+      color: "#00FF00",
+      similarity: 0.1,
+      spill: 0,
+    },
+    locked: payload.locked ?? false,
+    effects: payload.effects ?? [],
   } as AnyClip;
 
   return baseClip;

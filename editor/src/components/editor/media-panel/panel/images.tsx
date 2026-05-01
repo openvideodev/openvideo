@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useStudioStore } from "@/stores/studio-store";
-import { useProjectStore } from "@/stores/project-store";
 import { engine } from "@/lib/project";
 import { Log } from "openvideo";
 import { Search, Image as ImageIcon, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { VisualsChatPanel } from "../visuals-chat-panel";
 import { debounce } from "lodash";
+import Draggable from "@/components/shared/draggable";
 
 interface PexelsImage {
   id: number;
@@ -31,8 +29,6 @@ interface PexelsImage {
 }
 
 export default function PanelImages() {
-  const { studio } = useStudioStore();
-  const { canvasSize } = useProjectStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [images, setImages] = useState<PexelsImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +87,7 @@ export default function PanelImages() {
   return (
     <div className="h-full flex flex-col">
       <div>
-        <div className="flex-1 p-4">
+        <div className="p-4">
           <InputGroup>
             <InputGroupAddon className="bg-secondary/30 pointer-events-none text-muted-foreground w-8 justify-center">
               <Search size={14} />
@@ -120,23 +116,38 @@ export default function PanelImages() {
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
             {images.map((image) => (
-              <div
+              <Draggable
                 key={image.id}
-                className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
-                onClick={() => addItemToCanvas(image)}
+                data={{
+                  type: "Image",
+                  src: image.src.large2x,
+                  name: `Photo by ${image.photographer}`,
+                  // width: image.width,
+                  // height: image.height,
+                  duration: 5_000_000,
+                }}
+                renderCustomPreview={
+                  <div className="w-20 aspect-square rounded-md overflow-hidden shadow-xl border-2 border-primary">
+                    <img src={image.src.medium} className="w-full h-full object-cover" />
+                  </div>
+                }
               >
-                <img
-                  src={image.src.medium}
-                  alt={image.alt}
-                  className="w-full h-full object-cover"
-                />
-
-                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-[10px] text-white truncate font-medium">
-                    {image.photographer}
-                  </p>
+                <div
+                  className="group relative aspect-square rounded-md overflow-hidden bg-secondary/50 cursor-pointer border border-transparent hover:border-primary/50 transition-all"
+                  onClick={() => addItemToCanvas(image)}
+                  style={{
+                    backgroundImage: `url(${image.src.medium})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-[10px] text-white truncate font-medium">
+                      {image.photographer}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </Draggable>
             ))}
           </div>
         )}

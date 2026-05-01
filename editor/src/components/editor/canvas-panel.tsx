@@ -3,6 +3,7 @@ import { Studio, fontManager, registerCustomTransition, registerCustomEffect } f
 import { useTheme } from "next-themes";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
+import { engine } from "@/lib/project";
 import { editorFont } from "./constants";
 import { CUSTOM_TRANSITIONS } from "./transition-custom";
 import { CUSTOM_EFFECTS } from "./effect-custom";
@@ -89,6 +90,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
       ...STUDIO_CONFIG,
       bgColor,
       canvas: canvasRef.current,
+      engine: engine,
     });
 
     // Initialize fonts and notify when ready

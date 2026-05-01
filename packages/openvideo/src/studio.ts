@@ -37,6 +37,8 @@ import {
 } from "./utils/color-adjustment";
 
 import EventEmitter from "./event-emitter";
+import { CoreEngine } from "@openvideo/core";
+import { StudioBridge } from "./studio-bridge";
 
 export interface IStudioOpts {
   width: number;
@@ -46,6 +48,7 @@ export interface IStudioOpts {
   canvas?: HTMLCanvasElement;
   interactivity?: boolean;
   spacing?: number;
+  engine?: CoreEngine;
 }
 
 interface ActiveGlobalEffect {
@@ -203,8 +206,9 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.transport.maxDuration = val;
   }
 
-  public opts: Required<Omit<IStudioOpts, "canvas">> & {
+  public opts: Required<Omit<IStudioOpts, "canvas" | "engine">> & {
     canvas?: HTMLCanvasElement;
+    engine?: CoreEngine;
   };
   public destroyed = false;
   private renderingSuspended = false;
@@ -217,6 +221,7 @@ export class Studio extends EventEmitter<StudioEvents> {
   private historyGroupDepth = 0;
   private clipCache = new Map<string, IClip>();
   private _isUpdatingLayout = false;
+  private bridge: StudioBridge | null = null;
 
   // Effect system
   public globalEffects = new Map<string, GlobalEffectInfo>();
@@ -289,6 +294,10 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.on("clip:updated", this.handleTimelineChange);
     this.on("track:removed", () => this.handleTimelineChange());
     this.on("track:added", () => this.handleTimelineChange());
+
+    if (this.opts.engine) {
+      this.bridge = new StudioBridge(this.opts.engine, this);
+    }
   }
 
   private attachClipEvents(clip: IClip) {
@@ -2411,6 +2420,10 @@ export class Studio extends EventEmitter<StudioEvents> {
   destroy(): void {
     if (this.destroyed) return;
     window.removeEventListener("resize", this.handleResize);
+    if (this.bridge) {
+      this.bridge.dispose();
+      this.bridge = null;
+    }
     this.destroyed = true;
     this.stop();
     this.clear();

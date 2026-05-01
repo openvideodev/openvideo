@@ -405,7 +405,7 @@ function onDrop(this: Timeline, e: DropEventData) {
   // Get the drag data
   const draggedDataString = e.e.dataTransfer?.types[0] as string;
   const draggedData = JSON.parse(e.e.dataTransfer!.getData(draggedDataString)) as { type: string; [key: string]: unknown };
-  if (draggedData.type !== "transition") {
+  if (draggedData.type.toLowerCase() !== "transition") {
     const previewItem = state.activeObjects[0];
     // Use previewItem.left directly as it's already in canvas coordinates (considering scroll)
     const positionXInTime = unitsToTimeUs(previewItem.left, canvas.tScale);
@@ -462,69 +462,15 @@ function onDrop(this: Timeline, e: DropEventData) {
   if (!previewItem) return;
 
   if (nextTransition) {
-    const transitionId = nextTransition.id;
-    const propstoUpdate = pick(draggedData, ["kind", "direction"]) as { kind: string; direction?: string };
-    // assign the new props to the nextTransition
-    Object.keys(propstoUpdate).forEach((key) => {
-      const k = key as keyof typeof propstoUpdate;
-      if (k === "kind") {
-        nextTransition.kind = propstoUpdate[k] as string;
-      } else {
-        (nextTransition as unknown as Record<string, unknown>)[k] = propstoUpdate[k];
+    this.emitter.emit("add:transition", {
+      payload: {
+        ...draggedData,
+        type: "Transition",
+        id: nextTransition.id,
+        fromClipId: nextTransition.fromId,
+        toClipId: nextTransition.toId
       }
     });
-
-    const currentTrackItemIds = cloneDeep(this.trackItemIds);
-    const currentTransitionsMap = cloneDeep(this.transitionsMap);
-    const currentTrackItemsMap = cloneDeep(this.trackItemsMap);
-
-    // find next transition gropu
-    currentTransitionsMap[transitionId] = {
-      ...currentTransitionsMap[transitionId],
-      ...propstoUpdate
-    };
-
-    const nextTransitionGroup = groupByTransition({
-      trackItemIds: currentTrackItemIds,
-      transitionsMap: currentTransitionsMap,
-      trackItemsMap: currentTrackItemsMap
-    });
-    const currentTransition = currentTransitionsMap[transitionId];
-    const currentFrom = currentTransition.fromId;
-
-    const fromTransitionGroupNext =
-      nextTransitionGroup.find((tg) => {
-        return tg.find((i) => i.id === currentFrom);
-      }) || [];
-
-    const nextTrackItems = adjustTrackItemsInTransition(
-      fromTransitionGroupNext
-    );
-    const updatedTrackItemsMap = updateTrackItemsMap(
-      this.trackItemsMap,
-      nextTrackItems
-    );
-
-    /**
-     * 1.Restore current transition groups
-     * 2. Add new items to transition group
-     * 3. Fix positioning for transition group
-     * 4. Render it
-     */
-
-    this.trackItemsMap = updatedTrackItemsMap;
-    this.transitionsMap[transitionId] = {
-      ...this.transitionsMap[transitionId],
-      ...propstoUpdate
-    };
-
-    // this.itemsManager.updateTrackItemCoords();
-    this.tracksManager.adjustMagneticTrack();
-    this.calcBounding();
-    this.transitionManager.updateTransitions();
-
-    this.tracksManager.refreshTrackLayout();
-    this.updateState({ kind: "add:transition", updateHistory: true });
   }
   transitions.forEach((obj) => {
     obj.strokeDashArray = [];
