@@ -16,3 +16,4 @@ export {
   Pattern
 } from "fabric";
 export type { TransformActionHandler } from "fabric";
+export * from "./types";

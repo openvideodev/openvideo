@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useStudioStore } from "@/stores/studio-store";
+import { projectStore } from "@/lib/project";
 import { Text, Log } from "openvideo";
 
 const TEXT_PRESETS = [
@@ -100,28 +101,34 @@ export default function PanelText() {
   const { studio } = useStudioStore();
 
   const handleAddText = async (preset?: (typeof TEXT_PRESETS)[0]) => {
-    if (!studio) return;
-
     try {
-      const textClip = new Text(preset ? preset.description : "Add Text", {
-        fontSize: preset?.style.fontSize || 124,
-        fontFamily: preset?.style.fontFamily || "Arial",
-        align: "center",
-        fontWeight: preset?.style.fontWeight || "bold",
-        fontStyle: (preset?.style as any)?.fontStyle || "normal",
-        fill: preset?.style.fill || "#ffffff",
-        stroke: (preset?.style as any)?.stroke || undefined,
-        dropShadow: (preset?.style as any)?.dropShadow || undefined,
-        wordWrap: true,
-        wordWrapWidth: 600,
-        fontUrl: (preset?.style as any)?.fontUrl,
+      // [FLOW]: Add to Core first
+      projectStore.getState().addClip({
+        type: "Text",
+        name: preset ? preset.name : "Text",
+        text: preset ? preset.description : "Add Text",
+        style: {
+          fontSize: preset?.style.fontSize || 124,
+          fontFamily: preset?.style.fontFamily || "Arial",
+          align: "center",
+          fontWeight: preset?.style.fontWeight || "bold",
+          fontStyle: (preset?.style as any)?.fontStyle || "normal",
+          fill: preset?.style.fill || "#ffffff",
+          stroke: (preset?.style as any)?.stroke || undefined,
+          dropShadow: (preset?.style as any)?.dropShadow || undefined,
+          wordWrap: true,
+          wordWrapWidth: 600,
+          fontUrl: (preset?.style as any)?.fontUrl,
+        },
+        display: { from: 0, to: 5_000_000 },
+        trim: { from: 0, to: 5_000_000 },
+        left: 1920 / 2 - 300, // Roughly centered
+        top: 1080 / 2 - 62,
+        width: 600,
+        height: 124,
       });
-      textClip.name = preset ? preset.name : "Text";
-      await textClip.ready;
-      textClip.display.from = 0;
-      textClip.duration = 5e6;
-      textClip.display.to = 5e6;
-      await studio.addClip(textClip);
+
+      // The sync bridge will automatically push this to Studio and Timeline
     } catch (error) {
       Log.error("Failed to add text:", error);
     }

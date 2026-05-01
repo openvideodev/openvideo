@@ -8,6 +8,7 @@ import { Video, Log, Placeholder } from "openvideo";
 import { Search, Film, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { cloneDeep, debounce } from "lodash";
+import { projectStore } from "@/lib/project";
 
 interface PexelsVideo {
   id: number;
@@ -83,23 +84,37 @@ export default function PanelVideos() {
       const src = videoFile.link;
       const clipName = `Video by ${asset.user.name}`;
 
-      // 1. Create and add placeholder immediately
-      const placeholder = new Placeholder(
-        src,
-        {
-          width: asset.width,
-          height: asset.height,
-          duration: asset.duration * 1e6, // seconds to microseconds
-        },
-        "Video",
-      );
-      placeholder.name = clipName;
+      // Calculate centered position and fit scale
+      const { width: canvasWidth, height: canvasHeight } = canvasSize;
+      const assetRatio = asset.width / asset.height;
+      const canvasRatio = canvasWidth / canvasHeight;
+      
+      let width, height;
+      if (assetRatio > canvasRatio) {
+        width = canvasWidth;
+        height = canvasWidth / assetRatio;
+      } else {
+        height = canvasHeight;
+        width = canvasHeight * assetRatio;
+      }
 
-      // Scale to fit and center in scene
-      await placeholder.scaleToFit(canvasSize.width, canvasSize.height);
-      placeholder.centerInScene(canvasSize.width, canvasSize.height);
+      const left = (canvasWidth - width) / 2;
+      const top = (canvasHeight - height) / 2;
 
-      await studio.addClip(placeholder);
+      // [FLOW]: Add to Core first
+      projectStore.getState().addClip({
+        type: "Video",
+        name: clipName,
+        src: src,
+        left,
+        top,
+        width,
+        height,
+        display: { from: 0, to: asset.duration * 1e6 },
+        trim: { from: 0, to: asset.duration * 1e6 },
+      });
+
+      // The sync bridge in studio-to-store-sync.ts will detect this and add it to Studio
 
       // 2. Load the real clip in the background
       Video.fromUrl(src)

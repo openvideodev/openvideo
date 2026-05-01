@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useStudioStore } from "@/stores/studio-store";
+import { useTimelineStore } from "@/stores/timeline-store";
 import type { TimelineCanvas } from "./timeline";
 import { Ellipsis } from "lucide-react";
 import {
@@ -24,8 +25,8 @@ export function TimelineClipMenu({ timelineCanvas }: TimelineClipMenuProps) {
   const [hoveredClipId, setHoveredClipId] = useState<string | null>(null);
   const [isHoveringMenu, setIsHoveringMenu] = useState(false);
   const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const [selectedClips, setSelectedClips] = useState<IClip[]>([]);
-  const { studio, setSelectedClips: setStudioSelectedClips } = useStudioStore();
+  const { studio } = useStudioStore();
+  const selectedClipIds = useTimelineStore((state) => state.selectedClipIds);
   const [menuPosition, setMenuPosition] = useState<{
     x: number;
     y: number;
@@ -36,29 +37,8 @@ export function TimelineClipMenu({ timelineCanvas }: TimelineClipMenuProps) {
 
   const activeClip = activeClipId ? studio?.timeline.getClipById(activeClipId) : null;
 
-  useEffect(() => {
-    if (!studio) return;
-
-    const handleSelection = (data: any) => {
-      setSelectedClips(data.selected);
-      setStudioSelectedClips(data.selected);
-    };
-
-    const handleClear = () => {
-      setSelectedClips([]);
-      setStudioSelectedClips([]);
-    };
-
-    studio.on("selection:created", handleSelection);
-    studio.on("selection:updated", handleSelection);
-    studio.on("selection:cleared", handleClear);
-
-    return () => {
-      studio.off("selection:created", handleSelection);
-      studio.off("selection:updated", handleSelection);
-      studio.off("selection:cleared", handleClear);
-    };
-  }, [studio]);
+  // Selection is now handled by the unified bridge in studio-to-store-sync.ts
+  // which updates the Zustand store automatically.
 
   const { hasClipboard, handleCopy, handlePaste, handleDuplicate, handleToggleLock, handleDelete } =
     useClipActions(activeClip || null);
@@ -149,7 +129,7 @@ export function TimelineClipMenu({ timelineCanvas }: TimelineClipMenuProps) {
     };
   }, [timelineCanvas]);
 
-  const isSelected = activeClip && selectedClips.some((c) => c.id === activeClip.id);
+  const isSelected = activeClip && selectedClipIds.includes(activeClip.id);
 
   if (!menuPosition || !activeClip || !isSelected || activeClip.type === "Transition") return null;
 
@@ -173,7 +153,7 @@ export function TimelineClipMenu({ timelineCanvas }: TimelineClipMenuProps) {
             onClick={(e) => {
               e.stopPropagation();
               // If clip wasn't selected, maybe we want to select it here?
-              if (studio && !selectedClips.find((c) => c.id === activeClip.id)) {
+              if (studio && !selectedClipIds.includes(activeClip.id)) {
                 studio.selection.clear();
                 studio.selectClipsByIds([activeClip.id]);
               }

@@ -79,7 +79,6 @@ class TrackManager {
           (classRegistry.getClass("Track") as typeof Track) || Track;
         const accepts =
           trackData.accepts || this.timeline.getItemAccepts(trackData.type);
-        console.log('trackData', {trackHeight, type: trackData.type, trackData});
         
           const track = new TrackClass({
           id: trackData.id,

@@ -105,7 +105,6 @@ const isObjectAcceptedByTrack = (canvas: Timeline, object: FabricObject) => {
   );
 
   const validateObjType = object.type.toLowerCase();
-  console.log('draggingOverTrack', {draggingOverTrack, validateAccepts,validateObjType});
 
   if (object instanceof PreviewTrackItem) {
     return draggingOverTrack && validateAccepts?.includes(validateObjType);
@@ -241,10 +240,7 @@ const onObjectMovingForPlaceholder = throttle(
       canvas,
       state.primaryMovingObjects[0]
     );
-    console.log('isAccepted', {
-      pri:  state.primaryMovingObjects[0]
-    });
-    
+
     if (draggingOverTrack.magnetic && isAccepted) {
       if (!state.updateItemsInTrack) {
         state.updateItemsInTrack = draggingOverTrack.id;
@@ -562,7 +558,6 @@ const getPlaceholderPosition = (
   overObject?: FabricObject
 ): { top: number; left: number; isInvalidDrop?: boolean } => {
   const isObjectAccepted = isObjectAcceptedByTrack(canvas, draggedObject);
-  console.log("isObjectAccepted placeholder", isObjectAccepted);
   if (!isObjectAccepted && draggedObject instanceof PreviewTrackItem) {
     return {
       top: 0,

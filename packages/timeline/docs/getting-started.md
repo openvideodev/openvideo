@@ -1,6 +1,6 @@
 # Getting Started
 
-Integrating `@designcombo/timeline` into your project involves three main steps: setting up the Fabric.js canvas, initializing the `Timeline` class, and establishing the state synchronization loop.
+Integrating `@openvideo/timeline` into your project involves three main steps: setting up the Fabric.js canvas, initializing the `Timeline` class, and establishing the state synchronization loop.
 
 ## 1. Setup Canvas
 
@@ -22,7 +22,7 @@ const fabricCanvas = new Canvas("timeline-canvas", {
 Initialize the `Timeline` class by providing your canvas and configuration maps.
 
 ```typescript
-import { Timeline } from "@designcombo/timeline";
+import { Timeline } from "@openvideo/timeline";
 
 const timeline = new Timeline({
   canvas: fabricCanvas,

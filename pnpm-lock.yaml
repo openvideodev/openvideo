@@ -100,6 +100,12 @@ importers:
       '@genkit-ai/next':
         specifier: ^1.28.0
         version: 1.33.0(genkit@1.33.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.8.0))(next@16.0.7(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(zod@4.3.5)
+      '@openvideo/core':
+        specifier: workspace:*
+        version: link:../packages/core
+      '@openvideo/timeline':
+        specifier: workspace:*
+        version: link:../packages/timeline
       '@prisma/adapter-pg':
         specifier: ^7.4.2
         version: 7.8.0
@@ -291,7 +297,7 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       typescript:
-        specifier: ^5.9.2
+        specifier: ^5.9.3
         version: 5.9.3
 
   examples:
@@ -378,6 +384,28 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@24.10.15)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
+
+  packages/core:
+    dependencies:
+      nanoid:
+        specifier: ^5.0.7
+        version: 5.1.9
+      zustand:
+        specifier: ^5.0.4
+        version: 5.0.12(@types/react@19.2.8)(immer@10.2.0)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
+    devDependencies:
+      typescript:
+        specifier: ~5.9.2
+        version: 5.9.3
+      vite:
+        specifier: ^7.1.5
+        version: 7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
+      vite-plugin-dts:
+        specifier: ^4.5.4
+        version: 4.5.4(@types/node@25.0.8)(rollup@4.53.3)(typescript@5.9.3)(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.0.8)(@vitest/browser-playwright@4.0.18)(@vitest/ui@4.0.18)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.31.1)(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(yaml@2.8.2)
 
   packages/openvideo:
     dependencies:
@@ -5009,9 +5037,6 @@ packages:
   confbox@0.1.8:
     resolution: {integrity: sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w==}
 
-  confbox@0.2.2:
-    resolution: {integrity: sha512-1NB+BKqhtNipMsov4xI/NnhCKp9XG9NamYp5PVm9klAT0fsrNPjaFICsCFhNhwZJKNh7zB/3q8qXz0E9oaMNtQ==}
-
   confbox@0.2.4:
     resolution: {integrity: sha512-ysOGlgTFbN2/Y6Cg3Iye8YKulHw+R2fNXHrgSmXISQdMnomY6eNDprVdW9R5xBguEqI954+S6709UyiO7B+6OQ==}
 
@@ -8860,7 +8885,7 @@ snapshots:
       ansis: 4.2.0
       fzf: 0.5.2
       package-manager-detector: 1.6.0
-      tinyexec: 1.0.2
+      tinyexec: 1.1.2
 
   '@asamuzakjp/css-color@4.1.1':
     dependencies:
@@ -14412,6 +14437,20 @@ snapshots:
       - utf-8-validate
       - vite
 
+  '@vitest/browser-playwright@4.0.18(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(playwright@1.57.0)(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))(vitest@4.0.18)':
+    dependencies:
+      '@vitest/browser': 4.0.18(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))(vitest@4.0.18)
+      '@vitest/mocker': 4.0.18(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
+      playwright: 1.57.0
+      tinyrainbow: 3.0.3
+      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.0.8)(@vitest/browser-playwright@4.0.18)(@vitest/ui@4.0.18)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.31.1)(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(yaml@2.8.2)
+    transitivePeerDependencies:
+      - bufferutil
+      - msw
+      - utf-8-validate
+      - vite
+    optional: true
+
   '@vitest/browser@4.0.18(msw@2.12.10(@types/node@20.19.39)(typescript@5.9.3))(vite@7.3.1(@types/node@20.19.39)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))(vitest@4.0.18)':
     dependencies:
       '@vitest/mocker': 4.0.18(msw@2.12.10(@types/node@20.19.39)(typescript@5.9.3))(vite@7.3.1(@types/node@20.19.39)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
@@ -14446,6 +14485,24 @@ snapshots:
       - msw
       - utf-8-validate
       - vite
+
+  '@vitest/browser@4.0.18(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))(vitest@4.0.18)':
+    dependencies:
+      '@vitest/mocker': 4.0.18(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
+      '@vitest/utils': 4.0.18
+      magic-string: 0.30.21
+      pixelmatch: 7.1.0
+      pngjs: 7.0.0
+      sirv: 3.0.2
+      tinyrainbow: 3.0.3
+      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.0.8)(@vitest/browser-playwright@4.0.18)(@vitest/ui@4.0.18)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.31.1)(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(yaml@2.8.2)
+      ws: 8.19.0
+    transitivePeerDependencies:
+      - bufferutil
+      - msw
+      - utf-8-validate
+      - vite
+    optional: true
 
   '@vitest/expect@4.0.18':
     dependencies:
@@ -14530,7 +14587,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.25':
     dependencies:
-      '@babel/parser': 7.28.5
+      '@babel/parser': 7.29.0
       '@vue/shared': 3.5.25
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -15007,8 +15064,6 @@ snapshots:
   concat-map@0.0.1: {}
 
   confbox@0.1.8: {}
-
-  confbox@0.2.2: {}
 
   confbox@0.2.4: {}
 
@@ -18007,7 +18062,7 @@ snapshots:
 
   pkg-types@2.3.0:
     dependencies:
-      confbox: 0.2.2
+      confbox: 0.2.4
       exsolve: 1.0.8
       pathe: 2.0.3
 
@@ -19482,6 +19537,25 @@ snapshots:
       - rollup
       - supports-color
 
+  vite-plugin-dts@4.5.4(@types/node@25.0.8)(rollup@4.53.3)(typescript@5.9.3)(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)):
+    dependencies:
+      '@microsoft/api-extractor': 7.55.1(@types/node@25.0.8)
+      '@rollup/pluginutils': 5.3.0(rollup@4.53.3)
+      '@volar/typescript': 2.4.26
+      '@vue/language-core': 2.2.0(typescript@5.9.3)
+      compare-versions: 6.1.1
+      debug: 4.4.3
+      kolorist: 1.8.0
+      local-pkg: 1.1.2
+      magic-string: 0.30.21
+      typescript: 5.9.3
+    optionalDependencies:
+      vite: 7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
+    transitivePeerDependencies:
+      - '@types/node'
+      - rollup
+      - supports-color
+
   vite@7.2.4(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2):
     dependencies:
       esbuild: 0.25.12
@@ -19559,7 +19633,7 @@ snapshots:
       picomatch: 4.0.3
       std-env: 3.10.0
       tinybench: 2.9.0
-      tinyexec: 1.0.2
+      tinyexec: 1.1.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
       vite: 7.3.1(@types/node@20.19.39)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
@@ -19600,7 +19674,7 @@ snapshots:
       picomatch: 4.0.3
       std-env: 3.10.0
       tinybench: 2.9.0
-      tinyexec: 1.0.2
+      tinyexec: 1.1.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
       vite: 7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
@@ -19608,7 +19682,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       '@types/node': 25.0.8
-      '@vitest/browser-playwright': 4.0.18(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(playwright@1.57.0)(vite@7.2.4(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))(vitest@4.0.18)
+      '@vitest/browser-playwright': 4.0.18(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(playwright@1.57.0)(vite@7.3.1(@types/node@25.0.8)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))(vitest@4.0.18)
       '@vitest/ui': 4.0.18(vitest@4.0.18)
       jsdom: 27.4.0(@noble/hashes@2.2.0)(canvas@2.11.2)
     transitivePeerDependencies:
@@ -19829,5 +19903,12 @@ snapshots:
       immer: 10.2.0
       react: 19.2.0
       use-sync-external-store: 1.6.0(react@19.2.0)
+
+  zustand@5.0.12(@types/react@19.2.8)(immer@10.2.0)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3)):
+    optionalDependencies:
+      '@types/react': 19.2.8
+      immer: 10.2.0
+      react: 19.2.3
+      use-sync-external-store: 1.6.0(react@19.2.3)
 
   zwitch@2.0.4: {}

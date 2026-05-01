@@ -1,6 +1,6 @@
 # Architecture Overview
 
-The `@designcombo/timeline` engine is designed with a clear separation between state management and visual rendering. It uses a centralized "Manager" pattern to handle different aspects of the timeline lifecycle.
+The `@openvideo/timeline` engine is designed with a clear separation between state management and visual rendering. It uses a centralized "Manager" pattern to handle different aspects of the timeline lifecycle.
 
 ## Core Managers
 

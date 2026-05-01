@@ -1,6 +1,6 @@
 # Creating Custom Clips
 
-One of the most powerful features of `@designcombo/timeline` is its ability to handle any custom clip type. This is achieved through a capability-based architecture.
+One of the most powerful features of `@openvideo/timeline` is its ability to handle any custom clip type. This is achieved through a capability-based architecture.
 
 ## 1. Define the Fabric Class
 

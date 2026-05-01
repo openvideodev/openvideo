@@ -136,7 +136,6 @@ class Timeline extends Canvas {
     }
   ) {
     super(canvasEl, options);
-    console.log("Timeline options", options);
     this.emitter = new EventEmitter<Record<string, any>>();
     this.bounding = options.bounding || {
       width: options.width || 0,

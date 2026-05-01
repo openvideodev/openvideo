@@ -1,4 +1,4 @@
-# @designcombo/timeline
+# @openvideo/timeline
 
 A high-performance, type-agnostic timeline engine built on Fabric.js. This package provides the core logic for managing temporal layouts, magnetic tracks, and multi-media synchronization in video editing applications.
 
@@ -21,15 +21,15 @@ A high-performance, type-agnostic timeline engine built on Fabric.js. This packa
 ## Installation
 
 ```bash
-npm install @designcombo/timeline
+npm install @openvideo/timeline
 # or
-pnpm add @designcombo/timeline
+pnpm add @openvideo/timeline
 ```
 
 ## Quick Example
 
 ```typescript
-import { Timeline } from "@designcombo/timeline";
+import { Timeline } from "@openvideo/timeline";
 
 const timeline = new Timeline({
   canvas: myFabricCanvas,

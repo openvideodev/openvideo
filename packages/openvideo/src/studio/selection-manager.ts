@@ -17,6 +17,10 @@ export class SelectionManager {
   public activeTransformer: Transformer | null = null;
   public interactiveClips: Set<IClip> = new Set(); // Track which clips have interactivity set up
 
+  public getSelection(): IClip[] {
+    return Array.from(this.selectedClips);
+  }
+
   // Drag-to-select state
   public selectionGraphics: Graphics | null = null;
   public isDragSelecting = false;

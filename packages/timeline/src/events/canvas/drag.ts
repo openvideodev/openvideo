@@ -132,7 +132,6 @@ function onDragEnter(this: Timeline, e: DragEventData) {
     transitions = canvas.getObjects("Transition") as Transition[];
     const appliedTransitions = transitions.filter((t) => t.kind !== "none");
     transitions.forEach((obj) => {
-      console.log(obj)
       const toObj = items.find((i) => i.id === obj.toId);
       const fromObj = items.find((i) => i.id === obj.fromId);
       const previewItemWidth = obj.width;

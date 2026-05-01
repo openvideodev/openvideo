@@ -6,7 +6,6 @@ import { useProjectStore } from "@/stores/project-store";
 import { editorFont } from "./constants";
 import { CUSTOM_TRANSITIONS } from "./transition-custom";
 import { CUSTOM_EFFECTS } from "./effect-custom";
-import { SelectionFloatingMenu } from "./selection-floating-menu";
 import { TextEditorOverlay } from "./text-editor-overlay";
 import { useClipActions } from "./options-floating-menu";
 import {
@@ -243,7 +242,6 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
               }}
               tabIndex={0}
             />
-            <SelectionFloatingMenu />
             {editingClip && (
               <TextEditorOverlay clip={editingClip} onClose={() => setEditingClip(null)} />
             )}

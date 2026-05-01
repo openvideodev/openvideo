@@ -81,15 +81,16 @@ class ItemManager {
     this.timeline.trackItemIds = trackItems.map((t) => t.id).reverse();
   }
 
-  public selectTrackItemByIds(trackItemIds: string[]) {
+  public selectTrackItemByIds(trackItemIds: string[] = []) {
+    const ids = trackItemIds || [];
     const currentActiveIds = this.timeline.getActiveObjects().map((o) => o.id);
-    if (isEqual(currentActiveIds, trackItemIds)) return;
+    if (isEqual(currentActiveIds, ids)) return;
     const objects = this.timeline.getObjects(
       ...Timeline.objectTypes,
       "Transition"
     );
 
-    const activeObjects = objects.filter((o) => trackItemIds.includes(o.id));
+    const activeObjects = objects.filter((o) => ids.includes(o.id));
 
     if (!activeObjects.length) {
       this.timeline.discardActiveObject();
