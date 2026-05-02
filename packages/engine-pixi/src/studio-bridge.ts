@@ -17,16 +17,52 @@ export class StudioBridge {
     this.init();
   }
 
+  private isSyncing = false;
+  
   private init() {
+    console.log('StudioBridge.init');
     // 1. Sync Playback
-    this.core.on('timeupdate', (time: number) => this.studio.updateFrame(time));
-    this.core.on('play', () => {}); // Studio might not need explicit play call if frame update is driven by core
-    this.core.on('pause', () => {});
+    this.core.on('timeupdate', async (time: number) => {
+      if (this.isSyncing) return;
+      this.isSyncing = true;
+      try {
+        // If we're not playing, seek the studio to match core
+        // If we ARE playing, the studio's own loop is already updating time,
+        // but we still want to allow external seeks (scrubbing) to take precedence.
+        if (!this.studio.isPlaying) {
+          await this.studio.transport.seek(time);
+        }
+      } finally {
+        this.isSyncing = false;
+      }
+    });
 
-    // 2. Sync via Patches
+    this.core.on('play', () => {
+      console.log('core:play -> studio.play()');
+      this.studio.play();
+    });
+
+    this.core.on('pause', () => {
+      console.log('core:pause -> studio.pause()');
+      this.studio.pause();
+    });
+
+    // 2. Sync Back from Studio to Core (Source of Truth)
+    this.studio.on('currentTime', ({ currentTime }) => {
+      if (this.studio.isPlaying && !this.isSyncing) {
+        this.isSyncing = true;
+        try {
+          this.core.seek(currentTime);
+        } finally {
+          this.isSyncing = false;
+        }
+      }
+    });
+
+    // 3. Sync via Patches
     this.core.on('change', (patches: Patch[]) => this.handlePatches(patches));
 
-    // 3. Initial Sync
+    // 4. Initial Sync
     this.syncInitialState();
   }
 

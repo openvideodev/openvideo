@@ -232,7 +232,7 @@ const Header = ({
                   justifyContent: 'center',
                 }}
               >
-                {timeToString({ time: duration })}
+                {timeToString({ time: durationUs })}
               </div>
             </div>
           </div>

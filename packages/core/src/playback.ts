@@ -43,6 +43,9 @@ export class PlaybackController {
   public seek(timeUs: number) {
     this.store.getState().seek(timeUs);
     this.triggerRender(timeUs);
+    // Reset lastTimestamp to ensure that if the loop is running,
+    // it starts its next delta from this new seek position.
+    this.lastTimestamp = this.isBrowser ? performance.now() : Date.now();
   }
 
   private triggerRender(timeUs: number) {

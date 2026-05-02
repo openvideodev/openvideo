@@ -122,6 +122,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       });
 
       // TODO: Emit change event for collaborators/engines
+      get().recalculateDuration();
     },
 
     batch: (commands) => {
@@ -162,6 +163,8 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
           future: [],
         };
       });
+
+      get().recalculateDuration();
     },
 
     undo: () => {
@@ -180,6 +183,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
           future: [entry, ...state.future],
         };
       });
+      get().recalculateDuration();
     },
 
     redo: () => {
@@ -198,6 +202,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
           future: nextFuture,
         };
       });
+      get().recalculateDuration();
     },
 
     // Actions: Selection
@@ -449,8 +454,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
             : clip.display.from + clip.duration;
         if (endUs > maxUs) maxUs = endUs;
       });
-
-      const finalDuration = Math.max(30_000_000, maxUs + 1_000_000);
+      const finalDuration = maxUs
 
       if (get().settings.duration !== finalDuration) {
         get().updateSettings({ duration: finalDuration });

@@ -45,13 +45,6 @@ type ExtMP4Sample = Omit<MP4Sample, 'data'> & {
 };
 
 type LocalFileReader = Awaited<ReturnType<OPFSToolFile['createReader']>>;
-
-type ThumbnailOpts = {
-  start: number;
-  end: number;
-  step: number;
-};
-
 /**
  * Video clip, parses MP4 files, uses {@link Video.tick} to decode image frames at specified time on demand
  *
@@ -387,119 +380,6 @@ export class Video extends BaseClip implements IPlaybackCapable {
       state: 'success',
     });
   }
-
-  private thumbAborter = new AbortController();
-  private thumbFinder: VideoFrameFinder | null = null;
-
-  /**
-   * Generate thumbnails, default generates one 100px width thumbnail per keyframe.
-   *
-   * @param imgWidth Thumbnail width, default 100
-   * @param opts Partial<ThumbnailOpts>
-   * @returns Promise<Array<{ ts: number; img: Blob }>>
-   */
-  async thumbnails(
-    imgWidth = 100,
-    opts?: Partial<ThumbnailOpts>
-  ): Promise<Array<{ ts: number; img: Blob }>> {
-    this.thumbAborter.abort();
-    this.thumbAborter = new AbortController();
-    const aborterSignal = this.thumbAborter.signal;
-
-    await this.ready;
-    const abortMsg = 'generate thumbnails aborted';
-    if (aborterSignal.aborted) throw Error(abortMsg);
-
-    const { width, height } = this._meta;
-    const convtr = createVF2BlobConvtr(
-      imgWidth,
-      Math.round(height * (imgWidth / width)),
-      { quality: 0.1, type: 'image/png' }
-    );
-
-    return new Promise<Array<{ ts: number; img: Blob }>>(
-      async (resolve, reject) => {
-        const results: Array<{ ts: number; img: Blob }> = [];
-        const vc = this.decoderConf.video;
-        if (vc == null || this.videoSamples.length === 0) {
-          resolve([]);
-          return;
-        }
-        let localFinder: VideoFrameFinder | null = null;
-
-        aborterSignal.addEventListener('abort', () => {
-          reject(Error(abortMsg));
-        });
-
-        try {
-          const { start = 0, end = this._meta.duration, step } = opts ?? {};
-          if (step) {
-            let cur = start;
-
-            // Clean up any previously orphaned finder on class instance
-            if (this.thumbFinder) {
-              await this.thumbFinder.destroy();
-              this.thumbFinder = null;
-            }
-
-            localFinder = new VideoFrameFinder(
-              await this.localFile.createReader(),
-              this.videoSamples,
-              {
-                ...vc,
-                hardwareAcceleration: this.opts.__unsafe_hardwareAcceleration__,
-              }
-            );
-
-            // Register it globally so video.destroy() can still abort it if the clip is deleted
-            this.thumbFinder = localFinder;
-
-            while (cur <= end && !aborterSignal.aborted) {
-              const vf = await localFinder.find(cur);
-              if (vf) {
-                const blob = await convtr(vf);
-                results.push({ ts: vf.timestamp, img: blob });
-              }
-              cur += step;
-            }
-
-            if (results.length === 0 && !aborterSignal.aborted) {
-              const vf = await localFinder.find(0);
-              if (vf) {
-                const blob = await convtr(vf);
-                results.push({ ts: vf.timestamp, img: blob });
-              }
-            }
-          } else {
-            await thumbnailByKeyFrame(
-              this.videoSamples,
-              this.localFile,
-              vc,
-              aborterSignal,
-              { start, end },
-              async (vf, done) => {
-                if (vf != null) {
-                  const blob = await convtr(vf);
-                  results.push({ ts: vf.timestamp, img: blob });
-                }
-              }
-            );
-          }
-        } catch (e) {
-          reject(e);
-          return;
-        } finally {
-          if (localFinder) {
-            await localFinder.destroy();
-            if (this.thumbFinder === localFinder) {
-              this.thumbFinder = null;
-            }
-          }
-        }
-        resolve(results);
-      }
-    );
-  }
   async split(time: number) {
     await this.ready;
 
@@ -649,29 +529,12 @@ export class Video extends BaseClip implements IPlaybackCapable {
     return clips;
   }
 
-  /**
-   * Clean up thumbnail generation resources
-   */
-  cleanupThumbnails = async () => {
-    this.thumbAborter.abort();
-    if (this.thumbFinder) {
-      await this.thumbFinder.destroy();
-      this.thumbFinder = null;
-    }
-  };
-
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
     this.logger.info('Video destroy');
     super.destroy();
 
-    // Abort thumbnail generation first
-    this.thumbAborter.abort();
-
-    // Cleanup finders - these are now async but we fire and forget
-    this.thumbFinder?.destroy();
-    this.thumbFinder = null;
     this.videoFrameFinder?.destroy();
     this.audioFrameFinder?.destroy();
   }
@@ -1984,120 +1847,4 @@ function memoryUsageInfo() {
   } catch (err) {
     return {};
   }
-}
-
-async function thumbnailByKeyFrame(
-  samples: ExtMP4Sample[],
-  localFile: OPFSToolFile,
-  decConf: VideoDecoderConfig,
-  abortSingl: AbortSignal,
-  time: { start: number; end: number },
-  onOutput: (vf: VideoFrame | null, done: boolean) => void
-) {
-  const fileReader = await localFile.createReader();
-
-  const chunks = await videosamples2Chunks(
-    samples.filter(
-      (s) => !s.deleted && s.is_sync && s.cts >= time.start && s.cts <= time.end
-    ),
-    fileReader
-  );
-  if (chunks.length === 0 || abortSingl.aborted) {
-    onOutput(null, true);
-    return;
-  }
-
-  let outputCnt = 0;
-  decodeGoP(createVideoDec(), chunks, {
-    onDecodingError: (err) => {
-      Log.warn('thumbnailsByKeyFrame', err);
-      // 尝试降级一次
-      if (outputCnt === 0) {
-        decodeGoP(createVideoDec(true), chunks, {
-          onDecodingError: (err) => {
-            fileReader.close();
-            Log.error('thumbnailsByKeyFrame retry soft deocde', err);
-          },
-        });
-      } else {
-        onOutput(null, true);
-        fileReader.close();
-      }
-    },
-  });
-
-  function createVideoDec(downgrade = false) {
-    const encoderConf = {
-      ...decConf,
-      ...(downgrade ? { hardwareAcceleration: 'prefer-software' } : {}),
-    } as VideoDecoderConfig;
-    const dec = new VideoDecoder({
-      output: (vf) => {
-        outputCnt += 1;
-        const done = outputCnt === chunks.length;
-        onOutput(vf, done);
-        if (done) {
-          fileReader.close();
-          if (dec.state !== 'closed') dec.close();
-        }
-      },
-      error: (err) => {
-        const errMsg = `thumbnails decoder error: ${err.message}, config: ${JSON.stringify(encoderConf)}, state: ${JSON.stringify(
-          {
-            qSize: dec.decodeQueueSize,
-            state: dec.state,
-            outputCnt,
-            inputCnt: chunks.length,
-          }
-        )}`;
-        Log.error(errMsg);
-        throw Error(errMsg);
-      },
-    });
-    abortSingl.addEventListener('abort', () => {
-      fileReader.close();
-      if (dec.state !== 'closed') dec.close();
-    });
-    dec.configure(encoderConf);
-    return dec;
-  }
-}
-
-function createVF2BlobConvtr(
-  width: number,
-  height: number,
-  opts?: ImageEncodeOptions
-) {
-  // We use fresh canvas per frame to avoid any stale state or collisions
-  return async (vf: VideoFrame) => {
-    try {
-      const targetW = Math.max(1, Math.round(width));
-      const targetH = Math.max(1, Math.round(height));
-
-      Log.info(
-        `[Video.convtr] START: ${targetW}x${targetH}, ts: ${vf.timestamp}`
-      );
-
-      Log.info(`[Video.convtr] Creating OffscreenCanvas`);
-      const cvs = new OffscreenCanvas(targetW, targetH);
-
-      Log.info(`[Video.convtr] Getting Context`);
-      const ctx = cvs.getContext('2d')!;
-
-      Log.info(`[Video.convtr] Drawing image`);
-      ctx.drawImage(vf, 0, 0, targetW, targetH);
-
-      Log.info(`[Video.convtr] Closing VideoFrame`);
-      vf.close();
-
-      Log.info(`[Video.convtr] Calling convertToBlob`);
-      const blob = await cvs.convertToBlob(opts);
-      Log.info(`[Video.convtr] FINISHED: ${blob.size} bytes`);
-
-      return blob;
-    } catch (err: any) {
-      Log.error(`[Video.convtr] ERROR: ${err?.message || err}`);
-      throw err;
-    }
-  };
 }

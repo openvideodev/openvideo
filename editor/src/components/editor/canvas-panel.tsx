@@ -123,6 +123,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
         // If there's initial data from the project store, load it now
 
         onReadyRef.current?.();
+
       } catch (error) {
         console.error('Failed to initialize studio:', error);
       }
