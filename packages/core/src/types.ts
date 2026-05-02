@@ -8,6 +8,11 @@ export interface ITrim {
   to: number;
 }
 
+export interface IFlip {
+  x: boolean;
+  y: boolean;
+}
+
 export type ClipType =
   | 'Video'
   | 'Audio'
@@ -34,7 +39,7 @@ export interface IBaseClip {
   angle: number;
   src?: string;
   text?: string;
-  flip?: any;
+  flip?: IFlip | null;
   locked?: boolean;
   textCase?: 'none' | 'uppercase' | 'lowercase';
   verticalAlign?: 'top' | 'center' | 'bottom';

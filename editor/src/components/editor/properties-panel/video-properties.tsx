@@ -35,6 +35,8 @@ import {
   IconSquare,
   IconVolume,
   IconEdit,
+  IconFlipHorizontal,
+  IconFlipVertical,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import {
@@ -223,6 +225,51 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
               <span className="text-[10px] text-muted-foreground">°</span>
             </InputGroupAddon>
           </InputGroup>
+        </div>
+      </div>
+
+      {/* Flip Section */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Flip
+        </label>
+        <div className="flex items-center gap-2 mt-1">
+          <button
+            onClick={() =>
+              handleUpdate({
+                flip: {
+                  ...(coreClip.flip || { x: false, y: false }),
+                  x: !coreClip.flip?.x,
+                },
+              })
+            }
+            className={`flex items-center justify-center flex-1 py-1.5 rounded-md border transition-colors ${
+              coreClip.flip?.x
+                ? 'bg-primary/20 border-primary text-primary'
+                : 'bg-secondary/30 border-transparent text-muted-foreground hover:text-white'
+            }`}
+          >
+            <IconFlipHorizontal className="size-4 mr-2" />
+            <span className="text-xs">Flip X</span>
+          </button>
+          <button
+            onClick={() =>
+              handleUpdate({
+                flip: {
+                  ...(coreClip.flip || { x: false, y: false }),
+                  y: !coreClip.flip?.y,
+                },
+              })
+            }
+            className={`flex items-center justify-center flex-1 py-1.5 rounded-md border transition-colors ${
+              coreClip.flip?.y
+                ? 'bg-primary/20 border-primary text-primary'
+                : 'bg-secondary/30 border-transparent text-muted-foreground hover:text-white'
+            }`}
+          >
+            <IconFlipVertical className="size-4 mr-2" />
+            <span className="text-xs">Flip Y</span>
+          </button>
         </div>
       </div>
 

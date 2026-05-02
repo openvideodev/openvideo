@@ -1992,10 +1992,12 @@ export class Studio extends EventEmitter<StudioEvents> {
 
     // Create a root container that holds everything
     const rootContainer = new Container();
+    console.log(' flip fff ', clip.flip?.x, clip.flip?.y);
     rootContainer.x = clip.center.x + xOffset;
     rootContainer.y = clip.center.y + yOffset;
     rootContainer.rotation =
-      ((clip.flip == null ? 1 : -1) * ((clip.angle + angleOffset) * Math.PI)) /
+      ((clip.flip?.x || clip.flip?.y ? -1 : 1) *
+        ((clip.angle + angleOffset) * Math.PI)) /
       180;
     rootContainer.alpha = clip.opacity * opacityMultiplier;
 
@@ -2037,12 +2039,13 @@ export class Studio extends EventEmitter<StudioEvents> {
       }
 
       // Apply flip
-      if (clip.flip === 'horizontal') {
+      if (clip.flip?.x) {
         tempSprite.scale.x = -sX;
         for (let i = 0; i < 8; i++) {
           mirrorSprites[i].scale.x = -mirrors[i][2];
         }
-      } else if (clip.flip === 'vertical') {
+      }
+      if (clip.flip?.y) {
         tempSprite.scale.y = -sY;
         for (let i = 0; i < 8; i++) {
           mirrorSprites[i].scale.y = -mirrors[i][3];
@@ -2055,16 +2058,12 @@ export class Studio extends EventEmitter<StudioEvents> {
       }
     } else {
       // Standard single sprite
-      if (clip.flip === 'horizontal') {
-        tempSprite.scale.x = -baseScaleX * scaleMultiplier;
-        tempSprite.scale.y = baseScaleY * scaleMultiplier;
-      } else if (clip.flip === 'vertical') {
-        tempSprite.scale.x = baseScaleX * scaleMultiplier;
-        tempSprite.scale.y = -baseScaleY * scaleMultiplier;
-      } else {
-        tempSprite.scale.x = baseScaleX * scaleMultiplier;
-        tempSprite.scale.y = baseScaleY * scaleMultiplier;
-      }
+      tempSprite.scale.x = clip.flip?.x
+        ? -baseScaleX * scaleMultiplier
+        : baseScaleX * scaleMultiplier;
+      tempSprite.scale.y = clip.flip?.y
+        ? -baseScaleY * scaleMultiplier
+        : baseScaleY * scaleMultiplier;
       rootContainer.addChild(tempSprite);
     }
 

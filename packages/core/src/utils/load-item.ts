@@ -161,7 +161,7 @@ export const loadClip = async (
     width,
     height,
     angle: payload.angle ?? 0,
-    flip: payload.flip ?? null,
+    flip: payload.flip ?? { x: false, y: false },
     style: payload.style ?? {},
     chromaKey: payload.chromaKey ?? {
       enabled: false,
@@ -171,6 +171,14 @@ export const loadClip = async (
     },
     locked: payload.locked ?? false,
     effects: payload.effects ?? [],
+    animations: payload.animations ?? [],
+    colorAdjustment: payload.colorAdjustment ?? {
+      enabled: false,
+      type: 'basic',
+      basic: {},
+      hsl: {},
+      curves: {},
+    },
   } as AnyClip;
 
   if (payload.type === 'Caption') {

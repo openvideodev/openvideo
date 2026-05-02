@@ -18,7 +18,7 @@ export class StudioBridge {
   }
 
   private isSyncing = false;
-  
+
   private init() {
     console.log('StudioBridge.init');
     // 1. Sync Playback
@@ -67,6 +67,7 @@ export class StudioBridge {
   }
 
   private handlePatches(patches: Patch[]) {
+    console.log('handlePatches', patches);
     patches.forEach((patch) => {
       const parts = patch.path.split('/').filter(Boolean);
 
@@ -118,6 +119,7 @@ export class StudioBridge {
   }
 
   private handleUpdateClip(clipId: string, pathParts: string[], value: any) {
+    console.log('handleUpdateClip', clipId, pathParts, value);
     const clip = this.studio.timeline.getClipById(clipId);
     if (!clip) return;
 
@@ -165,9 +167,19 @@ export class StudioBridge {
       'angle',
       'opacity',
       'zIndex',
+      'flip',
+      'playbackRate',
+      'trim',
+      'volume',
+      'style',
+      'chromaKey',
+      'colorAdjustment',
+      'animations',
     ];
     props.forEach((prop) => {
-      clip[prop] = coreClip[prop];
+      if (coreClip[prop] !== undefined) {
+        clip[prop] = coreClip[prop];
+      }
     });
     clip.display = { ...coreClip.display };
     this.studio.updateFrame(this.studio.currentTime);

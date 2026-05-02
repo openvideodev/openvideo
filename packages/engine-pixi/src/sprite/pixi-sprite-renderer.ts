@@ -47,12 +47,16 @@ export function updateSpriteTransform(clip: IClip, sprite: Sprite): void {
 
   // Z-index
   sprite.zIndex = zIndex;
-
   // Flip
-  if (flip === 'horizontal') {
+  if (flip?.x) {
     sprite.scale.x = -Math.abs(sprite.scale.x);
-  } else if (flip === 'vertical') {
+  } else {
+    sprite.scale.x = Math.abs(sprite.scale.x);
+  }
+  if (flip?.y) {
     sprite.scale.y = -Math.abs(sprite.scale.y);
+  } else {
+    sprite.scale.y = Math.abs(sprite.scale.y);
   }
 }
 
@@ -285,7 +289,7 @@ export class PixiSpriteRenderer {
     // This ensures the wireframe/transformer remains stationary during animation
     this.root.x = center.x;
     this.root.y = center.y;
-    this.root.angle = (flip == null ? 1 : -1) * angle;
+    this.root.angle = (flip?.x || flip?.y ? -1 : 1) * angle;
     this.root.alpha = opacity;
     this.root.zIndex = zIndex;
     this.root.scale.set(1, 1);
@@ -294,7 +298,8 @@ export class PixiSpriteRenderer {
     if (this.animationContainer) {
       this.animationContainer.x = xOffset;
       this.animationContainer.y = yOffset;
-      this.animationContainer.angle = (flip == null ? 1 : -1) * angleOffset;
+      this.animationContainer.angle =
+        (flip?.x || flip?.y ? -1 : 1) * angleOffset;
       this.animationContainer.alpha = opacityMultiplier;
       this.animationContainer.scale.set(
         scaleMultiplier * scaleXMultiplier,
@@ -385,13 +390,14 @@ export class PixiSpriteRenderer {
       }
 
       // Apply flip to the whole grid if needed
-      if (flip === 'horizontal') {
+      if (flip?.x) {
         this.pixiSprite.scale.x = -baseScaleX;
         for (let i = 0; i < 8; i++) {
           // Flip the flips
           this.mirrorSprites[i].scale.x = -mirrors[i][2];
         }
-      } else if (flip === 'vertical') {
+      }
+      if (flip?.y) {
         this.pixiSprite.scale.y = -baseScaleY;
         for (let i = 0; i < 8; i++) {
           this.mirrorSprites[i].scale.y = -mirrors[i][3];
@@ -422,16 +428,8 @@ export class PixiSpriteRenderer {
       }
 
       // Standard Sprite behavior
-      if (flip === 'horizontal') {
-        this.pixiSprite.scale.x = -baseScaleX;
-        this.pixiSprite.scale.y = baseScaleY;
-      } else if (flip === 'vertical') {
-        this.pixiSprite.scale.x = baseScaleX;
-        this.pixiSprite.scale.y = -baseScaleY;
-      } else {
-        this.pixiSprite.scale.x = baseScaleX;
-        this.pixiSprite.scale.y = baseScaleY;
-      }
+      this.pixiSprite.scale.x = flip?.x ? -baseScaleX : baseScaleX;
+      this.pixiSprite.scale.y = flip?.y ? -baseScaleY : baseScaleY;
     }
 
     this.applyStyle();

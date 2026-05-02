@@ -37,7 +37,7 @@ interface BaseClipJSON {
   angle: number;
   zIndex: number;
   opacity: number;
-  flip?: 'horizontal' | 'vertical' | null;
+  flip?: { x: boolean; y: boolean } | null;
   trim?: {
     from: number;
     to: number;

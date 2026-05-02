@@ -224,7 +224,7 @@ export abstract class BaseSprite<
   /**
    * Flip clip horizontally or vertically
    */
-  flip: 'horizontal' | 'vertical' | null = null;
+  flip: { x: boolean; y: boolean } | null = null;
 
   effects: Array<{
     id: string;
@@ -305,11 +305,11 @@ export abstract class BaseSprite<
     const { center } = this;
     ctx.setTransform(
       // Horizontal scale, skew
-      this.flip === 'horizontal' ? -1 : 1,
+      this.flip?.x ? -1 : 1,
       0,
       // Vertical skew, scale
       0,
-      this.flip === 'vertical' ? -1 : 1,
+      this.flip?.y ? -1 : 1,
       // Coordinate origin offset x y
       center.x,
       center.y

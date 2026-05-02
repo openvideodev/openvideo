@@ -454,7 +454,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
             : clip.display.from + clip.duration;
         if (endUs > maxUs) maxUs = endUs;
       });
-      const finalDuration = maxUs
+      const finalDuration = maxUs;
 
       if (get().settings.duration !== finalDuration) {
         get().updateSettings({ duration: finalDuration });

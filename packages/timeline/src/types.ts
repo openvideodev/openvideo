@@ -27,8 +27,8 @@ export interface IChromaKey {
 }
 
 export interface IFlip {
-  horizontal: boolean;
-  vertical: boolean;
+  x: boolean;
+  y: boolean;
 }
 
 // ============================================================================
