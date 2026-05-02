@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Play, Trash2 } from "lucide-react";
-import { fontManager, jsonToClip, Log, type IClip } from "openvideo";
+import { fontManager, jsonToClip, Log, type IClip } from "@openvideo/engine-pixi";
 import { generateCaptionClips } from "@/lib/caption-generator";
 import { useStore } from "zustand";
 import { projectStore, engine } from "@/lib/project";

@@ -7,7 +7,7 @@ import {
   ProjectJSON,
   registerCustomEffect,
   VALUES_FILTER_SPECIAL,
-} from "openvideo";
+} from "@openvideo/engine-pixi";
 import { CustomShaderForm } from "@/components/gallery/custom-preset-forms";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";

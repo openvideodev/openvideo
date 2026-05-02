@@ -8,7 +8,7 @@ import {
   ColorPickerSelection,
 } from "@/components/ui/color-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { IClip } from "openvideo";
+import { IClip } from "@openvideo/engine-pixi";
 import {
   IconLineHeight,
   IconMinus,

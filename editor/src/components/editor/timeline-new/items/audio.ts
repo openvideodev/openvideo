@@ -4,7 +4,7 @@ import {
   TrimmableProps,
   timeUsToUnits
 } from "@openvideo/timeline";
-import { Audio as OpenVideoAudio } from "openvideo";
+import { Audio as OpenVideoAudio } from "@openvideo/engine-pixi";
 import { IMetadata, ITrim } from "@openvideo/timeline";
 import { createAudioControls } from "../controls";
 import { SECONDARY_FONT } from "../../constants/constants";

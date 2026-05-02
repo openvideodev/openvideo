@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Editor from "@/components/editor/editor";
 import { storageService } from "@/lib/storage/storage-service";
 import { useProjectStore } from "@/stores/project-store";
-import { registerCustomEffect, registerCustomTransition } from "openvideo";
+import { registerCustomEffect, registerCustomTransition } from "@openvideo/engine-pixi";
 
 export default function EditProjectPage() {
   const params = useParams();

@@ -1,4 +1,4 @@
-import { IClip, VALUES_FILTER_SPECIAL_LIMITS, VALUES_FILTER_SPECIAL } from "openvideo";
+import { IClip, VALUES_FILTER_SPECIAL_LIMITS, VALUES_FILTER_SPECIAL } from "@openvideo/engine-pixi";
 import {
   InputGroup,
   InputGroupAddon,

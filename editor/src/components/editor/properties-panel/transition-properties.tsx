@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IClip, getTransitionOptions, registerCustomTransition } from "openvideo";
+import { IClip, getTransitionOptions, registerCustomTransition } from "@openvideo/engine-pixi";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";

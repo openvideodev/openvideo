@@ -1,4 +1,4 @@
-import { clipToJSON, type IClip as StudioClip, Studio, jsonToClip } from "openvideo";
+import { clipToJSON, type IClip as StudioClip, Studio, jsonToClip } from "@openvideo/engine-pixi";
 import CanvasTimeline, { TIMELINE_SEEK } from "@openvideo/timeline";
 import { IClip } from "@/types/timeline";
 import { engine, projectStore } from "@/lib/project";

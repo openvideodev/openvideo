@@ -7,7 +7,7 @@ import { useStudioStore } from "@/stores/studio-store";
 import { usePanelStore } from "@/stores/panel-store";
 import { useProjectStore } from "@/stores/project-store";
 import { DEFAULT_CANVAS_PRESETS } from "@/lib/editor-utils";
-import { Log, type IClip } from "openvideo";
+import { Log, type IClip } from "@openvideo/engine-pixi";
 import { ExportModal } from "./export-modal";
 import { LogoIcons } from "../shared/logos";
 import Link from "next/link";
@@ -26,7 +26,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Compositor } from "openvideo";
+import { Compositor } from "@openvideo/engine-pixi";
 import { ShortcutsModal } from "./shortcuts-modal";
 import { useEffect } from "react";
 import {

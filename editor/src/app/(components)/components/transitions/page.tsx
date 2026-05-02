@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import { ExamplePlayer } from "@/components/example-player";
-import { Studio, getTransitionOptions, ProjectJSON, registerCustomTransition } from "openvideo";
+import { Studio, getTransitionOptions, ProjectJSON, registerCustomTransition } from "@openvideo/engine-pixi";
 import { CustomShaderForm } from "@/components/gallery/custom-preset-forms";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";

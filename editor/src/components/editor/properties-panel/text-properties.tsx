@@ -10,7 +10,7 @@ import {
   ColorPickerSelection,
 } from "@/components/ui/color-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { IClip, AnimationOptions, KeyframeData } from "openvideo";
+import { IClip, AnimationOptions, KeyframeData } from "@openvideo/engine-pixi";
 import {
   Select,
   SelectContent,
@@ -48,7 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import color from "color";
 
-import { fontManager } from "openvideo";
+import { fontManager } from "@openvideo/engine-pixi";
 import { getGroupedFonts, getFontByPostScriptName } from "@/utils/font-utils";
 import { NumberInput } from "@/components/ui/number-input";
 import useLayoutStore from "../store/use-layout-store";

@@ -8,7 +8,7 @@ import { usePanelStore } from "@/stores/panel-store";
 import Header from "@/components/editor/header";
 import { Loading } from "@/components/editor/loading";
 import FloatingControl from "@/components/editor/floating-controls/floating-control";
-import { Compositor } from "openvideo";
+import { Compositor } from "@openvideo/engine-pixi";
 import { WebCodecsUnsupportedModal } from "@/components/editor/webcodecs-unsupported-modal";
 import Assistant from "./assistant/assistant";
 

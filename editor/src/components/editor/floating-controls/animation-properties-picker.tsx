@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { ANIMATABLE_PROPERTIES, AnimationProps, AnimationOptions, KeyframeData } from "openvideo";
-import { getPresetTemplate } from "openvideo";
+import { ANIMATABLE_PROPERTIES, AnimationProps, AnimationOptions, KeyframeData } from "@openvideo/engine-pixi";
+import { getPresetTemplate } from "@openvideo/engine-pixi";
 import {
   Select,
   SelectContent,

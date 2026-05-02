@@ -7,7 +7,7 @@ import { ICaptionsControlProps } from "../interface/captions";
 import { STYLE_CAPTION_PRESETS, NONE_PRESET } from "../constant/caption";
 
 import { useStudioStore } from "@/stores/studio-store";
-import { fontManager } from "openvideo";
+import { fontManager } from "@openvideo/engine-pixi";
 import { regenerateCaptionClips } from "@/lib/caption-utils";
 
 const CaptionPresetPicker = () => {

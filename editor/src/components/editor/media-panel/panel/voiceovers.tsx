@@ -3,7 +3,7 @@
 import { IconMicrophone } from "@tabler/icons-react";
 import { useGeneratedStore } from "@/stores/generated-store";
 import { useStudioStore } from "@/stores/studio-store";
-import { Audio, Log } from "openvideo";
+import { Audio, Log } from "@openvideo/engine-pixi";
 import { AudioItem } from "./audio-item";
 import { useState } from "react";
 import { VoiceoverChatPanel } from "../voiceover-chat-panel";

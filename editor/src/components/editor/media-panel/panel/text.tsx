@@ -1,7 +1,7 @@
 "use client";
 
 import { engine } from "@/lib/project";
-import { Log } from "openvideo";
+import { Log } from "@openvideo/engine-pixi";
 import Draggable from "@/components/shared/draggable";
 
 const TEXT_PRESETS = [

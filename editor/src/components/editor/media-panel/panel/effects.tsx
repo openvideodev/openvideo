@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Effect, getEffectOptions, VALUES_FILTER_SPECIAL, registerCustomEffect } from "openvideo";
+import { Effect, getEffectOptions, VALUES_FILTER_SPECIAL, registerCustomEffect } from "@openvideo/engine-pixi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatFilterName } from "@/utils/effects";
 import { engine } from "@/lib/project";

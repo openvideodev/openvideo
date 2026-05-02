@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { ANIMATABLE_PROPERTIES, AnimationProps } from "openvideo";
+import { ANIMATABLE_PROPERTIES, AnimationProps } from "@openvideo/engine-pixi";
 
 // --- Effects & Transitions ---
 

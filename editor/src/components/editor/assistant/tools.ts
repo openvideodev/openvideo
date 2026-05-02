@@ -1,7 +1,7 @@
 
 import {
   fontManager,
-} from "openvideo";
+} from "@openvideo/engine-pixi";
 import { duplicateClip, splitClip, trimClip } from "./action-handlers";
 import { projectStore } from "@/lib/project";
 import { generateCaptionClips } from "@/lib/caption-generator";

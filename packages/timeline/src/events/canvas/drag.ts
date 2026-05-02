@@ -7,7 +7,6 @@ import {
   TPointerEvent,
   Transform
 } from "fabric";
-import { cloneDeep, pick } from "lodash-es";
 import Timeline from "../../timeline";
 import {
   Helper,
@@ -25,13 +24,6 @@ import {
 } from "../../utils/canvas";
 import { clearAuxiliaryObjects } from "../../utils/guideline";
 import { TIMELINE_OFFSET_CANVAS_LEFT } from "../../constants/constants";
-import {
-  GroupElement,
-  groupByTransition
-} from "../../utils/group-by-transition";
-import { IClip } from "../../types";
-
-// Removed hardcoded ALLOWED_DROP_TYPES
 
 let previewItem: TransitionGuide | PreviewTrackItem;
 let nextTransition: Transition;
@@ -483,42 +475,6 @@ function onDrop(this: Timeline, e: DropEventData) {
   canvas.requestRenderAll();
   this.emitter.emit(DRAG_END);
 }
-
-// put track items sequentially, update its display as needed
-
-const adjustTrackItemsInTransition = (items: GroupElement[]): IClip[] => {
-  const [firstItem] = items as IClip[];
-  const trackItems = items.filter(
-    (item) => item.type !== "Transition"
-  ) as IClip[];
-
-  let cumulativeStart = firstItem.display.from;
-
-  return trackItems.map((item) => {
-    const duration = item.display.to - item.display.from;
-    const updatedDisplay = {
-      from: cumulativeStart,
-      to: cumulativeStart + duration
-    };
-    cumulativeStart = updatedDisplay.to;
-
-    return {
-      ...item,
-      display: updatedDisplay
-    };
-  });
-};
-
-const updateTrackItemsMap = (
-  trackItemsMap: Record<string, IClip>,
-  updatedTrackItems: IClip[]
-) => {
-  let updatedTrackItemsMap = trackItemsMap;
-  updatedTrackItems.forEach((item) => {
-    updatedTrackItemsMap[item.id] = item;
-  });
-  return updatedTrackItemsMap;
-};
 
 const getIndexHelper = (overTrack: FabricObject, tracks: FabricObject[]) => {
   const sortedTracks = tracks.sort((a, b) => a.top - b.top);

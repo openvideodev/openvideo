@@ -15,7 +15,7 @@ import PanelVoiceovers from "./panel/voiceovers";
 import PanelSFX from "./panel/sfx";
 import PanelElements from "./panel/elements";
 import { PropertiesPanel } from "../properties-panel";
-import type { IClip } from "openvideo";
+import type { IClip } from "@openvideo/engine-pixi";
 import { useEffect, useState } from "react";
 import { useStudioStore } from "@/stores/studio-store";
 

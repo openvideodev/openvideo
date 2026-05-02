@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-import type { ProjectJSON } from 'openvideo';
+import type { ProjectJSON } from '@openvideo/engine-pixi';
 import { ExamplePlayer } from './example-player';
 
 interface ActionLayoutProps {

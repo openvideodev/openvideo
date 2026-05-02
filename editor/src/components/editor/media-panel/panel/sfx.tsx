@@ -1,6 +1,6 @@
 "use client";
 
-import { Log } from "openvideo";
+import { Log } from "@openvideo/engine-pixi";
 import { IconWaveSine } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { AudioItem } from "./audio-item";

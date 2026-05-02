@@ -1,4 +1,4 @@
-import { createStore, StoreApi } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla";
 import { IProject, AnyClip, ITrack, IScaleState } from "./types";
 import { loadClip } from "./utils/load-item";
 import { manageTracks, AddClipOptions } from "./utils/manage-tracks";

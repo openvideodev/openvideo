@@ -23,7 +23,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useStudioStore } from "@/stores/studio-store";
-import { clipToJSON, jsonToClip, type ClipJSON } from "openvideo";
+import { clipToJSON, jsonToClip, type ClipJSON } from "@openvideo/engine-pixi";
 import { generateUUID } from "@/utils/id";
 
 // Module-level clipboard — persists across renders

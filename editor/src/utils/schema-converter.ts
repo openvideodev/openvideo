@@ -1,4 +1,4 @@
-import { fontManager } from "openvideo";
+import { fontManager } from "@openvideo/engine-pixi";
 import * as PIXI from "pixi.js";
 
 /**

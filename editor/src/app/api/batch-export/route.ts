@@ -4,7 +4,7 @@ import path from "path";
 
 export async function GET() {
   try {
-    const presetsPath = path.join(process.cwd(), "../packages/openvideo/src/animation/presets.ts");
+    const presetsPath = path.join(process.cwd(), "../packages/engine-pixi/src/animation/presets.ts");
     const presetsContent = fs.readFileSync(presetsPath, "utf-8");
     const animationKeys = [
       ...presetsContent.matchAll(/animationRegistry\.register\("([^"]+)"/g),

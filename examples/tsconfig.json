@@ -8,7 +8,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "openvideo": ["../packages/openvideo/src/index.ts"]
+      "@openvideo/engine-pixi": ["../packages/engine-pixi/src/index.ts"]
     }
   }
 }

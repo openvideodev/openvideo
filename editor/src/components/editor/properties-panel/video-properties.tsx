@@ -10,7 +10,7 @@ import {
   ColorPickerSelection,
 } from "@/components/ui/color-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { IClip, AnimationOptions, KeyframeData } from "openvideo";
+import { IClip, AnimationOptions, KeyframeData } from "@openvideo/engine-pixi";
 import {
   IconAlignLeft,
   IconAlignCenter,

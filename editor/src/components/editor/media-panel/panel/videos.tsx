@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { engine } from "@/lib/project";
-import { Log } from "openvideo";
+import { Log } from "@openvideo/engine-pixi";
 import { Search, Film, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { debounce } from "lodash";

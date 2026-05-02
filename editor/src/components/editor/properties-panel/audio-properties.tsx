@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IClip } from "openvideo";
+import { IClip } from "@openvideo/engine-pixi";
 import { IconVolume, IconGauge, IconMusic } from "@tabler/icons-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Slider } from "@/components/ui/slider";

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState } from "react";
-import { Studio, fontManager, registerCustomTransition, registerCustomEffect } from "openvideo";
+import { Studio, fontManager, registerCustomTransition, registerCustomEffect } from "@openvideo/engine-pixi";
 import { useTheme } from "next-themes";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";

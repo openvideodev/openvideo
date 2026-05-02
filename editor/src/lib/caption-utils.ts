@@ -1,4 +1,4 @@
-import { IClip } from "openvideo";
+import { IClip } from "@openvideo/engine-pixi";
 import { generateCaptionClips } from "./caption-generator";
 import { engine, projectStore } from "./project";
 

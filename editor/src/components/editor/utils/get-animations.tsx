@@ -1,5 +1,5 @@
 import { IClip } from "@openvideo/timeline";
-import { easings } from "openvideo";
+import { easings } from "@openvideo/engine-pixi";
 
 export interface ICompositionAnimation {
   property: string;

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getTransitionOptions, registerCustomTransition } from "openvideo";
+import { getTransitionOptions, registerCustomTransition } from "@openvideo/engine-pixi";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { Icons } from "@/components/shared/icons";
