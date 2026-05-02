@@ -40,7 +40,7 @@ const Ruler = (props: RulerProps) => {
     onScroll,
     scale,
   } = props;
-  console.log({scale})
+  console.log({ scale });
   const durationUs = useStore(projectStore, (s) => s.settings.duration);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 

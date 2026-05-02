@@ -3,7 +3,13 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowUpIcon, Wand2, RefreshCw, SquarePen, PlusIcon } from 'lucide-react';
+import {
+  ArrowUpIcon,
+  Wand2,
+  RefreshCw,
+  SquarePen,
+  PlusIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { projectStore } from '@/lib/project';
@@ -103,13 +109,9 @@ export default function Assistant() {
     }
   }, [messages]);
 
-  const handleSubmit = async (suggestionText?: string) => {
+  const handleSubmit = async (suggestionText?: string) => {};
 
-  };
-
-  const handleToolAction = async (input: any, engine: any) => {
-   
-  };
+  const handleToolAction = async (input: any, engine: any) => {};
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
     setInput(suggestion.text);
@@ -121,38 +123,46 @@ export default function Assistant() {
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
         <span className="text-sm tracking-wide">Director</span>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          >
             <RefreshCw className="w-3.5 h-3.5" />
             <span className="sr-only">Refresh</span>
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          >
             <PlusIcon className="w-3.5 h-3.5" />
             <span className="sr-only">New chat</span>
           </Button>
         </div>
       </div>
-      {messages.length === 0?  <div className='flex-1 items-center flex justify-center'>
-       <div className="flex flex-1 flex-col items-center justify-center space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700  pb-24">
-              <div className="flex items-center justify-center w-16 h-16">
-                <Icons.sparkle className="w-12 h-12 text-muted-foreground/90" />
-              </div>
-
-              <div className="text-center space-y-2">
-                <h2 className="text-xl font-semibold">
-                  I'm ILO, your AI assistant
-                </h2>
-                <p className="text-muted-foreground">
-                  What can I help you with?
-                </p>
-              </div>
-
+      {messages.length === 0 ? (
+        <div className="flex-1 items-center flex justify-center">
+          <div className="flex flex-1 flex-col items-center justify-center space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700  pb-24">
+            <div className="flex items-center justify-center w-16 h-16">
+              <Icons.sparkle className="w-12 h-12 text-muted-foreground/90" />
             </div>
-      </div>:    <ScrollArea className="flex-1 min-h-0 h-full">
-        <div
-          ref={scrollRef}
-          className="min-h-full flex flex-col overflow-x-hidden p-4 md:p-6 space-y-2"
-        >
-           <div className="space-y-4">
+
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold">
+                I'm ILO, your AI assistant
+              </h2>
+              <p className="text-muted-foreground">What can I help you with?</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <ScrollArea className="flex-1 min-h-0 h-full">
+          <div
+            ref={scrollRef}
+            className="min-h-full flex flex-col overflow-x-hidden p-4 md:p-6 space-y-2"
+          >
+            <div className="space-y-4">
               {messages.map((m, i) => (
                 <div
                   key={i}
@@ -288,10 +298,9 @@ export default function Assistant() {
                 </div>
               )}
             </div>
-        </div>
-      </ScrollArea>}
-    
-   
+          </div>
+        </ScrollArea>
+      )}
 
       <div className="p-4 md:p-2 space-y-4 shrink-0">
         <InputGroup className="rounded-sm">

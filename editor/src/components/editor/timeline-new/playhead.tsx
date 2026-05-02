@@ -48,8 +48,7 @@ const Playhead = ({
     setMounted(true);
   }, []);
 
-
-  const color = "#ffffff"
+  const color = '#ffffff';
 
   const handleMouseMove = useCallback(
     (e: MouseEvent | TouchEvent | any) => {
@@ -150,7 +149,7 @@ const Playhead = ({
           style={{
             width: 1,
             height: 8,
-            backgroundColor: '#000' ,
+            backgroundColor: '#000',
             opacity: 0.5,
           }}
         />

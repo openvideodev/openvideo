@@ -98,7 +98,7 @@ const Timeline = () => {
       }
     }
   }, [currentTimeUs]);
-  console.log("TTTTTT")
+  console.log('TTTTTT');
   const onResizeCanvas = (payload: { width: number; height: number }) => {};
 
   useEffect(() => {

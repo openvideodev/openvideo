@@ -1,27 +1,34 @@
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo, useState } from 'react';
 import {
   Studio,
   fontManager,
   registerCustomTransition,
   registerCustomEffect,
-} from "@openvideo/engine-pixi";
-import { useTheme } from "next-themes";
-import { useStudioStore } from "@/stores/studio-store";
-import { useProjectStore } from "@/stores/project-store";
-import { core } from "@/lib/project";
-import { editorFont } from "./constants";
-import { CUSTOM_TRANSITIONS } from "./transition-custom";
-import { CUSTOM_EFFECTS } from "./effect-custom";
-import { TextEditorOverlay } from "./text-editor-overlay";
-import { useClipActions } from "./options-floating-menu";
+} from '@openvideo/engine-pixi';
+import { useTheme } from 'next-themes';
+import { useStudioStore } from '@/stores/studio-store';
+import { useProjectStore } from '@/stores/project-store';
+import { core } from '@/lib/project';
+import { editorFont } from './constants';
+import { CUSTOM_TRANSITIONS } from './transition-custom';
+import { CUSTOM_EFFECTS } from './effect-custom';
+import { TextEditorOverlay } from './text-editor-overlay';
+import { useClipActions } from './options-floating-menu';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuShortcut,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { Clipboard, Copy, CopyPlus, LockKeyhole, LockKeyholeOpen, Trash2 } from "lucide-react";
+} from '@/components/ui/context-menu';
+import {
+  Clipboard,
+  Copy,
+  CopyPlus,
+  LockKeyhole,
+  LockKeyholeOpen,
+  Trash2,
+} from 'lucide-react';
 
 const STUDIO_CONFIG = {
   fps: 30,
@@ -30,8 +37,8 @@ const STUDIO_CONFIG = {
 } as const;
 
 const THEME_COLORS = {
-  dark: "#1C160D",
-  light: "#ffffff",
+  dark: '#1C160D',
+  light: '#ffffff',
 } as const;
 
 interface CanvasPanelProps {
@@ -61,7 +68,6 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
   } = useClipActions();
   const [editingClip, setEditingClip] = useState<any | null>(null);
 
-
   // Keep onReady ref up to date
   useEffect(() => {
     onReadyRef.current = onReady;
@@ -78,8 +84,6 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     });
   }, [canvasSize]);
 
-
-
   // Setup Studio and ResizeObserver (only once on mount)
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -88,7 +92,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     studioRef.current = new Studio({
       ...canvasSize,
       ...STUDIO_CONFIG,
-      bgColor: "#262028",
+      bgColor: '#262028',
       canvas: canvasRef.current,
       core: core,
     });
@@ -112,7 +116,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
 
         onReadyRef.current?.();
       } catch (error) {
-        console.error("Failed to initialize studio:", error);
+        console.error('Failed to initialize studio:', error);
       }
     };
 
@@ -128,7 +132,10 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
 
     if (parentElement) {
       resizeObserver = new ResizeObserver(() => {
-        if (studioRef.current && (studioRef.current as any).updateArtboardLayout) {
+        if (
+          studioRef.current &&
+          (studioRef.current as any).updateArtboardLayout
+        ) {
           (studioRef.current as any).updateArtboardLayout();
         }
       });
@@ -166,7 +173,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     const projectStore = useProjectStore.getState();
     if (initialStudioJSON !== null) {
       projectStore.setInitialStudioJSON(null);
-      console.log("Loading initial studio JSON", initialStudioJSON);
+      console.log('Loading initial studio JSON', initialStudioJSON);
       studioRef.current?.loadFromJSON(initialStudioJSON);
     }
   }, [initialStudioJSON]);
@@ -189,16 +196,16 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
       setEditingClip(clip);
     };
 
-    studio.on("selection:created", handleSelection);
-    studio.on("selection:updated", handleSelection);
-    studio.on("selection:cleared", handleClear);
-    studio.on("clip:dblclick", handleDblClick);
+    studio.on('selection:created', handleSelection);
+    studio.on('selection:updated', handleSelection);
+    studio.on('selection:cleared', handleClear);
+    studio.on('clip:dblclick', handleDblClick);
 
     return () => {
-      studio.off("selection:created", handleSelection);
-      studio.off("selection:updated", handleSelection);
-      studio.off("selection:cleared", handleClear);
-      studio.off("clip:dblclick", handleDblClick);
+      studio.off('selection:created', handleSelection);
+      studio.off('selection:updated', handleSelection);
+      studio.off('selection:cleared', handleClear);
+      studio.off('clip:dblclick', handleDblClick);
     };
   }, [setSelectedClips]);
 
@@ -230,22 +237,25 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
             onContextMenu={handleContextMenu}
             style={{
               flex: 1,
-              position: "relative", // Ensure relative positioning for absolute children if needed
-              overflow: "hidden", // Hide anything outside (though canvas masks it too)
+              position: 'relative', // Ensure relative positioning for absolute children if needed
+              overflow: 'hidden', // Hide anything outside (though canvas masks it too)
             }}
           >
             <canvas
               ref={canvasRef}
               style={{
-                display: "block",
-                width: "100%",
-                height: "100%",
-                outline: "none", // Avoid focus outline on canvas click
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                outline: 'none', // Avoid focus outline on canvas click
               }}
               tabIndex={0}
             />
             {editingClip && (
-              <TextEditorOverlay clip={editingClip} onClose={() => setEditingClip(null)} />
+              <TextEditorOverlay
+                clip={editingClip}
+                onClose={() => setEditingClip(null)}
+              />
             )}
           </div>
         </div>
@@ -258,7 +268,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
           e.stopPropagation();
         }}
       >
-        {selectedClip && selectedClip?.type !== "Transition" ? (
+        {selectedClip && selectedClip?.type !== 'Transition' ? (
           <>
             {!isLocked && (
               <>
@@ -274,7 +284,10 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
                   <ContextMenuShortcut>⌘ V</ContextMenuShortcut>
                 </ContextMenuItem>
 
-                <ContextMenuItem onClick={handleDuplicate} disabled={!selectedClip}>
+                <ContextMenuItem
+                  onClick={handleDuplicate}
+                  disabled={!selectedClip}
+                >
                   <CopyPlus className="mr-2 w-4 h-4" />
                   Duplicate
                   <ContextMenuShortcut>⌘ D</ContextMenuShortcut>
@@ -288,7 +301,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
               ) : (
                 <LockKeyhole className="mr-2 w-4 h-4" />
               )}
-              {isLocked ? "Unlock" : "Lock"}
+              {isLocked ? 'Unlock' : 'Lock'}
               <ContextMenuShortcut>⌘ L</ContextMenuShortcut>
             </ContextMenuItem>
 
