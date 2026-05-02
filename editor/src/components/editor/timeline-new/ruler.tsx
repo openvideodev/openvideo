@@ -10,8 +10,12 @@ import {
 import { useStore } from 'zustand';
 import { projectStore } from '@/lib/project';
 import { useTimelineOffsetX } from '../hooks/use-timeline-offset';
-import { useTheme } from 'next-themes';
-import { useMemo } from 'react';
+
+const RULER_COLORS = {
+  bg: '#111010',
+  text: '#9ca3af',
+  border: '#374151',
+};
 
 interface RulerProps {
   height?: number;
@@ -36,22 +40,11 @@ const Ruler = (props: RulerProps) => {
     onScroll,
     scale,
   } = props;
+  console.log({scale})
   const durationUs = useStore(projectStore, (s) => s.settings.duration);
-  const { theme, resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const currentTheme = (theme === 'system' ? resolvedTheme : theme) as
-    | 'dark'
-    | 'light';
-
-  const colors = useMemo(() => {
-    const isDark = currentTheme === 'dark';
-    return {
-      bg: isDark ? '#111010' : '#f3f4f6',
-      text: isDark ? '#9ca3af' : '#4b5563',
-      border: isDark ? '#374151' : '#d1d5db',
-    };
-  }, [currentTheme]);
+  const colors = RULER_COLORS;
 
   const [canvasSize, setCanvasSize] = useState({
     width: 0,
@@ -94,7 +87,7 @@ const Ruler = (props: RulerProps) => {
       // Calculate intervals
       const minTextSpacing = 60;
       const intervalOptions = [0.1, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300];
-      let mainInterval = 300;
+      let mainInterval = 80;
 
       for (const opt of intervalOptions) {
         if (opt * pixelsPerSecond >= minTextSpacing) {
@@ -168,7 +161,7 @@ const Ruler = (props: RulerProps) => {
 
       context.restore();
     },
-    [scale.zoom, colors, pixelsPerSecond, offsetX, durationUs]
+    [scale.zoom, pixelsPerSecond, offsetX, durationUs]
   );
 
   useEffect(() => {

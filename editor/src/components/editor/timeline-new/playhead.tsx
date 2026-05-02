@@ -15,7 +15,6 @@ import {
   ITimelineScaleState,
 } from '@openvideo/timeline';
 import { useTimelineOffsetX } from '../hooks/use-timeline-offset';
-import { useTheme } from 'next-themes';
 
 const Playhead = ({
   scrollLeft,
@@ -26,7 +25,6 @@ const Playhead = ({
 }) => {
   const currentTimeUs = useStore(projectStore, (s) => s.currentTime);
   const timelineOffsetX = useTimelineOffsetX();
-  const { theme, resolvedTheme } = useTheme();
 
   // Track drag state in a ref to avoid closure issues
   const dragRef = useRef({
@@ -50,14 +48,8 @@ const Playhead = ({
     setMounted(true);
   }, []);
 
-  const currentTheme = useMemo(() => {
-    if (!mounted) return 'light';
-    return (theme === 'system' ? resolvedTheme : theme) as 'dark' | 'light';
-  }, [mounted, theme, resolvedTheme]);
 
-  const color = useMemo(() => {
-    return currentTheme === 'dark' ? '#ffffff' : '#000000';
-  }, [currentTheme]);
+  const color = "#ffffff"
 
   const handleMouseMove = useCallback(
     (e: MouseEvent | TouchEvent | any) => {
@@ -158,7 +150,7 @@ const Playhead = ({
           style={{
             width: 1,
             height: 8,
-            backgroundColor: currentTheme === 'dark' ? '#000' : '#fff',
+            backgroundColor: '#000' ,
             opacity: 0.5,
           }}
         />

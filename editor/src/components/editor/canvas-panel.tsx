@@ -61,10 +61,6 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
   } = useClipActions();
   const [editingClip, setEditingClip] = useState<any | null>(null);
 
-  const bgColor = useMemo(() => {
-    const currentTheme = theme === "system" ? resolvedTheme : theme;
-    return currentTheme === "dark" ? THEME_COLORS.dark : THEME_COLORS.light;
-  }, [theme, resolvedTheme]);
 
   // Keep onReady ref up to date
   useEffect(() => {
@@ -82,12 +78,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     });
   }, [canvasSize]);
 
-  // Handle theme changes
-  useEffect(() => {
-    if (studioRef.current) {
-      studioRef.current.setBgColor(bgColor);
-    }
-  }, [bgColor]);
+
 
   // Setup Studio and ResizeObserver (only once on mount)
   useEffect(() => {
@@ -97,7 +88,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     studioRef.current = new Studio({
       ...canvasSize,
       ...STUDIO_CONFIG,
-      bgColor: "#0e1517",
+      bgColor: "#262028",
       canvas: canvasRef.current,
       core: core,
     });

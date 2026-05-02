@@ -19,7 +19,7 @@ export const PREVIEW_FRAME_WIDTH = 188;
 export const TIMELINE_OFFSET_X = 40;
 export const TIMELINE_OFFSET_CANVAS_LEFT = 16;
 export const MICROSECONDS_PER_SECOND = 1_000_000;
-export const PIXELS_PER_SECOND = 80;
+export const PIXELS_PER_SECOND = 100;
 
 export const BASE_TIMELINE_ELEMENT_DURATION_US = 4_000_000;
 

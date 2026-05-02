@@ -69,7 +69,6 @@ const Timeline = () => {
   const onMouseOut = () => {};
 
   const [timeline, setTimeline] = useState<CanvasTimeline | null>(null);
-
   useEffect(() => {
     const position = timeUsToUnits(currentTimeUs, scale.zoom);
     const canvasEl = canvasElRef.current;
@@ -99,7 +98,7 @@ const Timeline = () => {
       }
     }
   }, [currentTimeUs]);
-
+  console.log("TTTTTT")
   const onResizeCanvas = (payload: { width: number; height: number }) => {};
 
   useEffect(() => {
