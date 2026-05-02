@@ -23,7 +23,7 @@ export const usePanelStore = create<PanelState>()(
   persist(
     (set) => ({
       toolsPanel: 30,
-      copilotPanel: 30,
+      copilotPanel: 25,
       previewPanel: 50,
       propertiesPanel: 25,
       mainContent: 70,

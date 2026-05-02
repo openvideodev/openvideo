@@ -119,7 +119,7 @@ export default function Editor() {
                 minSize={15}
                 maxSize={40}
                 onResize={setCopilotPanel}
-                className="max-w-7xl relative overflow-visible! bg-card min-w-0"
+                className="max-w-4xl min-w-[360px] relative overflow-visible! bg-card min-w-0"
               >
                 {/* Chat copilot */}
                 <Assistant />

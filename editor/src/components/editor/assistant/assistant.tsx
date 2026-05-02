@@ -3,11 +3,10 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ArrowUpIcon, Wand2, MessageCircle, SparkleIcon } from 'lucide-react';
+import { ArrowUpIcon, Wand2, RefreshCw, SquarePen, PlusIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { engine, projectStore } from '@/lib/project';
-import { streamFlow } from '@genkit-ai/next/client';
-import * as ToolHandlers from './tools';
+import { Button } from '@/components/ui/button';
+import { projectStore } from '@/lib/project';
 import {
   InputGroup,
   InputGroupAddon,
@@ -17,7 +16,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStore } from 'zustand';
 import { IClip } from '@/types/timeline';
-import { chatFlow } from '@/genkit/chat-flow';
 import { ImportAsset } from '@/genkit/type';
 import { Icons } from '@/components/shared/icons';
 
@@ -84,10 +82,6 @@ export default function Assistant() {
     [tracks]
   );
 
-  const existingAssets = useMemo(
-    () => mapClipsToAssets(Object.values(clips)),
-    [clips, mapClipsToAssets]
-  );
   const selectedAssets = useMemo(() => {
     const selectedClips = selectedClipIds
       .map(getClip)
@@ -110,128 +104,11 @@ export default function Assistant() {
   }, [messages]);
 
   const handleSubmit = async (suggestionText?: string) => {
-    const messageText = suggestionText || input.trim();
-    if (!messageText || isLoading) return;
 
-    const userMessage: Message = { role: 'user', content: messageText };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-    setShowSuggestions(false);
-
-    const assistantMessage: Message = {
-      role: 'model',
-      content: '',
-      status: 'running',
-    };
-    setMessages((prev) => [...prev, assistantMessage]);
-    try {
-      const flow = streamFlow<typeof chatFlow>({
-        url: '/api/chat/editor',
-        input: {
-          message: messageText,
-          metadata: {
-            existingAssets,
-            selectedAssets,
-            currentTime: projectStore.getState().currentTime / 1_000_000,
-          },
-        },
-      });
-
-      for await (const chunkStr of flow.stream) {
-        const chunk = JSON.parse(chunkStr);
-
-        if (chunk.event === 'reasoning') {
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            // We could show reasoning in a special way, for now let's just mark it's thinking
-            return [...prev.slice(0, -1), { ...last, status: 'thinking' }];
-          });
-        }
-
-        if (chunk.event === 'tool') {
-          console.log('Tool call from flow:', chunk, chunk.name, chunk.arg);
-          handleToolAction(
-            { action: chunk.name, ...chunk.arg, ...chunk.response },
-            engine
-          );
-        }
-      }
-
-      const result = await flow.output;
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: 'model', content: result.reply, status: 'complete' },
-      ]);
-    } catch (error) {
-      console.error('Chat error:', error);
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: 'model', content: 'Something went wrong.' },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleToolAction = async (input: any, engine: any) => {
-    console.log('handleToolAction', input);
-    const { action } = input;
-
-    try {
-      switch (action) {
-        case 'add_clip':
-        case 'add_text':
-        case 'add_image':
-        case 'add_video':
-        case 'add_audio':
-          await ToolHandlers.handleAddClip(input, engine);
-          break;
-        case 'update_clip':
-        case 'update_asset':
-          await ToolHandlers.handleUpdateClip(input, engine);
-          break;
-        case 'remove_clip':
-        case 'delete_asset':
-          await ToolHandlers.handleRemoveClip(input, engine);
-          break;
-        case 'split_clip':
-        case 'split_asset':
-          await ToolHandlers.handleSplitClip(input, engine);
-          break;
-        case 'add_transition':
-          await ToolHandlers.handleAddTransition(input, engine);
-          break;
-        case 'add_effect':
-        case 'apply_effect':
-          await ToolHandlers.handleAddEffect(input, engine);
-          break;
-        case 'trim_clip':
-        case 'trim_asset':
-          await ToolHandlers.handleTrimClip(input, engine);
-          break;
-        case 'duplicate_clip':
-        case 'duplicate_asset':
-          await ToolHandlers.handleDuplicateClip(input, engine);
-          break;
-        case 'search_and_add_media':
-          await ToolHandlers.handleSearchAndAddMedia(input, engine);
-          break;
-        case 'generate_voiceover':
-          await ToolHandlers.handleGenerateVoiceover(input, engine);
-          break;
-        case 'seek_to_time':
-          await ToolHandlers.handleSeekToTime(input, engine);
-          break;
-        case 'generate_captions':
-          await ToolHandlers.handleGenerateCaptions(input, engine);
-          break;
-        default:
-          console.log('Unhandled tool action:', action);
-      }
-    } catch (err) {
-      console.error(`Failed to execute tool action: ${action}`, err);
-    }
+   
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
@@ -240,13 +117,22 @@ export default function Assistant() {
 
   return (
     <div className="flex flex-col h-full bg-card text-foreground text-sm overflow-hidden">
-      <ScrollArea className="flex-1 min-h-0 h-full">
-        <div
-          ref={scrollRef}
-          className="h-full  overflow-x-hidden p-4 md:p-6 space-y-2"
-        >
-          {messages.length === 0 ? (
-            <div className="flex flex-1 h-full flex-col items-center justify-center space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
+        <span className="text-sm tracking-wide">Director</span>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="sr-only">Refresh</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+            <PlusIcon className="w-3.5 h-3.5" />
+            <span className="sr-only">New chat</span>
+          </Button>
+        </div>
+      </div>
+      {messages.length === 0?  <div className='flex-1 items-center flex justify-center'>
+       <div className="flex flex-1 flex-col items-center justify-center space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700  pb-24">
               <div className="flex items-center justify-center w-16 h-16">
                 <Icons.sparkle className="w-12 h-12 text-muted-foreground/90" />
               </div>
@@ -260,21 +146,13 @@ export default function Assistant() {
                 </p>
               </div>
 
-              <div className="w-full max-w-md space-y-3">
-                {SUGGESTIONS.map((suggestion, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-border bg-background/50 hover:bg-background transition-colors text-left group"
-                  >
-                    <span className="text-sm">{suggestion.text}</span>
-                    <ArrowUpIcon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </button>
-                ))}
-              </div>
             </div>
-          ) : (
-            <div className="space-y-4">
+      </div>:    <ScrollArea className="flex-1 min-h-0 h-full">
+        <div
+          ref={scrollRef}
+          className="min-h-full flex flex-col overflow-x-hidden p-4 md:p-6 space-y-2"
+        >
+           <div className="space-y-4">
               {messages.map((m, i) => (
                 <div
                   key={i}
@@ -410,9 +288,10 @@ export default function Assistant() {
                 </div>
               )}
             </div>
-          )}
         </div>
-      </ScrollArea>
+      </ScrollArea>}
+    
+   
 
       <div className="p-4 md:p-2 space-y-4 shrink-0">
         <InputGroup className="rounded-sm">
