@@ -34,6 +34,7 @@ export const useProjectStore = create<ProjectState>()(
     }),
     {
       name: 'openvideo-project-storage',
+      version: 1,
     }
   )
 );

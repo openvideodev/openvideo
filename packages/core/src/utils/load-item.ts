@@ -90,6 +90,7 @@ export const loadClip = async (
   payload: Partial<AnyClip> & { type: string },
   options: { canvasSize: { width: number; height: number } }
 ): Promise<AnyClip> => {
+  console.log('LOAD CLIP');
   const { canvasSize } = options;
 
   // 1. Resolve Dimensions and Duration (Async if needed)
@@ -139,8 +140,8 @@ export const loadClip = async (
   duration = duration ?? DEFAULT_DURATION;
 
   // 2. Centering logic
-  const left = payload.left ?? (canvasSize.width - width) / 2;
-  const top = payload.top ?? (canvasSize.height - height) / 2;
+  const left = payload.left ?? 0;
+  const top = payload.top ?? 0;
 
   const trim = getTrim(payload.trim, duration);
   const display = getDisplay(payload.display, trim.to - trim.from);
@@ -180,7 +181,11 @@ export const loadClip = async (
       curves: {},
     },
   } as AnyClip;
-
+  console.log({
+    baseClip,
+    options,
+    payload,
+  });
   if (payload.type === 'Caption') {
     const captionClip = baseClip as any;
     captionClip.mediaId = payload.mediaId ?? '';

@@ -260,6 +260,7 @@ export class Studio extends EventEmitter<StudioEvents> {
    */
   constructor(opts: IStudioOpts) {
     super();
+    console.log({ opts });
     // this.postProcessContainer = new Container(); // Removed
     this.opts = {
       fps: 30,
@@ -565,7 +566,7 @@ export class Studio extends EventEmitter<StudioEvents> {
 
   private async initPixiApp(): Promise<void> {
     if (this.destroyed) return;
-
+    console.log('OPTIONS', this.opts);
     const canvas = this.opts.canvas || document.createElement('canvas');
     canvas.width = this.opts.width;
     canvas.height = this.opts.height;

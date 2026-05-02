@@ -83,6 +83,10 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     if (studioRef.current) {
       studioRef.current.setSize(canvasSize.width, canvasSize.height);
     }
+    core.store.getState().updateSettings({
+      width: canvasSize.width,
+      height: canvasSize.height,
+    });
   }, [canvasSize]);
 
   // Handle theme changes

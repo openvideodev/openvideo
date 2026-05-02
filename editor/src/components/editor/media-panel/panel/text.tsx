@@ -119,8 +119,8 @@ export default function PanelText() {
         },
         display: { from: 0, to: 5_000_000 },
         trim: { from: 0, to: 5_000_000 },
-        left: 1920 / 2 - 300,
-        top: 1080 / 2 - 62,
+        left: 240,
+        top: 898.0000000000003,
         width: 600,
         height: 124,
       });

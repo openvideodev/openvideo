@@ -1,10 +1,13 @@
 import { Core } from '@openvideo/core';
+import { useProjectStore } from '@/stores/project-store';
+
+const { canvasSize, fps } = useProjectStore.getState();
 
 export const core = new Core({
   settings: {
-    width: 1920,
-    height: 1080,
-    fps: 30,
+    width: canvasSize.width,
+    height: canvasSize.height,
+    fps,
     duration: 30_000_000,
   },
 });
