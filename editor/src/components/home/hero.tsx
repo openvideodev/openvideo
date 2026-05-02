@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Sparkles } from "lucide-react";
+import Link from 'next/link';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Sparkles } from 'lucide-react';
 
 const Hero = () => {
   return (
@@ -12,7 +12,7 @@ const Hero = () => {
         <div className="flex items-center justify-center gap-4 flex-col">
           <Badge
             className="rounded-full cursor-pointer py-1 px-4 hover:bg-secondary/80 transition-colors"
-            variant={"secondary"}
+            variant={'secondary'}
           >
             <Sparkles size={12} className="mr-2 text-orange-500" />
             New: Chroma Key Support 🎬
@@ -23,12 +23,16 @@ const Hero = () => {
             The Open Source Video Editor
           </h1>
           <p className="max-sm:text-sm text-lg text-muted-foreground max-w-2xl px-4">
-            The simplest way to edit videos in your browser. No installs, no signups—just start
-            creating.
+            The simplest way to edit videos in your browser. No installs, no
+            signups—just start creating.
           </p>
         </div>
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <Button asChild className="shadow-md h-12 rounded-full px-8" size={"lg"}>
+          <Button
+            asChild
+            className="shadow-md h-12 rounded-full px-8"
+            size={'lg'}
+          >
             <Link href="/projects" className="font-normal text-lg">
               Get Started
             </Link>

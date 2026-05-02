@@ -3,8 +3,8 @@ import {
   Input,
   UrlSource,
   VideoSample,
-  VideoSampleSink
-} from "mediabunny";
+  VideoSampleSink,
+} from 'mediabunny';
 
 type Options = {
   track: { width: number; height: number };
@@ -27,36 +27,36 @@ export async function extractFrames({
   src,
   timestampsInSeconds,
   onVideoSample,
-  signal
+  signal,
 }: ExtractFramesProps): Promise<void> {
   using input = new Input({
     formats: ALL_FORMATS,
-    source: new UrlSource(src)
+    source: new UrlSource(src),
   });
 
   const [durationInSeconds, format, videoTrack] = await Promise.all([
     input.computeDuration(),
     input.getFormat(),
-    input.getPrimaryVideoTrack()
+    input.getPrimaryVideoTrack(),
   ]);
 
   if (!videoTrack) {
-    throw new Error("No video track found in the input");
+    throw new Error('No video track found in the input');
   }
 
   if (signal?.aborted) {
-    throw new Error("Aborted");
+    throw new Error('Aborted');
   }
 
   const timestamps =
-    typeof timestampsInSeconds === "function"
+    typeof timestampsInSeconds === 'function'
       ? await timestampsInSeconds({
           track: {
             width: videoTrack.displayWidth,
-            height: videoTrack.displayHeight
+            height: videoTrack.displayHeight,
           },
           container: format.name,
-          durationInSeconds
+          durationInSeconds,
         })
       : timestampsInSeconds;
 
@@ -65,7 +65,7 @@ export async function extractFrames({
   }
 
   if (signal?.aborted) {
-    throw new Error("Aborted");
+    throw new Error('Aborted');
   }
 
   const sink = new VideoSampleSink(videoTrack);

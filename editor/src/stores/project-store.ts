@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { CanvasSize } from "@/types/editor";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { CanvasSize } from '@/types/editor';
 
 interface ProjectState {
   canvasSize: CanvasSize;
@@ -15,7 +15,7 @@ interface ProjectState {
 }
 
 export const DEFAULT_CANVAS_SIZE: CanvasSize = { width: 1080, height: 1920 };
-export const DEFAULT_ASPECT_RATIO = "9:16";
+export const DEFAULT_ASPECT_RATIO = '9:16';
 export const DEFAULT_FPS = 30;
 
 export const useProjectStore = create<ProjectState>()(
@@ -25,14 +25,15 @@ export const useProjectStore = create<ProjectState>()(
       aspectRatio: DEFAULT_ASPECT_RATIO,
       fps: DEFAULT_FPS,
       initialStudioJSON: null,
-      projectName: "Untitled video",
+      projectName: 'Untitled video',
       setProjectName: (projectName) => set({ projectName }),
-      setCanvasSize: (canvasSize, aspectRatio) => set({ canvasSize, aspectRatio }),
+      setCanvasSize: (canvasSize, aspectRatio) =>
+        set({ canvasSize, aspectRatio }),
       setFps: (fps) => set({ fps }),
       setInitialStudioJSON: (initialStudioJSON) => set({ initialStudioJSON }),
     }),
     {
-      name: "openvideo-project-storage",
-    },
-  ),
+      name: 'openvideo-project-storage',
+    }
+  )
 );

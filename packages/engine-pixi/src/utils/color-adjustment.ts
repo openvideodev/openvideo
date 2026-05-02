@@ -1,4 +1,4 @@
-import { ColorMatrixFilter } from "pixi.js";
+import { ColorMatrixFilter } from 'pixi.js';
 
 export interface ColorAdjustmentBasic {
   saturation?: number;
@@ -44,7 +44,7 @@ export interface ColorAdjustmentCurves {
 
 export interface ColorAdjustment {
   enabled?: boolean;
-  type?: "basic" | "hsl" | "curves";
+  type?: 'basic' | 'hsl' | 'curves';
   basic?: ColorAdjustmentBasic;
   hsl?: ColorAdjustmentHsl;
   curves?: ColorAdjustmentCurves;
@@ -84,14 +84,14 @@ export function hasColorAdjustment(adjustment?: ColorAdjustment): boolean {
 }
 
 export function getActiveSelectiveHsl(
-  adjustment?: ColorAdjustment,
+  adjustment?: ColorAdjustment
 ): ActiveSelectiveHslAdjustment | null {
   const all = getAllSelectiveHsl(adjustment);
   return all.length > 0 ? all[0] : null;
 }
 
 export function getAllSelectiveHsl(
-  adjustment?: ColorAdjustment,
+  adjustment?: ColorAdjustment
 ): ActiveSelectiveHslAdjustment[] {
   if (!adjustment || adjustment.enabled === false) return [];
   const hsl = adjustment.hsl;
@@ -107,7 +107,7 @@ export function getAllSelectiveHsl(
     }))
     .filter(
       (entry) =>
-        entry.hue !== 0 || entry.saturation !== 0 || entry.lightness !== 0,
+        entry.hue !== 0 || entry.saturation !== 0 || entry.lightness !== 0
     );
 
   if (entries.length > 0) return entries;
@@ -132,7 +132,7 @@ export function getAllSelectiveHsl(
 export function applyColorAdjustmentToMatrix(
   matrix: ColorMatrixFilter,
   adjustment?: ColorAdjustment,
-  animationBrightnessMultiplier = 1,
+  animationBrightnessMultiplier = 1
 ): void {
   matrix.reset();
 
@@ -158,8 +158,13 @@ export function applyColorAdjustmentToMatrix(
   const shadow = basic.shadow ?? 0;
   const hslLightness = selectiveHsl ? 0 : (hsl.lightness ?? 0);
   const lightnessScore =
-    basicBrightness + hslLightness + shine * 0.25 + highlight * 0.25 - shadow * 0.25;
-  const brightness = clamp(1 + lightnessScore / 100, 0, 5) * animationBrightnessMultiplier;
+    basicBrightness +
+    hslLightness +
+    shine * 0.25 +
+    highlight * 0.25 -
+    shadow * 0.25;
+  const brightness =
+    clamp(1 + lightnessScore / 100, 0, 5) * animationBrightnessMultiplier;
   if (brightness !== 1) {
     matrix.brightness(brightness, true);
   }

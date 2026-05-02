@@ -1,5 +1,5 @@
-import { type TMat2D, type TPointerEventInfo, util } from "fabric";
-import Timeline from "../timeline";
+import { type TMat2D, type TPointerEventInfo, util } from 'fabric';
+import Timeline from '../timeline';
 
 type SizeProps = {
   min: number;
@@ -98,8 +98,10 @@ export const makeMouseWheel =
       const oldZoom = canvas.tScale;
       let newZoom = oldZoom * speed ** e.deltaY;
 
-      if (options.max != undefined && newZoom > options.max) newZoom = options.max;
-      if (options.min != undefined && newZoom < options.min) newZoom = options.min;
+      if (options.max != undefined && newZoom > options.max)
+        newZoom = options.max;
+      if (options.min != undefined && newZoom < options.min)
+        newZoom = options.min;
 
       if (oldZoom !== newZoom) {
         const vpt = canvas.viewportTransform.slice(0) as TMat2D;

@@ -1,5 +1,5 @@
-import { fontManager } from "@openvideo/engine-pixi";
-import * as PIXI from "pixi.js";
+import { fontManager } from '@openvideo/engine-pixi';
+import * as PIXI from 'pixi.js';
 
 /**
  * Fetches caption data from a URL
@@ -12,7 +12,7 @@ export const fetchCaptionData = async (url: string): Promise<any> => {
     }
     return await response.json();
   } catch (error) {
-    console.error("Error fetching caption data:", error);
+    console.error('Error fetching caption data:', error);
     return null;
   }
 };
@@ -26,13 +26,13 @@ export const groupWordsByWidth = (
   words: any[],
   maxWidth: number = 800,
   fontSize: number = 80,
-  fontFamily: string = "Bangers-Regular",
-  maxLines: number = 1,
+  fontFamily: string = 'Bangers-Regular',
+  maxLines: number = 1
 ): any[] => {
   if (!words || words.length === 0) return [];
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
   if (!ctx) return [];
 
   ctx.font = `${fontSize}px ${fontFamily}`;
@@ -40,11 +40,11 @@ export const groupWordsByWidth = (
   const captions: any[] = [];
   let currentWords: any[] = [];
 
-  let lines: string[] = [""];
+  let lines: string[] = [''];
   let currentLineCount = 1;
   let lastCommaIndex = -1;
 
-  const getCurrentText = () => lines.join("\n");
+  const getCurrentText = () => lines.join('\n');
 
   const measureTextWidth = (text: string): number => {
     const metrics = ctx.measureText(text);
@@ -60,7 +60,7 @@ export const groupWordsByWidth = (
 
   const rebuildLines = (words: any[]) => {
     const newLines: string[] = [];
-    let tempLine = "";
+    let tempLine = '';
 
     for (const w of words) {
       const text = w.word || w.text;
@@ -87,21 +87,22 @@ export const groupWordsByWidth = (
     const firstWord = currentWords[0];
     const lastWord = currentWords[currentWords.length - 1];
 
-    const metrics = ctx.measureText("AaFfLMZpPqQ");
+    const metrics = ctx.measureText('AaFfLMZpPqQ');
     const singleLineHeight =
-      metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize;
+      metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent ||
+      fontSize;
 
     const totalHeight = singleLineHeight * currentLineCount;
 
     let maxW = 0;
-    const widthSpace = ctx.measureText(" ").width + 2;
+    const widthSpace = ctx.measureText(' ').width + 2;
 
     lines.forEach((line) => {
       const width = measureTextWidth(line);
       maxW = Math.max(maxW, width);
     });
 
-    const wordsLine = lines[0].split(" ");
+    const wordsLine = lines[0].split(' ');
     const totalWidth = maxW + (wordsLine.length + 1) * widthSpace;
 
     captions.push({
@@ -109,11 +110,11 @@ export const groupWordsByWidth = (
       width: totalWidth,
       height: totalHeight,
       words: currentWords.map((w, idx) => ({
-        text: w.word || w.text || "",
+        text: w.word || w.text || '',
         from: idx === 0 ? 0 : (w.start - firstWord.start) * 1000,
         to: (w.end - firstWord.start) * 1000,
         isKeyWord: idx === 0 || idx === currentWords.length - 1,
-        paragraphIndex: w.paragraphIndex ?? "",
+        paragraphIndex: w.paragraphIndex ?? '',
       })),
       from: firstWord.start,
       to: lastWord.end,
@@ -122,14 +123,14 @@ export const groupWordsByWidth = (
 
   const resetBlock = () => {
     currentWords = [];
-    lines = [""];
+    lines = [''];
     currentLineCount = 1;
     lastCommaIndex = -1;
   };
 
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
-    const wordText = word.word || word.text || "";
+    const wordText = word.word || word.text || '';
 
     const endsWithPeriod = /[.!?]$/.test(wordText);
     const endsWithComma = /[,;:]$/.test(wordText);
@@ -142,7 +143,7 @@ export const groupWordsByWidth = (
 
     const isOverflowing = testLineWidth > maxWidth;
 
-    if (isOverflowing && currentLine !== "") {
+    if (isOverflowing && currentLine !== '') {
       // Intentar cortar en coma si existe
       if (lastCommaIndex !== -1) {
         const wordsBeforeComma = currentWords.slice(0, lastCommaIndex + 1);
@@ -156,7 +157,7 @@ export const groupWordsByWidth = (
 
         // reiniciar con lo que sigue
         currentWords = [...wordsAfterComma, word];
-        lines = [currentWords.map((w) => w.word || w.text).join(" ")];
+        lines = [currentWords.map((w) => w.word || w.text).join(' ')];
         currentLineCount = 1;
 
         lastCommaIndex = -1;
@@ -172,12 +173,12 @@ export const groupWordsByWidth = (
       }
 
       if (currentLineCount < maxLines) {
-        const currentLineWords = lines[lines.length - 1].split(" ");
+        const currentLineWords = lines[lines.length - 1].split(' ');
 
         const lastWordFromLine = currentLineWords.pop();
 
         if (lastWordFromLine) {
-          lines[lines.length - 1] = currentLineWords.join(" ");
+          lines[lines.length - 1] = currentLineWords.join(' ');
 
           const newLine = lastWordFromLine;
           lines.push(newLine);
@@ -244,21 +245,23 @@ export const groupWordsByWidth = (
 /**
  * Converts schema.json format to exported.json format compatible with Studio
  */
-export const convertSchemaToExported = async (schemaJson: any): Promise<any> => {
+export const convertSchemaToExported = async (
+  schemaJson: any
+): Promise<any> => {
   const schema = schemaJson.schema || schemaJson;
   const clips: any[] = [];
 
   // Load Bangers font for caption text measurement
   await fontManager.loadFonts([
     {
-      name: "Bangers-Regular",
-      url: "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+      name: 'Bangers-Regular',
+      url: 'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf',
     },
   ]);
 
   // Extract aspect ratio to calculate dimensions
-  const aspectRatio = schema.aspectRatio || "9:16";
-  const [widthRatio, heightRatio] = aspectRatio.split(":").map(Number);
+  const aspectRatio = schema.aspectRatio || '9:16';
+  const [widthRatio, heightRatio] = aspectRatio.split(':').map(Number);
 
   // Default dimensions for 9:16 aspect ratio
   let width = 1080;
@@ -286,18 +289,28 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
       // Add video clips from segment
       if (segment.clips && Array.isArray(segment.clips)) {
         for (const clip of segment.clips) {
-          if (clip.type === "video" && clip.src && Array.isArray(clip.src) && clip.src.length > 0) {
+          if (
+            clip.type === 'video' &&
+            clip.src &&
+            Array.isArray(clip.src) &&
+            clip.src.length > 0
+          ) {
             // Convert milliseconds to microseconds
             const durationMs = clip.duration || segmentDurationMs;
             const durationUs = durationMs * 1000;
-            const fromMs = clip.display?.from !== undefined ? clip.display.from : cumulativeTime;
+            const fromMs =
+              clip.display?.from !== undefined
+                ? clip.display.from
+                : cumulativeTime;
             const toMs =
-              clip.display?.to !== undefined ? clip.display.to : cumulativeTime + durationMs;
+              clip.display?.to !== undefined
+                ? clip.display.to
+                : cumulativeTime + durationMs;
             const fromUs = fromMs * 1000;
             const toUs = toMs * 1000;
 
             clips.push({
-              type: "Video",
+              type: 'Video',
               src: clip.src[0], // Use first video source
               display: {
                 from: fromUs,
@@ -314,7 +327,7 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
               audio: true,
             });
           } else if (
-            clip.type === "image" &&
+            clip.type === 'image' &&
             clip.src &&
             Array.isArray(clip.src) &&
             clip.src.length > 0
@@ -322,14 +335,19 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
             // Handle image clips - use segment duration if clip doesn't have display values
             const durationMs = clip.duration || segmentDurationMs;
             const durationUs = durationMs * 1000;
-            const fromMs = clip.display?.from !== undefined ? clip.display.from : cumulativeTime;
+            const fromMs =
+              clip.display?.from !== undefined
+                ? clip.display.from
+                : cumulativeTime;
             const toMs =
-              clip.display?.to !== undefined ? clip.display.to : cumulativeTime + durationMs;
+              clip.display?.to !== undefined
+                ? clip.display.to
+                : cumulativeTime + durationMs;
             const fromUs = fromMs * 1000;
             const toUs = toMs * 1000;
 
             clips.push({
-              type: "Image",
+              type: 'Image',
               src: clip.src[0], // Use first image source
               display: {
                 from: fromUs,
@@ -362,7 +380,7 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
         const toUs = toMs * 1000;
 
         clips.push({
-          type: "Audio",
+          type: 'Audio',
           src: segment.textToSpeech.src,
           display: {
             from: fromUs,
@@ -398,7 +416,13 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
             const words = captionData.results.main.words;
 
             // Group words by width
-            const captionChunks = groupWordsByWidth(words, 800, 80, "Bangers-Regular", 1);
+            const captionChunks = groupWordsByWidth(
+              words,
+              800,
+              80,
+              'Bangers-Regular',
+              1
+            );
 
             // Create Caption clips for each chunk
             for (const chunk of captionChunks) {
@@ -417,8 +441,8 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
               const captionHeight = Math.ceil(chunk.height) + 20; // Add 20px vertical padding
 
               clips.push({
-                type: "Caption",
-                src: "",
+                type: 'Caption',
+                src: '',
                 display: {
                   from: fromUs,
                   to: toUs,
@@ -436,19 +460,19 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
                 text: chunk.text,
                 style: {
                   fontSize: 80,
-                  fontFamily: "Bangers-Regular",
-                  fontWeight: "700",
-                  fontStyle: "normal",
-                  color: "#ffffff",
-                  align: "center",
+                  fontFamily: 'Bangers-Regular',
+                  fontWeight: '700',
+                  fontStyle: 'normal',
+                  color: '#ffffff',
+                  align: 'center',
                   fontUrl:
-                    "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+                    'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf',
                   stroke: {
-                    color: "#000000",
+                    color: '#000000',
                     width: 4,
                   },
                   shadow: {
-                    color: "#000000",
+                    color: '#000000',
                     alpha: 0.5,
                     blur: 4,
                     offsetX: 2,
@@ -458,11 +482,11 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
                 caption: {
                   words: chunk.words,
                   colors: {
-                    appeared: "#ffffff",
-                    active: "#ffffff",
-                    activeFill: "#FF5700",
-                    background: "",
-                    keyword: "#ffffff",
+                    appeared: '#ffffff',
+                    active: '#ffffff',
+                    activeFill: '#FF5700',
+                    background: '',
+                    keyword: '#ffffff',
                   },
                   preserveKeywordColor: true,
                   positioning: {
@@ -474,7 +498,7 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
             }
           }
         } catch (error) {
-          console.error("Error processing caption data:", error);
+          console.error('Error processing caption data:', error);
         }
       }
 
@@ -489,7 +513,7 @@ export const convertSchemaToExported = async (schemaJson: any): Promise<any> => 
       width,
       height,
       fps: 30,
-      bgColor: "#000000",
+      bgColor: '#000000',
     },
   };
 };

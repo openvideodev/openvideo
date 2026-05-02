@@ -9,7 +9,7 @@ export function applyMixins<T extends Constructor, S extends Constructor>(
 ) {
   constructors.forEach((baseCtor) => {
     Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
-      name !== "constructor" &&
+      name !== 'constructor' &&
         Object.defineProperty(
           derivedCtor.prototype,
           name,

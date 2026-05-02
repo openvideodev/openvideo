@@ -1,6 +1,7 @@
-import { generateUUID } from "@/utils/id";
+import { core, projectStore } from '@/lib/project';
+import { nanoid } from '@openvideo/core';
 
-export const duplicateClip = async (clipId: string, projectStore: any) => {
+export const duplicateClip = async (clipId: string) => {
   const state = projectStore.getState();
   const originalClip = state.clips[clipId];
   if (!originalClip) return;
@@ -8,44 +9,40 @@ export const duplicateClip = async (clipId: string, projectStore: any) => {
   const track = state.tracks.find((t: any) => t.clipIds.includes(clipId));
   if (!track) return;
 
-  const newClipId = generateUUID();
+  const newClipId = nanoid();
   const newClip = {
     ...originalClip,
     id: newClipId,
   };
 
-  const newTrackId = generateUUID();
+  const newTrackId = 'track_' + nanoid(10);
   const newTrackName = `${track.name} (Copy)`;
 
-  projectStore.getState().addTrack({
-    id: newTrackId,
-    name: newTrackName,
-    type: track.type,
-  });
-
-  await projectStore.getState().addClip(newClip, newTrackId);
-  projectStore.getState().select([newClipId]);
+  core.batch([
+    {
+      id: nanoid(),
+      type: 'track.add',
+      payload: { id: newTrackId, name: newTrackName, type: track.type },
+    },
+    {
+      id: nanoid(),
+      type: 'clip.add',
+      payload: { clip: newClip, trackId: newTrackId },
+    },
+  ] as any[]);
 
   return newClipId;
 };
 
-export const deleteClip = async (
-  clipId: string,
-  engine: any,
-) => {
-  engine.removeClips([clipId]);
+export const deleteClip = async (clipId: string) => {
+  core.clip.remove([clipId]);
 };
 
-export const splitClip = async (
-  clipId: string,
-  splitTime: number,
-  projectStore: any,
-  updateClip: (id: string, updates: any) => void,
-) => {
+export const splitClip = async (clipId: string, splitTime: number) => {
   const splitTimeUs = splitTime * 1000000;
   const state = projectStore.getState();
   const clip = state.clips[clipId];
-  
+
   if (!clip) return;
 
   const splitOffset = splitTimeUs - clip.display.from;
@@ -67,11 +64,16 @@ export const splitClip = async (
     };
   }
 
-  updateClip(clipId, updates);
+  const splitClipUpdateCommand = {
+    id: nanoid(),
+    type: 'clip.update',
+    payload: { id: clipId, updates },
+  };
 
+  const newClipId = nanoid();
   const newClip = {
     ...clip,
-    id: generateUUID(),
+    id: newClipId,
     display: {
       from: splitTimeUs,
       to: clip.display.to,
@@ -88,8 +90,14 @@ export const splitClip = async (
 
   const track = state.tracks.find((t: any) => t.clipIds.includes(clipId));
   if (track) {
-    await projectStore.getState().addClip(newClip, track.id);
-    projectStore.getState().select([newClip.id]);
+    core.batch([
+      splitClipUpdateCommand,
+      {
+        id: nanoid(),
+        type: 'clip.add',
+        payload: { clip: newClip, trackId: track.id },
+      },
+    ] as any[]);
   }
 
   return newClip.id;
@@ -98,9 +106,7 @@ export const splitClip = async (
 export const trimClip = async (
   clipId: string,
   timeline: { from: number; to: number }, // seconds
-  display: { from: number; to: number }, // seconds
-  projectStore: any,
-  updateClip: (id: string, updates: any) => void,
+  display: { from: number; to: number } // seconds
 ) => {
   const state = projectStore.getState();
   const currentClip = state.clips[clipId];
@@ -111,13 +117,18 @@ export const trimClip = async (
   const currentTrimFromUs = currentClip.trim?.from ?? 0;
   const currentTrimToUs = currentClip.trim?.to ?? currentClip.duration;
 
-  const newTrimFromUs = timeline.from !== undefined ? timeline.from * 1000000 : currentTrimFromUs;
-  const newTrimToUs = timeline.to !== undefined ? timeline.to * 1000000 : currentTrimToUs;
+  const newTrimFromUs =
+    timeline.from !== undefined ? timeline.from * 1000000 : currentTrimFromUs;
+  const newTrimToUs =
+    timeline.to !== undefined ? timeline.to * 1000000 : currentTrimToUs;
 
   const newSourceDurationUs = newTrimToUs - newTrimFromUs;
   const newDurationUs = newSourceDurationUs / playbackRate;
 
-  const newDisplayFromUs = display.from !== undefined ? display.from * 1000000 : currentClip.display.from;
+  const newDisplayFromUs =
+    display.from !== undefined
+      ? display.from * 1000000
+      : currentClip.display.from;
   const newDisplayToUs = newDisplayFromUs + newDurationUs;
 
   const updates: any = {
@@ -132,24 +143,21 @@ export const trimClip = async (
     },
   };
 
-  updateClip(clipId, updates);
+  core.clip.update(clipId, updates);
 };
 
 export const applyEffectClip = async (
   name: string,
-  timeline: { from: number; to: number },
-  engine: any,
+  timeline: { from: number; to: number }
 ) => {
   const from = timeline.from * 1000000;
   const to = timeline.to * 1000000;
   const duration = to - from;
 
-  await engine.addClip({
-    id: `effect_${Date.now()}`,
-    type: "Effect",
+  await core.clip.add({
+    type: 'Effect',
     name,
     duration,
     display: { from, to },
   });
 };
-

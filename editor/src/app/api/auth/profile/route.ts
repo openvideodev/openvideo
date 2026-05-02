@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -9,13 +9,16 @@ export async function GET() {
     });
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     return NextResponse.json({ user: session.user });
   } catch (error) {
-    console.error("Profile error:", error);
-    return NextResponse.json({ error: "Failed to get profile" }, { status: 500 });
+    console.error('Profile error:', error);
+    return NextResponse.json(
+      { error: 'Failed to get profile' },
+      { status: 500 }
+    );
   }
 }
 
@@ -26,7 +29,7 @@ export async function PUT(request: Request) {
     });
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -43,7 +46,10 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
-    console.error("Profile update error:", error);
-    return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
+    console.error('Profile update error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update profile' },
+      { status: 500 }
+    );
   }
 }

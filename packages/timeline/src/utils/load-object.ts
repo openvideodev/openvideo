@@ -1,6 +1,6 @@
-import { classRegistry, FabricObject } from "fabric";
-import { IClip } from "../types";
-import { timeUsToUnits } from "./timeline";
+import { classRegistry, FabricObject } from 'fabric';
+import { IClip } from '../types';
+import { timeUsToUnits } from './timeline';
 
 export const loadObject = (
   item: IClip,
@@ -34,16 +34,17 @@ export const loadObject = (
     src: itemAny.src,
     trim: item.trim || {
       from: 0,
-      to: item.duration || display.to - display.from
+      to: item.duration || display.to - display.from,
     },
     text: itemAny.text,
     srcs: (itemAny.srcs as string[]) || [],
     backgroundColorDiv: itemAny.backgroundColor,
     svgString: itemAny.svgString,
-    preview: itemAny.preview
+    preview: itemAny.preview,
   };
 
   // Default case for all types
-  return new (Klass as new (options: typeof baseObject) => FabricObject)(baseObject);
+  return new (Klass as new (options: typeof baseObject) => FabricObject)(
+    baseObject
+  );
 };
-

@@ -1,13 +1,13 @@
-import { Resizable, ResizableProps } from "@openvideo/timeline";
+import { Resizable, ResizableProps } from '@openvideo/timeline';
 
 interface RadialAudioBarsProps extends ResizableProps {
   src: string;
 }
 
 class RadialAudioBars extends Resizable {
-  static type = "RadialAudioBars";
+  static type = 'RadialAudioBars';
   declare src: string;
-  public backgroundColorDiv: string = "#808080";
+  public backgroundColorDiv: string = '#808080';
 
   public hasSrc = true;
   constructor(props: RadialAudioBarsProps) {
@@ -24,8 +24,8 @@ class RadialAudioBars extends Resizable {
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
     const borderColor = this.isSelected
-      ? "rgba(255, 255, 255,1.0)"
-      : "rgba(255, 255, 255,0.1)";
+      ? 'rgba(255, 255, 255,1.0)'
+      : 'rgba(255, 255, 255,0.1)';
     const borderWidth = 2;
     const innerRadius = 4;
 
@@ -46,7 +46,7 @@ class RadialAudioBars extends Resizable {
     );
 
     // Use even-odd fill rule to create the border effect
-    ctx.fill("evenodd");
+    ctx.fill('evenodd');
     ctx.restore();
   }
 }

@@ -8,7 +8,14 @@ export interface ITrim {
   to: number;
 }
 
-export type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption" | "Effect";
+export type ClipType =
+  | 'Video'
+  | 'Audio'
+  | 'Image'
+  | 'Text'
+  | 'Transition'
+  | 'Caption'
+  | 'Effect';
 
 export interface IBaseClip {
   id: string;
@@ -29,16 +36,28 @@ export interface IBaseClip {
   text?: string;
   flip?: any;
   locked?: boolean;
-  textCase?: "none" | "uppercase" | "lowercase";
-  verticalAlign?: "top" | "center" | "bottom";
+  textCase?: 'none' | 'uppercase' | 'lowercase';
+  verticalAlign?: 'top' | 'center' | 'bottom';
   metadata?: Record<string, any>;
   [key: string]: any;
 }
 
-export interface IVideoClip extends IBaseClip { type: "Video"; src: string; }
-export interface IAudioClip extends IBaseClip { type: "Audio"; src: string; }
-export interface IImageClip extends IBaseClip { type: "Image"; src: string; }
-export interface ITextClip extends IBaseClip { type: "Text"; text: string; }
+export interface IVideoClip extends IBaseClip {
+  type: 'Video';
+  src: string;
+}
+export interface IAudioClip extends IBaseClip {
+  type: 'Audio';
+  src: string;
+}
+export interface IImageClip extends IBaseClip {
+  type: 'Image';
+  src: string;
+}
+export interface ITextClip extends IBaseClip {
+  type: 'Text';
+  text: string;
+}
 
 export interface ICaptionWord {
   text: string;
@@ -49,10 +68,10 @@ export interface ICaptionWord {
 }
 
 export interface ICaptionClip extends IBaseClip {
-  type: "Caption";
+  type: 'Caption';
   text: string;
   mediaId: string;
-  wordsPerLine: "single" | "multiple";
+  wordsPerLine: 'single' | 'multiple';
   caption: {
     words: ICaptionWord[];
     colors: {
@@ -74,7 +93,7 @@ export interface ICaptionClip extends IBaseClip {
     fontWeight?: string;
     fontStyle?: string;
     color?: string;
-    align?: "left" | "center" | "right";
+    align?: 'left' | 'center' | 'right';
     fontUrl?: string;
     wordWrapWidth?: number;
     wordWrap?: boolean;
@@ -92,8 +111,8 @@ export interface ICaptionClip extends IBaseClip {
   };
 }
 
-export interface ITransitionClip extends IBaseClip { 
-  type: "Transition"; 
+export interface ITransitionClip extends IBaseClip {
+  type: 'Transition';
   transitionEffect?: {
     id: string;
     key: string;
@@ -104,7 +123,7 @@ export interface ITransitionClip extends IBaseClip {
 }
 
 export interface IEffectClip extends IBaseClip {
-  type: "Effect";
+  type: 'Effect';
   effect: {
     id: string;
     key: string;
@@ -113,7 +132,14 @@ export interface IEffectClip extends IBaseClip {
   };
 }
 
-export type AnyClip = IVideoClip | IAudioClip | IImageClip | ITextClip | ICaptionClip | ITransitionClip | IEffectClip;
+export type AnyClip =
+  | IVideoClip
+  | IAudioClip
+  | IImageClip
+  | ITextClip
+  | ICaptionClip
+  | ITransitionClip
+  | IEffectClip;
 
 export interface ITrack {
   id: string;

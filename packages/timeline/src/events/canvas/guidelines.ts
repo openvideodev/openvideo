@@ -5,19 +5,19 @@ import {
   ModifiedEvent,
   ObjectEvents,
   SerializedObjectProps,
-  TPointerEvent
-} from "fabric";
+  TPointerEvent,
+} from 'fabric';
 
 import {
   clearAuxiliaryObjects,
   drawGuides,
   getGuides,
   getLineGuideStops,
-  getObjectSnappingEdges
-} from "../../utils/guideline";
-import { clearTrackHelperGuides, isHelperTrack } from "../../utils/canvas";
-import Timeline from "../../timeline";
-import { Track, Helper } from "../../objects";
+  getObjectSnappingEdges,
+} from '../../utils/guideline';
+import { clearTrackHelperGuides, isHelperTrack } from '../../utils/canvas';
+import Timeline from '../../timeline';
+import { Track, Helper } from '../../objects';
 
 export function onObjectMoving(
   this: Timeline,
@@ -29,7 +29,7 @@ export function onObjectMoving(
   const enableGuideRedraw = state.enableGuideRedraw;
   const pointer = canvas.getScenePoint(e.e!);
 
-  const overTracks = canvas.getObjects("Helper", "Track");
+  const overTracks = canvas.getObjects('Helper', 'Track');
 
   const draggingOverTrack = overTracks.find((obj) => {
     const objRect = obj.getBoundingRect();
@@ -70,7 +70,7 @@ export function onObjectMoving(
   const skipObjects = [
     target,
     ...canvas.getActiveObjects(),
-    ...canvas.getObjects("Track", "Helper", "Transition", "Placeholder")
+    ...canvas.getObjects('Track', 'Helper', 'Transition', 'Placeholder'),
   ];
 
   // find possible snapping lines
@@ -96,7 +96,7 @@ export function onObjectMoving(
   }
   // now force object position
   guides.forEach((lineGuide) => {
-    if (lineGuide.orientation === "V") {
+    if (lineGuide.orientation === 'V') {
       target.left = lineGuide.lineGuide + lineGuide.offset;
     } else {
       target.top = lineGuide.lineGuide + lineGuide.offset;
@@ -108,11 +108,11 @@ function onObjectModified(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
   const canvas = e.target.canvas;
   if (!canvas) return;
   clearAuxiliaryObjects(canvas, canvas.getObjects());
-  clearTrackHelperGuides(canvas.getObjects("Helper"));
+  clearTrackHelperGuides(canvas.getObjects('Helper'));
 
   this.dragStateManager.setState({
     draggingOverTrack: null,
-    isPointerOverHelperTrack: false
+    isPointerOverHelperTrack: false,
   });
 }
 
@@ -133,12 +133,12 @@ function onObjectResizing(
   const corner = canvas._currentTransform?.corner;
   const targetRect = target.getBoundingRect();
 
-  if (transform.action === "resizing") {
+  if (transform.action === 'resizing') {
     // Skip active objects and selection
     const skipObjects = [
       target,
       ...canvas.getActiveObjects(),
-      ...canvas.getObjects("Track", "Helper", "Transition", "Placeholder")
+      ...canvas.getObjects('Track', 'Helper', 'Transition', 'Placeholder'),
     ];
 
     // find possible snapping lines
@@ -146,9 +146,9 @@ function onObjectResizing(
     const validatelineGuideStopsVertical = lineGuideStops.vertical.filter(
       (dataV) => {
         const val = dataV.val;
-        if (corner === "ml") {
+        if (corner === 'ml') {
           return val <= targetRect.left;
-        } else if (corner === "mr") {
+        } else if (corner === 'mr') {
           return val >= targetRect.left + targetRect.width;
         }
       }
@@ -164,13 +164,13 @@ function onObjectResizing(
 }
 
 export function addGuidelineEvents(timeline: Timeline) {
-  timeline.on("object:moving", onObjectMoving.bind(timeline));
-  timeline.on("object:modified", onObjectModified.bind(timeline));
-  timeline.on("object:resizing", onObjectResizing.bind(timeline));
+  timeline.on('object:moving', onObjectMoving.bind(timeline));
+  timeline.on('object:modified', onObjectModified.bind(timeline));
+  timeline.on('object:resizing', onObjectResizing.bind(timeline));
 }
 
 export function removeGuidelineEvents(timeline: Timeline) {
-  timeline.off("object:moving", onObjectMoving.bind(timeline));
-  timeline.off("object:modified", onObjectModified.bind(timeline));
-  timeline.off("object:resizing", onObjectResizing.bind(timeline));
+  timeline.off('object:moving', onObjectMoving.bind(timeline));
+  timeline.off('object:modified', onObjectModified.bind(timeline));
+  timeline.off('object:resizing', onObjectResizing.bind(timeline));
 }

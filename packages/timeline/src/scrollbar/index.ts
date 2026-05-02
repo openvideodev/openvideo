@@ -1,17 +1,17 @@
-import type { TMat2D, TPointerEvent } from "fabric";
-import { util } from "fabric";
-import Timeline from "../timeline";
+import type { TMat2D, TPointerEvent } from 'fabric';
+import { util } from 'fabric';
+import Timeline from '../timeline';
 import type {
   ScrollbarProps,
   ScrollbarsProps,
   ScrollbarXProps,
-  ScrollbarYProps
-} from "./types";
+  ScrollbarYProps,
+} from './types';
 
 export class Scrollbars {
   canvas: Timeline;
-  fill = "rgba(0,0,0,.3)";
-  stroke = "rgba(255,255,255,.3)";
+  fill = 'rgba(0,0,0,.3)';
+  stroke = 'rgba(255,255,255,.3)';
   lineWidth = 1;
   hideX = false;
   hideY = false;
@@ -24,7 +24,7 @@ export class Scrollbars {
   offsetX = 0;
   offsetY = 0;
   scrollbarWidth = 5;
-  scrollbarColor = "rgba(0,0,0,.3)";
+  scrollbarColor = 'rgba(0,0,0,.3)';
   onViewportChange?: (left: number) => void;
 
   private _bar?: { type: string; start: number; vpt: TMat2D };
@@ -34,7 +34,7 @@ export class Scrollbars {
     top: 1,
     bottom: -1,
     sx: 1,
-    sy: 1
+    sy: 1,
   };
 
   private _originalMouseDown: ((e: TPointerEvent) => void) | undefined;
@@ -65,8 +65,8 @@ export class Scrollbars {
     this.initBehavior();
   }
   initBehavior() {
-    this.canvas.on("before:render", this.beforeRenderHandler);
-    this.canvas.on("after:render", this.afterRenderHandler);
+    this.canvas.on('before:render', this.beforeRenderHandler);
+    this.canvas.on('after:render', this.afterRenderHandler);
   }
   getScrollbar(e: TPointerEvent) {
     const p = this.canvas.getViewportPoint(e);
@@ -82,7 +82,7 @@ export class Scrollbars {
             this.padding &&
         p.y < this.canvas.height - this.scrollSpace + this.padding;
 
-      if (b) return { type: "x", start: p.x, vpt };
+      if (b) return { type: 'x', start: p.x, vpt };
     }
     if (!this.hideY) {
       const b =
@@ -95,7 +95,7 @@ export class Scrollbars {
             this.padding &&
         p.x < this.canvas.width - this.scrollSpace + this.padding;
 
-      if (b) return { type: "y", start: p.y, vpt };
+      if (b) return { type: 'y', start: p.y, vpt };
     }
   }
   mouseDownHandler(e: TPointerEvent) {
@@ -107,9 +107,9 @@ export class Scrollbars {
     if (!this._bar) return Timeline.prototype._onMouseMove.call(this.canvas, e);
     const p = this.canvas.getViewportPoint(e);
     const s =
-      this._bar.type == "x" ? this._barViewport.sx : this._barViewport.sy;
-    const n = this._bar.type == "x" ? 4 : 5;
-    const end = this._bar.type == "x" ? p.x : p.y;
+      this._bar.type == 'x' ? this._barViewport.sx : this._barViewport.sy;
+    const n = this._bar.type == 'x' ? 4 : 5;
+    const end = this._bar.type == 'x' ? p.x : p.y;
     const vpt = this._bar.vpt.slice(0) as TMat2D;
     vpt[n] -= (end - this._bar.start) * s;
 
@@ -137,7 +137,7 @@ export class Scrollbars {
       left: Math.min(objectRect.left, -this.offsetX),
       top: Math.min(objectRect.top, -this.offsetY),
       right: objectRect.right + this.extraMarginX,
-      bottom: objectRect.bottom + this.extraMarginY
+      bottom: objectRect.bottom + this.extraMarginY,
     };
 
     if (objectRectWithMargin.left > mapRect.left)
@@ -161,7 +161,7 @@ export class Scrollbars {
     mapRect: ScrollbarProps,
     objectRect: ScrollbarProps
   ) {
-    console.log("Rendering scrollbars", this.hideX, this.hideY);
+    console.log('Rendering scrollbars', this.hideX, this.hideY);
     // Clear only scrollbar areas, not the entire canvas
     if (!this.hideX) {
       ctx.clearRect(
@@ -229,9 +229,9 @@ export class Scrollbars {
       x,
       y,
       w: width,
-      h: this.scrollbarSize
+      h: this.scrollbarSize,
     });
-    console.log("Drawing scrollbar x", x, y, width, this.scrollbarSize);
+    console.log('Drawing scrollbar x', x, y, width, this.scrollbarSize);
   }
   drawScrollbarY(
     ctx: CanvasRenderingContext2D,
@@ -263,7 +263,7 @@ export class Scrollbars {
       x,
       y,
       w: this.scrollbarSize,
-      h: height
+      h: height,
     });
   }
   drawRect(
@@ -355,7 +355,7 @@ export class Scrollbars {
       this.canvas._onMouseUp = this._originalMouseUp;
     }
 
-    this.canvas.off("before:render", this.beforeRenderHandler);
-    this.canvas.off("after:render", this.afterRenderHandler);
+    this.canvas.off('before:render', this.beforeRenderHandler);
+    this.canvas.off('after:render', this.afterRenderHandler);
   }
 }

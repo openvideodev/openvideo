@@ -22,7 +22,7 @@ export const calculateThumbnailSegmentLayout = (
 
   return {
     thumbnailsPerSegment: maxThumbnails,
-    segmentSize
+    segmentSize,
   };
 };
 
@@ -63,7 +63,7 @@ export function matchTimestampsToNearestThumbnails(
     // Push the result into the results array
     results.push({
       ts,
-      url: closestThumbnail.url
+      url: closestThumbnail.url,
     });
   });
 

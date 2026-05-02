@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -10,7 +10,7 @@ export async function GET() {
     });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "No active session" }, { status: 401 });
+      return NextResponse.json({ error: 'No active session' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
@@ -19,7 +19,10 @@ export async function GET() {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Session error:", error);
-    return NextResponse.json({ error: "Failed to get session" }, { status: 500 });
+    console.error('Session error:', error);
+    return NextResponse.json(
+      { error: 'Failed to get session' },
+      { status: 500 }
+    );
   }
 }

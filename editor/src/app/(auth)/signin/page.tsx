@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
-import { UserAuthForm } from "@/components/user-auth-form";
-import { ArrowLeftIcon } from "lucide-react";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
+import { UserAuthForm } from '@/components/user-auth-form';
+import { ArrowLeftIcon } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: "Sign in",
-  description: "Signin to combo.",
+  title: 'Sign in',
+  description: 'Signin to combo.',
 };
 
 export default function AuthenticationPage() {
@@ -16,9 +16,9 @@ export default function AuthenticationPage() {
       <Link
         href="/"
         className={cn(
-          buttonVariants({ variant: "outline" }),
+          buttonVariants({ variant: 'outline' }),
 
-          "absolute left-4 top-4 w-8 md:left-8 md:top-8",
+          'absolute left-4 top-4 w-8 md:left-8 md:top-8'
         )}
       >
         <ArrowLeftIcon />
@@ -27,8 +27,8 @@ export default function AuthenticationPage() {
       <Link
         href="/signup"
         className={cn(
-          buttonVariants({ variant: "outline" }),
-          "absolute right-4 top-4 md:right-8 md:top-8",
+          buttonVariants({ variant: 'outline' }),
+          'absolute right-4 top-4 md:right-8 md:top-8'
         )}
       >
         Sign up
@@ -43,12 +43,18 @@ export default function AuthenticationPage() {
           </div>
           <UserAuthForm kind="signin" />
           <p className="px-8 text-center text-sm text-muted-foreground">
-            By signing in, you agree to our{" "}
-            <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
+            By signing in, you agree to our{' '}
+            <Link
+              href="/terms"
+              className="underline underline-offset-4 hover:text-primary"
+            >
               Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
+            </Link>{' '}
+            and{' '}
+            <Link
+              href="/privacy"
+              className="underline underline-offset-4 hover:text-primary"
+            >
               Privacy Policy
             </Link>
             .

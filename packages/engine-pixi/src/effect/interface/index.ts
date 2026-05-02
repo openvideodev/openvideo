@@ -29,7 +29,7 @@ import {
   TiltShiftFilterOptions,
   TwistFilterOptions,
   ZoomBlurFilterOptions,
-} from "pixi-filters";
+} from 'pixi-filters';
 
 export type FilterOptionsMap = {
   adjustmentFilter: AdjustmentFilterOptions;

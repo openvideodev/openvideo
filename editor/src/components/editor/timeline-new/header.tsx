@@ -1,15 +1,22 @@
-import { Button } from "@/components/ui/button";
-import { frameToTimeString, timeToString } from "../utils/time";
-import { SquareSplitHorizontal, Trash2, ZoomIn, ZoomOut, Copy, Scissors } from "lucide-react";
-import { useClipActions } from "../options-floating-menu";
-import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
-import { useStore } from "zustand";
-import { engine, projectStore } from "@/lib/project";
-import { useStudioStore } from "@/stores/studio-store";
-import { useEffect, useState } from "react";
-import { ITimelineScaleState } from "@openvideo/timeline";
-import { Slider } from "@/components/ui/slider";
-import { getFitZoomLevel } from "../utils/timeline";
+import { Button } from '@/components/ui/button';
+import { frameToTimeString, timeToString } from '../utils/time';
+import {
+  SquareSplitHorizontal,
+  Trash2,
+  ZoomIn,
+  ZoomOut,
+  Copy,
+  Scissors,
+} from 'lucide-react';
+import { useClipActions } from '../options-floating-menu';
+import { useTimelineOffsetX } from '../hooks/use-timeline-offset';
+import { useStore } from 'zustand';
+import { engine, projectStore } from '@/lib/project';
+import { useStudioStore } from '@/stores/studio-store';
+import { useEffect, useState } from 'react';
+import { ITimelineScaleState } from '@openvideo/timeline';
+import { Slider } from '@/components/ui/slider';
+import { getFitZoomLevel } from '../utils/timeline';
 
 const IconPlayerPlayFilled = ({ size }: { size: number }) => (
   <svg
@@ -70,7 +77,7 @@ const IconPlayerSkipForward = ({ size }: { size: number }) => (
 );
 const Header = ({
   scale,
-  setScale
+  setScale,
 }: {
   scale: ITimelineScaleState;
   setScale: (scale: ITimelineScaleState) => void;
@@ -83,7 +90,8 @@ const Header = ({
 
   const { studio } = useStudioStore();
   const fps = useStore(projectStore, (s) => s.settings.fps);
-  const { selectedClip, isLocked, handleDuplicate, handleDelete } = useClipActions();
+  const { selectedClip, isLocked, handleDuplicate, handleDelete } =
+    useClipActions();
 
   const handleSplit = () => {
     if (!studio) return;
@@ -103,60 +111,59 @@ const Header = ({
     <div
       id="timeline-header"
       style={{
-        position: "relative",
-        height: "50px",
-        flex: "none"
+        position: 'relative',
+        height: '50px',
+        flex: 'none',
       }}
     >
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           height: 50,
-          width: "100%",
-          display: "flex",
-          alignItems: "center"
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <div
           style={{
             height: 36,
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "1fr 260px 1fr",
-            alignItems: "center"
+            width: '100%',
+            display: 'grid',
+            gridTemplateColumns: '1fr 260px 1fr',
+            alignItems: 'center',
           }}
         >
           <div className="flex px-2">
             <Button
               disabled={!selectedClip || isLocked}
               onClick={handleDelete}
-              variant={"ghost"}
-              size={"sm"}
+              variant={'ghost'}
+              size={'sm'}
               className="flex items-center gap-1 px-2"
             >
-              <Trash2 size={14} />{" "}
+              <Trash2 size={14} />{' '}
               <span className="hidden lg:block">Delete</span>
             </Button>
 
             <Button
               disabled={!selectedClip || isLocked}
               onClick={handleSplit}
-              variant={"ghost"}
-              size={"sm"}
+              variant={'ghost'}
+              size={'sm'}
               className="flex items-center gap-1 px-2"
             >
-              <Scissors size={15} />{" "}
+              <Scissors size={15} />{' '}
               <span className="hidden lg:block">Split</span>
             </Button>
             <Button
               disabled={!selectedClip || isLocked}
               onClick={handleDuplicate}
-              variant={"ghost"}
-              size={"sm"}
+              variant={'ghost'}
+              size={'sm'}
               className="flex items-center gap-1 px-2"
             >
-              <Copy size={15} />{" "}
-              <span className="hidden lg:block">Clone</span>
+              <Copy size={15} /> <span className="hidden lg:block">Clone</span>
             </Button>
           </div>
           <div className="flex items-center justify-center">
@@ -164,8 +171,8 @@ const Header = ({
               <Button
                 className="hidden lg:inline-flex"
                 onClick={() => handleSeek(0)}
-                variant={"ghost"}
-                size={"icon"}
+                variant={'ghost'}
+                size={'icon'}
               >
                 <IconPlayerSkipBack size={14} />
               </Button>
@@ -176,8 +183,8 @@ const Header = ({
                   }
                   handlePlay();
                 }}
-                variant={"ghost"}
-                size={"icon"}
+                variant={'ghost'}
+                size={'icon'}
               >
                 {isPlaying ? (
                   <IconPlayerPauseFilled size={14} />
@@ -188,8 +195,8 @@ const Header = ({
               <Button
                 className="hidden lg:inline-flex"
                 onClick={() => handleSeek(duration)}
-                variant={"ghost"}
-                size={"icon"}
+                variant={'ghost'}
+                size={'icon'}
               >
                 <IconPlayerSkipForward size={14} />
               </Button>
@@ -197,29 +204,32 @@ const Header = ({
             <div
               className="text-xs font-light flex"
               style={{
-                alignItems: "center",
-                gridTemplateColumns: "54px 4px 54px",
-                paddingTop: "2px",
-                justifyContent: "center"
+                alignItems: 'center',
+                gridTemplateColumns: '54px 4px 54px',
+                paddingTop: '2px',
+                justifyContent: 'center',
               }}
             >
               <div
                 className="font-medium text-zinc-200"
                 style={{
-                  display: "flex",
-                  justifyContent: "center"
+                  display: 'flex',
+                  justifyContent: 'center',
                 }}
                 data-current-time={currentTime}
                 id="video-current-time"
               >
-                {frameToTimeString({ frame: Math.floor(currentTime * fps) }, { fps })}
+                {frameToTimeString(
+                  { frame: Math.floor(currentTime * fps) },
+                  { fps }
+                )}
               </div>
               <span className="px-1">|</span>
               <div
                 className="text-muted-foreground hidden lg:block"
                 style={{
-                  display: "flex",
-                  justifyContent: "center"
+                  display: 'flex',
+                  justifyContent: 'center',
                 }}
               >
                 {timeToString({ time: duration })}
@@ -241,7 +251,7 @@ const Header = ({
 const ZoomControl = ({
   scale,
   onChangeTimelineScale,
-  duration
+  duration,
 }: {
   scale: ITimelineScaleState;
   onChangeTimelineScale: (scale: ITimelineScaleState) => void;
@@ -272,7 +282,7 @@ const ZoomControl = ({
   return (
     <div className="flex items-center justify-end">
       <div className="flex lg:border-l pl-4 pr-2">
-        <Button size={"icon"} variant={"ghost"} onClick={onZoomOutClick}>
+        <Button size={'icon'} variant={'ghost'} onClick={onZoomOutClick}>
           <ZoomOut size={16} />
         </Button>
         <Slider
@@ -287,10 +297,10 @@ const ZoomControl = ({
             onChangeTimelineScale({ ...scale, zoom: newZoom });
           }}
         />
-        <Button size={"icon"} variant={"ghost"} onClick={onZoomInClick}>
+        <Button size={'icon'} variant={'ghost'} onClick={onZoomInClick}>
           <ZoomIn size={16} />
         </Button>
-        <Button onClick={onZoomFitClick} variant={"ghost"} size={"icon"}>
+        <Button onClick={onZoomFitClick} variant={'ghost'} size={'icon'}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"

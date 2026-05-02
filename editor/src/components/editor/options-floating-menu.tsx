@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import * as React from 'react';
+import { useCallback } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   Clipboard,
   Copy,
@@ -19,19 +19,25 @@ import {
   LockKeyholeOpen,
   MoreHorizontalIcon,
   Trash2,
-} from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { useStudioStore } from "@/stores/studio-store";
-import { clipToJSON, jsonToClip, type ClipJSON } from "@openvideo/engine-pixi";
-import { generateUUID } from "@/utils/id";
+} from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { useStudioStore } from '@/stores/studio-store';
+import { clipToJSON, jsonToClip, type ClipJSON } from '@openvideo/engine-pixi';
+import { generateUUID } from '@/utils/id';
 
 // Module-level clipboard — persists across renders
 export let clipboardClipJSON: ClipJSON | null = null;
 
 export function useClipActions(clipOverride?: any) {
   const { studio, selectedClips } = useStudioStore();
-  const [hasClipboard, setHasClipboard] = React.useState(clipboardClipJSON !== null);
+  const [hasClipboard, setHasClipboard] = React.useState(
+    clipboardClipJSON !== null
+  );
   const [isLocked, setIsLocked] = React.useState(false);
 
   const selectedClip = clipOverride || (selectedClips[0] as any);
@@ -45,15 +51,21 @@ export function useClipActions(clipOverride?: any) {
 
   React.useEffect(() => {
     if (!studio) return;
-    const handleLockChanged = ({ clip, locked }: { clip: any; locked: boolean }) => {
+    const handleLockChanged = ({
+      clip,
+      locked,
+    }: {
+      clip: any;
+      locked: boolean;
+    }) => {
       const selected = selectedClips[0] as any;
       if (selected && selected.id === clip.id) {
         setIsLocked(locked);
       }
     };
-    studio.on("clip:lock-changed", handleLockChanged);
+    studio.on('clip:lock-changed', handleLockChanged);
     return () => {
-      studio.off("clip:lock-changed", handleLockChanged);
+      studio.off('clip:lock-changed', handleLockChanged);
     };
   }, [studio, selectedClips]);
 
@@ -123,7 +135,7 @@ export function OptionsFloatingMenu() {
               variant="ghost"
               size="icon"
               className={cn(
-                "w-9 h-9 rounded-full transition-all hover:bg-accent/50 active:scale-90",
+                'w-9 h-9 rounded-full transition-all hover:bg-accent/50 active:scale-90'
               )}
             >
               <MoreHorizontalIcon className="w-4 h-4" />
@@ -151,7 +163,10 @@ export function OptionsFloatingMenu() {
                 <DropdownMenuShortcut>⌘ V</DropdownMenuShortcut>
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={handleDuplicate} disabled={!selectedClip}>
+              <DropdownMenuItem
+                onClick={handleDuplicate}
+                disabled={!selectedClip}
+              >
                 <CopyPlus />
                 Duplicate
                 <DropdownMenuShortcut>⌘ D</DropdownMenuShortcut>
@@ -161,7 +176,7 @@ export function OptionsFloatingMenu() {
 
           <DropdownMenuItem onClick={handleToggleLock} disabled={!selectedClip}>
             {isLocked ? <LockKeyholeOpen /> : <LockKeyhole />}
-            {isLocked ? "Unlock" : "Lock"}
+            {isLocked ? 'Unlock' : 'Lock'}
             <DropdownMenuShortcut>⌘ L</DropdownMenuShortcut>
           </DropdownMenuItem>
 

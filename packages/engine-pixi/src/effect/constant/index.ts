@@ -36,8 +36,8 @@ import {
   TiltShiftFilter,
   TwistFilter,
   ZoomBlurFilter,
-} from "pixi-filters";
-import { FilterOptionsMap } from "../interface";
+} from 'pixi-filters';
+import { FilterOptionsMap } from '../interface';
 
 export const FILTER_CLASSES: Record<string, any> = {
   adjustmentFilter: AdjustmentFilter,
@@ -99,7 +99,7 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
   },
   asciiFilter: {
     size: 8,
-    color: "#ffffff",
+    color: '#ffffff',
     replaceColor: true,
   },
   backdropBlurFilter: {
@@ -109,9 +109,9 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
   bevelFilter: {
     rotation: 45,
     thickness: 10,
-    lightColor: "#ffffff",
+    lightColor: '#ffffff',
     lightAlpha: 1.0,
-    shadowColor: "#000000",
+    shadowColor: '#000000',
     shadowAlpha: 1.0,
   },
   bloomFilter: {
@@ -136,12 +136,12 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
     replace: true,
     stops: [
       {
-        color: "#ffffff",
+        color: '#ffffff',
         offset: 0,
         alpha: 1,
       },
       {
-        color: "#000000",
+        color: '#000000',
         offset: 1,
         alpha: 1,
       },
@@ -153,12 +153,12 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
     // colorMap
   },
   colorOverlayFilter: {
-    color: "#ffffff",
+    color: '#ffffff',
     alpha: 1,
   },
   colorReplaceFilter: {
-    originalColor: "#ffffff",
-    targetColor: "#000000",
+    originalColor: '#ffffff',
+    targetColor: '#000000',
     tolerance: 0.1,
   },
   convolutionFilter: {
@@ -190,7 +190,7 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
     quality: 3,
     alpha: 0.5,
     offset: { x: 4, y: 4 },
-    color: "#000000",
+    color: '#000000',
     shadowOnly: true,
   },
   embossFilter: {
@@ -219,7 +219,7 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
     distance: 10,
     outerStrength: 2,
     innerStrength: 0,
-    color: "#ffffff",
+    color: '#ffffff',
     quality: 1,
     alpha: 1,
     knockout: false,
@@ -262,8 +262,8 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
   },
   multiColorReplaceFilter: {
     replacements: [
-      ["#ff0000", "#00ff00"],
-      ["#0000ff", "#ffff00"],
+      ['#ff0000', '#00ff00'],
+      ['#0000ff', '#ffff00'],
     ],
     tolerance: 0.1,
   },
@@ -281,7 +281,7 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
   },
   outlineFilter: {
     thickness: 1,
-    color: "#000000",
+    color: '#000000',
     alpha: 1,
     knockout: false,
   },
@@ -322,7 +322,7 @@ export const VALUES_FILTER_SPECIAL: FilterOptionsMap = {
     },
   },
   simpleLightmapFilter: {
-    color: "#ffffff",
+    color: '#ffffff',
     alpha: 1,
   },
   simplexNoiseFilter: {

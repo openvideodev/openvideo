@@ -4,24 +4,24 @@ import {
   Trimmable,
   TrimmableProps,
   timeUsToUnits,
-  unitsToTimeUs
-} from "@openvideo/timeline";
-import { Filmstrip, FilmstripBacklogOptions } from "../types";
-import ThumbnailCache from "../../utils/thumbnail-cache";
-import { IDisplay, IMetadata, ITrim } from "@openvideo/timeline";
+  unitsToTimeUs,
+} from '@openvideo/timeline';
+import { Filmstrip, FilmstripBacklogOptions } from '../types';
+import ThumbnailCache from '../../utils/thumbnail-cache';
+import { IDisplay, IMetadata, ITrim } from '@openvideo/timeline';
 import {
   calculateOffscreenSegments,
-  calculateThumbnailSegmentLayout
-} from "../../utils/filmstrip";
-import { createMediaControls } from "../controls";
-import { SECONDARY_FONT } from "../../constants/constants";
-import { extractFrames } from "../../utils/mediabunny";
+  calculateThumbnailSegmentLayout,
+} from '../../utils/filmstrip';
+import { createMediaControls } from '../controls';
+import { SECONDARY_FONT } from '../../constants/constants';
+import { extractFrames } from '../../utils/mediabunny';
 
 const EMPTY_FILMSTRIP: Filmstrip = {
   offset: 0,
   startTime: 0,
   thumbnailsCount: 0,
-  widthOnScreen: 0
+  widthOnScreen: 0,
 };
 
 interface VideoProps extends TrimmableProps {
@@ -35,10 +35,10 @@ interface VideoProps extends TrimmableProps {
   preview?: string;
 }
 class Video extends Trimmable {
-  static type = "Video";
+  static type = 'Video';
   public extractFramesController: AbortController | null = null;
   declare id: string;
-  public resourceId = "";
+  public resourceId = '';
   declare tScale: number;
   public isSelected = false;
   declare display: IDisplay;
@@ -47,7 +47,7 @@ class Video extends Trimmable {
   public hasSrc = true;
   declare duration: number;
   public prevDuration: number;
-  public itemType = "video";
+  public itemType = 'video';
   public metadata?: Partial<IMetadata>;
   declare src: string;
 
@@ -75,7 +75,7 @@ class Video extends Trimmable {
 
   private fallbackSegmentIndex = 0;
   private fallbackSegmentsCount = 0;
-  private previewUrl = "";
+  private previewUrl = '';
 
   static createControls(): { controls: Record<string, Control> } {
     return { controls: createMediaControls() };
@@ -93,7 +93,7 @@ class Video extends Trimmable {
     this.trim = props.trim;
     this.duration = props.duration;
     this.prevDuration = props.duration;
-    this.fill = "#27272a";
+    this.fill = '#27272a';
     this.borderOpacityWhenMoving = 1;
     this.metadata = props.metadata;
 
@@ -105,7 +105,7 @@ class Video extends Trimmable {
     this.transparentCorners = false;
     this.hasBorders = false;
 
-    this.previewUrl = props.preview || props.metadata?.previewUrl || "";
+    this.previewUrl = props.preview || props.metadata?.previewUrl || '';
     this.initOffscreenCanvas();
     this.initialize();
   }
@@ -113,7 +113,7 @@ class Video extends Trimmable {
   private initOffscreenCanvas() {
     if (!this.offscreenCanvas) {
       this.offscreenCanvas = new OffscreenCanvas(this.width, this.height);
-      this.offscreenCtx = this.offscreenCanvas.getContext("2d");
+      this.offscreenCtx = this.offscreenCanvas.getContext('2d');
     }
 
     // Resize if dimensions changed
@@ -155,7 +155,7 @@ class Video extends Trimmable {
 
   private calculateFilmstripDimensions({
     segmentIndex,
-    widthOnScreen
+    widthOnScreen,
   }: {
     segmentIndex: number;
     widthOnScreen: number;
@@ -187,7 +187,7 @@ class Video extends Trimmable {
       leftBacklogSize,
       rightBacklogSize,
       filmstripStartTime,
-      filmstrimpThumbnailsCount
+      filmstrimpThumbnailsCount,
     };
   }
 
@@ -198,12 +198,12 @@ class Video extends Trimmable {
 
     return new Promise<void>((resolve) => {
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      img.crossOrigin = 'anonymous';
       img.src = `${fallbackThumbnail}?t=${Date.now()}`;
       img.onload = () => {
         // Create a temporary canvas to resize the image
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
         // Calculate new width maintaining aspect ratio
@@ -221,7 +221,7 @@ class Video extends Trimmable {
         // Update aspect ratio and cache the resized image
         this.aspectRatio = aspectRatio;
         this.thumbnailWidth = targetWidth;
-        this.thumbnailCache.setThumbnail("fallback", resizedImg);
+        this.thumbnailCache.setThumbnail('fallback', resizedImg);
         resolve();
       };
     });
@@ -246,7 +246,7 @@ class Video extends Trimmable {
 
     const canvasWidth = canvas.width;
     const maxPatternSize = 12000;
-    const fallbackSource = this.thumbnailCache.getThumbnail("fallback");
+    const fallbackSource = this.thumbnailCache.getThumbnail('fallback');
 
     if (!fallbackSource) return;
 
@@ -257,11 +257,11 @@ class Video extends Trimmable {
     const patternWidth = segmentsRequired * this.segmentSize;
 
     // Setup canvas dimensions
-    const offCanvas = document.createElement("canvas");
+    const offCanvas = document.createElement('canvas');
     offCanvas.height = this.thumbnailHeight;
     offCanvas.width = patternWidth;
 
-    const context = offCanvas.getContext("2d");
+    const context = offCanvas.getContext('2d');
     if (!context) return;
     const thumbnailsTotal = segmentsRequired * this.thumbnailsPerSegment;
 
@@ -280,11 +280,11 @@ class Video extends Trimmable {
     // Create the pattern and apply it
     const fillPattern = new Pattern({
       source: offCanvas,
-      repeat: "no-repeat",
-      offsetX: 0
+      repeat: 'no-repeat',
+      offsetX: 0,
     });
 
-    this.set("fill", fillPattern);
+    this.set('fill', fillPattern);
     this.canvas?.requestRenderAll();
   }
   public async loadAndRenderThumbnails() {
@@ -315,10 +315,10 @@ class Video extends Trimmable {
           const timestampMs = Math.round(frame.timestamp * 1000);
           if (this.thumbnailCache.getThumbnail(timestampMs)) return;
 
-          const canvas = document.createElement("canvas");
+          const canvas = document.createElement('canvas');
           canvas.width = this.thumbnailWidth;
           canvas.height = this.thumbnailHeight;
-          const ctx = canvas.getContext("2d");
+          const ctx = canvas.getContext('2d');
 
           if (!ctx) return;
 
@@ -336,15 +336,15 @@ class Video extends Trimmable {
 
           this.isDirty = true;
           this.canvas?.requestRenderAll();
-        }
+        },
       });
 
       this.currentFilmstrip = { ...this.loadingFilmstrip };
     } catch (error: any) {
-      if (error.name === "AbortError" || error.message === "Aborted") {
+      if (error.name === 'AbortError' || error.message === 'Aborted') {
         // Normal cancellation
       } else {
-        console.error("Failed to extract frames:", error);
+        console.error('Failed to extract frames:', error);
       }
     } finally {
       this.isFetchingThumbnails = false;
@@ -429,7 +429,7 @@ class Video extends Trimmable {
       );
 
       if (!img) {
-        img = this.thumbnailCache.getThumbnail("fallback");
+        img = this.thumbnailCache.getThumbnail('fallback');
       }
 
       if (img?.complete) {
@@ -445,20 +445,20 @@ class Video extends Trimmable {
 
   public drawTextIdentity(ctx: CanvasRenderingContext2D) {
     const iconPath = new Path2D(
-      "M16.5625 0.925L12.5 3.275V0.625L11.875 0H0.625L0 0.625V9.375L0.625 10H11.875L12.5 9.375V6.875L16.5625 9.2125L17.5 8.625V1.475L16.5625 0.925ZM11.25 8.75H1.25V1.25H11.25V8.75ZM16.25 7.5L12.5 5.375V4.725L16.25 2.5V7.5Z"
+      'M16.5625 0.925L12.5 3.275V0.625L11.875 0H0.625L0 0.625V9.375L0.625 10H11.875L12.5 9.375V6.875L16.5625 9.2125L17.5 8.625V1.475L16.5625 0.925ZM11.25 8.75H1.25V1.25H11.25V8.75ZM16.25 7.5L12.5 5.375V4.725L16.25 2.5V7.5Z'
     );
     ctx.save();
     ctx.translate(-this.width / 2, -this.height / 2);
     ctx.translate(0, 14);
     ctx.font = `400 12px ${SECONDARY_FONT}`;
-    ctx.fillStyle = "#f4f4f5";
-    ctx.textAlign = "left";
+    ctx.fillStyle = '#f4f4f5';
+    ctx.textAlign = 'left';
     ctx.clip();
-    ctx.fillText("Video", 36, 10);
+    ctx.fillText('Video', 36, 10);
 
     ctx.translate(8, 1);
 
-    ctx.fillStyle = "#f4f4f5";
+    ctx.fillStyle = '#f4f4f5';
     ctx.fill(iconPath);
     ctx.restore();
   }
@@ -470,8 +470,8 @@ class Video extends Trimmable {
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
     const borderColor = this.isSelected
-      ? "rgba(255, 255, 255,1.0)"
-      : "rgba(255, 255, 255,0.05)";
+      ? 'rgba(255, 255, 255,1.0)'
+      : 'rgba(255, 255, 255,0.05)';
     const borderWidth = 2;
     const innerRadius = 4;
 
@@ -492,12 +492,12 @@ class Video extends Trimmable {
     );
 
     // Use even-odd fill rule to create the border effect
-    ctx.fill("evenodd");
+    ctx.fill('evenodd');
     ctx.restore();
   }
 
   public calulateWidthOnScreen() {
-    const canvasEl = document.getElementById("designcombo-timeline-canvas");
+    const canvasEl = document.getElementById('designcombo-timeline-canvas');
     const canvasWidth = canvasEl?.clientWidth;
     const scrollLeft = this.scrollLeft;
     if (!canvasWidth) return 0;
@@ -523,7 +523,7 @@ class Video extends Trimmable {
 
   public onScrollChange({
     scrollLeft,
-    force
+    force,
   }: {
     scrollLeft: number;
     force?: boolean;
@@ -567,7 +567,7 @@ class Video extends Trimmable {
       const { filmstripOffset, filmstripStartTime, filmstrimpThumbnailsCount } =
         this.calculateFilmstripDimensions({
           widthOnScreen: this.calulateWidthOnScreen(),
-          segmentIndex: segmentToDraw
+          segmentIndex: segmentToDraw,
         });
 
       this.nextFilmstrip = {
@@ -575,7 +575,7 @@ class Video extends Trimmable {
         offset: filmstripOffset,
         startTime: filmstripStartTime,
         thumbnailsCount: filmstrimpThumbnailsCount,
-        widthOnScreen
+        widthOnScreen,
       };
 
       this.loadAndRenderThumbnails();

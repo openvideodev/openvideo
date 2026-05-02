@@ -1,163 +1,143 @@
-import { CoreEngine, AnyClip } from "@openvideo/core";
-import { Studio } from "./studio";
-import { jsonToClip } from "./json-serialization";
+import { Core, AnyClip, Patch } from '@openvideo/core';
+import { Studio } from './studio';
+import { jsonToClip } from './json-serialization';
 
 /**
- * StudioBridge - The "Reconciler" between CoreEngine and Studio.
- * Following SOLID principles, this class decouples the PIXI Renderer (Studio)
- * from the Core Engine.
+ * StudioBridge - The "Reconciler" between Core and Studio.
+ * Now driven by Patches for deterministic rendering.
  */
 export class StudioBridge {
-  private engine: CoreEngine;
+  private core: Core;
   private studio: Studio;
 
-  constructor(engine: CoreEngine, studio: Studio) {
-    this.engine = engine;
+  constructor(core: Core, studio: Studio) {
+    this.core = core;
     this.studio = studio;
 
     this.init();
   }
 
-  private handleTimeUpdate = (time: number) => {
-    this.studio.updateFrame(time);
-  };
+  private init() {
+    // 1. Sync Playback
+    this.core.on('timeupdate', (time: number) => this.studio.updateFrame(time));
+    this.core.on('play', () => {}); // Studio might not need explicit play call if frame update is driven by core
+    this.core.on('pause', () => {});
 
-  private handleClipAdded = async (coreClip: AnyClip) => {
-    if (coreClip.type === "Transition") {
+    // 2. Sync via Patches
+    this.core.on('change', (patches: Patch[]) => this.handlePatches(patches));
+
+    // 3. Initial Sync
+    this.syncInitialState();
+  }
+
+  private handlePatches(patches: Patch[]) {
+    patches.forEach((patch) => {
+      const parts = patch.path.split('/').filter(Boolean);
+
+      // Handle Clips
+      if (parts[0] === 'clips') {
+        const clipId = parts[1];
+        if (patch.op === 'add' && !parts[2]) {
+          this.handleAddClip(patch.value);
+        } else if (patch.op === 'remove' && !parts[2]) {
+          this.handleRemoveClip(clipId);
+        } else if (patch.op === 'update') {
+          this.handleUpdateClip(clipId, parts.slice(2), patch.value);
+        }
+      }
+
+      // Handle Tracks
+      if (parts[0] === 'tracks') {
+        this.studio.setTracks(this.core.store.getState().tracks as any);
+      }
+
+      // Handle Settings
+      if (parts[0] === 'settings') {
+        const settings = this.core.store.getState().settings;
+        this.studio.setSize(settings.width, settings.height);
+      }
+    });
+  }
+
+  private async handleAddClip(coreClip: AnyClip) {
+    if (coreClip.type === 'Transition') {
       await this.studio.addTransition(
-        coreClip.transitionEffect?.key || "none",
+        coreClip.transitionEffect?.key || 'none',
         coreClip.duration,
         coreClip.fromClipId,
         coreClip.toClipId
       );
     } else {
-      const clip = await jsonToClip(coreClip as any);
+      const clip = await jsonToClip(coreClip);
       const trackId = this.findTrackIdForClip(coreClip.id);
       await this.studio.addClip(clip, { trackId });
     }
-  };
+  }
 
-  private handleClipRemoved = async (clipId: string) => {
+  private async handleRemoveClip(clipId: string) {
     const clip = this.studio.timeline.getClipById(clipId);
     if (clip) {
       await this.studio.removeClip(clip);
     }
-  };
-
-  private handleClipUpdated = async (coreClip: AnyClip) => {
-    const clip = this.studio.timeline.getClipById(coreClip.id);
-    if (clip) {
-      this.syncClipProperties(clip, coreClip);
-    }
-  };
-
-  private init() {
-    // 1. Sync Playback
-    this.engine.on("timeupdate", this.handleTimeUpdate);
-
-    // 2. Sync Clips
-    this.engine.on("clip:added", this.handleClipAdded);
-
-    // 3. Sync Removals
-    this.engine.on("clip:removed", this.handleClipRemoved);
-
-    // 4. Sync Updates
-    this.engine.on("clip:updated", this.handleClipUpdated);
-    
-    // 5. Sync Tracks
-    this.engine.on("tracks:updated", this.handleTracksUpdated);
-
-    // Initial Sync
-    this.syncInitialState();
   }
 
-  private handleTracksUpdated = (tracks: any[]) => {
-    this.studio.setTracks(tracks as any);
-  };
+  private handleUpdateClip(clipId: string, pathParts: string[], value: any) {
+    const clip = this.studio.timeline.getClipById(clipId);
+    if (!clip) return;
 
-  private async syncInitialState() {
-    const state = this.engine.store.getState();
-    
-    // Set initial size
-    this.studio.setSize(state.settings.width, state.settings.height);
-
-    // Sync tracks initially
-    await this.studio.setTracks(state.tracks as any);
-
-    // Add all clips
-    for (const id in state.clips) {
-      const coreClip = state.clips[id];
-      if (coreClip.type === "Transition") {
-        await this.studio.addTransition(
-          coreClip.transitionEffect?.key || "none",
-          coreClip.duration,
-          coreClip.fromClipId,
-          coreClip.toClipId
-        );
+    // Simple property update
+    if (pathParts.length === 0) {
+      // Full clip update
+      this.syncClipProperties(clip, value);
+    } else {
+      // Granular update (e.g. /clips/c1/left)
+      const prop = pathParts[0];
+      if (prop === 'display') {
+        clip.display = { ...value };
       } else {
-        const clip = await jsonToClip(coreClip);
-        const trackId = this.findTrackIdForClip(id);
-        await this.studio.addClip(clip, { trackId });
+        (clip as any)[prop] = value;
       }
-    }
-
-    // Set initial time
-    this.studio.updateFrame(state.currentTime);
-  }
-
-  private findTrackIdForClip(clipId: string): string | undefined {
-    const state = this.engine.store.getState();
-    return state.tracks.find(t => t.clipIds.includes(clipId))?.id;
-  }
-
-  private syncClipProperties(clip: any, coreClip: AnyClip) {
-    let changed = false;
-    
-    const props: (keyof AnyClip)[] = ["left", "top", "width", "height", "angle", "opacity", "zIndex"];
-    props.forEach(prop => {
-      if (clip[prop] !== coreClip[prop]) {
-        clip[prop] = coreClip[prop];
-        changed = true;
-      }
-    });
-
-    // Sync complex objects if they changed
-    if (JSON.stringify(clip.style) !== JSON.stringify(coreClip.style)) {
-      clip.style = coreClip.style ? JSON.parse(JSON.stringify(coreClip.style)) : {};
-      changed = true;
-    }
-
-    if (JSON.stringify(clip.chromaKey) !== JSON.stringify(coreClip.chromaKey)) {
-      clip.chromaKey = coreClip.chromaKey ? JSON.parse(JSON.stringify(coreClip.chromaKey)) : { enabled: false, color: "#00FF00", similarity: 0.1, spill: 0 };
-      changed = true;
-    }
-
-    if (JSON.stringify(clip.animations) !== JSON.stringify(coreClip.animations)) {
-      // For animations, we might need to clear and re-add if the engine doesn't handle direct assignment
-      if (typeof clip.clearAnimations === "function") {
-        clip.clearAnimations();
-        (coreClip.animations || []).forEach((anim: any) => {
-          clip.addAnimation(anim.name, anim.opts, anim.params);
-        });
-      }
-      changed = true;
-    }
-
-    if (coreClip.display && (clip.display.from !== coreClip.display.from || clip.display.to !== coreClip.display.to)) {
-      clip.display = { ...coreClip.display };
-      changed = true;
-    }
-
-    if (changed) {
       this.studio.updateFrame(this.studio.currentTime);
     }
   }
 
+  private async syncInitialState() {
+    const state = this.core.store.getState();
+    this.studio.setSize(state.settings.width, state.settings.height);
+    this.studio.setTracks(state.tracks as any);
+
+    for (const id in state.clips) {
+      await this.handleAddClip(state.clips[id]);
+    }
+
+    this.studio.updateFrame(state.currentTime);
+  }
+
+  private findTrackIdForClip(clipId: string): string | undefined {
+    return this.core.store
+      .getState()
+      .tracks.find((t) => t.clipIds.includes(clipId))?.id;
+  }
+
+  private syncClipProperties(clip: any, coreClip: AnyClip) {
+    // Legacy sync logic for full updates
+    const props: (keyof AnyClip)[] = [
+      'left',
+      'top',
+      'width',
+      'height',
+      'angle',
+      'opacity',
+      'zIndex',
+    ];
+    props.forEach((prop) => {
+      clip[prop] = coreClip[prop];
+    });
+    clip.display = { ...coreClip.display };
+    this.studio.updateFrame(this.studio.currentTime);
+  }
+
   public dispose() {
-    this.engine.off("timeupdate", this.handleTimeUpdate);
-    this.engine.off("clip:added", this.handleClipAdded);
-    this.engine.off("clip:removed", this.handleClipRemoved);
-    this.engine.off("clip:updated", this.handleClipUpdated);
-    this.engine.off("tracks:updated", this.handleTracksUpdated);
+    this.core.removeAllListeners();
   }
 }

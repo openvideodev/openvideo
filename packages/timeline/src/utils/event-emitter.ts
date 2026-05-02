@@ -16,7 +16,7 @@ export type WildCardEventHandlerList<T = Record<string, unknown>> = Array<
 
 // A map of event types and their corresponding event handlers.
 export type EventHandlerMap<Events extends Record<EventType, unknown>> = Map<
-  keyof Events | "*",
+  keyof Events | '*',
   EventHandlerList<Events[keyof Events]> | WildCardEventHandlerList<Events>
 >;
 
@@ -24,13 +24,13 @@ export interface Emitter<Events extends Record<EventType, unknown>> {
   all: EventHandlerMap<Events>;
 
   on<Key extends keyof Events>(type: Key, handler: Handler<Events[Key]>): void;
-  on(type: "*", handler: WildcardHandler<Events>): void;
+  on(type: '*', handler: WildcardHandler<Events>): void;
 
   off<Key extends keyof Events>(
     type: Key,
     handler?: Handler<Events[Key]>
   ): void;
-  off(type: "*", handler: WildcardHandler<Events>): void;
+  off(type: '*', handler: WildcardHandler<Events>): void;
 
   emit<Key extends keyof Events>(type: Key, event: Events[Key]): void;
   emit<Key extends keyof Events>(
@@ -56,7 +56,7 @@ export default class EventEmitter<Events extends Record<EventType, unknown>>
     type: Key,
     handler: Handler<Events[Key]>
   ): () => void;
-  on(type: "*", handler: WildcardHandler<Events>): () => void;
+  on(type: '*', handler: WildcardHandler<Events>): () => void;
   on<Key extends keyof Events>(
     type: Key,
     handler: Handler<Events[Key]> | WildcardHandler<Events>
@@ -97,7 +97,7 @@ export default class EventEmitter<Events extends Record<EventType, unknown>>
     type: Key,
     handler?: Handler<Events[Key]>
   ): void;
-  off(type: "*", handler: WildcardHandler<Events>): void;
+  off(type: '*', handler: WildcardHandler<Events>): void;
   off<Key extends keyof Events>(
     type: Key,
     handler?: Handler<Events[Key]> | WildcardHandler<Events>
@@ -135,7 +135,7 @@ export default class EventEmitter<Events extends Record<EventType, unknown>>
         });
     }
 
-    handlers = this.all.get("*");
+    handlers = this.all.get('*');
     if (handlers) {
       (handlers as WildCardEventHandlerList<Events>)
         .slice()

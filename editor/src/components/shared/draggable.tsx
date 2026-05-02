@@ -1,5 +1,5 @@
-import React, { useState, cloneElement, ReactElement } from "react";
-import { createPortal } from "react-dom";
+import React, { useState, cloneElement, ReactElement } from 'react';
+import { createPortal } from 'react-dom';
 
 interface DraggableProps {
   children: ReactElement;
@@ -12,7 +12,7 @@ const Draggable: React.FC<DraggableProps> = ({
   children,
   renderCustomPreview,
   data = {},
-  shouldDisplayPreview = true
+  shouldDisplayPreview = true,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -21,11 +21,11 @@ const Draggable: React.FC<DraggableProps> = ({
     setIsDragging(true);
     e.dataTransfer.setDragImage(new Image(), 0, 0); // Hides default preview
     e.dataTransfer.setData(JSON.stringify(data), JSON.stringify(data));
-    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.effectAllowed = 'move';
 
     setPosition({
       x: e.clientX,
-      y: e.clientY
+      y: e.clientY,
     });
   };
 
@@ -38,7 +38,7 @@ const Draggable: React.FC<DraggableProps> = ({
     if (isDragging) {
       setPosition({
         x: e.clientX,
-        y: e.clientY
+        y: e.clientY,
       });
     }
   };
@@ -50,17 +50,17 @@ const Draggable: React.FC<DraggableProps> = ({
       if (isDragging) {
         setPosition({
           x: e.clientX,
-          y: e.clientY
+          y: e.clientY,
         });
       }
     };
 
     if (isDragging) {
-      document.addEventListener("dragover", handleDocumentDragOver);
+      document.addEventListener('dragover', handleDocumentDragOver);
     }
 
     return () => {
-      document.removeEventListener("dragover", handleDocumentDragOver);
+      document.removeEventListener('dragover', handleDocumentDragOver);
     };
   }, [isDragging]);
 
@@ -70,8 +70,8 @@ const Draggable: React.FC<DraggableProps> = ({
     onDragEnd: handleDragEnd,
     onDragOver: handleDragOver,
     style: {
-      ...(children.props as any)?.style
-    }
+      ...(children.props as any)?.style,
+    },
   } as any);
 
   return (
@@ -79,20 +79,20 @@ const Draggable: React.FC<DraggableProps> = ({
       {childWithProps}
       {isDragging && shouldDisplayPreview && renderCustomPreview
         ? createPortal(
-          <div
-            style={{
-              position: "fixed",
-              left: position.x,
-              top: position.y,
-              pointerEvents: "none",
-              zIndex: 9999,
-              transform: "translate(-50%, -50%)" // Center the preview
-            }}
-          >
-            {renderCustomPreview}
-          </div>,
-          document.body
-        )
+            <div
+              style={{
+                position: 'fixed',
+                left: position.x,
+                top: position.y,
+                pointerEvents: 'none',
+                zIndex: 9999,
+                transform: 'translate(-50%, -50%)', // Center the preview
+              }}
+            >
+              {renderCustomPreview}
+            </div>,
+            document.body
+          )
         : null}
     </>
   );

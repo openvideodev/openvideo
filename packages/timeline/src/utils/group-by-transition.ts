@@ -1,6 +1,6 @@
-import { IClip, ITransitionClip } from "../types";
-import { FabricObject, RectProps } from "fabric";
-import Timeline from "../timeline";
+import { IClip, ITransitionClip } from '../types';
+import { FabricObject, RectProps } from 'fabric';
+import Timeline from '../timeline';
 
 export type GroupElement = IClip | ITransitionClip;
 
@@ -70,7 +70,7 @@ export const groupByTransition = (data: {
       if (!transition) break;
 
       group.push(transition);
-      currentId = transition.toClipId || "";
+      currentId = transition.toClipId || '';
     }
 
     return group;
@@ -83,9 +83,7 @@ export const groupByTransition = (data: {
     // If item is not part of any transition or is the start of a sequence
     if (
       !itemTransitionMap.has(itemId) ||
-        !Object.values(transitionsMap).some(
-          (t) => t.toClipId === itemId
-        )
+      !Object.values(transitionsMap).some((t) => t.toClipId === itemId)
     ) {
       const group = buildGroup(itemId);
       if (group.length > 0) {
@@ -97,7 +95,7 @@ export const groupByTransition = (data: {
   // Sort items within each group by display.from
   groups.forEach((group) => {
     group.sort((a, b) => {
-      if ("display" in a && "display" in b) {
+      if ('display' in a && 'display' in b) {
         return a.display.from - b.display.from;
       }
       return 0;
@@ -111,7 +109,7 @@ export function getNextTransitionMappings(
   tracks: FabricObject[],
   trackItems: FabricObject[],
   currentTransitionsMap: Record<string, ITransitionClip>,
-  positionAfterTransform: Record<string, Pick<RectProps, "left" | "top">>,
+  positionAfterTransform: Record<string, Pick<RectProps, 'left' | 'top'>>,
   activeObjectIds: string[]
 ): {
   newTransitionIds: string[];
@@ -163,9 +161,9 @@ export function getNextTransitionMappings(
             duration: 1_500_000,
             fromClipId: item1.id,
             toClipId: item2.id,
-            key: "none",
+            key: 'none',
             trackId: track.id,
-            type: "Transition"
+            type: 'Transition',
           } as any;
 
           newTransitionsMap[transitionId] = transition;
@@ -178,7 +176,7 @@ export function getNextTransitionMappings(
 
   return {
     newTransitionIds,
-    newTransitionsMap
+    newTransitionsMap,
   };
 }
 
@@ -190,11 +188,13 @@ export const getAdjustedTrackItemDimensions = (
   const prevTransition = transitionGroup[itemIndex - 1];
   const nextTransition = transitionGroup[itemIndex + 1];
   const transitionsInGroup = transitionGroup.filter(
-    (t) => t.type === "Transition"
+    (t) => t.type === 'Transition'
   ) as ITransitionClip[];
 
   // get all transitioins before prevTransition
-  const prevTransitionIndex = transitionsInGroup.indexOf(prevTransition as ITransitionClip);
+  const prevTransitionIndex = transitionsInGroup.indexOf(
+    prevTransition as ITransitionClip
+  );
   const transitionsBeforePrev = transitionsInGroup.slice(
     0,
     prevTransitionIndex
@@ -217,6 +217,6 @@ export const getAdjustedTrackItemDimensions = (
 
   return {
     durationDiff,
-    offsetTransitions
+    offsetTransitions,
   };
 };

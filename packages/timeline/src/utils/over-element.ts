@@ -1,4 +1,4 @@
-import { FabricObject, Point } from "fabric";
+import { FabricObject, Point } from 'fabric';
 
 export const detectOverObject = (point: Point, objects: FabricObject[]) => {
   let isOverObject = false;

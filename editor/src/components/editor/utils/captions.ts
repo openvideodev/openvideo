@@ -1,5 +1,5 @@
-import { generateId } from "@openvideo/timeline";
-import { ICaption } from "@openvideo/timeline";
+import { generateId } from '@openvideo/timeline';
+import { ICaption } from '@openvideo/timeline';
 
 interface Word {
   start: number;
@@ -23,13 +23,13 @@ export const generateCaption = (
 ): ICaption => {
   const caption = {
     id: generateId(),
-    type: "Caption",
-    name: "Caption",
+    type: 'Caption',
+    name: 'Caption',
     display: {
       from: options.displayFrom + captionLine.start * 1000,
-      to: options.displayFrom + captionLine.end * 1000
+      to: options.displayFrom + captionLine.end * 1000,
     },
-    src: "",
+    src: '',
     playbackRate: 1,
     duration: (captionLine.end - captionLine.start) * 1000,
     left: 0,
@@ -40,7 +40,7 @@ export const generateCaption = (
     zIndex: 1,
     opacity: 100,
     flip: null,
-    chromaKey: { enabled: false, color: "#000000", similarity: 0, spill: 0 },
+    chromaKey: { enabled: false, color: '#000000', similarity: 0, spill: 0 },
     locked: false,
     effects: [],
     sourceUrl,
@@ -49,22 +49,22 @@ export const generateCaption = (
     words: captionLine.words.map((w) => ({
       ...w,
       start: w.start * 1000,
-      end: w.end * 1000
+      end: w.end * 1000,
     })),
     style: {
-      appearedColor: "#FFFFFF",
-      activeColor: "#50FF12",
-      activeFillColor: "#7E12FF",
-      color: "#DADADA",
-      backgroundColor: "transparent",
-      borderColor: "#000000",
+      appearedColor: '#FFFFFF',
+      activeColor: '#50FF12',
+      activeFillColor: '#7E12FF',
+      color: '#DADADA',
+      backgroundColor: 'transparent',
+      borderColor: '#000000',
       borderWidth: 5,
       fontSize: fontInfo.fontSize,
       fontFamily: fontInfo.fontFamily,
       fontUrl: fontInfo.fontUrl,
-      textAlign: "center",
-      linesPerCaption: options.linesPerCaption
-    }
+      textAlign: 'center',
+      linesPerCaption: options.linesPerCaption,
+    },
   };
   return caption as any;
 };
@@ -90,8 +90,8 @@ function createCaptionLines(
   fontInfo: FontInfo,
   options: Options
 ): ICaptionLine[] {
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
   if (!context) return [];
   context.font = `${fontInfo.fontSize}px ${fontInfo.fontFamily}`;
 
@@ -99,11 +99,11 @@ function createCaptionLines(
   const words: Word[] = input.results.main.words;
 
   let currentLine: ICaptionLine = {
-    text: "",
+    text: '',
     words: [],
     width: 0,
     start: words.length > 0 ? words[0].start : 0,
-    end: 0
+    end: 0,
   };
   let linesCount = 0;
 
@@ -112,9 +112,9 @@ function createCaptionLines(
 
     if (
       currentLine.width + wordWidth > options.containerWidth - 100 ||
-      currentLine.text.endsWith(".")
+      currentLine.text.endsWith('.')
     ) {
-      const advance = currentLine.text.endsWith(".");
+      const advance = currentLine.text.endsWith('.');
       // Check if it's time to start a new caption set
       if (linesCount + 1 === options.linesPerCaption || advance) {
         // Only push when lines count is correct
@@ -123,11 +123,11 @@ function createCaptionLines(
 
         // Reset currentLine for the next set of lines
         currentLine = {
-          text: "",
+          text: '',
           words: [],
           width: 0,
           start: wordObj.start,
-          end: wordObj.end
+          end: wordObj.end,
         };
       } else {
         linesCount += 1;
@@ -138,7 +138,7 @@ function createCaptionLines(
     }
 
     // Accumulate words and width for the current line
-    currentLine.text += (currentLine.text ? " " : "") + wordObj.word;
+    currentLine.text += (currentLine.text ? ' ' : '') + wordObj.word;
     currentLine.words.push(wordObj);
     currentLine.width += wordWidth;
     currentLine.end = wordObj.end;

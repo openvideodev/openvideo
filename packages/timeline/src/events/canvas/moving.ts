@@ -1,6 +1,6 @@
-import { Track } from "../../objects";
-import Timeline from "../../timeline";
-import { timeUsToUnits } from "../../utils";
+import { Track } from '../../objects';
+import Timeline from '../../timeline';
+import { timeUsToUnits } from '../../utils';
 
 function handleMovingEvent(this: Timeline) {
   const state = this.dragStateManager.getState();
@@ -81,9 +81,9 @@ function handleMovingEvent(this: Timeline) {
 }
 
 export function addMovingEvents(timeline: Timeline) {
-  timeline.on("object:moving", handleMovingEvent.bind(timeline));
+  timeline.on('object:moving', handleMovingEvent.bind(timeline));
 }
 
 export function removeMovingEvents(timeline: Timeline) {
-  timeline.off("object:moving", handleMovingEvent.bind(timeline));
+  timeline.off('object:moving', handleMovingEvent.bind(timeline));
 }

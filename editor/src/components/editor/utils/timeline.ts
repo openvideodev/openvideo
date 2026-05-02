@@ -1,10 +1,10 @@
-import { findIndex } from "./search";
+import { findIndex } from './search';
 import {
   MICROSECONDS_PER_SECOND,
-  PIXELS_PER_SECOND
-} from "@openvideo/timeline";
-import { ITimelineScaleState } from "@openvideo/timeline";
-import { TIMELINE_ZOOM_LEVELS } from "../constants/scale";
+  PIXELS_PER_SECOND,
+} from '@openvideo/timeline';
+import { ITimelineScaleState } from '@openvideo/timeline';
+import { TIMELINE_ZOOM_LEVELS } from '../constants/scale';
 
 export function getPreviousZoomLevel(
   currentZoom: ITimelineScaleState
@@ -76,7 +76,7 @@ export function getFitZoomLevel(
     const clampedScrollOffset = Math.max(0, scrollOffset);
 
     const timelineCanvas = document.getElementById(
-      "designcombo-timeline-canvas"
+      'designcombo-timeline-canvas'
     ) as HTMLElement;
     const offsetWidth =
       timelineCanvas?.offsetWidth ?? document.body.offsetWidth;
@@ -86,7 +86,7 @@ export function getFitZoomLevel(
   };
 
   const getFullWidth = () => {
-    if (typeof totalLengthMs === "number") {
+    if (typeof totalLengthMs === 'number') {
       return timeUsToUnits(totalLengthMs, zoom);
     }
 
@@ -106,7 +106,7 @@ export function getFitZoomLevel(
     segments: 5,
     index: fitZoomIndex,
     zoom: targetZoom,
-    unit: 1
+    unit: 1,
   };
 }
 
@@ -118,6 +118,9 @@ export function unitsToTimeUs(units: number, zoom = 1): number {
   return (units / (PIXELS_PER_SECOND * zoom)) * MICROSECONDS_PER_SECOND;
 }
 
-export function calculateTimelineWidth(totalLengthUs: number, zoom = 1): number {
+export function calculateTimelineWidth(
+  totalLengthUs: number,
+  zoom = 1
+): number {
   return timeUsToUnits(totalLengthUs, zoom);
 }

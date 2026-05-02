@@ -1,8 +1,8 @@
-import { TransformActionHandler, controlsUtils } from "fabric";
-import { resolveOrigin } from "../utils/resolve-origin";
-import { isTransformCentered, wrapWithFixedAnchor } from "../utils/fabric";
-import { CENTER, LEFT, RIGHT } from "../constants/fabric";
-import { unitsToTimeUs } from "../utils/timeline";
+import { TransformActionHandler, controlsUtils } from 'fabric';
+import { resolveOrigin } from '../utils/resolve-origin';
+import { isTransformCentered, wrapWithFixedAnchor } from '../utils/fabric';
+import { CENTER, LEFT, RIGHT } from '../constants/fabric';
+import { unitsToTimeUs } from '../utils/timeline';
 
 const { wrapWithFireEvent, getLocalPoint } = controlsUtils;
 
@@ -45,7 +45,7 @@ export const changeTemplateWidth: TransformActionHandler = (
         Math.abs((localPoint.x * multiplier) / target.scaleX) - strokePadding
       );
 
-    const fromRight = transform.corner === "mr";
+    const fromRight = transform.corner === 'mr';
 
     if (fromRight) {
       const to = target.trim.to;
@@ -62,7 +62,7 @@ export const changeTemplateWidth: TransformActionHandler = (
 
       if (newTo > target.duration) return false;
 
-      target.set("width", Math.max(newWidth, 0));
+      target.set('width', Math.max(newWidth, 0));
       target.trim.to = newTo;
     } else {
       // Check if the object is out of the canvas
@@ -83,7 +83,7 @@ export const changeTemplateWidth: TransformActionHandler = (
       const newTrimFrom = from - diffTime;
       if (newTrimFrom < 0) return false;
 
-      target.set("width", Math.max(newWidth, 0));
+      target.set('width', Math.max(newWidth, 0));
       target.trim.from = newTrimFrom;
     }
     //  check against actual target width in case `newWidth` was rejected
@@ -93,6 +93,6 @@ export const changeTemplateWidth: TransformActionHandler = (
 };
 
 export const resizeTemplate = wrapWithFireEvent(
-  "resizing",
+  'resizing',
   wrapWithFixedAnchor(changeTemplateWidth)
 );

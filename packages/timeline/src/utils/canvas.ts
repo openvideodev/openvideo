@@ -1,6 +1,6 @@
-import { Canvas, FabricObject, TPointerEvent } from "fabric";
-import { Helper } from "../objects";
-import { CanvasSpacing } from "../types";
+import { Canvas, FabricObject, TPointerEvent } from 'fabric';
+import { Helper } from '../objects';
+import { CanvasSpacing } from '../types';
 export const clearPlaceholderObjects = (
   canvas: Canvas,
   placeholderMovingObjects: FabricObject[]
@@ -22,12 +22,12 @@ export const calcCanvasSpacing = (
 ): CanvasSpacing => {
   const defaultSpacing = {
     left: 16,
-    right: 80
+    right: 80,
   };
   return Object.assign({}, defaultSpacing, payload);
 };
 
-const touchEvents = ["touchstart", "touchmove", "touchend"];
+const touchEvents = ['touchstart', 'touchmove', 'touchend'];
 export const isTouchEvent = (event: TPointerEvent) =>
   touchEvents.includes(event.type) ||
-  (event as PointerEvent).pointerType === "touch";
+  (event as PointerEvent).pointerType === 'touch';

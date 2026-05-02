@@ -6,14 +6,14 @@ import {
   Texture,
   RenderTexture,
   UniformGroup,
-} from "pixi.js";
-import type { EffectOptions, EffectRendererOptions } from "./types";
-import { vertex } from "./vertex";
-import { getAllEffects } from "./glsl/gl-effect";
-import { FILTER_CLASSES, VALUES_FILTER_SPECIAL } from "./constant";
-import type { FilterOptionsMap } from "./interface";
-import textureUrl from "../assets/texture1.png";
-import textureUrl2 from "../assets/texture2.png";
+} from 'pixi.js';
+import type { EffectOptions, EffectRendererOptions } from './types';
+import { vertex } from './vertex';
+import { getAllEffects } from './glsl/gl-effect';
+import { FILTER_CLASSES, VALUES_FILTER_SPECIAL } from './constant';
+import type { FilterOptionsMap } from './interface';
+import textureUrl from '../assets/texture1.png';
+import textureUrl2 from '../assets/texture2.png';
 
 export async function makeEffect({ name, renderer, values }: EffectOptions) {
   let filter: any = null;
@@ -25,18 +25,18 @@ export async function makeEffect({ name, renderer, values }: EffectOptions) {
     const defaults = VALUES_FILTER_SPECIAL[name as keyof FilterOptionsMap];
     options = { ...defaults, ...values };
 
-    if (name === "colorMapFilter") {
+    if (name === 'colorMapFilter') {
       options.colorMap = await Assets.load(textureUrl);
     }
 
-    if (name === "simpleLightmapFilter") {
+    if (name === 'simpleLightmapFilter') {
       options.lightMap = await Assets.load(textureUrl2);
     }
     filter = new FilterClass(options);
   } else {
     const effects = getAllEffects();
     const localKey = Object.keys(effects).find(
-      (key) => key.toLowerCase() === name.toLowerCase(),
+      (key) => key.toLowerCase() === name.toLowerCase()
     ) as string | undefined;
 
     if (!localKey) {
@@ -59,7 +59,7 @@ export async function makeEffect({ name, renderer, values }: EffectOptions) {
     });
 
     const effectUniforms = new UniformGroup({
-      uTime: { value: 0, type: "f32" },
+      uTime: { value: 0, type: 'f32' },
       ...uniforms,
     });
 

@@ -1,8 +1,8 @@
-import { BaseClip } from "./base-clip";
-import type { IClipMeta } from "./iclip";
+import { BaseClip } from './base-clip';
+import type { IClipMeta } from './iclip';
 
 export class Placeholder extends BaseClip {
-  type: string = "Placeholder";
+  type: string = 'Placeholder';
 
   meta: IClipMeta = {
     width: 0,
@@ -13,7 +13,7 @@ export class Placeholder extends BaseClip {
   constructor(
     src: string,
     meta: Partial<IClipMeta> = {},
-    type: string = "Placeholder",
+    type: string = 'Placeholder'
   ) {
     super();
     this.type = type;
@@ -41,13 +41,13 @@ export class Placeholder extends BaseClip {
   async tick(time: number): Promise<{
     video?: ImageBitmap | null;
     audio?: Float32Array[];
-    state: "done" | "success";
+    state: 'done' | 'success';
   }> {
     if (!this.canvas) {
-      this.canvas = document.createElement("canvas");
+      this.canvas = document.createElement('canvas');
       this.canvas.width = this.meta.width;
       this.canvas.height = this.meta.height;
-      this.ctx = this.canvas.getContext("2d");
+      this.ctx = this.canvas.getContext('2d');
     }
 
     const { canvas, ctx } = this;
@@ -55,7 +55,7 @@ export class Placeholder extends BaseClip {
       const { width, height } = canvas;
       if (width > 0 && height > 0) {
         // 1. Clear and Draw Background
-        ctx.fillStyle = "#1e1e1e";
+        ctx.fillStyle = '#1e1e1e';
         ctx.fillRect(0, 0, width, height);
 
         // 2. Draw Spinner
@@ -72,15 +72,15 @@ export class Placeholder extends BaseClip {
 
         // Create a gradient for the spinner tail effect
         const gradient = ctx.createConicGradient(rotation, centerX, centerY);
-        gradient.addColorStop(0, "#ffffff"); // Head
-        gradient.addColorStop(0.2, "#ffffff");
-        gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.4)");
-        gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)"); // Tail
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        gradient.addColorStop(0, '#ffffff'); // Head
+        gradient.addColorStop(0.2, '#ffffff');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
+        gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.1)'); // Tail
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         ctx.strokeStyle = gradient;
         ctx.lineWidth = thickness;
-        ctx.lineCap = "round";
+        ctx.lineCap = 'round';
 
         ctx.beginPath();
         // Draw 270 degrees of the ring starting from the current rotation
@@ -90,7 +90,7 @@ export class Placeholder extends BaseClip {
         ctx.restore();
 
         // 4. Add a subtle border
-        ctx.strokeStyle = "#333333";
+        ctx.strokeStyle = '#333333';
         ctx.lineWidth = 10;
         ctx.strokeRect(0, 0, width, height);
       }
@@ -108,7 +108,7 @@ export class Placeholder extends BaseClip {
         }
         if (!this.renderPending) {
           this.renderPending = true;
-          this.emit("request-render" as any);
+          this.emit('request-render' as any);
         }
         this.animationRafId = requestAnimationFrame(scheduleNext);
       };
@@ -122,7 +122,7 @@ export class Placeholder extends BaseClip {
 
     return {
       video: frame,
-      state: "success",
+      state: 'success',
       audio: [],
     };
   }
@@ -155,7 +155,7 @@ export class Placeholder extends BaseClip {
    * Create a Placeholder instance from a JSON object
    */
   static async fromObject(json: any): Promise<Placeholder> {
-    if (json.type !== "Placeholder") {
+    if (json.type !== 'Placeholder') {
       throw new Error(`Expected Placeholder, got ${json.type}`);
     }
 

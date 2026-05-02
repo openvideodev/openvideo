@@ -1,62 +1,62 @@
-"use client";
+'use client';
 
-import { engine } from "@/lib/project";
-import { Log } from "@openvideo/engine-pixi";
-import Draggable from "@/components/shared/draggable";
+import { core } from '@/lib/project';
+import { Log } from '@openvideo/engine-pixi';
+import Draggable from '@/components/shared/draggable';
 
 const TEXT_PRESETS = [
   {
-    name: "Heading",
-    description: "Heading",
+    name: 'Heading',
+    description: 'Heading',
     style: {
       fontSize: 80,
-      fontFamily: "Inter",
-      fontWeight: "bold",
-      fill: "#ffffff",
+      fontFamily: 'Inter',
+      fontWeight: 'bold',
+      fill: '#ffffff',
     },
   },
   {
-    name: "Body text",
-    description: "Body text",
+    name: 'Body text',
+    description: 'Body text',
     style: {
       fontSize: 40,
-      fontFamily: "Inter",
-      fontWeight: "normal",
-      fill: "#ffffff",
+      fontFamily: 'Inter',
+      fontWeight: 'normal',
+      fill: '#ffffff',
     },
   },
   {
-    name: "Modern Bold",
-    description: "MODERN",
+    name: 'Modern Bold',
+    description: 'MODERN',
     style: {
       fontSize: 60,
-      fontFamily: "Montserrat",
-      fontWeight: "900",
-      fill: "#ffffff",
-      stroke: { color: "#000000", width: 2, join: "round" },
+      fontFamily: 'Montserrat',
+      fontWeight: '900',
+      fill: '#ffffff',
+      stroke: { color: '#000000', width: 2, join: 'round' },
     },
   },
   {
-    name: "Elegant Serif",
-    description: "Serif Style",
+    name: 'Elegant Serif',
+    description: 'Serif Style',
     style: {
       fontSize: 60,
-      fontFamily: "Playfair Display",
-      fontWeight: "normal",
-      fontStyle: "italic",
-      fill: "#ffffff",
+      fontFamily: 'Playfair Display',
+      fontWeight: 'normal',
+      fontStyle: 'italic',
+      fill: '#ffffff',
     },
   },
   {
-    name: "Neon Glow",
-    description: "NEON",
+    name: 'Neon Glow',
+    description: 'NEON',
     style: {
       fontSize: 60,
-      fontFamily: "Inter",
-      fontWeight: "bold",
-      fill: "#00ffff",
+      fontFamily: 'Inter',
+      fontWeight: 'bold',
+      fill: '#00ffff',
       dropShadow: {
-        color: "#00ffff",
+        color: '#00ffff',
         alpha: 0.8,
         blur: 10,
         angle: 0,
@@ -65,13 +65,13 @@ const TEXT_PRESETS = [
     },
   },
   {
-    name: "Handwritten",
-    description: "Script",
+    name: 'Handwritten',
+    description: 'Script',
     style: {
       fontSize: 70,
-      fontFamily: "Dancing Script",
-      fontWeight: "normal",
-      fill: "#ffffff",
+      fontFamily: 'Dancing Script',
+      fontWeight: 'normal',
+      fill: '#ffffff',
     },
   },
 ];
@@ -97,21 +97,20 @@ const TEXT_PRESETS = [
 //       },
 
 export default function PanelText() {
-
   const handleAddText = async (preset?: (typeof TEXT_PRESETS)[0]) => {
     try {
-      // Use the clean Engine API to add a text clip
-      engine.addClip({
-        type: "Text",
-        name: preset?.name || "Text",
-        text: preset?.description || "Add Text",
+      // Use the new Core API to add a text clip
+      core.clip.add({
+        type: 'Text',
+        name: preset?.name || 'Text',
+        text: preset?.description || 'Add Text',
         style: {
           fontSize: preset?.style.fontSize || 124,
-          fontFamily: preset?.style.fontFamily || "Arial",
-          align: "center",
-          fontWeight: preset?.style.fontWeight || "bold",
-          fontStyle: (preset?.style as any)?.fontStyle || "normal",
-          fill: preset?.style.fill || "#ffffff",
+          fontFamily: preset?.style.fontFamily || 'Arial',
+          align: 'center',
+          fontWeight: preset?.style.fontWeight || 'bold',
+          fontStyle: (preset?.style as any)?.fontStyle || 'normal',
+          fill: preset?.style.fill || '#ffffff',
           stroke: (preset?.style as any)?.stroke || undefined,
           dropShadow: (preset?.style as any)?.dropShadow || undefined,
           wordWrap: true,
@@ -126,7 +125,7 @@ export default function PanelText() {
         height: 124,
       });
     } catch (error) {
-      Log.error("Failed to add text:", error);
+      Log.error('Failed to add text:', error);
     }
   };
 
@@ -135,15 +134,15 @@ export default function PanelText() {
       <div className="p-4">
         <Draggable
           data={{
-            type: "Text",
-            name: "Text",
-            text: "Add Text",
+            type: 'Text',
+            name: 'Text',
+            text: 'Add Text',
             style: {
               fontSize: 124,
-              fontFamily: "Arial",
-              align: "center",
-              fontWeight: "bold",
-              fill: "#ffffff",
+              fontFamily: 'Arial',
+              align: 'center',
+              fontWeight: 'bold',
+              fill: '#ffffff',
             },
             duration: 5_000_000,
           }}
@@ -167,7 +166,7 @@ export default function PanelText() {
             <Draggable
               key={index}
               data={{
-                type: "Text",
+                type: 'Text',
                 name: preset.name,
                 text: preset.description,
                 style: preset.style,
@@ -178,7 +177,7 @@ export default function PanelText() {
                   <span
                     style={{
                       fontFamily: preset.style.fontFamily,
-                      fontSize: "14px",
+                      fontSize: '14px',
                       fontWeight: preset.style.fontWeight,
                       color: preset.style.fill,
                     }}
@@ -195,10 +194,10 @@ export default function PanelText() {
                 <span
                   style={{
                     fontFamily: preset.style.fontFamily,
-                    fontSize: "12px",
+                    fontSize: '12px',
                     fontWeight: preset.style.fontWeight,
                     color: preset.style.fill,
-                    textAlign: "center",
+                    textAlign: 'center',
                   }}
                   className="line-clamp-2"
                 >

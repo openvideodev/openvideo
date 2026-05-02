@@ -1,16 +1,19 @@
-import { useEffect } from "react";
-import hotkeys from "hotkeys-js";
-import { useStore } from "zustand";
-import { projectStore, engine } from "@/lib/project";
-import { useStudioStore } from "@/stores/studio-store";
-import CanvasTimeline from "@/components/editor/timeline-new/items/timeline";
+import { useEffect } from 'react';
+import hotkeys from 'hotkeys-js';
+import { useStore } from 'zustand';
+import { projectStore, core } from '@/lib/project';
+import { useStudioStore } from '@/stores/studio-store';
+import CanvasTimeline from '@/components/editor/timeline-new/items/timeline';
 
 interface UseEditorHotkeysProps {
   timelineCanvas: CanvasTimeline | null;
   setZoomLevel?: (zoomLevel: number | ((prev: number) => number)) => void;
 }
 
-export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotkeysProps) {
+export function useEditorHotkeys({
+  timelineCanvas,
+  setZoomLevel,
+}: UseEditorHotkeysProps) {
   const currentTimeUs = useStore(projectStore, (s) => s.currentTime);
   const isPlaying = useStore(projectStore, (s) => s.isPlaying);
   const selectedIds = useStore(projectStore, (s) => s.selectedIds);
@@ -19,13 +22,13 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
 
   useEffect(() => {
     // Play/Pause
-    hotkeys("space", (event, handler) => {
+    hotkeys('space', (event, handler) => {
       event.preventDefault();
-      engine.playback.toggle();
+      core.playback.toggle();
     });
 
     // Split
-    hotkeys("command+b, ctrl+b", (event, handler) => {
+    hotkeys('command+b, ctrl+b', (event, handler) => {
       event.preventDefault();
       if (studio) {
         // Studio expects microseconds
@@ -35,124 +38,132 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
     });
 
     // Delete
-    hotkeys("backspace, delete", (event, handler) => {
+    hotkeys('backspace, delete', (event, handler) => {
       // Check if active element is input
       const activeTag = document.activeElement?.tagName.toLowerCase();
-      if (activeTag === "input" || activeTag === "textarea") return;
+      if (activeTag === 'input' || activeTag === 'textarea') return;
 
       if (selectedIds.length > 0) {
-        engine.removeClips(selectedIds);
+        core.clip.remove(selectedIds);
       }
     });
 
     // Select All
-    hotkeys("command+a, ctrl+a", (event, handler) => {
+    hotkeys('command+a, ctrl+a', (event, handler) => {
       event.preventDefault();
       const { clips } = projectStore.getState();
       projectStore.getState().select(Object.keys(clips));
     });
 
     // Copy / Paste / Cut
-    hotkeys("command+c, ctrl+c", (event) => {
+    hotkeys('command+c, ctrl+c', (event) => {
       // Future: Implement Core-level clipboard
     });
 
-    hotkeys("command+v, ctrl+v", (event) => {
+    hotkeys('command+v, ctrl+v', (event) => {
       if (studio) {
         studio.duplicateSelected();
       }
     });
 
     // Zoom In
-    hotkeys("command+=, ctrl+=", (event) => {
+    hotkeys('command+=, ctrl+=', (event) => {
       event.preventDefault();
       setZoomLevel?.((prev) => Math.min(10, prev + 0.15));
     });
 
     // Zoom Out
-    hotkeys("command+-, ctrl+-", (event) => {
+    hotkeys('command+-, ctrl+-', (event) => {
       event.preventDefault();
       setZoomLevel?.((prev) => Math.max(0.1, prev - 0.15));
     });
 
     // Undo / Redo
-    hotkeys("command+z, ctrl+z", (event) => {
+    hotkeys('command+z, ctrl+z', (event) => {
       event.preventDefault();
-      studio?.undo();
+      core.undo();
     });
 
-    hotkeys("command+shift+z, ctrl+shift+z, command+y, ctrl+y", (event) => {
+    hotkeys('command+shift+z, ctrl+shift+z, command+y, ctrl+y', (event) => {
       event.preventDefault();
-      studio?.redo();
+      core.redo();
     });
 
     // Move Up
-    hotkeys("up, shift+up", (event) => {
+    hotkeys('up, shift+up', (event) => {
       const activeTag = document.activeElement?.tagName.toLowerCase();
-      if (activeTag === "input" || activeTag === "textarea") return;
+      if (activeTag === 'input' || activeTag === 'textarea') return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(0, -step);
     });
 
     // Move Down
-    hotkeys("down, shift+down", (event) => {
+    hotkeys('down, shift+down', (event) => {
       const activeTag = document.activeElement?.tagName.toLowerCase();
-      if (activeTag === "input" || activeTag === "textarea") return;
+      if (activeTag === 'input' || activeTag === 'textarea') return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(0, step);
     });
 
     // Move Left
-    hotkeys("left, shift+left", (event) => {
+    hotkeys('left, shift+left', (event) => {
       const activeTag = document.activeElement?.tagName.toLowerCase();
-      if (activeTag === "input" || activeTag === "textarea") return;
+      if (activeTag === 'input' || activeTag === 'textarea') return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(-step, 0);
     });
 
     // Move Right
-    hotkeys("right, shift+right", (event) => {
+    hotkeys('right, shift+right', (event) => {
       const activeTag = document.activeElement?.tagName.toLowerCase();
-      if (activeTag === "input" || activeTag === "textarea") return;
+      if (activeTag === 'input' || activeTag === 'textarea') return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
       studio?.selection.move(step, 0);
     });
 
     // Last Frame
-    hotkeys("command+left, ctrl+left", (event) => {
+    hotkeys('command+left, ctrl+left', (event) => {
       event.preventDefault();
       const frameDurationUs = 1_000_000 / fps;
-      engine.seek(Math.max(0, currentTimeUs - frameDurationUs));
+      core.seek(Math.max(0, currentTimeUs - frameDurationUs));
     });
 
     // Next Frame
-    hotkeys("command+right, ctrl+right", (event) => {
+    hotkeys('command+right, ctrl+right', (event) => {
       event.preventDefault();
       const frameDurationUs = 1_000_000 / fps;
-      engine.seek(currentTimeUs + frameDurationUs);
+      core.seek(currentTimeUs + frameDurationUs);
     });
 
     return () => {
-      hotkeys.unbind("space");
-      hotkeys.unbind("command+b, ctrl+b");
-      hotkeys.unbind("backspace, delete");
-      hotkeys.unbind("command+a, ctrl+a");
-      hotkeys.unbind("command+c, ctrl+c");
-      hotkeys.unbind("command+v, ctrl+v");
-      hotkeys.unbind("command+=, ctrl+=");
-      hotkeys.unbind("command+-, ctrl+-");
-      hotkeys.unbind("command+z, ctrl+z");
-      hotkeys.unbind("command+shift+z, ctrl+shift+z, command+y, ctrl+y");
-      hotkeys.unbind("up, shift+up");
-      hotkeys.unbind("down, shift+down");
-      hotkeys.unbind("left, shift+left");
-      hotkeys.unbind("right, shift+right");
-      hotkeys.unbind("command+left, ctrl+left");
-      hotkeys.unbind("command+right, ctrl+right");
+      hotkeys.unbind('space');
+      hotkeys.unbind('command+b, ctrl+b');
+      hotkeys.unbind('backspace, delete');
+      hotkeys.unbind('command+a, ctrl+a');
+      hotkeys.unbind('command+c, ctrl+c');
+      hotkeys.unbind('command+v, ctrl+v');
+      hotkeys.unbind('command+=, ctrl+=');
+      hotkeys.unbind('command+-, ctrl+-');
+      hotkeys.unbind('command+z, ctrl+z');
+      hotkeys.unbind('command+shift+z, ctrl+shift+z, command+y, ctrl+y');
+      hotkeys.unbind('up, shift+up');
+      hotkeys.unbind('down, shift+down');
+      hotkeys.unbind('left, shift+left');
+      hotkeys.unbind('right, shift+right');
+      hotkeys.unbind('command+left, ctrl+left');
+      hotkeys.unbind('command+right, ctrl+right');
     };
-  }, [isPlaying, timelineCanvas, currentTimeUs, selectedIds, fps, setZoomLevel, studio]);
+  }, [
+    isPlaying,
+    timelineCanvas,
+    currentTimeUs,
+    selectedIds,
+    fps,
+    setZoomLevel,
+    studio,
+  ]);
 }

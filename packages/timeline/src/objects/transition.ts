@@ -1,13 +1,13 @@
-import { Control, Rect, RectProps, classRegistry } from "fabric";
+import { Control, Rect, RectProps, classRegistry } from 'fabric';
 
 import {
   ACTIVE_SELECTION_COLOR,
-  ACTIVE_SELECTION_WIDTH
-} from "../constants/objects";
-import { createTransitionControls } from "../controls";
+  ACTIVE_SELECTION_WIDTH,
+} from '../constants/objects';
+import { createTransitionControls } from '../controls';
 
 interface TransitionProps
-  extends Pick<RectProps, "width" | "height" | "top" | "left"> {
+  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
   id: string;
   tScale: number;
   duration: number;
@@ -18,11 +18,11 @@ interface TransitionProps
 }
 
 class Transition extends Rect {
-  static type = "Transition";
+  static type = 'Transition';
   public duration: number;
   public fromClipId: string;
   public toClipId: string;
-  public key: string = "none";
+  public key: string = 'none';
   public isSelected = false;
   public isHovered = false;
   public availableDrop = true;
@@ -34,23 +34,23 @@ class Transition extends Rect {
   static getDefaults(): Record<string, any> {
     return {
       ...super.getDefaults(),
-      ...Transition.ownDefaults
+      ...Transition.ownDefaults,
     };
   }
 
   static ownDefaults = {
     objectCaching: false,
-    borderColor: "transparent",
-    stroke: "transparent",
+    borderColor: 'transparent',
+    stroke: 'transparent',
     strokeWidth: 1.5,
-    fill: "rgba(32, 32, 32, 0.8)",
+    fill: 'rgba(32, 32, 32, 0.8)',
     borderOpacityWhenMoving: 1,
-    hoverCursor: "pointer",
+    hoverCursor: 'pointer',
     lockMovementX: true,
     lockMovementY: true,
     duration: 1_500_000,
     rx: 6,
-    ry: 6
+    ry: 6,
   };
 
   constructor(props: TransitionProps) {
@@ -70,16 +70,16 @@ class Transition extends Rect {
     this.width = props.width || this.width;
     this.height = props.height || this.height;
 
-    if (this.key === "none") {
+    if (this.key === 'none') {
       this.hasControls = false;
     }
 
-    this.on("mouseover", () => {
+    this.on('mouseover', () => {
       this.isHovered = true;
       this.canvas?.requestRenderAll();
     });
 
-    this.on("mouseout", () => {
+    this.on('mouseout', () => {
       this.isHovered = false;
       this.canvas?.requestRenderAll();
     });
@@ -89,7 +89,7 @@ class Transition extends Rect {
 
   // add custom text to the track item
   public _render(ctx: CanvasRenderingContext2D) {
-    if (this.key === "none" && !this.isHovered && !this.isSelected) {
+    if (this.key === 'none' && !this.isHovered && !this.isSelected) {
       return;
     }
     const visualWidth = 24;
@@ -114,12 +114,12 @@ class Transition extends Rect {
 
   private drawIcon(ctx: CanvasRenderingContext2D) {
     ctx.save();
-    ctx.strokeStyle = "white";
+    ctx.strokeStyle = 'white';
     ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    if (this.key === "none") {
+    if (this.key === 'none') {
       // Plus icon
       ctx.beginPath();
       ctx.moveTo(-5, 0);
@@ -129,7 +129,7 @@ class Transition extends Rect {
       ctx.stroke();
     } else {
       // Transition icon (two triangles)
-      ctx.fillStyle = "white";
+      ctx.fillStyle = 'white';
       ctx.beginPath();
       // Left triangle
       ctx.moveTo(-6, -5);
@@ -161,8 +161,8 @@ class Transition extends Rect {
     const strokeStyle = this.availableDrop
       ? this.isSelected
         ? ACTIVE_SELECTION_COLOR
-        : "rgba(255, 255, 255, 0.15)"
-      : "red";
+        : 'rgba(255, 255, 255, 0.15)'
+      : 'red';
 
     ctx.save();
     ctx.beginPath();
@@ -181,6 +181,6 @@ class Transition extends Rect {
   }
 }
 
-classRegistry.setClass(Transition, "Transition");
+classRegistry.setClass(Transition, 'Transition');
 
 export default Transition;

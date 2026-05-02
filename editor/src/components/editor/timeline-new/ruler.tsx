@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   MICROSECONDS_PER_SECOND,
   PIXELS_PER_SECOND,
   SECONDARY_FONT,
   TIMELINE_OFFSET_CANVAS_LEFT,
-  ITimelineScaleState
-} from "@openvideo/timeline";
-import { useStore } from "zustand";
-import { projectStore } from "@/lib/project";
-import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
-import { useTheme } from "next-themes";
-import { useMemo } from "react";
+  ITimelineScaleState,
+} from '@openvideo/timeline';
+import { useStore } from 'zustand';
+import { projectStore } from '@/lib/project';
+import { useTimelineOffsetX } from '../hooks/use-timeline-offset';
+import { useTheme } from 'next-themes';
+import { useMemo } from 'react';
 
 interface RulerProps {
   height?: number;
@@ -34,28 +34,28 @@ const Ruler = (props: RulerProps) => {
     scrollLeft = 0,
     onClick,
     onScroll,
-    scale
+    scale,
   } = props;
   const durationUs = useStore(projectStore, (s) => s.settings.duration);
   const { theme, resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const currentTheme = (theme === "system" ? resolvedTheme : theme) as
-    | "dark"
-    | "light";
+  const currentTheme = (theme === 'system' ? resolvedTheme : theme) as
+    | 'dark'
+    | 'light';
 
   const colors = useMemo(() => {
-    const isDark = currentTheme === "dark";
+    const isDark = currentTheme === 'dark';
     return {
-      bg: isDark ? "#111010" : "#f3f4f6",
-      text: isDark ? "#9ca3af" : "#4b5563",
-      border: isDark ? "#374151" : "#d1d5db"
+      bg: isDark ? '#111010' : '#f3f4f6',
+      text: isDark ? '#9ca3af' : '#4b5563',
+      border: isDark ? '#374151' : '#d1d5db',
     };
   }, [currentTheme]);
 
   const [canvasSize, setCanvasSize] = useState({
     width: 0,
-    height: height
+    height: height,
   });
 
   // Drag state
@@ -64,7 +64,7 @@ const Ruler = (props: RulerProps) => {
     startX: 0,
     startScrollPos: 0,
     isDragging: false,
-    hasDragged: false
+    hasDragged: false,
   });
 
   const pixelsPerSecond = PIXELS_PER_SECOND * scale.zoom;
@@ -88,8 +88,8 @@ const Ruler = (props: RulerProps) => {
       context.strokeStyle = colors.border;
       context.lineWidth = 1;
       context.font = `11px ${SECONDARY_FONT}`;
-      context.textAlign = "left";
-      context.textBaseline = "middle";
+      context.textAlign = 'left';
+      context.textBaseline = 'middle';
 
       // Calculate intervals
       const minTextSpacing = 60;
@@ -109,8 +109,8 @@ const Ruler = (props: RulerProps) => {
         const s = Math.floor(seconds % 60);
         const ms = Math.floor((seconds % 1) * 10);
 
-        const mStr = m.toString().padStart(2, "0");
-        const sStr = s.toString().padStart(2, "0");
+        const mStr = m.toString().padStart(2, '0');
+        const sStr = s.toString().padStart(2, '0');
 
         if (h > 0) return `${h}:${mStr}:${sStr}`;
         if (mainInterval < 1) return `${mStr}:${sStr}.${ms}`;
@@ -175,7 +175,7 @@ const Ruler = (props: RulerProps) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext('2d');
     if (!context) return;
 
     const offsetParent = canvas.offsetParent as HTMLDivElement;
@@ -206,7 +206,7 @@ const Ruler = (props: RulerProps) => {
       startX: clickX,
       startScrollPos: scrollLeft,
       isDragging: true,
-      hasDragged: false
+      hasDragged: false,
     };
 
     // Immediate seek on click
@@ -232,7 +232,7 @@ const Ruler = (props: RulerProps) => {
       startX: touchX,
       startScrollPos: scrollLeft,
       isDragging: true,
-      hasDragged: false
+      hasDragged: false,
     };
 
     // Immediate seek on touch
@@ -319,18 +319,18 @@ const Ruler = (props: RulerProps) => {
   // Add global mouse and touch event listeners for drag
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.addEventListener("touchmove", handleTouchMove as any, {
-        passive: false
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove as any, {
+        passive: false,
       });
-      document.addEventListener("touchend", handleTouchEnd);
+      document.addEventListener('touchend', handleTouchEnd);
 
       return () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-        document.removeEventListener("touchmove", handleTouchMove as any);
-        document.removeEventListener("touchend", handleTouchEnd);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove as any);
+        document.removeEventListener('touchend', handleTouchEnd);
       };
     }
   }, [
@@ -338,16 +338,16 @@ const Ruler = (props: RulerProps) => {
     handleMouseMove,
     handleMouseUp,
     handleTouchMove,
-    handleTouchEnd
+    handleTouchEnd,
   ]);
 
   return (
     <div
       className="border-t border-border"
       style={{
-        position: "relative",
-        width: "100%",
-        height: `${canvasSize.height}px`
+        position: 'relative',
+        width: '100%',
+        height: `${canvasSize.height}px`,
       }}
     >
       <canvas
@@ -359,10 +359,10 @@ const Ruler = (props: RulerProps) => {
         ref={canvasRef}
         height={canvasSize.height}
         style={{
-          cursor: isDragging ? "grabbing" : "grab",
-          width: "100%",
-          display: "block",
-          touchAction: "none" // Prevent default touch behaviors
+          cursor: isDragging ? 'grabbing' : 'grab',
+          width: '100%',
+          display: 'block',
+          touchAction: 'none', // Prevent default touch behaviors
         }}
       />
     </div>

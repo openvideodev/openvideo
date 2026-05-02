@@ -1,5 +1,5 @@
-import { ActiveSelection, FabricObject } from "fabric";
-import Timeline from "../timeline";
+import { ActiveSelection, FabricObject } from 'fabric';
+import Timeline from '../timeline';
 
 interface InternalObservable {
   __eventListeners: Record<string, unknown>;
@@ -25,12 +25,14 @@ class CanvasMixin {
     }
     this.onResizeCanvas?.({
       width: this.width,
-      height: this.height
+      height: this.height,
     });
   }
 
   pauseEventListeners(this: Timeline) {
-    this.___eventListeners = (this as unknown as InternalObservable).__eventListeners;
+    this.___eventListeners = (
+      this as unknown as InternalObservable
+    ).__eventListeners;
     (this as unknown as InternalObservable).__eventListeners = {};
 
     const activeObjects = this.getActiveObjects();
@@ -39,7 +41,8 @@ class CanvasMixin {
   }
 
   resumeEventListeners(this: Timeline) {
-    (this as unknown as InternalObservable).__eventListeners = this.___eventListeners;
+    (this as unknown as InternalObservable).__eventListeners =
+      this.___eventListeners;
     this.___eventListeners = {};
 
     const activeObjects = this.___activeObjects;
@@ -70,4 +73,3 @@ class CanvasMixin {
   }
 }
 export default CanvasMixin;
-

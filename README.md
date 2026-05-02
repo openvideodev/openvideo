@@ -37,9 +37,19 @@ The editor has been removed from this core repository and moved to dedicated rep
 - **JSON Serialization**: Full project state can be serialized to and from JSON for easy persistence and cloud rendering.
 - **Low Latency**: Optimized for interactive video editing experiences.
 
-## Documentation
+## Architecture
+OpenVideo follows a strict "Brain-Muscle-UI" separation to ensure composability and AI-first workflows.
 
-Comprehensive documentation is available at [docs.openvideo.dev](https://docs.openvideo.dev).
+- **`openvideo/core` (The Brain)**: Headless, deterministic engine containing all business logic and state.
+- **`openvideo/engine-*` (The Muscle)**: Platform-specific adapters that render state to pixels (PixiJS, Remotion, Skia).
+- **`openvideo/timeline` (The UI)**: Reference UI package for building editor interfaces.
+- **`openvideo/agents` (The AI Layer)**: High-level agentic editing layer that operates on Core commands.
+
+Detailed documentation is available in the `docs/architecture` directory:
+- [Clean Architecture](docs/architecture/clean-architecture.md)
+- [Command System](docs/architecture/command-system.md)
+- [Agentic Editing](docs/architecture/agents.md)
+- [DX Patterns](docs/architecture/dx-patterns.md)
 
 ## Installation
 
@@ -52,23 +62,27 @@ npm install openvideo
 ### Basic Composition
 
 ```typescript
-import { Studio, Video } from 'openvideo';
+import { createCore } from '@openvideo/core';
+import { PixiEngine } from '@openvideo/engine-pixi';
 
-// 1. Initialize the Studio (Project State & Preview)
-const studio = new Studio({
-  width: 1920,
-  height: 1080,
-  fps: 30,
-  canvas: document.getElementById('preview-canvas') as HTMLCanvasElement,
-  spacing: 20
+// 1. Initialize the Core (The Brain)
+const core = createCore();
+
+// 2. Attach a Rendering Engine (The Muscle)
+const engine = new PixiEngine({
+  canvas: document.getElementById('preview-canvas'),
+  core
 });
 
-// 2. Load and add a Video Clip
-const video = await Video.fromUrl('https://example.com/video.mp4');
-await studio.addClip(video);
+// 3. Add a Clip via Command API
+core.clip.add({
+  src: 'https://example.com/video.mp4',
+  start: 0,
+  duration: 5
+});
 
-// 3. Start Preview
-studio.play();
+// 4. Start Playback
+core.play();
 ```
 
 ## Core Components

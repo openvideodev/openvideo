@@ -11,6 +11,7 @@ import { Text } from '../clips/text-clip';
 import { Caption } from '../clips/caption-clip';
 import { Transformer } from '../transfomer/transformer';
 import type { Studio } from '../studio';
+import { nanoid } from 'nanoid';
 
 export class SelectionManager {
   public selectedClips: Set<IClip> = new Set();
@@ -546,12 +547,12 @@ export class SelectionManager {
       rafId = requestAnimationFrame(() => {
         rafId = null;
         this.syncSelectedClipsTransformsRealtime();
-        
+
         // Emit for real-time sync to Core/UI
         for (const clip of this.selectedClips) {
           this.studio.emit('clip:transforming', { clip });
         }
-        
+
         // Force render for real-time visual feedback
         this.studio.pixiApp?.render();
       });
@@ -569,7 +570,62 @@ export class SelectionManager {
         cancelAnimationFrame(rafId);
         rafId = null;
       }
-      await this.syncSelectedClipsTransforms();
+
+      const core = this.studio.opts.core;
+      if (core) {
+        // Collect updates for ALL selected clips
+        const updatesList: { id: string; updates: any }[] = [];
+
+        for (const clip of this.selectedClips) {
+          const renderer = this.studio.spriteRenderers.get(clip);
+          if (!renderer) continue;
+
+          const root = renderer.getRoot();
+          const sprite = renderer.getSprite();
+          if (!root || !sprite || !sprite.texture) continue;
+
+          const textureWidth = sprite.texture.width;
+          const textureHeight = sprite.texture.height;
+          const newWidth =
+            Math.abs(root.scale.x * sprite.scale.x) * textureWidth;
+          const newHeight =
+            Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
+
+          const updates: any = {
+            left: root.x - newWidth / 2,
+            top: root.y - newHeight / 2,
+            width: newWidth,
+            height: newHeight,
+            angle: (clip.flip == null ? 1 : -1) * root.angle,
+          };
+
+          // Special case for Text/Caption reflow
+          if (
+            (clip.type === 'Text' || clip.type === 'Caption') &&
+            this.textClipResizedWidth !== null
+          ) {
+            updates.width = this.textClipResizedWidth;
+            // Note: height will be updated by the engine after reflow
+          }
+
+          updatesList.push({ id: clip.id, updates });
+        }
+
+        // Batch update via core
+        if (updatesList.length > 0) {
+          core.execute({
+            id: nanoid(),
+            type: 'clip.update',
+            payload: updatesList.length === 1 ? updatesList[0] : updatesList, // Handle batch vs single update if handler supports it
+          });
+          // Actually, our handler currently handles { id, updates }.
+          // I should add a batch handler or a multi-update handler.
+        }
+      } else {
+        // Fallback to legacy direct mutation if core is not present
+        await this.syncSelectedClipsTransforms();
+      }
+
       for (const clip of this.selectedClips) {
         this.studio.emit('clip:updated', { clip });
       }

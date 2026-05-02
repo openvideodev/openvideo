@@ -3,16 +3,16 @@ import {
   ResizableProps,
   Pattern,
   util,
-  Control
-} from "@openvideo/timeline";
-import { createResizeControls } from "../controls";
+  Control,
+} from '@openvideo/timeline';
+import { createResizeControls } from '../controls';
 
 interface ImageProps extends ResizableProps {
   src: string;
 }
 
 class Image extends Resizable {
-  static type = "Image";
+  static type = 'Image';
   public src: string;
   public hasSrc = true;
 
@@ -41,10 +41,10 @@ class Image extends Resizable {
       const scaleY = rectHeight / imgHeight;
       const pattern = new Pattern({
         source: img,
-        repeat: "repeat-x",
-        patternTransform: [scaleY, 0, 0, scaleY, 0, 0]
+        repeat: 'repeat-x',
+        patternTransform: [scaleY, 0, 0, scaleY, 0, 0],
       });
-      this.set("fill", pattern);
+      this.set('fill', pattern);
       this.canvas?.requestRenderAll();
     });
   }
@@ -57,8 +57,8 @@ class Image extends Resizable {
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
     const borderColor = this.isSelected
-      ? "rgba(255, 255, 255,1.0)"
-      : "rgba(255, 255, 255,0.1)";
+      ? 'rgba(255, 255, 255,1.0)'
+      : 'rgba(255, 255, 255,0.1)';
     const borderWidth = 2;
     const innerRadius = 4;
 
@@ -79,7 +79,7 @@ class Image extends Resizable {
     );
 
     // Use even-odd fill rule to create the border effect
-    ctx.fill("evenodd");
+    ctx.fill('evenodd');
     ctx.restore();
   }
 }

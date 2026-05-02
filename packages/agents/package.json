@@ -1,0 +1,26 @@
+{
+  "name": "@openvideo/agents",
+  "version": "0.1.0",
+  "description": "AI Agent Layer for OpenVideo",
+  "type": "module",
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js"
+    }
+  },
+  "scripts": {
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@openvideo/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.18"
+  }
+}

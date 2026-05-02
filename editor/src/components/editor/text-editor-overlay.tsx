@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef } from "react";
-import { useStudioStore } from "@/stores/studio-store";
-import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useEffect, useRef } from 'react';
+import { useStudioStore } from '@/stores/studio-store';
+import { Textarea } from '@/components/ui/textarea';
 
 interface TextEditorOverlayProps {
   clip: any;
@@ -15,8 +15,14 @@ interface TextEditorOverlayProps {
  */
 export function TextEditorOverlay({ clip, onClose }: TextEditorOverlayProps) {
   const { studio } = useStudioStore();
-  const [text, setText] = useState(clip.text || "");
-  const [bounds, setBounds] = useState({ x: 0, y: 0, width: 0, height: 0, rotation: 0 });
+  const [text, setText] = useState(clip.text || '');
+  const [bounds, setBounds] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    rotation: 0,
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const textRef = useRef(text); // Track text for saving on unmount
 
@@ -50,12 +56,12 @@ export function TextEditorOverlay({ clip, onClose }: TextEditorOverlayProps) {
     updatePosition();
 
     // Sync position if the clip is moved/resized while editing
-    studio.on("transforming", updatePosition);
-    studio.on("selection:cleared", onClose);
+    studio.on('transforming', updatePosition);
+    studio.on('selection:cleared', onClose);
 
     return () => {
-      studio.off("transforming", updatePosition);
-      studio.off("selection:cleared", onClose);
+      studio.off('transforming', updatePosition);
+      studio.off('selection:cleared', onClose);
     };
   }, [studio, onClose]);
 
@@ -63,7 +69,7 @@ export function TextEditorOverlay({ clip, onClose }: TextEditorOverlayProps) {
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = "0px";
+      textarea.style.height = '0px';
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, [text, bounds.width]);
@@ -88,9 +94,9 @@ export function TextEditorOverlay({ clip, onClose }: TextEditorOverlayProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       onClose();
-    } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+    } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       handleSave();
     }
   };
@@ -146,22 +152,22 @@ export function TextEditorOverlay({ clip, onClose }: TextEditorOverlayProps) {
   return (
     <div
       style={{
-        position: "absolute",
+        position: 'absolute',
         left: bounds.x,
         top: bounds.y + 38, // Move slightly up from original position
         width: bounds.width,
-        height: "auto",
+        height: 'auto',
         minHeight: `${scaledFontSize}px`,
         transform: `rotate(${bounds.rotation}rad)`,
         zIndex: 50,
-        pointerEvents: "auto",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-start",
-        alignItems: "stretch",
-        border: "2px solid #00aaff", // Cyan bounding box
-        boxSizing: "border-box",
-        overflow: "visible",
+        pointerEvents: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'stretch',
+        border: '2px solid #00aaff', // Cyan bounding box
+        boxSizing: 'border-box',
+        overflow: 'visible',
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -182,15 +188,15 @@ export function TextEditorOverlay({ clip, onClose }: TextEditorOverlayProps) {
         spellCheck={false}
         className="w-full p-0 m-0 resize-none bg-transparent border-none outline-none overflow-hidden whitespace-pre-wrap wrap-break-word block"
         style={{
-          color: style.fill || "white",
-          fontFamily: style.fontFamily || "sans-serif",
+          color: style.fill || 'white',
+          fontFamily: style.fontFamily || 'sans-serif',
           fontSize: `${scaledFontSize}px`,
-          fontWeight: style.fontWeight || "normal",
-          lineHeight: style.lineHeight || "1.0", // Tighter line height for editing
-          textAlign: (clip as any).textAlign || "center",
-          padding: "5px 0", // Small vertical padding to match baseline better
+          fontWeight: style.fontWeight || 'normal',
+          lineHeight: style.lineHeight || '1.0', // Tighter line height for editing
+          textAlign: (clip as any).textAlign || 'center',
+          padding: '5px 0', // Small vertical padding to match baseline better
           // Text shadow to match subtle Pixi rendering if possible
-          textShadow: style.dropShadow ? "1px 1px 2px rgba(0,0,0,0.3)" : "none",
+          textShadow: style.dropShadow ? '1px 1px 2px rgba(0,0,0,0.3)' : 'none',
         }}
       />
     </div>

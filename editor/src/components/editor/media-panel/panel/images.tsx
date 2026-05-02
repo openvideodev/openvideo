@@ -1,13 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { engine } from "@/lib/project";
-import { Log } from "@openvideo/engine-pixi";
-import { Search, Image as ImageIcon, Loader2 } from "lucide-react";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { debounce } from "lodash";
-import Draggable from "@/components/shared/draggable";
+import { useState, useEffect, useCallback } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { core } from '@/lib/project';
+import { Log } from '@openvideo/engine-pixi';
+import { Search, Image as ImageIcon, Loader2 } from 'lucide-react';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { debounce } from 'lodash';
+import Draggable from '@/components/shared/draggable';
 
 interface PexelsImage {
   id: number;
@@ -29,7 +33,7 @@ interface PexelsImage {
 }
 
 export default function PanelImages() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [images, setImages] = useState<PexelsImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,7 +51,7 @@ export default function PanelImages() {
         setImages([]);
       }
     } catch (error) {
-      console.error("Failed to fetch images:", error);
+      console.error('Failed to fetch images:', error);
     } finally {
       setIsLoading(false);
     }
@@ -56,11 +60,11 @@ export default function PanelImages() {
   // Memoize the debounced fetch function
   const debouncedFetch = useCallback(
     debounce((query: string) => fetchImages(query), 500),
-    [],
+    []
   );
 
   useEffect(() => {
-    fetchImages("");
+    fetchImages('');
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,13 +75,12 @@ export default function PanelImages() {
 
   const addItemToCanvas = async (asset: PexelsImage) => {
     try {
-      // Use the clean Engine API to add an image clip
-      engine.addClip({
-        type: "Image",
+      // Use the new Core command API
+      await core.clip.add({
+        type: 'Image',
         src: asset.src.large2x,
         name: `Photo by ${asset.photographer}`,
         display: { from: 0, to: 5_000_000 },
-        // The engine/bridge handles scaling and centering automatically
       });
     } catch (error) {
       Log.error(`Failed to add image:`, error);
@@ -119,7 +122,7 @@ export default function PanelImages() {
               <Draggable
                 key={image.id}
                 data={{
-                  type: "Image",
+                  type: 'Image',
                   src: image.src.large2x,
                   name: `Photo by ${image.photographer}`,
                   // width: image.width,
@@ -128,7 +131,10 @@ export default function PanelImages() {
                 }}
                 renderCustomPreview={
                   <div className="w-20 aspect-square rounded-md overflow-hidden shadow-xl border-2 border-primary">
-                    <img src={image.src.medium} className="w-full h-full object-cover" />
+                    <img
+                      src={image.src.medium}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 }
               >
@@ -137,8 +143,8 @@ export default function PanelImages() {
                   onClick={() => addItemToCanvas(image)}
                   style={{
                     backgroundImage: `url(${image.src.medium})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
                   }}
                 >
                   <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">

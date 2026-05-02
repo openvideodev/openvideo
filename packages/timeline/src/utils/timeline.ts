@@ -1,13 +1,19 @@
-import { MICROSECONDS_PER_SECOND, PIXELS_PER_SECOND } from "../constants/constants";
-import { IClip } from "../types";
-import { OBJECT_TYPE_TRANSITION } from "../constants/objects";
+import {
+  MICROSECONDS_PER_SECOND,
+  PIXELS_PER_SECOND,
+} from '../constants/constants';
+import { IClip } from '../types';
+import { OBJECT_TYPE_TRANSITION } from '../constants/objects';
 
 export function timeUsToUnits(
   timeUs: number,
   zoom = 1,
   playbackRate = 1
 ): number {
-  return ((timeUs / MICROSECONDS_PER_SECOND) * PIXELS_PER_SECOND * zoom) / playbackRate;
+  return (
+    ((timeUs / MICROSECONDS_PER_SECOND) * PIXELS_PER_SECOND * zoom) /
+    playbackRate
+  );
 }
 
 export function unitsToTimeUs(
@@ -15,7 +21,11 @@ export function unitsToTimeUs(
   zoom = 1,
   playbackRate = 1
 ): number {
-  return (units / (PIXELS_PER_SECOND * zoom)) * MICROSECONDS_PER_SECOND * playbackRate;
+  return (
+    (units / (PIXELS_PER_SECOND * zoom)) *
+    MICROSECONDS_PER_SECOND *
+    playbackRate
+  );
 }
 
 export function calculateTimelineWidth(

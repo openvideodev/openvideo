@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { storageService } from "@/lib/storage/storage-service";
-import { TProject } from "@/types/project";
-import { generateUUID } from "@/utils/id";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { storageService } from '@/lib/storage/storage-service';
+import { TProject } from '@/types/project';
+import { generateUUID } from '@/utils/id';
+import { Button } from '@/components/ui/button';
 import {
   Plus,
   Video,
@@ -16,8 +16,8 @@ import {
   PlusIcon,
   ChevronRight,
   Home,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 // ─── Project Card ────────────────────────────────────────────────────────────
 
@@ -37,18 +37,24 @@ function ProjectCard({ project, onOpen, onDelete }: ProjectCardProps) {
         setMenuOpen(false);
       }
     };
-    if (menuOpen) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
-  const formattedDate = new Date(project.updatedAt).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formattedDate = new Date(project.updatedAt).toLocaleDateString(
+    undefined,
+    {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }
+  );
 
   return (
-    <div onClick={() => onOpen(project.id)} className="group flex flex-col gap-2.5 cursor-pointer">
+    <div
+      onClick={() => onOpen(project.id)}
+      className="group flex flex-col gap-2.5 cursor-pointer"
+    >
       {/* Thumbnail */}
       <div className="relative aspect-video rounded-xl sm:rounded-2xl bg-muted/30 border border-border/30 overflow-hidden transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg group-hover:shadow-black/10 group-hover:border-border/60">
         {project.thumbnail ? (
@@ -59,7 +65,10 @@ function ProjectCard({ project, onOpen, onDelete }: ProjectCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Video className="w-7 h-7 sm:w-8 sm:h-8 text-muted-foreground/20" strokeWidth={1.5} />
+            <Video
+              className="w-7 h-7 sm:w-8 sm:h-8 text-muted-foreground/20"
+              strokeWidth={1.5}
+            />
           </div>
         )}
 
@@ -103,8 +112,12 @@ function ProjectCard({ project, onOpen, onDelete }: ProjectCardProps) {
 
       {/* Info */}
       <div className="px-0.5">
-        <p className="text-sm font-medium truncate leading-snug">{project.name}</p>
-        <p className="text-xs text-muted-foreground/60 mt-0.5">{formattedDate}</p>
+        <p className="text-sm font-medium truncate leading-snug">
+          {project.name}
+        </p>
+        <p className="text-xs text-muted-foreground/60 mt-0.5">
+          {formattedDate}
+        </p>
       </div>
     </div>
   );
@@ -115,7 +128,7 @@ function ProjectCard({ project, onOpen, onDelete }: ProjectCardProps) {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<TProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -130,7 +143,7 @@ export default function ProjectsPage() {
       const loaded = await storageService.loadAllProjects();
       setProjects(loaded);
     } catch (e) {
-      console.error("Failed to load projects", e);
+      console.error('Failed to load projects', e);
     } finally {
       setIsLoading(false);
     }
@@ -140,13 +153,13 @@ export default function ProjectsPage() {
     const sceneId = generateUUID();
     const newProject: TProject = {
       id: generateUUID(),
-      name: "Untitled project",
-      thumbnail: "",
+      name: 'Untitled project',
+      thumbnail: '',
       createdAt: new Date(),
       updatedAt: new Date(),
       currentSceneId: sceneId,
       canvasSize: { width: 1080, height: 1920 },
-      canvasMode: "preset",
+      canvasMode: 'preset',
       fps: 30,
       data: null, // Scene data will be saved on first edit
     };
@@ -154,7 +167,7 @@ export default function ProjectsPage() {
       await storageService.saveProject({ project: newProject });
       router.push(`/edit/${newProject.id}`);
     } catch (e) {
-      console.error("Failed to create project", e);
+      console.error('Failed to create project', e);
     }
   };
 
@@ -164,12 +177,12 @@ export default function ProjectsPage() {
       await storageService.deleteProject({ id });
       await loadProjects();
     } catch (error) {
-      console.error("Failed to delete project", error);
+      console.error('Failed to delete project', error);
     }
   };
 
   const filteredProjects = projects.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const openSearch = () => {
@@ -186,7 +199,7 @@ export default function ProjectsPage() {
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1 text-sm min-w-0">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push('/')}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground active:text-foreground transition-colors shrink-0"
             >
               <Home className="w-3.5 h-3.5" />
@@ -209,7 +222,7 @@ export default function ProjectsPage() {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => setSearchQuery('')}
                   className="absolute right-2 text-muted-foreground/50 hover:text-muted-foreground"
                 >
                   <X className="w-3 h-3" />
@@ -227,7 +240,11 @@ export default function ProjectsPage() {
             </button>
 
             {/* New project — icon-only on mobile, full on sm+ */}
-            <Button onClick={handleCreateProject} size="sm" className="h-8 rounded-full gap-1.5">
+            <Button
+              onClick={handleCreateProject}
+              size="sm"
+              className="h-8 rounded-full gap-1.5"
+            >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline text-xs">New project</span>
             </Button>
@@ -248,7 +265,7 @@ export default function ProjectsPage() {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => setSearchQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -258,7 +275,7 @@ export default function ProjectsPage() {
             <button
               onClick={() => {
                 setSearchOpen(false);
-                setSearchQuery("");
+                setSearchQuery('');
               }}
               className="text-sm text-muted-foreground hover:text-foreground shrink-0"
             >
@@ -277,7 +294,12 @@ export default function ProjectsPage() {
         ) : filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground mt-8 space-y-2">
             <div className="py-2 text-stone-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="56"
+                height="56"
+                viewBox="0 0 24 24"
+              >
                 <path
                   fill="currentColor"
                   fillRule="evenodd"
@@ -296,7 +318,9 @@ export default function ProjectsPage() {
             ) : (
               <>
                 <h3 className="font-medium text-foreground">No projects yet</h3>
-                <p className="text-sm mb-4">Create your first project to get started.</p>
+                <p className="text-sm mb-4">
+                  Create your first project to get started.
+                </p>
                 <Button
                   onClick={handleCreateProject}
                   variant="outline"

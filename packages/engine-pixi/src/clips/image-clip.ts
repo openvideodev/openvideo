@@ -75,7 +75,9 @@ export class Image extends BaseClip implements IClip {
     duration: number;
   }> = [];
 
-  getVisibleHandles(): Array<'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'> {
+  getVisibleHandles(): Array<
+    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
+  > {
     return ['tl', 'tr', 'bl', 'br', 'rot'];
   }
 
@@ -451,14 +453,13 @@ export class Image extends BaseClip implements IClip {
     if ((json as any).chromaKey) {
       clip.chromaKey = { ...clip.chromaKey, ...(json as any).chromaKey };
     }
-  
+
     if ((json as any).colorAdjustment) {
       clip.colorAdjustment = {
         ...clip.colorAdjustment,
         ...(json as any).colorAdjustment,
       };
     }
-
 
     if (json.locked !== undefined) {
       clip.locked = json.locked;

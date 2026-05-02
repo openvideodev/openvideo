@@ -1,10 +1,10 @@
 import {
   PreviewTrackItem as PreviewTrackItemBase,
-  PreviewTrackItemProps
-} from "@openvideo/timeline";
+  PreviewTrackItemProps,
+} from '@openvideo/timeline';
 
 class PreviewTrackItem extends PreviewTrackItemBase {
-  static type = "PreviewTrackItem";
+  static type = 'PreviewTrackItem';
   constructor(props: PreviewTrackItemProps) {
     super(props);
   }

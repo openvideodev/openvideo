@@ -1,8 +1,8 @@
-import { TransformActionHandler, controlsUtils } from "fabric";
-import { resolveOrigin } from "../utils/resolve-origin";
-import { isTransformCentered, wrapWithFixedAnchor } from "../utils/fabric";
-import { CENTER, LEFT, RIGHT } from "../constants/fabric";
-import { timeUsToUnits, unitsToTimeUs } from "../utils";
+import { TransformActionHandler, controlsUtils } from 'fabric';
+import { resolveOrigin } from '../utils/resolve-origin';
+import { isTransformCentered, wrapWithFixedAnchor } from '../utils/fabric';
+import { CENTER, LEFT, RIGHT } from '../constants/fabric';
+import { timeUsToUnits, unitsToTimeUs } from '../utils';
 
 const { wrapWithFireEvent, getLocalPoint } = controlsUtils;
 
@@ -47,7 +47,7 @@ export const changeTrimmableWidth: TransformActionHandler = (
 
     const minTimeToUnits = unitsToTimeUs(1, target.tScale);
 
-    const fromRight = transform.corner === "mr";
+    const fromRight = transform.corner === 'mr';
 
     if (fromRight) {
       const to = target.trim.to;
@@ -70,7 +70,7 @@ export const changeTrimmableWidth: TransformActionHandler = (
       );
       if (widthToTime < minTimeToUnits) return false;
 
-      target.set("width", Math.max(newWidth, 0));
+      target.set('width', Math.max(newWidth, 0));
       target.trim.to = newTo;
     } else {
       // Check if the object is out of the canvas
@@ -90,7 +90,7 @@ export const changeTrimmableWidth: TransformActionHandler = (
         const totalWidthToLeft = target.width + target.left;
 
         if (totalWidthToLeft <= durationInUnits) {
-          target.set("width", totalWidthToLeft);
+          target.set('width', totalWidthToLeft);
 
           const newTrimFrom = unitsToTimeUs(
             durationInUnits - totalWidthToLeft,
@@ -124,7 +124,7 @@ export const changeTrimmableWidth: TransformActionHandler = (
       const newTrimFrom = from - diffTime;
       if (newTrimFrom < 0) return false;
 
-      target.set("width", Math.max(newWidth, 0));
+      target.set('width', Math.max(newWidth, 0));
       target.trim.from = newTrimFrom;
       if (target.onResize) {
         target.onResize();
@@ -137,6 +137,6 @@ export const changeTrimmableWidth: TransformActionHandler = (
 };
 
 export const resizeTrimmable = wrapWithFireEvent(
-  "resizing",
+  'resizing',
   wrapWithFixedAnchor(changeTrimmableWidth)
 );

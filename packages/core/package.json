@@ -19,12 +19,14 @@
     "test": "vitest"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
     "typescript": "~5.9.2",
     "vite": "^7.1.5",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "lodash-es": "^4.17.21",
     "nanoid": "^5.0.7",
     "zustand": "^5.0.4"
   }

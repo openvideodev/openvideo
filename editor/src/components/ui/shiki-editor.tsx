@@ -1,6 +1,6 @@
-"use client";
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { codeToHtml } from "shiki";
+'use client';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { codeToHtml } from 'shiki';
 
 interface ShikiEditorProps {
   value: string;
@@ -14,12 +14,12 @@ interface ShikiEditorProps {
 export const ShikiEditor = ({
   value,
   onChange,
-  language = "glsl",
-  theme = "vitesse-dark",
-  className = "",
-  placeholder = "",
+  language = 'glsl',
+  theme = 'vitesse-dark',
+  className = '',
+  placeholder = '',
 }: ShikiEditorProps) => {
-  const [highlightedHtml, setHighlightedHtml] = useState("");
+  const [highlightedHtml, setHighlightedHtml] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +34,7 @@ export const ShikiEditor = ({
     let cancelled = false;
     const highlight = async () => {
       if (!value) {
-        setHighlightedHtml("");
+        setHighlightedHtml('');
         return;
       }
       try {
@@ -47,7 +47,10 @@ export const ShikiEditor = ({
         }
       } catch {
         if (!cancelled) {
-          const escaped = value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          const escaped = value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
           setHighlightedHtml(`<pre><code>${escaped}</code></pre>`);
         }
       }
@@ -61,7 +64,7 @@ export const ShikiEditor = ({
   return (
     <div
       className={`shiki-editor-wrapper relative rounded-md border border-input overflow-hidden focus-within:ring-1 focus-within:ring-ring ${className}`}
-      style={{ minHeight: "16rem" }}
+      style={{ minHeight: '16rem' }}
     >
       {/* Highlighting Layer */}
       <div
@@ -81,8 +84,8 @@ export const ShikiEditor = ({
         spellCheck={false}
         className="shiki-editor-textarea absolute inset-0 w-full h-full resize-none bg-transparent text-transparent font-mono text-xs leading-relaxed p-4 outline-none rounded-md z-10"
         style={{
-          caretColor: "white",
-          WebkitTextFillColor: "transparent",
+          caretColor: 'white',
+          WebkitTextFillColor: 'transparent',
         }}
       />
 

@@ -199,6 +199,9 @@ importers:
       motion:
         specifier: ^12.23.26
         version: 12.38.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      nanoid:
+        specifier: ^5.0.7
+        version: 5.1.9
       next:
         specifier: 16.0.7
         version: 16.0.7(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -385,8 +388,24 @@ importers:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@24.10.15)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2)
 
+  packages/agents:
+    dependencies:
+      '@openvideo/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: ~5.9.2
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.0.8)(@vitest/browser-playwright@4.0.18)(@vitest/ui@4.0.18)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.31.1)(msw@2.12.10(@types/node@25.0.8)(typescript@5.9.3))(yaml@2.8.2)
+
   packages/core:
     dependencies:
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.18.1
       nanoid:
         specifier: ^5.0.7
         version: 5.1.9
@@ -394,6 +413,9 @@ importers:
         specifier: ^5.0.4
         version: 5.0.12(@types/react@19.2.8)(immer@10.2.0)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
     devDependencies:
+      '@types/lodash-es':
+        specifier: ^4.17.12
+        version: 4.17.12
       typescript:
         specifier: ~5.9.2
         version: 5.9.3
@@ -427,6 +449,9 @@ importers:
       microdiff:
         specifier: ^1.4.0
         version: 1.5.0
+      nanoid:
+        specifier: ^5.0.7
+        version: 5.1.9
       opfs-tools:
         specifier: ^0.7.2
         version: 0.7.4
@@ -479,6 +504,9 @@ importers:
 
   packages/timeline:
     dependencies:
+      '@openvideo/core':
+        specifier: workspace:*
+        version: link:../core
       fabric:
         specifier: ^6.3.0
         version: 6.9.1

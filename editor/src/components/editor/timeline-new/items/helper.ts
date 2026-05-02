@@ -1,10 +1,10 @@
-import { Helper as HelperBase, HelperProps } from "@openvideo/timeline";
+import { Helper as HelperBase, HelperProps } from '@openvideo/timeline';
 
 class Helper extends HelperBase {
-  static type = "Helper";
+  static type = 'Helper';
 
   constructor(props: HelperProps) {
-    props.activeGuideFill = "#ffffff";
+    props.activeGuideFill = '#ffffff';
     super(props);
   }
 }

@@ -50,12 +50,13 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@pixi/layout": "^3.2.0",
     "@openvideo/core": "workspace:*",
+    "@pixi/layout": "^3.2.0",
     "gl-transitions": "^1.43.0",
     "gsap": "^3.12.7",
     "mediabunny": "^1.26.0",
     "microdiff": "^1.4.0",
+    "nanoid": "^5.0.7",
     "opfs-tools": "^0.7.2",
     "pixi-filters": "^6.1.5",
     "pixi.js": "^8.14.3",

@@ -1,9 +1,9 @@
-import { Control, controlsUtils } from "fabric";
-import { changeWidth } from "../resize/common";
-import { drawVerticalLine } from "./draw";
-import { resizeTrimmable } from "../resize/trimmable";
-import { resizeTransitionWidth } from "../resize/transition";
-import { resizeTemplate } from "../resize/template";
+import { Control, controlsUtils } from 'fabric';
+import { changeWidth } from '../resize/common';
+import { drawVerticalLine } from './draw';
+import { resizeTrimmable } from '../resize/trimmable';
+import { resizeTransitionWidth } from '../resize/transition';
+import { resizeTemplate } from '../resize/template';
 
 const { scaleSkewCursorStyleHandler } = controlsUtils;
 
@@ -13,19 +13,19 @@ export const createResizeControls = () => ({
     y: 0,
     actionHandler: changeWidth,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
+    actionName: 'resizing',
     render: drawVerticalLine,
-    controlOrientation: "right"
+    controlOrientation: 'right',
   }),
   ml: new Control({
     x: -0.5,
     y: 0,
     actionHandler: changeWidth,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
+    actionName: 'resizing',
     render: drawVerticalLine,
-    controlOrientation: "left"
-  })
+    controlOrientation: 'left',
+  }),
 });
 
 export const createTemplateControls = () => ({
@@ -35,8 +35,8 @@ export const createTemplateControls = () => ({
     render: drawVerticalLine,
     actionHandler: resizeTemplate,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
-    controlOrientation: "right"
+    actionName: 'resizing',
+    controlOrientation: 'right',
   }),
   ml: new Control({
     x: -0.5,
@@ -44,9 +44,9 @@ export const createTemplateControls = () => ({
     render: drawVerticalLine,
     actionHandler: resizeTemplate,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
-    controlOrientation: "left"
-  })
+    actionName: 'resizing',
+    controlOrientation: 'left',
+  }),
 });
 
 export const createAudioControls = () => ({
@@ -56,8 +56,8 @@ export const createAudioControls = () => ({
     render: drawVerticalLine,
     actionHandler: resizeTrimmable,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
-    controlOrientation: "right"
+    actionName: 'resizing',
+    controlOrientation: 'right',
   }),
   ml: new Control({
     x: -0.5,
@@ -65,9 +65,9 @@ export const createAudioControls = () => ({
     render: drawVerticalLine,
     actionHandler: resizeTrimmable,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
-    controlOrientation: "left"
-  })
+    actionName: 'resizing',
+    controlOrientation: 'left',
+  }),
 });
 
 export const createMediaControls = () => ({
@@ -77,8 +77,8 @@ export const createMediaControls = () => ({
     render: drawVerticalLine,
     actionHandler: resizeTrimmable,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
-    controlOrientation: "right"
+    actionName: 'resizing',
+    controlOrientation: 'right',
   }),
   ml: new Control({
     x: -0.5,
@@ -86,9 +86,9 @@ export const createMediaControls = () => ({
     render: drawVerticalLine,
     actionHandler: resizeTrimmable,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
-    controlOrientation: "left"
-  })
+    actionName: 'resizing',
+    controlOrientation: 'left',
+  }),
 });
 
 export const createTransitionControls = () => ({
@@ -97,17 +97,17 @@ export const createTransitionControls = () => ({
     y: 0,
     actionHandler: resizeTransitionWidth,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
+    actionName: 'resizing',
     render: drawVerticalLine,
-    controlOrientation: "right"
+    controlOrientation: 'right',
   }),
   ml: new Control({
     x: -0.5,
     y: 0,
     actionHandler: resizeTransitionWidth,
     cursorStyleHandler: scaleSkewCursorStyleHandler,
-    actionName: "resizing",
+    actionName: 'resizing',
     render: drawVerticalLine,
-    controlOrientation: "left"
-  })
+    controlOrientation: 'left',
+  }),
 });

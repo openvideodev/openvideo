@@ -1,12 +1,12 @@
-import { ActiveSelection, FabricObject } from "fabric";
-import Timeline from "../timeline";
-import { Transition, Track } from "../objects";
-import { unitsToTimeUs } from "../utils/timeline";
-import { IClip } from "../types";
-import { removeItemsFromTrack } from "../utils/item";
-import { timeUsToUnits } from "../utils";
-import { loadObject } from "../utils/load-object";
-import { isEqual } from "lodash-es";
+import { ActiveSelection, FabricObject } from 'fabric';
+import Timeline from '../timeline';
+import { Transition, Track } from '../objects';
+import { unitsToTimeUs } from '../utils/timeline';
+import { IClip } from '../types';
+import { removeItemsFromTrack } from '../utils/item';
+import { timeUsToUnits } from '../utils';
+import { loadObject } from '../utils/load-object';
+import { isEqual } from 'lodash-es';
 
 class ItemManager {
   private timeline: Timeline;
@@ -18,7 +18,7 @@ class ItemManager {
   public addTrackItem(trackItem: IClip) {
     const object = loadObject(trackItem, {
       tScale: this.timeline.tScale,
-      sizesMap: this.timeline.sizesMap
+      sizesMap: this.timeline.sizesMap,
     });
 
     this.timeline.add(object as FabricObject);
@@ -29,12 +29,12 @@ class ItemManager {
 
     // Create a map of track IDs to track objects
     const trackMap = new Map(
-      this.timeline.getObjects("Track").map((track) => [track.id, track])
+      this.timeline.getObjects('Track').map((track) => [track.id, track])
     );
 
     // Cache track items for later use
     const trackItems = this.getTrackItems();
-    const transitions = this.timeline.getObjects("Transition") as Transition[];
+    const transitions = this.timeline.getObjects('Transition') as Transition[];
 
     // Align track items to their respective tracks
     this.timeline.trackItemIds.forEach((id) => {
@@ -87,7 +87,7 @@ class ItemManager {
     if (isEqual(currentActiveIds, ids)) return;
     const objects = this.timeline.getObjects(
       ...Timeline.objectTypes,
-      "Transition"
+      'Transition'
     );
 
     const activeObjects = objects.filter((o) => ids.includes(o.id));
@@ -118,11 +118,11 @@ class ItemManager {
       const nextDuration = unitsToTimeUs(width, this.timeline.tScale);
       const nextDisplay = {
         from: from,
-        to: from + nextDuration
+        to: from + nextDuration,
       };
 
       const nextTrackItem: Partial<IClip> = {
-        display: nextDisplay
+        display: nextDisplay,
       };
 
       if (o.isTrimmable) {
@@ -134,13 +134,13 @@ class ItemManager {
 
       nextTrackItemsMap[id] = {
         ...currentTrackItem,
-        ...nextTrackItem
+        ...nextTrackItem,
       };
     });
 
     this.timeline.trackItemsMap = {
       ...this.timeline.trackItemsMap,
-      ...nextTrackItemsMap
+      ...nextTrackItemsMap,
     };
 
     this.timeline.resumeEventListeners();
@@ -200,7 +200,7 @@ class ItemManager {
 
     this.timeline.tracksManager?.renderTracks();
     this.alignItemsToTrack();
-    this.timeline.updateState({ updateHistory: true, kind: "remove" });
+    this.timeline.updateState({ updateHistory: true, kind: 'remove' });
   }
 
   public updateTrackItemCoords(updateActiveObject?: boolean) {
@@ -227,7 +227,7 @@ class ItemManager {
       );
       trackItemObject.set({
         left: left,
-        width: width
+        width: width,
       });
       trackItemObject.setCoords();
       return;

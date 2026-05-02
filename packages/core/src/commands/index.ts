@@ -1,0 +1,26 @@
+import { commandRegistry } from './registry';
+import * as clipHandlers from './clip';
+import * as trackHandlers from './track';
+import * as projectHandlers from './project';
+import * as playbackHandlers from './playback';
+
+export function registerDefaultHandlers() {
+  commandRegistry.register('clip.add', clipHandlers.addClipHandler);
+  commandRegistry.register('clip.update', clipHandlers.updateClipHandler);
+  commandRegistry.register('clip.remove', clipHandlers.removeClipsHandler);
+
+  commandRegistry.register('track.add', trackHandlers.addTrackHandler);
+  commandRegistry.register('track.remove', trackHandlers.removeTrackHandler);
+  commandRegistry.register('track.move', trackHandlers.moveTrackHandler);
+
+  commandRegistry.register(
+    'project.updateSettings',
+    projectHandlers.updateSettingsHandler
+  );
+
+  commandRegistry.register('playback.seek', playbackHandlers.seekHandler);
+  commandRegistry.register(
+    'playback.setIsPlaying',
+    playbackHandlers.setIsPlayingHandler
+  );
+}

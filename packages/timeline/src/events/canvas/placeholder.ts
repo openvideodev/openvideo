@@ -7,18 +7,18 @@ import {
   Point,
   SerializedObjectProps,
   TBBox,
-  TPointerEvent
-} from "fabric";
-import { Helper, Placeholder, PreviewTrackItem, Track } from "../../objects";
-import Timeline from "../../timeline";
-import { clearPlaceholderObjects } from "../../utils/canvas";
-import { IClip, ITransitionClip } from "../../types";
+  TPointerEvent,
+} from 'fabric';
+import { Helper, Placeholder, PreviewTrackItem, Track } from '../../objects';
+import Timeline from '../../timeline';
+import { clearPlaceholderObjects } from '../../utils/canvas';
+import { IClip, ITransitionClip } from '../../types';
 
-import { cloneDeep, throttle } from "lodash-es";
-import TransitionGuide from "../../objects/transition-guide";
-import { groupTrackItems } from "../../utils/group-items";
-import { timeUsToUnits } from "../../utils";
-import { MovingState } from "../../managers/drag-state-manager";
+import { cloneDeep, throttle } from 'lodash-es';
+import TransitionGuide from '../../objects/transition-guide';
+import { groupTrackItems } from '../../utils/group-items';
+import { timeUsToUnits } from '../../utils';
+import { MovingState } from '../../managers/drag-state-manager';
 
 // Removed hardcoded availableItemTypes
 
@@ -89,7 +89,7 @@ const checkCanBeDroppedOverlaped = (
   if (nextLeft < 0) return false;
   const overlapObject = findOverlapObject(objects, {
     ...target.getBoundingRect(),
-    left: nextLeft
+    left: nextLeft,
   });
 
   if (overlapObject) return false;
@@ -127,7 +127,7 @@ function getInitialPlaceholderPosition(canvas: Timeline) {
   const firstObj = state.primaryMovingObjects[0];
   return {
     top: state.objectInitialPositions[firstObj.id]!.top,
-    left: state.objectInitialPositions[firstObj.id]!.left
+    left: state.objectInitialPositions[firstObj.id]!.left,
   };
 }
 
@@ -141,12 +141,12 @@ function getDefaultPlaceholderPosition(canvas: Timeline, object: FabricObject) {
     const objectBounds = firstPrimaryObj.getBoundingRect();
     return {
       top: draggingOverTrack!.top,
-      left: objectBounds.left
+      left: objectBounds.left,
     };
   }
   return {
     top: draggingOverTrack!.top,
-    left: objectBounds.left
+    left: objectBounds.left,
   };
 }
 
@@ -176,12 +176,12 @@ function getOverlapPlaceholderPosition(
     );
     return {
       left: nearPoint,
-      top: track.top
+      top: track.top,
     };
   }
   return {
     left: position,
-    top: overlapObject!.top
+    top: overlapObject!.top,
   };
 }
 
@@ -293,7 +293,7 @@ const onObjectMovingForPlaceholder = throttle(
         const draggedObject = placeholderObject.draggedObject;
         canvas.positionAfterTransform[draggedObject.id] = {
           top: placeholderObject.top,
-          left: placeholderObject.left
+          left: placeholderObject.left,
         };
       });
       canvas.trackIdAfterTransform =
@@ -381,7 +381,7 @@ const onObjectMovingForPlaceholder = throttle(
             state.trackTopToIdMap[placeholderPosition.top];
           canvas.positionAfterTransform[draggedObject.id] = {
             top: placeholderPosition.top,
-            left: placeholderPosition.left + (diffBetweenObjs[index - 1] || 0)
+            left: placeholderPosition.left + (diffBetweenObjs[index - 1] || 0),
           };
           placeholderObject.left =
             placeholderPosition.left + (diffBetweenObjs[index - 1] || 0);
@@ -391,7 +391,7 @@ const onObjectMovingForPlaceholder = throttle(
             state.trackTopToIdMap[placeholderPosition.top];
           canvas.positionAfterTransform[draggedObject.id] = {
             top: placeholderPosition.top,
-            left: placeholderPosition.left
+            left: placeholderPosition.left,
           };
           placeholderObject.left = placeholderPosition.left;
           placeholderObject.top = placeholderPosition.top;
@@ -470,7 +470,7 @@ function setPositionMagneticObj(
   const primaryObjIds = state.primaryMovingObjects.map((obj) => obj.id);
   if (!canvas) return;
   const transitionIds = canvas.transitionIds.filter(
-    (id) => (canvas.transitionsMap[id] as ITransitionClip).key !== "none"
+    (id) => (canvas.transitionsMap[id] as ITransitionClip).key !== 'none'
   );
   sortedObjectByLeft.forEach((obj) => {
     obj.set({ left: initialPost });
@@ -512,7 +512,7 @@ function setPositionRegularObj(
     if (itemIds.includes(o.id)) itemInTrack[o.id] = o;
   });
   const transitionInTrackIds = canvas
-    .getObjects("Transition")
+    .getObjects('Transition')
     .filter((o) => o.top === draggingOverTrack.top)
     .map((o) => o.id);
   Object.values(canvas.transitionsMap).forEach((o) => {
@@ -521,7 +521,7 @@ function setPositionRegularObj(
   const groupedItems = groupTrackItems({
     trackItemIds: cloneDeep(itemIds),
     transitionsMap: cloneDeep(transitionInTrack),
-    trackItemsMap: cloneDeep(itemInTrack)
+    trackItemsMap: cloneDeep(itemInTrack),
   });
   initialTrackPoints.push(0);
   groupedItems.forEach((group) => {
@@ -543,9 +543,10 @@ function setPositionRegularObj(
 }
 
 function selectClosestHelper(canvas: Canvas, pointY: number): void {
-  const overTracks = canvas.getObjects("Helper");
-  const closestHelp = overTracks.reduce((prev: FabricObject, curr: FabricObject) =>
-    Math.abs(curr.top - pointY) < Math.abs(prev.top - pointY) ? curr : prev
+  const overTracks = canvas.getObjects('Helper');
+  const closestHelp = overTracks.reduce(
+    (prev: FabricObject, curr: FabricObject) =>
+      Math.abs(curr.top - pointY) < Math.abs(prev.top - pointY) ? curr : prev
   ) as Helper;
   closestHelp.setSelected(true);
 }
@@ -562,7 +563,7 @@ const getPlaceholderPosition = (
     return {
       top: 0,
       left: 0,
-      isInvalidDrop: true
+      isInvalidDrop: true,
     };
   }
 
@@ -575,7 +576,7 @@ const getPlaceholderPosition = (
       return {
         top: 0,
         left: 0,
-        isInvalidDrop: true
+        isInvalidDrop: true,
       };
     }
     return getOverlapPlaceholderPosition(
@@ -591,11 +592,11 @@ const getPlaceholderPosition = (
 };
 
 export function addPlaceholderEvents(timeline: Timeline) {
-  timeline.on("mouse:up", onMouseUp.bind(timeline));
-  timeline.on("object:moving", onObjectMovingForPlaceholder);
+  timeline.on('mouse:up', onMouseUp.bind(timeline));
+  timeline.on('object:moving', onObjectMovingForPlaceholder);
 }
 
 export function removePlaceholderEvents(timeline: Timeline) {
-  timeline.off("mouse:up", onMouseUp.bind(timeline));
-  timeline.off("object:moving", onObjectMovingForPlaceholder);
+  timeline.off('mouse:up', onMouseUp.bind(timeline));
+  timeline.off('object:moving', onObjectMovingForPlaceholder);
 }

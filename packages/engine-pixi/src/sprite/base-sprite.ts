@@ -244,7 +244,6 @@ export abstract class BaseSprite<
     spill: 0.0,
   };
 
-
   colorAdjustment: ColorAdjustment = {
     enabled: false,
     type: 'basic',
@@ -540,7 +539,9 @@ export abstract class BaseSprite<
     }
     // Copy metadata if target is a BaseClip
     if ('metadata' in this && 'metadata' in target) {
-      (target as any).metadata = JSON.parse(JSON.stringify((this as any).metadata || {}));
+      (target as any).metadata = JSON.parse(
+        JSON.stringify((this as any).metadata || {})
+      );
     }
   }
 

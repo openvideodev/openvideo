@@ -1,5 +1,5 @@
-import { Canvas, FabricObject, Line, TBBox } from "fabric";
-import Timeline from "../timeline";
+import { Canvas, FabricObject, Line, TBBox } from 'fabric';
+import Timeline from '../timeline';
 
 const GUIDELINE_OFFSET = 10;
 
@@ -51,7 +51,7 @@ export const getLineGuideStops = (
 
   return {
     vertical: vertical.flat(),
-    horizontal: []
+    horizontal: [],
   };
 };
 
@@ -74,10 +74,10 @@ export const getGuides = (
         resultV.push({
           lineGuide: lineGuide.val,
           diff: diff,
-          orientation: "V",
+          orientation: 'V',
           snap: itemBound.snap,
           offset: itemBound.offset,
-          targetDim: { start: lineGuide.start, end: lineGuide.end }
+          targetDim: { start: lineGuide.start, end: lineGuide.end },
         });
       }
     });
@@ -90,10 +90,10 @@ export const getGuides = (
         resultH.push({
           lineGuide: lineGuide.val,
           diff: diff,
-          orientation: "H",
+          orientation: 'H',
           snap: itemBound.snap,
           offset: itemBound.offset,
-          targetDim: { start: lineGuide.start, end: lineGuide.end }
+          targetDim: { start: lineGuide.start, end: lineGuide.end },
         });
       }
     });
@@ -108,18 +108,18 @@ export const getGuides = (
     guides.push({
       lineGuide: minV.lineGuide,
       offset: minV.offset,
-      orientation: "V",
+      orientation: 'V',
       snap: minV.snap,
-      targetDim: minV.targetDim
+      targetDim: minV.targetDim,
     });
   }
   if (minH) {
     guides.push({
       lineGuide: minH.lineGuide,
       offset: minH.offset,
-      orientation: "H",
+      orientation: 'H',
       snap: minH.snap,
-      targetDim: minH.targetDim
+      targetDim: minH.targetDim,
     });
   }
   return guides;
@@ -128,7 +128,7 @@ export const getGuides = (
 interface GuidelineResult {
   lineGuide: number;
   diff: number;
-  orientation: "V" | "H";
+  orientation: 'V' | 'H';
   snap: string;
   offset: number;
   targetDim: {
@@ -140,7 +140,7 @@ interface GuidelineResult {
 interface Guide {
   lineGuide: number;
   offset: number;
-  orientation: "V" | "H";
+  orientation: 'V' | 'H';
   snap: string;
   targetDim: {
     start: number;
@@ -153,26 +153,26 @@ interface Guide {
 export const drawGuides = (guides: Guide[], _: TBBox, canvas: Timeline) => {
   guides.forEach((lineGuide) => {
     const alignmentLineOptions = getAlignmentLineOptions(canvas.getZoom());
-    if (lineGuide.orientation === "H") {
+    if (lineGuide.orientation === 'H') {
       canvas.add(
         getAlignmentLine(
           [
             0,
             lineGuide.lineGuide - alignmentLineOptions.strokeWidth / 2,
             2000,
-            lineGuide.lineGuide - alignmentLineOptions.strokeWidth / 2
+            lineGuide.lineGuide - alignmentLineOptions.strokeWidth / 2,
           ],
           { ...alignmentLineOptions, stroke: canvas.guideLineColor }
         )
       );
-    } else if (lineGuide.orientation === "V") {
+    } else if (lineGuide.orientation === 'V') {
       canvas.add(
         getAlignmentLine(
           [
             lineGuide.lineGuide - alignmentLineOptions.strokeWidth / 2,
             0,
             lineGuide.lineGuide - alignmentLineOptions.strokeWidth / 2,
-            2000
+            2000,
           ],
           { ...alignmentLineOptions, stroke: canvas.guideLineColor }
         )
@@ -184,7 +184,7 @@ export const drawGuides = (guides: Guide[], _: TBBox, canvas: Timeline) => {
 const getAlignmentLineOptions = (zoom: number) => {
   const strokeWidth = 2 / zoom;
   return {
-    strokeWidth
+    strokeWidth,
   };
 };
 
@@ -194,11 +194,11 @@ const getAlignmentLine = (
 ) => {
   return new Line(points, {
     ...options,
-    strokeLineCap: "square",
+    strokeLineCap: 'square',
     excludeFromExport: true,
     isAlignmentAuxiliary: true,
     selectable: false,
-    objectCaching: false
+    objectCaching: false,
   });
 };
 
@@ -216,26 +216,26 @@ export const getObjectSnappingEdges = (
       {
         guide: Math.round(rect.left),
         offset: Math.round(target.left - rect.left),
-        snap: "start"
+        snap: 'start',
       },
       {
         guide: Math.round(rect.left + rect.width),
         offset: Math.round(target.left - rect.left - rect.width),
-        snap: "end"
-      }
+        snap: 'end',
+      },
     ],
     horizontal: [
       {
         guide: Math.round(rect.top),
         offset: Math.round(target.top - rect.top),
-        snap: "start"
+        snap: 'start',
       },
       {
         guide: Math.round(rect.top + rect.height),
         offset: Math.round(target.top - rect.top - rect.height),
-        snap: "end"
-      }
-    ]
+        snap: 'end',
+      },
+    ],
   };
 };
 
@@ -254,7 +254,7 @@ export const getStopsForObject = (
     return {
       val: stop,
       start: drawStart,
-      end: drawStart + drawDistance
+      end: drawStart + drawDistance,
     };
   });
 };

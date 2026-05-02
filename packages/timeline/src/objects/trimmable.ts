@@ -1,18 +1,18 @@
-import { Control, Rect, RectProps, classRegistry } from "fabric";
+import { Control, Rect, RectProps, classRegistry } from 'fabric';
 import {
   ACTIVE_SELECTION_COLOR,
-  ACTIVE_SELECTION_WIDTH
-} from "../constants/objects";
-import { createMediaControls } from "../controls";
-import { IClip, ITrim } from "../types";
-import { timeUsToUnits } from "../utils";
+  ACTIVE_SELECTION_WIDTH,
+} from '../constants/objects';
+import { createMediaControls } from '../controls';
+import { IClip, ITrim } from '../types';
+import { timeUsToUnits } from '../utils';
 interface IDisplay {
   from: number;
   to: number;
 }
 
 export interface TrimmableBaseProps
-  extends Pick<RectProps, "width" | "height" | "top" | "left"> {
+  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
   id: string;
   tScale: number;
   display: IDisplay;
@@ -22,9 +22,9 @@ export interface TrimmableBaseProps
 export type TrimmableProps<T extends object = {}> = TrimmableBaseProps & T;
 
 class Trimmable extends Rect {
-  static type = "Trimmable";
+  static type = 'Trimmable';
   public id: string;
-  public resourceId: string = "";
+  public resourceId: string = '';
   public tScale: number;
   public isSelected = false;
   declare display: IDisplay;
@@ -40,12 +40,12 @@ class Trimmable extends Rect {
     rx: 6,
     ry: 6,
     objectCaching: false,
-    borderColor: "transparent",
-    stroke: "transparent",
+    borderColor: 'transparent',
+    stroke: 'transparent',
     strokeWidth: 0,
-    fill: "#27272a",
+    fill: '#27272a',
     borderOpacityWhenMoving: 1,
-    hoverCursor: "default"
+    hoverCursor: 'default',
   };
 
   constructor(options: TrimmableProps) {
@@ -60,7 +60,8 @@ class Trimmable extends Rect {
   }
 
   public sync(itemDetail: IClip, tScale: number) {
-    const newWidthInTime = (itemDetail.trim?.to || 0) - (itemDetail.trim?.from || 0);
+    const newWidthInTime =
+      (itemDetail.trim?.to || 0) - (itemDetail.trim?.from || 0);
     const newWidthInUnits = timeUsToUnits(
       newWidthInTime,
       tScale,
@@ -70,7 +71,7 @@ class Trimmable extends Rect {
       duration: itemDetail.duration,
       display: itemDetail.display,
       trim: itemDetail.trim,
-      width: newWidthInUnits
+      width: newWidthInUnits,
     });
     this.setCoords();
   }
@@ -111,6 +112,6 @@ class Trimmable extends Rect {
   }
 }
 
-classRegistry.setClass(Trimmable, "Trimmable");
+classRegistry.setClass(Trimmable, 'Trimmable');
 
 export default Trimmable;

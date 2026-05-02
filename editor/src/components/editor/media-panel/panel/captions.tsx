@@ -1,31 +1,37 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Play, Trash2 } from "lucide-react";
-import { fontManager, jsonToClip, Log, type IClip } from "@openvideo/engine-pixi";
-import { generateCaptionClips } from "@/lib/caption-generator";
-import { useStore } from "zustand";
-import { projectStore, engine } from "@/lib/project";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { useEffect, useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, Play, Trash2 } from 'lucide-react';
+import {
+  fontManager,
+  jsonToClip,
+  Log,
+  type IClip,
+} from '@openvideo/engine-pixi';
+import { generateCaptionClips } from '@/lib/caption-generator';
+import { useStore } from 'zustand';
+import { projectStore, core } from '@/lib/project';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { nanoid } from 'nanoid';
 
 export default function PanelCaptions() {
   const clips = useStore(projectStore, (s) => s.clips);
   const currentTime = useStore(projectStore, (s) => s.currentTime);
-  
+
   const mediaItems = (Object.values(clips) as IClip[]).filter(
-    (clip: any) => clip.type === "Video" || clip.type === "Audio",
+    (clip: any) => clip.type === 'Video' || clip.type === 'Audio'
   );
-  
+
   const captionItems = (Object.values(clips) as IClip[])
-    .filter((clip: any) => clip.type === "Caption")
+    .filter((clip: any) => clip.type === 'Caption')
     .sort((a, b) => a.display.from - b.display.from);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeCaptionId, setActiveCaptionId] = useState<string | null>(null);
-  
+
   const captionItemsRef = useRef(captionItems);
   const activeCaptionIdRef = useRef(activeCaptionId);
 
@@ -40,7 +46,8 @@ export default function PanelCaptions() {
   useEffect(() => {
     // Find the currently active caption
     const activeItem = captionItems.find(
-      (item) => currentTime >= item.display.from && currentTime < item.display.to,
+      (item) =>
+        currentTime >= item.display.from && currentTime < item.display.to
     );
     if (activeItem) {
       setActiveCaptionId(activeItem.id);
@@ -52,15 +59,14 @@ export default function PanelCaptions() {
   const updateClips = () => {}; // No longer needed but kept empty to avoid breaking other calls if any
 
   useEffect(() => {
-    if (!engine) return;
-
     const handleUpdate = () => updateClips();
 
     const handleTimeUpdate = (currentTime: number) => {
       // Find the currently active caption
       // We use the Ref because this closure is created once and we don't want to re-bind listener
       const activeItem = captionItemsRef.current.find(
-        (item) => currentTime >= item.display.from && currentTime < item.display.to,
+        (item) =>
+          currentTime >= item.display.from && currentTime < item.display.to
       );
 
       const newActiveId = activeItem ? activeItem.id : null;
@@ -72,27 +78,21 @@ export default function PanelCaptions() {
       }
     };
 
-    handleUpdate();
-    engine.on("clip:added", handleUpdate);
-    engine.on("clip:removed", handleUpdate);
-    engine.on("clip:updated", handleUpdate);
-    engine.on("timeupdate", handleTimeUpdate);
+    core.on('timeupdate', handleTimeUpdate);
 
     return () => {
-      engine.off("clip:added", handleUpdate);
-      engine.off("clip:removed", handleUpdate);
-      engine.off("clip:updated", handleUpdate);
-      engine.off("timeupdate", handleTimeUpdate);
+      core.off('timeupdate', handleTimeUpdate);
     };
-  }, [engine]);
+  }, []);
 
   const handleGenerateCaptions = async () => {
     if (mediaItems.length === 0) return;
 
     setIsGenerating(true);
     try {
-      const fontName = "Bangers-Regular";
-      const fontUrl = "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf";
+      const fontName = 'Bangers-Regular';
+      const fontUrl =
+        'https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf';
 
       await fontManager.addFont({
         name: fontName,
@@ -107,10 +107,10 @@ export default function PanelCaptions() {
           const audioUrl = (mediaClip as any).src;
           if (!audioUrl) continue;
 
-          const transcribeResponse = await fetch("/api/transcribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: audioUrl, model: "nova-3" }),
+          const transcribeResponse = await fetch('/api/transcribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: audioUrl, model: 'nova-3' }),
           });
 
           if (!transcribeResponse.ok) {
@@ -121,9 +121,12 @@ export default function PanelCaptions() {
           const transcriptionData = await transcribeResponse.json();
           if (!transcriptionData) continue;
 
-          const words = transcriptionData.results?.main?.words || transcriptionData.words || [];
+          const words =
+            transcriptionData.results?.main?.words ||
+            transcriptionData.words ||
+            [];
 
-          const settings = engine.store.getState().settings;
+          const settings = core.store.getState().settings;
           const captionClipsJSON = await generateCaptionClips({
             videoWidth: settings.width,
             videoHeight: settings.height,
@@ -151,17 +154,30 @@ export default function PanelCaptions() {
         }
       }
 
-      const newTrack = engine.addTrack({
-        name: "Captions",
-        type: "caption",
-      });
+      const trackId = 'track_' + nanoid(10);
+      const trackCommand = {
+        id: nanoid(),
+        type: 'track.add',
+        payload: { id: trackId, name: 'Captions', type: 'caption' },
+      };
 
       if (clipsToAdd.length > 0) {
-        await engine.addClips(clipsToAdd, { trackId: newTrack.id });
-        updateClips();
+        const fullClips = await Promise.all(
+          clipsToAdd.map((c) => core.clip.prepare(c as any))
+        );
+
+        const addCommands = fullClips.map((clip) => ({
+          id: nanoid(),
+          type: 'clip.add',
+          payload: { clip, trackId },
+        }));
+
+        core.batch([trackCommand, ...addCommands] as any[]);
+      } else {
+        core.execute(trackCommand as any);
       }
     } catch (error) {
-      Log.error("Failed to generate captions:", error);
+      Log.error('Failed to generate captions:', error);
     } finally {
       setIsGenerating(false);
     }
@@ -181,12 +197,16 @@ export default function PanelCaptions() {
     });
   }
 
-  const handleSplitCaption = async (id: string, cursorPosition: number, fullText: string) => {
-    const state = engine.store.getState();
+  const handleSplitCaption = async (
+    id: string,
+    cursorPosition: number,
+    fullText: string
+  ) => {
+    const state = core.store.getState();
     const clip = state.clips[id];
     if (!clip) return;
 
-    const track = state.tracks.find(t => t.clipIds.includes(id));
+    const track = state.tracks.find((t) => t.clipIds.includes(id));
     if (!track) return;
     const trackId = track.id;
 
@@ -218,21 +238,23 @@ export default function PanelCaptions() {
     const part1Text = wordsInText
       .slice(0, splitWordIndex)
       .map((w) => w.text)
-      .join(" ");
+      .join(' ');
     const part2Text = wordsInText
       .slice(splitWordIndex)
       .map((w) => w.text)
-      .join(" ");
+      .join(' ');
 
-    const clipJson = (clip as any).toJSON ? (clip as any).toJSON() : { ...clip };
+    const clipJson = (clip as any).toJSON
+      ? (clip as any).toJSON()
+      : { ...clip };
     const caption = clipJson.caption || {};
     const words = caption.words || [];
 
     const part1Words = words.slice(0, splitWordIndex);
     const part2Words = words.slice(splitWordIndex);
-    console.log("part1Words", part1Words);
-    console.log("part2Words", part2Words);
-    console.log("clipJson", clipJson);
+    console.log('part1Words', part1Words);
+    console.log('part2Words', part2Words);
+    console.log('clipJson', clipJson);
 
     if (part1Words.length === 0 || part2Words.length === 0) return;
     const lastWordPart1 = part1Words[part1Words.length - 1];
@@ -270,20 +292,27 @@ export default function PanelCaptions() {
         from: lastWordPart1.to * 1000 + clipJson.display.from,
         to: clipJson.display.to,
       },
-      duration: clipJson.display.to - lastWordPart1.to * 1000 - clipJson.display.from,
+      duration:
+        clipJson.display.to - lastWordPart1.to * 1000 - clipJson.display.from,
     };
 
     try {
-      await engine.addClips([clip1Json as any, clip2Json as any], { trackId });
-      engine.removeClips([id]);
+      for (const c of [clip1Json, clip2Json]) {
+        await core.clip.add(c as any, { trackId });
+      }
+      core.clip.remove([id]);
     } catch (error) {
-      Log.error("Failed to split caption clip:", error);
+      Log.error('Failed to split caption clip:', error);
     }
   };
 
   // En PanelCaptions, modifica handleUpdateCaption:
-  const handleUpdateCaption = async (id: string, text: string, fullUpdate = false) => {
-    const state = engine.store.getState();
+  const handleUpdateCaption = async (
+    id: string,
+    text: string,
+    fullUpdate = false
+  ) => {
+    const state = core.store.getState();
     const clip = state.clips[id];
     if (!clip) return;
 
@@ -294,22 +323,25 @@ export default function PanelCaptions() {
       // MODO RÁPIDO: solo actualizar text (para onChange)
       const captionClip = clip as any;
       captionClip.text = text;
-      captionClip.emit("propsChange", { text });
+      captionClip.emit('propsChange', { text });
       return;
     }
 
     // MODO COMPLETO: calcular words y timings (solo onBlur)
     const newWordsText = text.trim().split(/\s+/).filter(Boolean);
-    const clipJson = (clip as any).toJSON ? (clip as any).toJSON() : { ...clip };
+    const clipJson = (clip as any).toJSON
+      ? (clip as any).toJSON()
+      : { ...clip };
     const caption = clipJson.caption || {};
     const oldWords = caption.words || [];
-    const paragraphIndex = oldWords[0]?.paragraphIndex ?? "";
+    const paragraphIndex = oldWords[0]?.paragraphIndex ?? '';
 
     const isNewWordAdded = newWordsText.length > oldWords.length;
     let updatedWords;
 
     if (isNewWordAdded) {
-      const totalDurationMs = (clipJson.display.to - clipJson.display.from) / 1000;
+      const totalDurationMs =
+        (clipJson.display.to - clipJson.display.from) / 1000;
       const totalChars = newWordsText.reduce((acc, w) => acc + w.length, 0);
       const durationPerChar = totalChars > 0 ? totalDurationMs / totalChars : 0;
 
@@ -353,19 +385,19 @@ export default function PanelCaptions() {
     } as any;
 
     try {
-      await engine.addClip(newClipJson, { trackId: track.id });
-      engine.removeClips([id]);
+      await core.clip.add(newClipJson, { trackId: track.id });
+      core.clip.remove([id]);
     } catch (error) {
-      Log.error("Failed to update caption clip:", error);
+      Log.error('Failed to update caption clip:', error);
     }
   };
 
   const handleDeleteCaption = (id: string) => {
-    engine.removeClips([id]);
+    core.clip.remove([id]);
   };
 
   const handleSeek = (time: number) => {
-    engine.seek(time);
+    core.seek(time);
   };
 
   return (
@@ -384,8 +416,12 @@ export default function PanelCaptions() {
                     key={item.id}
                     item={item}
                     isActive={item.id === activeCaptionId}
-                    onUpdate={(text, fullUpdate) => handleUpdateCaption(item.id, text, fullUpdate)}
-                    onSplit={(pos, text) => handleSplitCaption(item.id, pos, text)}
+                    onUpdate={(text, fullUpdate) =>
+                      handleUpdateCaption(item.id, text, fullUpdate)
+                    }
+                    onSplit={(pos, text) =>
+                      handleSplitCaption(item.id, pos, text)
+                    }
                     onDelete={() => handleDeleteCaption(item.id)}
                     onSeek={() => handleSeek(item.display.from)}
                   />
@@ -396,7 +432,8 @@ export default function PanelCaptions() {
         ) : (
           <div className="flex flex-col gap-6 p-4 py-6 items-center text-center">
             <div className="text-sm text-muted-foreground">
-              Recognize speech in the selected media and generate captions automatically.
+              Recognize speech in the selected media and generate captions
+              automatically.
             </div>
             <Button
               onClick={handleGenerateCaptions}
@@ -410,7 +447,7 @@ export default function PanelCaptions() {
                   Generating...
                 </>
               ) : (
-                "Generate Captions"
+                'Generate Captions'
               )}
             </Button>
           </div>
@@ -435,11 +472,11 @@ function CaptionItem({
   onDelete: () => void;
   onSeek: () => void;
 }) {
-  const [text, setText] = useState((item as any).text || "");
+  const [text, setText] = useState((item as any).text || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setText((item as any).text || "");
+    setText((item as any).text || '');
   }, [(item as any).text]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -454,7 +491,7 @@ function CaptionItem({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const cursorPosition = textareaRef.current?.selectionStart || 0;
       onSplit(cursorPosition, text);
@@ -464,8 +501,10 @@ function CaptionItem({
   return (
     <div
       className={cn(
-        "group relative flex flex-col gap-2 rounded-md p-3 transition-colors border-l-2",
-        isActive ? "bg-zinc-700/10 border-zinc-300 border" : "hover:bg-zinc-700/10  border",
+        'group relative flex flex-col gap-2 rounded-md p-3 transition-colors border-l-2',
+        isActive
+          ? 'bg-zinc-700/10 border-zinc-300 border'
+          : 'hover:bg-zinc-700/10  border'
       )}
     >
       <div className="flex items-center justify-between">
@@ -473,13 +512,14 @@ function CaptionItem({
           className="text-[10px] font-mono text-muted-foreground cursor-pointer hover:text-white transition-colors"
           onClick={onSeek}
         >
-          {formatTime(item.display.from / 1_000_000)} - {formatTime(item.display.to / 1_000_000)}
+          {formatTime(item.display.from / 1_000_000)} -{' '}
+          {formatTime(item.display.to / 1_000_000)}
         </div>
 
         <div
           className={cn(
-            "flex items-center gap-1 opacity-0 transition-opacity",
-            isActive || "group-hover:opacity-100",
+            'flex items-center gap-1 opacity-0 transition-opacity',
+            isActive || 'group-hover:opacity-100'
           )}
         >
           <Button
@@ -525,9 +565,9 @@ function formatTime(seconds: number) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
 
-  const hh = h > 0 ? `${h.toString().padStart(2, "0")}:` : "";
-  const mm = m.toString().padStart(2, "0");
-  const ss = s.toString().padStart(2, "0");
+  const hh = h > 0 ? `${h.toString().padStart(2, '0')}:` : '';
+  const mm = m.toString().padStart(2, '0');
+  const ss = s.toString().padStart(2, '0');
 
   return `${hh}${mm}:${ss}`;
 }

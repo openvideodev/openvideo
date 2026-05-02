@@ -1,11 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Editor from "@/components/editor/editor";
-import { storageService } from "@/lib/storage/storage-service";
-import { useProjectStore } from "@/stores/project-store";
-import { registerCustomEffect, registerCustomTransition } from "@openvideo/engine-pixi";
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Editor from '@/components/editor/editor';
+import { storageService } from '@/lib/storage/storage-service';
+import { useProjectStore } from '@/stores/project-store';
+import {
+  registerCustomEffect,
+  registerCustomTransition,
+} from '@openvideo/engine-pixi';
 
 export default function EditProjectPage() {
   const params = useParams();
@@ -24,8 +27,8 @@ export default function EditProjectPage() {
         const project = await storageService.loadProject({ id: projectId });
 
         if (!project) {
-          console.error("Project not found");
-          router.push("/projects");
+          console.error('Project not found');
+          router.push('/projects');
           return;
         }
 
@@ -33,12 +36,13 @@ export default function EditProjectPage() {
 
         try {
           const [effectsRes, transitionsRes] = await Promise.all([
-            fetch("/api/custom-presets?category=effects"),
-            fetch("/api/custom-presets?category=transitions"),
+            fetch('/api/custom-presets?category=effects'),
+            fetch('/api/custom-presets?category=transitions'),
           ]);
 
           if (effectsRes.ok) {
-            const { own: ownEffects = [], published: pubEffects = [] } = await effectsRes.json();
+            const { own: ownEffects = [], published: pubEffects = [] } =
+              await effectsRes.json();
 
             for (const preset of [...ownEffects, ...pubEffects]) {
               const key = `custom_effect_${preset.id}`;
@@ -51,7 +55,8 @@ export default function EditProjectPage() {
           }
 
           if (transitionsRes.ok) {
-            const { own: ownTrans = [], published: pubTrans = [] } = await transitionsRes.json();
+            const { own: ownTrans = [], published: pubTrans = [] } =
+              await transitionsRes.json();
 
             for (const preset of [...ownTrans, ...pubTrans]) {
               const key = `custom_transition_${preset.id}`;
@@ -63,10 +68,13 @@ export default function EditProjectPage() {
             }
           }
         } catch (err) {
-          console.warn("Failed to pre-register custom presets", err);
+          console.warn('Failed to pre-register custom presets', err);
         }
 
-        projectStore.setCanvasSize(project.canvasSize, project.canvasMode || "preset");
+        projectStore.setCanvasSize(
+          project.canvasSize,
+          project.canvasMode || 'preset'
+        );
 
         if (project.fps) {
           projectStore.setFps(project.fps);
@@ -78,7 +86,7 @@ export default function EditProjectPage() {
 
         projectStore.setInitialStudioJSON(project.data || null);
       } catch (err) {
-        console.error("Failed to load project", err);
+        console.error('Failed to load project', err);
       } finally {
         setIsLoaded(true);
       }
@@ -92,11 +100,13 @@ export default function EditProjectPage() {
       {!isLoaded && (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-background text-foreground absolute z-10">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-muted-foreground animate-pulse">Loading project...</p>
+          <p className="text-muted-foreground animate-pulse">
+            Loading project...
+          </p>
         </div>
       )}
 
-      <div style={{ visibility: isLoaded ? "visible" : "hidden" }}>
+      <div style={{ visibility: isLoaded ? 'visible' : 'hidden' }}>
         <Editor />
       </div>
     </>

@@ -7,7 +7,7 @@ export const getBlobFromUrl = async (url: string) => {
 export const getFileFromUrl = async (url: string) => {
   const response = await fetch(url);
   const blob = await response.blob();
-  const filename = url.split("/").pop() || "video.mp4";
+  const filename = url.split('/').pop() || 'video.mp4';
   const file = new File([blob], filename);
   return file;
 };
@@ -18,7 +18,7 @@ export const fileToBlob = async (file: File) => {
 };
 
 export const blobToStream = async (blob: Blob) => {
-  const file = new File([blob], "video.mp4");
+  const file = new File([blob], 'video.mp4');
   const stream = file.stream();
   return stream;
 };
@@ -26,7 +26,7 @@ export const blobToStream = async (blob: Blob) => {
 export const getStreamFromUrl = async (url: string) => {
   const response = await fetch(url);
   const blob = await response.blob();
-  const file = new File([blob], "video.mp4");
+  const file = new File([blob], 'video.mp4');
   const stream = file.stream();
   return stream;
 };

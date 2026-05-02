@@ -1,5 +1,5 @@
-import { ITrack, AnyClip } from "../types";
-import { generateId } from "./id";
+import { ITrack, AnyClip } from '../types';
+import { generateId } from './id';
 
 export interface AddClipOptions {
   trackId?: string;
@@ -12,13 +12,13 @@ export interface TrackManagementResult {
 }
 
 const ACCEPTS_MAP: Record<string, string[]> = {
-  Text: ["text", "caption"],
-  Image: ["image", "video"],
-  Video: ["video", "image"],
-  Audio: ["audio"],
-  Caption: ["caption", "text"],
-  Effect: ["effect"],
-  Transition: ["transition"],
+  Text: ['text', 'caption'],
+  Image: ['image', 'video'],
+  Video: ['video', 'image'],
+  Audio: ['audio'],
+  Caption: ['caption', 'text'],
+  Effect: ['effect'],
+  Transition: ['transition'],
 };
 
 /**
@@ -45,32 +45,36 @@ export const manageTracks = (
       accepts: ACCEPTS_MAP[clip.type] || [existingType],
     };
 
-    if (typeof trackIndex === "number") {
+    if (typeof trackIndex === 'number') {
       nextTracks.splice(trackIndex, 0, newTrack);
     } else {
       nextTracks.push(newTrack);
     }
     targetTrackId = newTrack.id;
-  } else if (typeof trackIndex === "number" && nextTracks[trackIndex]) {
+  } else if (typeof trackIndex === 'number' && nextTracks[trackIndex]) {
     // Force specific track if compatible
     const targetTrack = nextTracks[trackIndex];
     const accepts = targetTrack.accepts || [targetTrack.type];
     const clipTypeLower = clip.type.toLowerCase();
 
-    if (accepts.includes(clipTypeLower) || (ACCEPTS_MAP[clip.type] && ACCEPTS_MAP[clip.type].some(a => accepts.includes(a)))) {
+    if (
+      accepts.includes(clipTypeLower) ||
+      (ACCEPTS_MAP[clip.type] &&
+        ACCEPTS_MAP[clip.type].some((a) => accepts.includes(a)))
+    ) {
       targetTrackId = targetTrack.id;
     }
   }
 
   if (!targetTrackId) {
     // For Effects, we usually want a new track every time to avoid overlapping filters
-    if (clip.type === "Effect") {
+    if (clip.type === 'Effect') {
       const newTrack: ITrack = {
-        id: "track_" + generateId(),
-        name: `Effect Track ${tracks.filter((t) => t.type === "effect").length + 1}`,
-        type: "effect",
+        id: 'track_' + generateId(),
+        name: `Effect Track ${tracks.filter((t) => t.type === 'effect').length + 1}`,
+        type: 'effect',
         clipIds: [clip.id],
-        accepts: ["effect"],
+        accepts: ['effect'],
       };
       nextTracks.push(newTrack);
       targetTrackId = newTrack.id;

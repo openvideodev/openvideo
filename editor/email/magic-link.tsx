@@ -11,8 +11,8 @@ import {
   Section,
   Text,
   Tailwind,
-} from "@react-email/components";
-import * as React from "react";
+} from '@react-email/components';
+import * as React from 'react';
 
 interface MagicLinkEmailProps {
   email: string;
@@ -24,8 +24,8 @@ export const MagicLinkEmail = ({ magicLink }: MagicLinkEmailProps) => {
     <Html>
       <Head />
       <Preview>
-        Your login request to Scenify. Click the button below to log into Scenify. Your link expires
-        in 1 hour.
+        Your login request to Scenify. Click the button below to log into
+        Scenify. Your link expires in 1 hour.
       </Preview>
       <Tailwind>
         <Body className="mx-auto my-auto bg-white px-2 font-sans">
@@ -42,7 +42,8 @@ export const MagicLinkEmail = ({ magicLink }: MagicLinkEmailProps) => {
               Your login request to Scenify
             </Heading>
             <Text className="text-[14px] leading-[24px] text-black">
-              Click the button below to log into Scenify. Your link expires in 1 hour.
+              Click the button below to log into Scenify. Your link expires in 1
+              hour.
             </Text>
 
             <Section className="mb-[24px] mt-[24px]">
@@ -54,7 +55,7 @@ export const MagicLinkEmail = ({ magicLink }: MagicLinkEmailProps) => {
               </Button>
             </Section>
             <Text className="text-[14px] leading-[24px] text-black">
-              If you're having trouble with the button above,{" "}
+              If you're having trouble with the button above,{' '}
               <Link href={magicLink} className="text-blue-600 no-underline">
                 click here
               </Link>

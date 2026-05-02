@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 import {
   Sparkles,
   Brain,
@@ -11,10 +11,10 @@ import {
   ArrowRight,
   Mail,
   Zap,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const WorkflowCard = ({
   title,
@@ -30,8 +30,12 @@ const WorkflowCard = ({
       <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-2 shadow-inner group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
-      <h3 className="text-xl font-bold tracking-tight text-foreground/90">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">{description}</p>
+      <h3 className="text-xl font-bold tracking-tight text-foreground/90">
+        {title}
+      </h3>
+      <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
+        {description}
+      </p>
     </div>
   );
 };
@@ -39,45 +43,45 @@ const WorkflowCard = ({
 const WorkflowsPage = () => {
   const workflows = [
     {
-      title: "UGC Video Ads",
+      title: 'UGC Video Ads',
       description:
-        "Create authentic user-style ads with AI avatars interacting with your product. Perfect for TikTok and Instagram.",
+        'Create authentic user-style ads with AI avatars interacting with your product. Perfect for TikTok and Instagram.',
       icon: <Video size={24} />,
     },
     {
-      title: "Product Video Ads",
+      title: 'Product Video Ads',
       description:
-        "Generate high-converting promo videos from your product assets and descriptions. Tailored for e-commerce growth.",
+        'Generate high-converting promo videos from your product assets and descriptions. Tailored for e-commerce growth.',
       icon: <Sparkles size={24} />,
     },
     {
-      title: "AI Narrative Video",
+      title: 'AI Narrative Video',
       description:
-        "Transform scripts into creative storytelling, motivational, or educational videos with dynamic visuals.",
+        'Transform scripts into creative storytelling, motivational, or educational videos with dynamic visuals.',
       icon: <Brain size={24} />,
     },
     {
-      title: "AI Editor",
+      title: 'AI Editor',
       description:
-        "Professional video editing app powered by AI tools. Crop, trim, and enhance your footage with just a few clicks.",
+        'Professional video editing app powered by AI tools. Crop, trim, and enhance your footage with just a few clicks.',
       icon: <Scissors size={24} />,
     },
     {
-      title: "AI Copilot",
+      title: 'AI Copilot',
       description:
-        "Chat with your footage to generate viral clips, summaries, and social media content automatically.",
+        'Chat with your footage to generate viral clips, summaries, and social media content automatically.',
       icon: <Bot size={24} />,
     },
     {
-      title: "Smart Captions",
+      title: 'Smart Captions',
       description:
-        "Add trendy captions, b-rolls, sound effects, and background music to make your videos stand out.",
+        'Add trendy captions, b-rolls, sound effects, and background music to make your videos stand out.',
       icon: <RefreshCw size={24} />,
     },
     {
-      title: "Link to Video",
+      title: 'Link to Video',
       description:
-        "Turn any URL—product pages, articles, or blog posts—into a polished and professional video presentation.",
+        'Turn any URL—product pages, articles, or blog posts—into a polished and professional video presentation.',
       icon: <Zap size={24} />,
     },
   ];
@@ -88,13 +92,15 @@ const WorkflowsPage = () => {
         <div className="flex items-center justify-center gap-6 flex-col">
           <Badge variant="secondary" className="px-4 py-2">
             Workflows
-          </Badge>{" "}
-          <h2 className="text-5xl font-medium tracking-tight">AI Powered Video Workflows</h2>
+          </Badge>{' '}
+          <h2 className="text-5xl font-medium tracking-tight">
+            AI Powered Video Workflows
+          </h2>
           <p className="max-w-2xl mx-auto max-sm:text-sm text-muted-foreground text-lg">
-            Professional AI services tailored for scale. Select a workflow to see how we can
-            transform your content production.
+            Professional AI services tailored for scale. Select a workflow to
+            see how we can transform your content production.
           </p>
-        </div>{" "}
+        </div>{' '}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full border border-border/50 rounded-3xl overflow-hidden bg-card/10 backdrop-blur-sm">
           {workflows.map((workflow, index) => (
             <div key={index} className="relative group">
@@ -128,12 +134,24 @@ const WorkflowsPage = () => {
         {/* CTA Section */}
         <div className="flex flex-col items-center gap-8 mt-12">
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Button asChild className="shadow-md h-10 rounded-full px-8" size={"lg"}>
-              <Link href="https://cal.com/designcombo/30min" className="font-normal">
+            <Button
+              asChild
+              className="shadow-md h-10 rounded-full px-8"
+              size={'lg'}
+            >
+              <Link
+                href="https://cal.com/designcombo/30min"
+                className="font-normal"
+              >
                 Schedule a Demo
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-10 rounded-full px-8" size={"lg"}>
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-full px-8"
+              size={'lg'}
+            >
               <a href="mailto:hello@openvideo.dev" className="font-normal">
                 <Mail className="mr-2 size-4" />
                 Contact Sales
@@ -141,7 +159,8 @@ const WorkflowsPage = () => {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            Trusted by content teams worldwide. Fully extensible and open source.
+            Trusted by content teams worldwide. Fully extensible and open
+            source.
           </p>
         </div>
       </section>

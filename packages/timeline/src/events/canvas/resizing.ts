@@ -1,4 +1,4 @@
-import Timeline from "../../timeline";
+import Timeline from '../../timeline';
 
 import {
   BasicTransformEvent,
@@ -6,10 +6,10 @@ import {
   FabricObjectProps,
   ObjectEvents,
   SerializedObjectProps,
-  TPointerEvent
-} from "fabric";
-import { unitsToTimeUs } from "../../utils";
-import { Trimmable } from "../../objects";
+  TPointerEvent,
+} from 'fabric';
+import { unitsToTimeUs } from '../../utils';
+import { Trimmable } from '../../objects';
 
 export default function onObjectResizing(
   this: Timeline,
@@ -25,11 +25,11 @@ export default function onObjectResizing(
   const target = e.target;
   const transform = e.transform;
 
-  if (transform.action === "resizing") {
+  if (transform.action === 'resizing') {
     const otherObjects = canvas.getObjects().filter((obj) => {
       return (
         obj !== target &&
-        !["Track", "Helper", "Transition", "Placeholder"].includes(obj.type)
+        !['Track', 'Helper', 'Transition', 'Placeholder'].includes(obj.type)
       );
     });
 
@@ -49,7 +49,7 @@ export default function onObjectResizing(
       const objLeft = objBounds.left;
       const objRight = objBounds.left + objBounds.width;
 
-      if (transform.corner === "mr") {
+      if (transform.corner === 'mr') {
         // When resizing from right, check both left and right edges
         const rightDiff = Math.abs(originalRight - objRight);
         const rightToLeftDiff = Math.abs(originalRight - objLeft);
@@ -69,7 +69,7 @@ export default function onObjectResizing(
             if (newTo <= target.duration) {
               target.set({
                 width: newWidth,
-                scaleX: 1
+                scaleX: 1,
               });
               target.trim.to = newTo;
               if (target.onResizeSnap) {
@@ -80,7 +80,7 @@ export default function onObjectResizing(
           } else {
             target.set({
               width: objRight - target.left,
-              scaleX: 1
+              scaleX: 1,
             });
             if (target.onResizeSnap) {
               target.onResizeSnap();
@@ -102,7 +102,7 @@ export default function onObjectResizing(
             if (newTo <= target.duration) {
               target.set({
                 width: newWidth,
-                scaleX: 1
+                scaleX: 1,
               });
               target.trim.to = newTo;
               if (target.onResizeSnap) {
@@ -113,7 +113,7 @@ export default function onObjectResizing(
           } else {
             target.set({
               width: objLeft - target.left,
-              scaleX: 1
+              scaleX: 1,
             });
             if (target.onResizeSnap) {
               target.onResizeSnap();
@@ -121,7 +121,7 @@ export default function onObjectResizing(
             snapped = true;
           }
         }
-      } else if (transform.corner === "ml") {
+      } else if (transform.corner === 'ml') {
         // When resizing from left, check both left and right edges
         const leftDiff = Math.abs(originalLeft - objLeft);
         const leftToRightDiff = Math.abs(originalLeft - objRight);
@@ -141,7 +141,7 @@ export default function onObjectResizing(
               target.set({
                 left: objLeft,
                 width: newWidth,
-                scaleX: 1
+                scaleX: 1,
               });
               target.trim.from = newFrom;
               if (target.onResizeSnap) target.onResizeSnap();
@@ -151,7 +151,7 @@ export default function onObjectResizing(
             target.set({
               left: objLeft,
               width: originalRight - objLeft,
-              scaleX: 1
+              scaleX: 1,
             });
             if (target.onResizeSnap) target.onResizeSnap();
             snapped = true;
@@ -171,7 +171,7 @@ export default function onObjectResizing(
               target.set({
                 left: objRight,
                 width: newWidth,
-                scaleX: 1
+                scaleX: 1,
               });
               target.trim.from = newFrom;
               if (target.onResizeSnap) target.onResizeSnap();
@@ -181,7 +181,7 @@ export default function onObjectResizing(
             target.set({
               left: objRight,
               width: originalRight - objRight,
-              scaleX: 1
+              scaleX: 1,
             });
             if (target.onResizeSnap) target.onResizeSnap();
             snapped = true;
@@ -198,9 +198,9 @@ export default function onObjectResizing(
 }
 
 export function addResizingEvents(timeline: Timeline) {
-  timeline.on("object:resizing", onObjectResizing.bind(timeline));
+  timeline.on('object:resizing', onObjectResizing.bind(timeline));
 }
 
 export function removeResizingEvents(timeline: Timeline) {
-  timeline.off("object:resizing", onObjectResizing.bind(timeline));
+  timeline.off('object:resizing', onObjectResizing.bind(timeline));
 }

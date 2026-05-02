@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Event object to be applied on the target element.
@@ -208,7 +208,7 @@ export function usePointerDrag<T>(
       onStart,
       onMove,
       onEnd,
-      dragPredicate
+      dragPredicate,
     } = optionsRef.current;
 
     const getData = (e: PointerEvent): IPointerDragData<T> => {
@@ -229,7 +229,7 @@ export function usePointerDrag<T>(
         startedAt,
         initialEvent,
         distance: Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2)),
-        event: e
+        event: e,
       };
     };
 
@@ -268,12 +268,12 @@ export function usePointerDrag<T>(
       setIsStarted(false);
     };
 
-    document.addEventListener("pointermove", handleMove);
-    document.addEventListener("pointerup", handleUp);
+    document.addEventListener('pointermove', handleMove);
+    document.addEventListener('pointerup', handleUp);
 
     return () => {
-      document.removeEventListener("pointermove", handleMove);
-      document.removeEventListener("pointerup", handleUp);
+      document.removeEventListener('pointermove', handleMove);
+      document.removeEventListener('pointerup', handleUp);
     };
   }, [isStarted]);
 
@@ -300,7 +300,7 @@ export function usePointerDrag<T>(
             y: e.clientY,
             startedAt: now,
             dragging: false,
-            initialEvent: e.nativeEvent
+            initialEvent: e.nativeEvent,
           };
 
           if (optionsRef.current.pointerDownPreventDefault) {
@@ -323,9 +323,9 @@ export function usePointerDrag<T>(
             startedAt: now,
             initialEvent: e.nativeEvent,
             distance: 0,
-            event: e.nativeEvent
+            event: e.nativeEvent,
           });
-        }
+        },
       };
     },
     [setDragState, setIsStarted]
@@ -335,6 +335,6 @@ export function usePointerDrag<T>(
     startDragging,
     dragState,
     isDragging,
-    dragProps
+    dragProps,
   } as IPointerDragReturnWithState<T> | IPointerDragReturnWithoutState;
 }

@@ -1,7 +1,7 @@
-import { Rect, classRegistry } from "fabric";
+import { Rect, classRegistry } from 'fabric';
 
 export interface TrackItemProps
-  extends Pick<Rect, "top" | "left" | "width" | "height"> {
+  extends Pick<Rect, 'top' | 'left' | 'width' | 'height'> {
   id: string;
   top: number;
   left: number;
@@ -17,12 +17,12 @@ const ownDefaults: Partial<Rect> = {
   selectable: false,
   evented: false,
   strokeWidth: 0,
-  stroke: "transparent"
+  stroke: 'transparent',
 };
 
 class Track extends Rect {
   static ownDefaults = ownDefaults;
-  static type = "Track";
+  static type = 'Track';
   public id: string;
   public accepts: string[] = [];
   public metadata?: Record<string, any>;
@@ -32,7 +32,7 @@ class Track extends Rect {
   static getDefaults(): Record<string, any> {
     return {
       ...super.getDefaults(),
-      ...Track.ownDefaults
+      ...Track.ownDefaults,
     };
   }
 
@@ -45,7 +45,7 @@ class Track extends Rect {
     this.magnetic = props.magnetic;
     this.static = props.static;
     this.metadata = props.metadata;
-    this.fill = "rgba(34, 34, 37, 0.8)";
+    this.fill = 'rgba(34, 34, 37, 0.8)';
     this.objectCaching = false;
   }
 
@@ -54,6 +54,6 @@ class Track extends Rect {
   }
 }
 
-classRegistry.setClass(Track, "Track");
+classRegistry.setClass(Track, 'Track');
 
 export default Track;

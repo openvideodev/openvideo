@@ -1,17 +1,17 @@
-"use client";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { IconShare } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { useStudioStore } from "@/stores/studio-store";
-import { usePanelStore } from "@/stores/panel-store";
-import { useProjectStore } from "@/stores/project-store";
-import { DEFAULT_CANVAS_PRESETS } from "@/lib/editor-utils";
-import { Log, type IClip } from "@openvideo/engine-pixi";
-import { ExportModal } from "./export-modal";
-import { LogoIcons } from "../shared/logos";
-import Link from "next/link";
-import { Icons } from "../shared/icons";
+'use client';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { IconShare } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
+import { useStudioStore } from '@/stores/studio-store';
+import { usePanelStore } from '@/stores/panel-store';
+import { useProjectStore } from '@/stores/project-store';
+import { DEFAULT_CANVAS_PRESETS } from '@/lib/editor-utils';
+import { Log, type IClip } from '@openvideo/engine-pixi';
+import { ExportModal } from './export-modal';
+import { LogoIcons } from '../shared/logos';
+import Link from 'next/link';
+import { Icons } from '../shared/icons';
 import {
   Keyboard,
   FileJson,
@@ -24,23 +24,25 @@ import {
   Square,
   Smartphone,
   Monitor,
-} from "lucide-react";
-import { toast } from "sonner";
-import { Compositor } from "@openvideo/engine-pixi";
-import { ShortcutsModal } from "./shortcuts-modal";
-import { useEffect } from "react";
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Compositor } from '@openvideo/engine-pixi';
+import { ShortcutsModal } from './shortcuts-modal';
+import { useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ModeToggle } from "../ui/mode-toggle";
-import { useRouter, useParams } from "next/navigation";
-import { storageService } from "@/lib/storage/storage-service";
-import { Save } from "lucide-react";
-import AutosizeInput from "../ui/autosize-input";
-import { authClient } from "@/lib/auth-client";
+} from '@/components/ui/dropdown-menu';
+import { ModeToggle } from '../ui/mode-toggle';
+import { useRouter, useParams } from 'next/navigation';
+import { storageService } from '@/lib/storage/storage-service';
+import { Save } from 'lucide-react';
+import AutosizeInput from '../ui/autosize-input';
+import { authClient } from '@/lib/auth-client';
+import { core, projectStore } from '@/lib/project';
+import { useStore } from 'zustand';
 
 export default function Header() {
   const { studio } = useStudioStore();
@@ -49,15 +51,15 @@ export default function Header() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isBatchExporting, setIsBatchExporting] = useState(false);
-  const [customWidth, setCustomWidth] = useState("");
-  const [customHeight, setCustomHeight] = useState("");
+  const [customWidth, setCustomWidth] = useState('');
+  const [customHeight, setCustomHeight] = useState('');
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
   const { data: session } = authClient.useSession();
   const { projectName, setProjectName } = useProjectStore();
   const [isSaving, setIsSaving] = useState(false);
-  const [title, setTitle] = useState(projectName || "Untitled video");
+  const [title, setTitle] = useState(projectName || 'Untitled video');
 
   // Sync title with store when project name changes externally (like on initial load)
   useEffect(() => {
@@ -74,10 +76,10 @@ export default function Header() {
       try {
         await storageService.updateProject(projectId, { name: title });
         setProjectName(title);
-        console.log("Project name updated in DB:", title);
+        console.log('Project name updated in DB:', title);
       } catch (error) {
-        console.error("Failed to update project name:", error);
-        toast.error("Failed to save project name");
+        console.error('Failed to update project name:', error);
+        toast.error('Failed to save project name');
       }
     }, 1000);
 
@@ -88,9 +90,9 @@ export default function Header() {
     const w = parseInt(customWidth);
     const h = parseInt(customHeight);
     if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) {
-      setCanvasSize({ width: w, height: h }, "Custom");
+      setCanvasSize({ width: w, height: h }, 'Custom');
     } else {
-      toast.error("Invalid dimensions");
+      toast.error('Invalid dimensions');
     }
   };
 
@@ -100,22 +102,26 @@ export default function Header() {
   const handleBatchExport = async () => {
     if (!studio) return;
     setIsBatchExporting(true);
-    const toastId = toast.loading("Initializing batch export...");
+    const toastId = toast.loading('Initializing batch export...');
 
     try {
       // 1. Get animation keys and template
-      const keysRes = await fetch("/api/batch-export");
+      const keysRes = await fetch('/api/batch-export');
       const { keys, template } = await keysRes.json();
 
-      if (!keys || keys.length === 0) throw new Error("No animations found");
+      if (!keys || keys.length === 0) throw new Error('No animations found');
 
       // 2. Select project template: prefer current studio if it has clips, otherwise use API template
       const currentProject = studio.exportToJSON();
       const baseProject =
-        currentProject.clips && currentProject.clips.length > 0 ? currentProject : template;
+        currentProject.clips && currentProject.clips.length > 0
+          ? currentProject
+          : template;
 
       if (!baseProject.clips || baseProject.clips.length === 0) {
-        throw new Error("No template content available. Please add a clip to the canvas.");
+        throw new Error(
+          'No template content available. Please add a clip to the canvas.'
+        );
       }
 
       const settings = baseProject.settings || {};
@@ -132,7 +138,10 @@ export default function Header() {
         // Find the first non-Audio/Transition/Effect clip to animate
         const targetClip =
           project.clips.find(
-            (c: any) => c.type !== "Audio" && c.type !== "Transition" && c.type !== "Effect",
+            (c: any) =>
+              c.type !== 'Audio' &&
+              c.type !== 'Transition' &&
+              c.type !== 'Effect'
           ) || project.clips[0];
 
         if (targetClip) {
@@ -152,8 +161,8 @@ export default function Header() {
           width: settings.width || 1080,
           height: settings.height || 1080,
           fps: settings.fps || 30,
-          bgColor: settings.bgColor || "#000000",
-          videoCodec: "avc1.42E032",
+          bgColor: settings.bgColor || '#000000',
+          videoCodec: 'avc1.42E032',
           bitrate: 10e6,
           // audio: true,
         });
@@ -170,20 +179,23 @@ export default function Header() {
 
         // 3. Upload to server
         const formData = new FormData();
-        formData.append("file", blob);
-        formData.append("filename", key);
+        formData.append('file', blob);
+        formData.append('filename', key);
 
-        const uploadRes = await fetch("/api/batch-export", {
-          method: "POST",
+        const uploadRes = await fetch('/api/batch-export', {
+          method: 'POST',
           body: formData,
         });
 
         if (!uploadRes.ok) throw new Error(`Failed to save ${key}`);
       }
 
-      toast.success(`Batch export complete! ${keys.length} videos saved to D:\\animations`, {
-        id: toastId,
-      });
+      toast.success(
+        `Batch export complete! ${keys.length} videos saved to D:\\animations`,
+        {
+          id: toastId,
+        }
+      );
     } catch (error: any) {
       toast.error(`Batch export failed: ${error.message}`, { id: toastId });
     } finally {
@@ -191,26 +203,11 @@ export default function Header() {
     }
   };
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
+  // Track undo/redo availability from Core store history
+  const canUndo = useStore(projectStore, (s) => s.history.length > 0);
+  const canRedo = useStore(projectStore, (s) => s.future.length > 0);
 
-  useEffect(() => {
-    if (!studio) return;
-
-    setCanUndo(studio.history.canUndo());
-    setCanRedo(studio.history.canRedo());
-
-    const handleHistoryChange = ({ canUndo, canRedo }: { canUndo: boolean; canRedo: boolean }) => {
-      setCanUndo(canUndo);
-      setCanRedo(canRedo);
-    };
-
-    studio.on("history:changed", handleHistoryChange);
-
-    return () => {
-      studio.off("history:changed", handleHistoryChange);
-    };
-  }, [studio]);
+  // NOTE: canUndo/canRedo state now sourced from core.store — no studio history listener needed.
 
   const handleSave = async (showToast = true) => {
     if (!studio || !projectId) return;
@@ -218,20 +215,20 @@ export default function Header() {
     setIsSaving(true);
     let toastId;
     if (showToast) {
-      toastId = toast.loading("Saving project...");
+      toastId = toast.loading('Saving project...');
     }
 
     try {
       const studioJSON = studio.exportToJSON();
       await storageService.saveProjectFull(projectId, studioJSON);
-      console.log("Project saved", studioJSON);
+      console.log('Project saved', studioJSON);
       if (showToast) {
-        toast.success("Project saved", { id: toastId });
+        toast.success('Project saved', { id: toastId });
       }
     } catch (error) {
-      console.error("Failed to save project", error);
+      console.error('Failed to save project', error);
       if (showToast) {
-        toast.error("Failed to save project", { id: toastId });
+        toast.error('Failed to save project', { id: toastId });
       }
     } finally {
       setIsSaving(false);
@@ -250,17 +247,17 @@ export default function Header() {
       }, 1000); // 1 second debounce
     };
     const eventsToListen = [
-      "history:changed",
-      "clip:added",
-      "clip:removed",
-      "clip:updated",
-      "clip:moved",
-      "track:added",
-      "track:removed",
-      "clips:removed",
-      "clip:replaced",
-      "clip:propsChange",
-      "propsChange",
+      'history:changed',
+      'clip:added',
+      'clip:removed',
+      'clip:updated',
+      'clip:moved',
+      'track:added',
+      'track:removed',
+      'clips:removed',
+      'clip:replaced',
+      'clip:propsChange',
+      'propsChange',
     ];
 
     eventsToListen.forEach((event) => {
@@ -278,7 +275,7 @@ export default function Header() {
   const handleNew = () => {
     if (!studio) return;
     const confirmed = window.confirm(
-      "Are you sure you want to start a new project? Unsaved changes will be lost.",
+      'Are you sure you want to start a new project? Unsaved changes will be lost.'
     );
     if (confirmed) {
       studio.clear();
@@ -292,18 +289,18 @@ export default function Header() {
       // Get all clips from studio
       const clips = (studio as any).clips as IClip[];
       if (clips.length === 0) {
-        alert("No clips to export");
+        alert('No clips to export');
         return;
       }
 
       // Export to JSON
       const json = studio.exportToJSON();
       const jsonString = JSON.stringify(json, null, 2);
-      const blob = new Blob([jsonString], { type: "application/json" });
+      const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
 
       // Download the JSON file
-      const aEl = document.createElement("a");
+      const aEl = document.createElement('a');
       document.body.appendChild(aEl);
       aEl.href = url;
       aEl.download = `combo-project-${Date.now()}.json`;
@@ -317,16 +314,16 @@ export default function Header() {
         URL.revokeObjectURL(url);
       }, 100);
     } catch (error) {
-      Log.error("Export to JSON error:", error);
-      alert("Failed to export to JSON: " + (error as Error).message);
+      Log.error('Export to JSON error:', error);
+      alert('Failed to export to JSON: ' + (error as Error).message);
     }
   };
 
   const handleImportJSON = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json,application/json";
-    input.style.display = "none";
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.style.display = 'none';
 
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
@@ -337,35 +334,37 @@ export default function Header() {
         const json = JSON.parse(text);
 
         if (!json.clips || !Array.isArray(json.clips)) {
-          throw new Error("Invalid JSON format: missing clips array");
+          throw new Error('Invalid JSON format: missing clips array');
         }
 
         if (!studio) {
-          throw new Error("Studio not initialized");
+          throw new Error('Studio not initialized');
         }
 
         // Filter out clips with empty sources (except Text, Caption, and Effect)
         const validClips = json.clips.filter((clipJSON: any) => {
           if (
-            clipJSON.type === "Text" ||
-            clipJSON.type === "Caption" ||
-            clipJSON.type === "Effect" ||
-            clipJSON.type === "Transition"
+            clipJSON.type === 'Text' ||
+            clipJSON.type === 'Caption' ||
+            clipJSON.type === 'Effect' ||
+            clipJSON.type === 'Transition'
           ) {
             return true;
           }
-          return clipJSON.src && clipJSON.src.trim() !== "";
+          return clipJSON.src && clipJSON.src.trim() !== '';
         });
 
         if (validClips.length === 0) {
-          throw new Error("No valid clips found in JSON. All clips have empty source URLs.");
+          throw new Error(
+            'No valid clips found in JSON. All clips have empty source URLs.'
+          );
         }
 
         const validJson = { ...json, clips: validClips };
         await studio.loadFromJSON(validJson);
       } catch (error) {
-        Log.error("Load from JSON error:", error);
-        alert("Failed to load from JSON: " + (error as Error).message);
+        Log.error('Load from JSON error:', error);
+        alert('Failed to load from JSON: ' + (error as Error).message);
       } finally {
         document.body.removeChild(input);
       }
@@ -384,7 +383,7 @@ export default function Header() {
       <div className="flex items-center gap-2">
         <div
           className="pointer-events-auto flex h-9 w-9 bg-primary/20 items-center justify-center rounded-md "
-          onClick={() => handleGetStarted("/")}
+          onClick={() => handleGetStarted('/')}
         >
           <LogoIcons.scenify width={24} />
         </div>
@@ -423,19 +422,19 @@ export default function Header() {
                 <div className="grid grid-cols-1 gap-1">
                   {[
                     {
-                      label: "Square",
+                      label: 'Square',
                       icon: Square,
                       width: 1080,
                       height: 1080,
                     },
                     {
-                      label: "Portrait",
+                      label: 'Portrait',
                       icon: Smartphone,
                       width: 1080,
                       height: 1920,
                     },
                     {
-                      label: "Landscape",
+                      label: 'Landscape',
                       icon: Monitor,
                       width: 1920,
                       height: 1080,
@@ -449,7 +448,7 @@ export default function Header() {
                         onClick={() =>
                           setCanvasSize(
                             { width: preset.width, height: preset.height },
-                            preset.label,
+                            preset.label
                           )
                         }
                         className="text-xs justify-between cursor-pointer px-2 py-1.5"
@@ -460,11 +459,13 @@ export default function Header() {
                         </div>
                         <div
                           className={cn(
-                            "flex h-3.5 w-3.5 items-center justify-center rounded-full border border-muted-foreground/50",
-                            isSelected && "border-primary",
+                            'flex h-3.5 w-3.5 items-center justify-center rounded-full border border-muted-foreground/50',
+                            isSelected && 'border-primary'
                           )}
                         >
-                          {isSelected && <div className="h-2 w-2 rounded-full bg-primary" />}
+                          {isSelected && (
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          )}
                         </div>
                       </DropdownMenuItem>
                     );
@@ -480,7 +481,9 @@ export default function Header() {
                 </p>
                 <div className="grid grid-cols-2 gap-2 px-1">
                   <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground uppercase">Width</label>
+                    <label className="text-[10px] text-muted-foreground uppercase">
+                      Width
+                    </label>
                     <input
                       type="number"
                       value={customWidth}
@@ -490,7 +493,9 @@ export default function Header() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground uppercase">Height</label>
+                    <label className="text-[10px] text-muted-foreground uppercase">
+                      Height
+                    </label>
                     <input
                       type="number"
                       value={customHeight}
@@ -513,11 +518,16 @@ export default function Header() {
         </DropdownMenu>
 
         <div className=" pointer-events-auto flex h-10 items-center px-1.5">
-          <Button onClick={() => studio?.undo()} disabled={!canUndo} variant="ghost" size="icon">
+          <Button
+            onClick={() => core.undo()}
+            disabled={!canUndo}
+            variant="ghost"
+            size="icon"
+          >
             <Icons.undo className="size-5" />
           </Button>
           <Button
-            onClick={() => studio?.redo()}
+            onClick={() => core.redo()}
             disabled={!canRedo}
             className="text-muted-foreground"
             variant="ghost"
@@ -567,7 +577,7 @@ export default function Header() {
           </Button>
 
           <Button
-            size={"sm"}
+            size={'sm'}
             variant="outline"
             onClick={toggleCopilot}
             className="h-7"
@@ -578,7 +588,7 @@ export default function Header() {
           </Button>
         </div>
         <Link href="https://discord.gg/SCfMrQx8kr" target="_blank">
-          <Button className="h-7 rounded-lg" variant={"outline"}>
+          <Button className="h-7 rounded-lg" variant={'outline'}>
             <LogoIcons.discord className="w-6 h-6" />
             <span className="hidden md:block">Join Us</span>
           </Button>
@@ -586,12 +596,22 @@ export default function Header() {
 
         {/* End of right actions */}
 
-        <ExportModal open={isExportModalOpen} onOpenChange={setIsExportModalOpen} />
-        <ShortcutsModal open={isShortcutsModalOpen} onOpenChange={setIsShortcutsModalOpen} />
+        <ExportModal
+          open={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        />
+        <ShortcutsModal
+          open={isShortcutsModalOpen}
+          onOpenChange={setIsShortcutsModalOpen}
+        />
 
         <ModeToggle />
 
-        <Button size="sm" className="gap-2 rounded-full" onClick={() => setIsExportModalOpen(true)}>
+        <Button
+          size="sm"
+          className="gap-2 rounded-full"
+          onClick={() => setIsExportModalOpen(true)}
+        >
           Download
         </Button>
       </div>

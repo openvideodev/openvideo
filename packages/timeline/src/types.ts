@@ -35,8 +35,24 @@ export interface IFlip {
 // CLIP TYPES
 // ============================================================================
 
-export type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption";
-export type ItemType = "video" | "audio" | "image" | "text" | "caption" | "Video" | "Audio" | "Image" | "Text" | "Caption";
+export type ClipType =
+  | 'Video'
+  | 'Audio'
+  | 'Image'
+  | 'Text'
+  | 'Transition'
+  | 'Caption';
+export type ItemType =
+  | 'video'
+  | 'audio'
+  | 'image'
+  | 'text'
+  | 'caption'
+  | 'Video'
+  | 'Audio'
+  | 'Image'
+  | 'Text'
+  | 'Caption';
 
 // ============================================================================
 // STYLE OBJECTS (per clip type)
@@ -74,7 +90,7 @@ export interface ITextStyle {
   fontStyle?: string;
   textDecoration?: string;
   textAlign?: string;
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   lineHeight?: string | number;
   letterSpacing?: string | number;
   wordSpacing?: string | number;
@@ -170,31 +186,31 @@ export interface IEffect {
 // ============================================================================
 
 export interface IVideoClip extends IClipBase {
-  type: "Video";
+  type: 'Video';
   style: IVideoStyle;
   audio: boolean;
   volume: number;
 }
 
 export interface IAudioClip extends IClipBase {
-  type: "Audio";
+  type: 'Audio';
   style: IAudioStyle;
   volume: number;
 }
 
 export interface IImageClip extends IClipBase {
-  type: "Image";
+  type: 'Image';
   style: IImageStyle;
 }
 
 export interface ITextClip extends IClipBase {
-  type: "Text";
+  type: 'Text';
   style: ITextStyle;
   text: string;
 }
 
 export interface ITransitionClip extends IClipBase {
-  type: "Transition";
+  type: 'Transition';
   style: ITransitionStyle;
   key: string;
   fromClipId: string;
@@ -209,7 +225,7 @@ export interface ICaptionWord {
 }
 
 export interface ICaptionClip extends IClipBase {
-  type: "Caption";
+  type: 'Caption';
   style: ITextStyle;
   text: string;
   words?: ICaptionWord[];
@@ -236,7 +252,13 @@ export type IMetadata = Record<string, unknown>;
 // TRACK
 // ============================================================================
 
-export type TrackType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption";
+export type TrackType =
+  | 'Video'
+  | 'Audio'
+  | 'Image'
+  | 'Text'
+  | 'Transition'
+  | 'Caption';
 
 export interface ITrack {
   id: string;
@@ -294,18 +316,18 @@ export interface CanvasSpacing {
 // ============================================================================
 
 export type IKindHistory =
-  | "add"
-  | "remove"
-  | "update"
-  | "replace"
-  | "update:details"
-  | "layer:selection"
-  | "undo"
-  | "design:resize"
-  | "design:load"
-  | "redo"
-  | "add:transition"
-  | "edit:track";
+  | 'add'
+  | 'remove'
+  | 'update'
+  | 'replace'
+  | 'update:details'
+  | 'layer:selection'
+  | 'undo'
+  | 'design:resize'
+  | 'design:load'
+  | 'redo'
+  | 'add:transition'
+  | 'edit:track';
 
 export interface IUpdateStateOptions {
   updateHistory?: boolean;
@@ -336,51 +358,45 @@ export interface IStateManager {
     partialState: Partial<State>,
     options?: IUpdateStateOptions
   ): void;
-  subscribeToScale: (callback: (v: { scale: State["scale"] }) => void) => void;
+  subscribeToScale: (callback: (v: { scale: State['scale'] }) => void) => void;
   subscribeToDuration: (
-    callback: (v: { duration: State["duration"] }) => void
+    callback: (v: { duration: State['duration'] }) => void
   ) => void;
   subscribeToUpdateTracks: (
     callback: (v: {
-      tracks: State["tracks"];
-      duration: State["duration"];
-      clips: State["clips"];
+      tracks: State['tracks'];
+      duration: State['duration'];
+      clips: State['clips'];
     }) => void
   ) => void;
   subscribeToActiveIds: (
-    callback: (v: { activeIds: State["activeIds"] }) => void
+    callback: (v: { activeIds: State['activeIds'] }) => void
   ) => void;
   subscribeToAddOrRemoveClips: (
-    callback: (v: { clips: State["clips"] }) => void
+    callback: (v: { clips: State['clips'] }) => void
   ) => void;
   subscribeToHistory: (
-    callback: (v: {
-      tracks: State["tracks"];
-      clips: State["clips"];
-    }) => void
+    callback: (v: { tracks: State['tracks']; clips: State['clips'] }) => void
   ) => void;
   subscribeToUpdateClip: (
-    callback: (v: { clips: State["clips"] }) => void
+    callback: (v: { clips: State['clips'] }) => void
   ) => void;
   subscribeToUpdateClipTiming: (
     callback: (v: {
-      clips: State["clips"];
+      clips: State['clips'];
       changedTrimIds?: string[];
       changedDisplayIds?: string[];
     }) => void
   ) => void;
   subscribeToFps: (callback: (v: { fps: number }) => void) => void;
   subscribeToTracks: (
-    callback: (v: {
-      tracks: State["tracks"];
-      changedTracks: string[];
-    }) => void
+    callback: (v: { tracks: State['tracks']; changedTracks: string[] }) => void
   ) => void;
   subscribeToState: (
     callback: (v: {
-      tracks: State["tracks"];
-      clips: State["clips"];
-      settings: State["settings"];
+      tracks: State['tracks'];
+      clips: State['clips'];
+      settings: State['settings'];
     }) => void
   ) => void;
 }
@@ -457,12 +473,12 @@ export type IBoxShadow = {
   blur: number;
 };
 
-export type ITextDetails = ITextClip & ITextStyle & {
-  [key: string]: unknown;
-};
+export type ITextDetails = ITextClip &
+  ITextStyle & {
+    [key: string]: unknown;
+  };
 
 /** @deprecated Legacy map type */
 export type ITrackItemsMap = Record<string, IClip>;
 
 /** @deprecated Legacy map type */
-

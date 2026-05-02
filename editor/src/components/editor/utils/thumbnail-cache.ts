@@ -32,11 +32,11 @@ class ThumbnailCache {
     this.accessOrder = [];
   }
   public clearCacheButFallback() {
-    const fallback = this.getThumbnail("fallback");
+    const fallback = this.getThumbnail('fallback');
 
     this.cache = {};
     this.accessOrder = [];
-    this.setThumbnail("fallback", fallback!);
+    this.setThumbnail('fallback', fallback!);
   }
 }
 

@@ -6,20 +6,22 @@ import {
   TPointerEvent,
   TPointerEventInfo,
   Transform,
-  classRegistry
-} from "fabric";
+  classRegistry,
+} from 'fabric';
 
-import CanvasMixin from "./mixins/canvas";
-import TrackManager from "./managers/track-manager";
-import ItemManager from "./managers/item-manager";
-import TransitionManager from "./managers/transition-manager";
-import DragStateManager from "./managers/drag-state-manager";
-import SyncManager from "./managers/sync-manager";
-import { addCanvasEvents, removeCanvasEvents } from "./events/canvas/events";
+import CanvasMixin from './mixins/canvas';
+import TrackManager from './managers/track-manager';
+import ItemManager from './managers/item-manager';
+import TransitionManager from './managers/transition-manager';
+import DragStateManager from './managers/drag-state-manager';
+import SyncManager from './managers/sync-manager';
+import { addCanvasEvents, removeCanvasEvents } from './events/canvas/events';
+import { Core } from '@openvideo/core';
+import { TimelineBridge } from './core-bridge';
 import {
   addTimelineEvents,
-  removeTimelineEvents
-} from "./events/canvas/timeline";
+  removeTimelineEvents,
+} from './events/canvas/timeline';
 import {
   ITimelineScaleState,
   ITrack,
@@ -27,27 +29,27 @@ import {
   ITransitionClip,
   IUpdateStateOptions,
   CanvasSpacing,
-  State
-} from "./types";
+  State,
+} from './types';
 export interface ITimelineTrack extends ITrack {
   accepts?: string[];
   magnetic?: boolean;
   static?: boolean;
   muted?: boolean;
 }
-import { timeUsToUnits } from "./utils/timeline";
-import { applyMixins } from "./utils/apply-mixins";
-import EventEmitter from "./utils/event-emitter";
-import { calcCanvasSpacing, isTouchEvent } from "./utils/canvas";
-import { ACTIVE_SELECTION_COLOR } from "./constants/objects";
-import { TIMELINE_OFFSET_CANVAS_LEFT } from "./constants/constants";
-import { Track } from "./objects";
-import { detectOverObject } from "./utils/over-element";
-import { TIMELINE_BOUNDING_CHANGED, TIMELINE_SCALE_CHANGED } from "./global";
-import { INTERNAL_OBJECT_TYPES } from "./constants/objects";
-import { ScrollbarsProps } from "./scrollbar/types";
-import { Scrollbars } from "./scrollbar";
-import { makeMouseWheel } from "./scrollbar/util";
+import { timeUsToUnits } from './utils/timeline';
+import { applyMixins } from './utils/apply-mixins';
+import EventEmitter from './utils/event-emitter';
+import { calcCanvasSpacing, isTouchEvent } from './utils/canvas';
+import { ACTIVE_SELECTION_COLOR } from './constants/objects';
+import { TIMELINE_OFFSET_CANVAS_LEFT } from './constants/constants';
+import { Track } from './objects';
+import { detectOverObject } from './utils/over-element';
+import { TIMELINE_BOUNDING_CHANGED, TIMELINE_SCALE_CHANGED } from './global';
+import { INTERNAL_OBJECT_TYPES } from './constants/objects';
+import { ScrollbarsProps } from './scrollbar/types';
+import { Scrollbars } from './scrollbar';
+import { makeMouseWheel } from './scrollbar/util';
 interface Bounding {
   width: number;
   height: number;
@@ -123,6 +125,8 @@ class Timeline extends Canvas {
   public transitionManager: TransitionManager;
   public dragStateManager: DragStateManager;
   public syncManager: SyncManager;
+  public core?: Core;
+  private _bridge?: TimelineBridge;
   private _mouseWheelHandler?: (e: TPointerEventInfo<WheelEvent>) => void;
   private _scrollbars?: Scrollbars;
   private _viewportChangeCallback?: (left: number) => void;
@@ -133,13 +137,14 @@ class Timeline extends Canvas {
       scale: ITimelineScaleState;
       duration: number;
       guideLineColor?: string;
+      core?: Core;
     }
   ) {
     super(canvasEl, options);
     this.emitter = new EventEmitter<Record<string, any>>();
     this.bounding = options.bounding || {
       width: options.width || 0,
-      height: options.height || 0
+      height: options.height || 0,
     };
     this.tScale = options.scale?.zoom || 1;
 
@@ -167,6 +172,11 @@ class Timeline extends Canvas {
     this.guideLineColor = options.guideLineColor || ACTIVE_SELECTION_COLOR;
     this.initEventListeners();
     this.withTransitions = options.withTransitions || [];
+
+    if (options.core) {
+      this.core = options.core;
+      this._bridge = new TimelineBridge(this.core, this);
+    }
   }
 
   initScrollbars(config: ScrollConfig = {}): void {
@@ -181,7 +191,7 @@ class Timeline extends Canvas {
         if (this._viewportChangeCallback) {
           this._viewportChangeCallback(left);
         }
-      }
+      },
     };
 
     this._mouseWheelHandler = makeMouseWheel(this, {
@@ -193,13 +203,13 @@ class Timeline extends Canvas {
           payload: {
             scale: {
               ...this.scale,
-              zoom
-            }
-          }
+              zoom,
+            },
+          },
         });
-      }
+      },
     });
-    this.on("mouse:wheel", this._mouseWheelHandler);
+    this.on('mouse:wheel', this._mouseWheelHandler);
 
     this._scrollbars = new Scrollbars(this, scrollConfig);
 
@@ -221,7 +231,7 @@ class Timeline extends Canvas {
 
   disposeScrollbars(): void {
     if (this._mouseWheelHandler) {
-      this.off("mouse:wheel", this._mouseWheelHandler);
+      this.off('mouse:wheel', this._mouseWheelHandler);
       this._mouseWheelHandler = undefined;
     }
 
@@ -232,11 +242,10 @@ class Timeline extends Canvas {
   }
 
   public getItemAccepts(itemType: string) {
-    
     return this.acceptsMap[itemType.toLowerCase()] || this.itemTypes;
   }
 
-  public getItemSize(itemType: string) {    
+  public getItemSize(itemType: string) {
     return this.sizesMap[itemType.toLowerCase()] || 42;
   }
 
@@ -245,17 +254,17 @@ class Timeline extends Canvas {
     vt[4] = this.spacing.left;
 
     Object.assign(FabricObject.ownDefaults, {
-      borderColor: "transparent",
-      cornerColor: "white",
-      cornerStrokeColor: "transparent",
+      borderColor: 'transparent',
+      cornerColor: 'white',
+      cornerStrokeColor: 'transparent',
       strokeWidth: 0,
       borderOpacityWhenMoving: 1,
       borderScaleFactor: 1,
       cornerSize: 8,
-      cornerStyle: "rect",
+      cornerStyle: 'rect',
       centeredScaling: false,
       centeredRotation: true,
-      transparentCorners: false
+      transparentCorners: false,
     });
   }
 
@@ -283,7 +292,7 @@ class Timeline extends Canvas {
       }
     }
     const items = this.itemsManager.getTrackItems();
-    const transitions = this.getObjects("Transition");
+    const transitions = this.getObjects('Transition');
     const { isOverObject: overAnyObject, overObjects } = detectOverObject(
       point,
       [...transitions, ...items]
@@ -303,7 +312,7 @@ class Timeline extends Canvas {
         x: point.x,
         y: point.y,
         deltaY: 0,
-        deltaX: 0
+        deltaX: 0,
       };
       super.__onMouseDown(e);
     }
@@ -316,13 +325,13 @@ class Timeline extends Canvas {
   ): void {
     if (this.hoverCornerItem) {
       const pointer = this.getScenePoint(e);
-      const { key: corner = "", control } = target.getActiveControl() || {};
+      const { key: corner = '', control } = target.getActiveControl() || {};
       const actionHandler =
         control && control.getActionHandler(e, target, control)?.bind(control);
       const origin = this._getOriginFromCorner(target, corner);
       const transform: Transform = {
         target: target,
-        action: "resizing",
+        action: 'resizing',
         actionHandler,
         actionPerformed: false,
         corner,
@@ -353,16 +362,16 @@ class Timeline extends Canvas {
             left: target.left,
             flipX: target.flipX,
             flipY: target.flipY,
-            top: target.top
+            top: target.top,
           },
           originX: origin.x,
-          originY: origin.y
-        }
+          originY: origin.y,
+        },
       };
       this._currentTransform = transform;
-      this.fire("before:transform", {
+      this.fire('before:transform', {
         e,
-        transform
+        transform,
       });
     } else {
       super._setupCurrentTransform(e, target, alreadySelected);
@@ -388,7 +397,10 @@ class Timeline extends Canvas {
     this.syncManager.syncTracksAndClips(data);
   }
 
-  public syncTracks(data: { tracks: ITimelineTrack[]; changedTracks: string[] }) {
+  public syncTracks(data: {
+    tracks: ITimelineTrack[];
+    changedTracks: string[];
+  }) {
     this.syncManager.syncTracks(data);
   }
 
@@ -436,7 +448,7 @@ class Timeline extends Canvas {
 
   public scrollTo({
     scrollLeft,
-    scrollTop
+    scrollTop,
   }: {
     scrollLeft?: number;
     scrollTop?: number;
@@ -444,11 +456,11 @@ class Timeline extends Canvas {
     const vt = [...this.viewportTransform]; // Create a shallow copy
     let hasChanged = false;
 
-    if (typeof scrollLeft === "number") {
+    if (typeof scrollLeft === 'number') {
       vt[4] = -scrollLeft + this.spacing.left;
       hasChanged = true;
     }
-    if (typeof scrollTop === "number") {
+    if (typeof scrollTop === 'number') {
       vt[5] = -scrollTop;
       hasChanged = true;
     }
@@ -465,25 +477,25 @@ class Timeline extends Canvas {
   }
 
   public calcBounding() {
-    const staticTracks = (this.getObjects("Track") as Track[]).filter(
+    const staticTracks = (this.getObjects('Track') as Track[]).filter(
       (track) => track.static
     );
 
     // get the largest bounding box for right and bottom of the objects
     const yBounding = [
       ...this.itemsManager.getTrackItems(),
-      ...staticTracks
+      ...staticTracks,
     ].reduce(
       (acc, obj) => {
         const { top, height } = obj.getBoundingRect();
         return {
           top: Math.min(acc.top, top),
-          height: Math.max(acc.height, top + height)
+          height: Math.max(acc.height, top + height),
         };
       },
       {
         top: Infinity,
-        height: 0
+        height: 0,
       }
     );
 
@@ -492,12 +504,12 @@ class Timeline extends Canvas {
         const { left, width } = obj.getBoundingRect();
         return {
           left: Math.min(acc.left, left),
-          width: Math.max(acc.width, left + width)
+          width: Math.max(acc.width, left + width),
         };
       },
       {
         left: Infinity,
-        width: this.width
+        width: this.width,
       }
     );
 
@@ -539,15 +551,15 @@ class Timeline extends Canvas {
 
     this.bounding = {
       ...yBounding,
-      ...xBounding
+      ...xBounding,
     };
     this.emitter.emit(TIMELINE_BOUNDING_CHANGED, {
       payload: {
         bounding: {
           ...yBounding,
-          ...xBounding
-        }
-      }
+          ...xBounding,
+        },
+      },
     });
   }
 
@@ -560,7 +572,7 @@ class Timeline extends Canvas {
     this.setActiveTrackItemCoords();
     this.onScroll?.({
       scrollTop: limitedPos.y,
-      scrollLeft: limitedPos.x - this.spacing.left
+      scrollLeft: limitedPos.x - this.spacing.left,
     });
   }
 

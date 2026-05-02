@@ -1,7 +1,7 @@
 export const CUSTOM_EFFECTS = [
   {
-    key: "zoomRotate",
-    label: "Zoom Rotate",
+    key: 'zoomRotate',
+    label: 'Zoom Rotate',
     fragment: `
       in vec2 vTextureCoord;
 in vec4 vColor;

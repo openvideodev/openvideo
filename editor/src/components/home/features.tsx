@@ -1,9 +1,9 @@
-"use client";
-import React from "react";
-import { Sparkles, Wand2, ArrowRightLeft, Move } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Icons } from "@/components/shared/icons";
-import { IconSparkles2 } from "@tabler/icons-react";
+'use client';
+import React from 'react';
+import { Sparkles, Wand2, ArrowRightLeft, Move } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Icons } from '@/components/shared/icons';
+import { IconSparkles2 } from '@tabler/icons-react';
 
 const FeatureCard = ({
   title,
@@ -26,55 +26,59 @@ const FeatureCard = ({
 const Features = () => {
   const features = [
     {
-      title: "AI Editor Copilot",
+      title: 'AI Editor Copilot',
       description:
-        "Write commands to edit video, generate transitions or analyze your media in real time.",
+        'Write commands to edit video, generate transitions or analyze your media in real time.',
       icon: <IconSparkles2 size={18} />,
     },
     {
-      title: "Zero Latency Renderer",
+      title: 'Zero Latency Renderer',
       description:
-        "Fast, client-side rendering using WebCodecs and PixiJS for a smooth editing experience.",
+        'Fast, client-side rendering using WebCodecs and PixiJS for a smooth editing experience.',
       icon: <Icons.video size={18} />,
     },
     {
-      title: "Chroma Key",
-      description: "Professional background removal for any video with just one click.",
+      title: 'Chroma Key',
+      description:
+        'Professional background removal for any video with just one click.',
       icon: <Sparkles size={18} />,
     },
     {
-      title: "Pro Effects",
-      description: "Apply cinematic filters and custom GLSL effects to your creative projects.",
+      title: 'Pro Effects',
+      description:
+        'Apply cinematic filters and custom GLSL effects to your creative projects.',
       icon: <Wand2 size={18} />,
     },
     {
-      title: "Smooth Transitions",
-      description: "Seamlessly blend clips with a variety of professional-grade transitions.",
+      title: 'Smooth Transitions',
+      description:
+        'Seamlessly blend clips with a variety of professional-grade transitions.',
       icon: <ArrowRightLeft size={18} />,
     },
     {
-      title: "Fluid Animations",
-      description: "Bring elements to life with customizable keyframe-based motion and transforms.",
+      title: 'Fluid Animations',
+      description:
+        'Bring elements to life with customizable keyframe-based motion and transforms.',
       icon: <Move size={18} />,
     },
   ];
 
   return (
     <>
-      {" "}
+      {' '}
       <section className="flex flex-col items-center justify-center gap-16 py-28 p-8 text-center px-4 w-full border-t">
         <div className="flex items-center justify-center gap-6 flex-col">
           <Badge variant="secondary" className="px-4 py-2">
             Features
-          </Badge>{" "}
+          </Badge>{' '}
           <h2 className="text-4xl font-medium tracking-tight">
             Everything you need to edit at phase
           </h2>
           <p className="max-w-2xl mx-auto max-sm:text-sm text-muted-foreground text-lg">
-            Powerful AI-assisted tools, real-time rendering and professional video workflows — all
-            running directly in your browser.
+            Powerful AI-assisted tools, real-time rendering and professional
+            video workflows — all running directly in your browser.
           </p>
-        </div>{" "}
+        </div>{' '}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <div key={index} className="p-8 relative">
@@ -102,7 +106,7 @@ const Features = () => {
               )}
               {index % 3 !== 2 && (
                 <div className="absolute right-0 top-4 bottom-4 w-[1.5px] bg-linear-to-b from-transparent via-border to-transparent hidden lg:block" />
-              )}{" "}
+              )}{' '}
             </div>
           ))}
         </div>

@@ -1,10 +1,10 @@
-import type { TProject } from "@/types/project";
-import type { MediaFile } from "@/types/media";
-import { IndexedDBAdapter } from "./indexeddb-adapter";
-import { OPFSAdapter } from "./opfs-adapter";
-import type { MediaFileData, StorageConfig, TimelineData } from "./types";
-import type { TimelineTrack } from "@/types/timeline";
-import type { SavedSoundsData, SavedSound, SoundEffect } from "@/types/sounds";
+import type { TProject } from '@/types/project';
+import type { MediaFile } from '@/types/media';
+import { IndexedDBAdapter } from './indexeddb-adapter';
+import { OPFSAdapter } from './opfs-adapter';
+import type { MediaFileData, StorageConfig, TimelineData } from './types';
+import type { TimelineTrack } from '@/types/timeline';
+import type { SavedSoundsData, SavedSound, SoundEffect } from '@/types/sounds';
 
 export interface StorageStats {
   usedBytes: number;
@@ -21,17 +21,17 @@ class StorageService {
 
   constructor() {
     this.config = {
-      projectsDb: "video-editor-projects",
-      mediaDb: "video-editor-media",
-      timelineDb: "video-editor-timelines",
-      savedSoundsDb: "video-editor-saved-sounds",
+      projectsDb: 'video-editor-projects',
+      mediaDb: 'video-editor-media',
+      timelineDb: 'video-editor-timelines',
+      savedSoundsDb: 'video-editor-saved-sounds',
       version: 1,
     };
 
     this.savedSoundsAdapter = new IndexedDBAdapter<SavedSoundsData>(
       this.config.savedSoundsDb,
-      "saved-sounds",
-      this.config.version,
+      'saved-sounds',
+      this.config.version
     );
   }
 
@@ -39,8 +39,8 @@ class StorageService {
   private getProjectMediaAdapters({ projectId }: { projectId: string }) {
     const mediaMetadataAdapter = new IndexedDBAdapter<MediaFileData>(
       `${this.config.mediaDb}-${projectId}`,
-      "media-metadata",
-      this.config.version,
+      'media-metadata',
+      this.config.version
     );
 
     const mediaFilesAdapter = new OPFSAdapter(`media-files-${projectId}`);
@@ -60,7 +60,11 @@ class StorageService {
       ? `${this.config.timelineDb}-${projectId}-${sceneId}`
       : `${this.config.timelineDb}-${projectId}`;
 
-    return new IndexedDBAdapter<TimelineData>(dbName, "timeline", this.config.version);
+    return new IndexedDBAdapter<TimelineData>(
+      dbName,
+      'timeline',
+      this.config.version
+    );
   }
 
   // Project operations
@@ -73,28 +77,31 @@ class StorageService {
       // First check if project exists
       const existing = await this.loadProject({ id: project.id });
 
-      const res = await fetch(`/api/projects${existing ? `/${project.id}` : ""}`, {
-        method: existing ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: project.id,
-          name: project.name,
-          thumbnail: project.thumbnail,
-          canvasSize: project.canvasSize,
-          canvasMode: project.canvasMode,
-          fps: project.fps,
-          data: project.data, // This is the single scene data
-          currentSceneId: project.currentSceneId,
-          bookmarks: project.bookmarks,
-          mediaItems: project.mediaItems,
-        }),
-      });
+      const res = await fetch(
+        `/api/projects${existing ? `/${project.id}` : ''}`,
+        {
+          method: existing ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: project.id,
+            name: project.name,
+            thumbnail: project.thumbnail,
+            canvasSize: project.canvasSize,
+            canvasMode: project.canvasMode,
+            fps: project.fps,
+            data: project.data, // This is the single scene data
+            currentSceneId: project.currentSceneId,
+            bookmarks: project.bookmarks,
+            mediaItems: project.mediaItems,
+          }),
+        }
+      );
 
       if (!res.ok) {
         throw new Error(`Failed to save project: ${res.statusText}`);
       }
     } catch (e) {
-      console.error("Error saving project to DB:", e);
+      console.error('Error saving project to DB:', e);
       throw e;
     }
   }
@@ -102,8 +109,8 @@ class StorageService {
   async saveProjectFull(projectId: string, data: any): Promise<void> {
     try {
       const res = await fetch(`/api/projects/${projectId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data }),
       });
 
@@ -111,16 +118,19 @@ class StorageService {
         throw new Error(`Failed to save project data: ${res.statusText}`);
       }
     } catch (e) {
-      console.error("Error saving project data to DB:", e);
+      console.error('Error saving project data to DB:', e);
       throw e;
     }
   }
 
-  async updateProject(projectId: string, updates: Partial<TProject>): Promise<void> {
+  async updateProject(
+    projectId: string,
+    updates: Partial<TProject>
+  ): Promise<void> {
     try {
       const res = await fetch(`/api/projects/${projectId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
 
@@ -128,7 +138,7 @@ class StorageService {
         throw new Error(`Failed to update project: ${res.statusText}`);
       }
     } catch (e) {
-      console.error("Error updating project in DB:", e);
+      console.error('Error updating project in DB:', e);
       throw e;
     }
   }
@@ -148,7 +158,7 @@ class StorageService {
         createdAt: new Date(dbProject.createdAt),
         updatedAt: new Date(dbProject.updatedAt),
         scenes: [], // Scenes are now simplified out or handled differently
-        currentSceneId: dbProject.currentSceneId || "",
+        currentSceneId: dbProject.currentSceneId || '',
         backgroundColor: dbProject.backgroundColor,
         backgroundType: dbProject.backgroundType,
         blurIntensity: dbProject.blurIntensity,
@@ -159,14 +169,14 @@ class StorageService {
         data: dbProject.data,
       } as TProject;
     } catch (e) {
-      console.error("Error loading project from DB:", e);
+      console.error('Error loading project from DB:', e);
       return null;
     }
   }
 
   async loadAllProjects(): Promise<TProject[]> {
     try {
-      const res = await fetch("/api/projects");
+      const res = await fetch('/api/projects');
       if (!res.ok) return [];
 
       const dbProjects = await res.json();
@@ -178,7 +188,7 @@ class StorageService {
         createdAt: new Date(dbProject.createdAt),
         updatedAt: new Date(dbProject.updatedAt),
         scenes: [],
-        currentSceneId: dbProject.currentSceneId || "",
+        currentSceneId: dbProject.currentSceneId || '',
         backgroundColor: dbProject.backgroundColor,
         backgroundType: dbProject.backgroundType,
         blurIntensity: dbProject.blurIntensity,
@@ -189,7 +199,7 @@ class StorageService {
         data: dbProject.data,
       }));
     } catch (e) {
-      console.error("Error loading all projects from DB:", e);
+      console.error('Error loading all projects from DB:', e);
       return [];
     }
   }
@@ -197,7 +207,7 @@ class StorageService {
   async deleteProject({ id }: { id: string }): Promise<void> {
     try {
       const res = await fetch(`/api/projects/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       if (!res.ok) {
@@ -213,7 +223,7 @@ class StorageService {
       const timelineAdapter = this.getProjectTimelineAdapter({ projectId: id });
       await timelineAdapter.clear();
     } catch (e) {
-      console.error("Failed to delete project or clear local data", e);
+      console.error('Failed to delete project or clear local data', e);
       throw e;
     }
   }
@@ -228,7 +238,8 @@ class StorageService {
     projectId: string;
     mediaItem: MediaFile;
   }): Promise<void> {
-    const { mediaMetadataAdapter, mediaFilesAdapter } = this.getProjectMediaAdapters({ projectId });
+    const { mediaMetadataAdapter, mediaFilesAdapter } =
+      this.getProjectMediaAdapters({ projectId });
 
     // Save file to project-specific OPFS
     await mediaFilesAdapter.set(mediaItem.id, mediaItem.file);
@@ -256,7 +267,8 @@ class StorageService {
     projectId: string;
     id: string;
   }): Promise<MediaFile | null> {
-    const { mediaMetadataAdapter, mediaFilesAdapter } = this.getProjectMediaAdapters({ projectId });
+    const { mediaMetadataAdapter, mediaFilesAdapter } =
+      this.getProjectMediaAdapters({ projectId });
 
     const [file, metadata] = await Promise.all([
       mediaFilesAdapter.get(id),
@@ -266,11 +278,11 @@ class StorageService {
     if (!file || !metadata) return null;
 
     let url: string;
-    if (metadata.type === "image" && (!file.type || file.type === "")) {
+    if (metadata.type === 'image' && (!file.type || file.type === '')) {
       try {
         const text = await file.text();
-        if (text.trim().startsWith("<svg")) {
-          const svgBlob = new Blob([text], { type: "image/svg+xml" });
+        if (text.trim().startsWith('<svg')) {
+          const svgBlob = new Blob([text], { type: 'image/svg+xml' });
           url = URL.createObjectURL(svgBlob);
         } else {
           url = URL.createObjectURL(file);
@@ -295,7 +307,11 @@ class StorageService {
     };
   }
 
-  async loadAllMediaFiles({ projectId }: { projectId: string }): Promise<MediaFile[]> {
+  async loadAllMediaFiles({
+    projectId,
+  }: {
+    projectId: string;
+  }): Promise<MediaFile[]> {
     const { mediaMetadataAdapter } = this.getProjectMediaAdapters({
       projectId,
     });
@@ -313,16 +329,34 @@ class StorageService {
     return mediaItems;
   }
 
-  async deleteMediaFile({ projectId, id }: { projectId: string; id: string }): Promise<void> {
-    const { mediaMetadataAdapter, mediaFilesAdapter } = this.getProjectMediaAdapters({ projectId });
+  async deleteMediaFile({
+    projectId,
+    id,
+  }: {
+    projectId: string;
+    id: string;
+  }): Promise<void> {
+    const { mediaMetadataAdapter, mediaFilesAdapter } =
+      this.getProjectMediaAdapters({ projectId });
 
-    await Promise.all([mediaFilesAdapter.remove(id), mediaMetadataAdapter.remove(id)]);
+    await Promise.all([
+      mediaFilesAdapter.remove(id),
+      mediaMetadataAdapter.remove(id),
+    ]);
   }
 
-  async deleteProjectMedia({ projectId }: { projectId: string }): Promise<void> {
-    const { mediaMetadataAdapter, mediaFilesAdapter } = this.getProjectMediaAdapters({ projectId });
+  async deleteProjectMedia({
+    projectId,
+  }: {
+    projectId: string;
+  }): Promise<void> {
+    const { mediaMetadataAdapter, mediaFilesAdapter } =
+      this.getProjectMediaAdapters({ projectId });
 
-    await Promise.all([mediaMetadataAdapter.clear(), mediaFilesAdapter.clear()]);
+    await Promise.all([
+      mediaMetadataAdapter.clear(),
+      mediaFilesAdapter.clear(),
+    ]);
   }
 
   // Timeline operations - supports both legacy and scene-based storage
@@ -343,7 +377,7 @@ class StorageService {
       tracks,
       lastModified: new Date().toISOString(),
     };
-    await timelineAdapter.set("timeline", timelineData);
+    await timelineAdapter.set('timeline', timelineData);
   }
 
   async loadTimeline({
@@ -357,13 +391,17 @@ class StorageService {
       projectId,
       sceneId,
     });
-    const timelineData = await timelineAdapter.get("timeline");
+    const timelineData = await timelineAdapter.get('timeline');
     return timelineData ? timelineData.tracks : null;
   }
 
-  async deleteProjectTimeline({ projectId }: { projectId: string }): Promise<void> {
+  async deleteProjectTimeline({
+    projectId,
+  }: {
+    projectId: string;
+  }): Promise<void> {
     const timelineAdapter = this.getProjectTimelineAdapter({ projectId });
-    await timelineAdapter.remove("timeline");
+    await timelineAdapter.remove('timeline');
   }
 
   // Utility methods
@@ -394,7 +432,7 @@ class StorageService {
 
     const [mediaIds, timelineData] = await Promise.all([
       mediaMetadataAdapter.list(),
-      timelineAdapter.get("timeline"),
+      timelineAdapter.get('timeline'),
     ]);
 
     return {
@@ -405,7 +443,7 @@ class StorageService {
 
   async loadSavedSounds(): Promise<SavedSoundsData> {
     try {
-      const savedSoundsData = await this.savedSoundsAdapter.get("user-sounds");
+      const savedSoundsData = await this.savedSoundsAdapter.get('user-sounds');
       return (
         savedSoundsData || {
           sounds: [],
@@ -413,12 +451,16 @@ class StorageService {
         }
       );
     } catch (error) {
-      console.error("Failed to load saved sounds:", error);
+      console.error('Failed to load saved sounds:', error);
       return { sounds: [], lastModified: new Date().toISOString() };
     }
   }
 
-  async saveSoundEffect({ soundEffect }: { soundEffect: SoundEffect }): Promise<void> {
+  async saveSoundEffect({
+    soundEffect,
+  }: {
+    soundEffect: SoundEffect;
+  }): Promise<void> {
     try {
       const currentData = await this.loadSavedSounds();
 
@@ -444,9 +486,9 @@ class StorageService {
         lastModified: new Date().toISOString(),
       };
 
-      await this.savedSoundsAdapter.set("user-sounds", updatedData);
+      await this.savedSoundsAdapter.set('user-sounds', updatedData);
     } catch (error) {
-      console.error("Failed to save sound effect:", error);
+      console.error('Failed to save sound effect:', error);
       throw error;
     }
   }
@@ -460,9 +502,9 @@ class StorageService {
         lastModified: new Date().toISOString(),
       };
 
-      await this.savedSoundsAdapter.set("user-sounds", updatedData);
+      await this.savedSoundsAdapter.set('user-sounds', updatedData);
     } catch (error) {
-      console.error("Failed to remove saved sound:", error);
+      console.error('Failed to remove saved sound:', error);
       throw error;
     }
   }
@@ -472,23 +514,23 @@ class StorageService {
       const currentData = await this.loadSavedSounds();
       return currentData.sounds.some((sound) => sound.id === soundId);
     } catch (error) {
-      console.error("Failed to check if sound is saved:", error);
+      console.error('Failed to check if sound is saved:', error);
       return false;
     }
   }
 
   async clearSavedSounds(): Promise<void> {
     try {
-      await this.savedSoundsAdapter.remove("user-sounds");
+      await this.savedSoundsAdapter.remove('user-sounds');
     } catch (error) {
-      console.error("Failed to clear saved sounds:", error);
+      console.error('Failed to clear saved sounds:', error);
       throw error;
     }
   }
 
   // Storage statistics
   async getStorageStats(): Promise<StorageStats | null> {
-    if (!("storage" in navigator) || !navigator.storage.estimate) {
+    if (!('storage' in navigator) || !navigator.storage.estimate) {
       return null;
     }
     try {
@@ -503,11 +545,12 @@ class StorageService {
         quotaBytes,
         usedMB: Math.round((usedBytes / (1024 * 1024)) * 10) / 10,
         quotaMB: Math.round((quotaBytes / (1024 * 1024)) * 10) / 10,
-        percentUsed: quotaBytes > 0 ? Math.round((usedBytes / quotaBytes) * 100) : 0,
+        percentUsed:
+          quotaBytes > 0 ? Math.round((usedBytes / quotaBytes) * 100) : 0,
         isPersisted: persisted,
       };
     } catch (error) {
-      console.error("Failed to get storage stats:", error);
+      console.error('Failed to get storage stats:', error);
       return null;
     }
   }
@@ -518,7 +561,7 @@ class StorageService {
   }
 
   isIndexedDBSupported(): boolean {
-    return "indexedDB" in window;
+    return 'indexedDB' in window;
   }
 
   isFullySupported(): boolean {

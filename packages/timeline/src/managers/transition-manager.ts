@@ -1,6 +1,6 @@
-import { ITransitionClip } from "../types";
-import { Transition, Track } from "../objects";
-import Timeline from "../timeline";
+import { ITransitionClip } from '../types';
+import { Transition, Track } from '../objects';
+import Timeline from '../timeline';
 
 class TransitionManager {
   private timeline: Timeline;
@@ -10,7 +10,7 @@ class TransitionManager {
   }
 
   private removeTransitions() {
-    const transitionItems = this.timeline.getObjects("Transition");
+    const transitionItems = this.timeline.getObjects('Transition');
     this.timeline.remove(...transitionItems);
   }
 
@@ -31,7 +31,10 @@ class TransitionManager {
       const height = 26;
       const position = fromObjItem.left + fromObjItem.width - width / 2;
       const top = fromObjItem.top + (fromObjItem.height - height) / 2;
-      const key = (transitionData as any).transitionEffect?.key || transitionData.key || "none";
+      const key =
+        (transitionData as any).transitionEffect?.key ||
+        transitionData.key ||
+        'none';
 
       const transitionItem = new Transition({
         id: transitionData.id,
@@ -43,7 +46,7 @@ class TransitionManager {
         duration: transitionData.duration,
         fromClipId: fromObjItem.id,
         toClipId: toObjItem.id,
-        key
+        key,
       });
 
       if (transitionItem) {
@@ -56,7 +59,7 @@ class TransitionManager {
     this.timeline.pauseEventListeners();
     this.timeline.transitionIds.forEach((id) => {
       const transitionItem = this.timeline
-        .getObjects("Transition")
+        .getObjects('Transition')
         .find((o) => o.id === id);
 
       if (transitionItem instanceof Transition) {
@@ -72,7 +75,7 @@ class TransitionManager {
 
         transitionItem.set({
           left: position,
-          top: top
+          top: top,
         });
         transitionItem.setCoords();
       }
@@ -82,7 +85,7 @@ class TransitionManager {
 
   public updateTransitions(handleListeners = true) {
     handleListeners && this.timeline.pauseEventListeners();
-    const tracks = this.timeline.getObjects("Track");
+    const tracks = this.timeline.getObjects('Track');
     const trackItems = this.timeline.getObjects(
       ...this.timeline.withTransitions
     );
@@ -107,14 +110,14 @@ class TransitionManager {
             this.timeline.transitionIds.includes(nextTransitionId);
           console.log({
             transitionExists,
-            nextTransitionId
+            nextTransitionId,
           });
           if (transitionExists) {
             const transition = this.timeline.transitionsMap[nextTransitionId];
 
             transitionsMapNext[nextTransitionId] = {
               ...transition,
-              trackId: track.id
+              trackId: track.id,
             } as any;
           } else {
             const transition: ITransitionClip = {
@@ -122,9 +125,9 @@ class TransitionManager {
               duration: 1_500_000,
               fromClipId: item1.id,
               toClipId: item2.id,
-              key: "none",
+              key: 'none',
               trackId: track.id,
-              type: "Transition"
+              type: 'Transition',
             } as any;
 
             transitionsMapNext[nextTransitionId] = transition;
@@ -140,7 +143,7 @@ class TransitionManager {
     this.renderTransitions();
 
     // update transitions in cache
-    const newTransitions = this.timeline.getObjects("Transition");
+    const newTransitions = this.timeline.getObjects('Transition');
     this.timeline.updateCachingActiveObjects(newTransitions);
 
     handleListeners && this.timeline.resumeEventListeners();

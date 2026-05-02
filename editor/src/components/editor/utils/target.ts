@@ -1,17 +1,17 @@
 export const getTargetControls = (targetType: string): string[] => {
   switch (targetType) {
-    case "text":
-      return ["e", "se", "s"];
-    case "caption":
-      return ["e", "se", "s"];
-    case "image":
-      return ["nw", "ne", "sw", "se"];
-    case "svg":
-      return ["nw", "n", "ne", "w", "e", "sw", "s", "se"];
-    case "group":
-      return ["nw", "ne", "sw", "se"];
+    case 'text':
+      return ['e', 'se', 's'];
+    case 'caption':
+      return ['e', 'se', 's'];
+    case 'image':
+      return ['nw', 'ne', 'sw', 'se'];
+    case 'svg':
+      return ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
+    case 'group':
+      return ['nw', 'ne', 'sw', 'se'];
     default:
-      return ["nw", "ne", "sw", "se"];
+      return ['nw', 'ne', 'sw', 'se'];
   }
 };
 
@@ -26,43 +26,43 @@ interface ITargetAbles {
 
 export const getTargetAbles = (targetType: string): ITargetAbles => {
   switch (targetType) {
-    case "text":
+    case 'text':
       return {
         rotatable: true,
         resizable: true,
         scalable: false,
         keepRatio: false,
         draggable: true,
-        snappable: true
+        snappable: true,
       };
-    case "caption":
+    case 'caption':
       return {
         rotatable: true,
         resizable: true,
         scalable: false,
         keepRatio: false,
         draggable: true,
-        snappable: true
+        snappable: true,
       };
-    case "image":
+    case 'image':
       return {
         rotatable: true,
         resizable: false,
         scalable: true,
         keepRatio: true,
         draggable: true,
-        snappable: true
+        snappable: true,
       };
-    case "group":
+    case 'group':
       return {
         rotatable: false,
         resizable: false,
         scalable: true,
         keepRatio: true,
         draggable: true,
-        snappable: true
+        snappable: true,
       };
-    case "svg":
+    case 'svg':
       return {
         rotatable: true,
         resizable: false,
@@ -70,7 +70,7 @@ export const getTargetAbles = (targetType: string): ITargetAbles => {
         keepRatio: true,
 
         draggable: true,
-        snappable: true
+        snappable: true,
       };
     default:
       return {
@@ -79,7 +79,7 @@ export const getTargetAbles = (targetType: string): ITargetAbles => {
         scalable: true,
         keepRatio: true,
         draggable: true,
-        snappable: true
+        snappable: true,
       };
   }
 };
@@ -106,9 +106,9 @@ export const emptySelection: SelectionInfo = {
     scalable: false,
     keepRatio: false,
     draggable: true,
-    snappable: true
+    snappable: true,
   },
-  controls: []
+  controls: [],
 };
 
 export const getSelectionByIds = (ids: string[]): SelectionInfo => {
@@ -125,7 +125,7 @@ export const getSelectionByIds = (ids: string[]): SelectionInfo => {
     .filter((target): target is HTMLElement => target !== null)
     .filter((target) => {
       const targetType = getTypeFromClassName(target.className)!;
-      return targetType !== "audio";
+      return targetType !== 'audio';
     });
 
   if (targets.length === 0) return emptySelection;
@@ -138,9 +138,9 @@ export const getSelectionByIds = (ids: string[]): SelectionInfo => {
   } else {
     return {
       targets,
-      layerType: "group",
-      ables: getTargetAbles("group"),
-      controls: []
+      layerType: 'group',
+      ables: getTargetAbles('group'),
+      controls: [],
     };
   }
 };

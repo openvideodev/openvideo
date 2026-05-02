@@ -1,5 +1,5 @@
-import { ISize } from "@openvideo/timeline";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ISize } from '@openvideo/timeline';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function useZoom(containerRef: React.RefObject<HTMLDivElement>, size: ISize) {
   const [zoom, setZoom] = useState(0.01);
@@ -42,11 +42,11 @@ function useZoom(containerRef: React.RefObject<HTMLDivElement>, size: ISize) {
       calculateZoom();
     };
 
-    window.addEventListener("resize", handleWindowResize);
+    window.addEventListener('resize', handleWindowResize);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener("resize", handleWindowResize);
+      window.removeEventListener('resize', handleWindowResize);
     };
   }, [calculateZoom]);
 

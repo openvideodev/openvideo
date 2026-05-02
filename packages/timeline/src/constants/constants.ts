@@ -11,9 +11,9 @@ export const LARGE_FONT_SIZE = 24;
 export const NORMAL_FONT_SIZE = 16;
 export const SMALL_FONT_SIZE = 12;
 
-export const DEFAULT_FONT = "Roboto";
-export const DEFAULT_WEIGHT = "Regular";
-export const SECONDARY_FONT = "Inter, sans-serif";
+export const DEFAULT_FONT = 'Roboto';
+export const DEFAULT_WEIGHT = 'Regular';
+export const SECONDARY_FONT = 'Inter, sans-serif';
 
 export const PREVIEW_FRAME_WIDTH = 188;
 export const TIMELINE_OFFSET_X = 40;

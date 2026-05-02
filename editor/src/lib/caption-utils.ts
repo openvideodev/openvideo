@@ -1,8 +1,9 @@
-import { IClip } from "@openvideo/engine-pixi";
-import { generateCaptionClips } from "./caption-generator";
-import { engine, projectStore } from "./project";
+import { IClip } from '@openvideo/engine-pixi';
+import { generateCaptionClips } from './caption-generator';
+import { core, projectStore } from './project';
+import { nanoid } from '@openvideo/core';
 
-export type WordsPerLineMode = "single" | "multiple";
+export type WordsPerLineMode = 'single' | 'multiple';
 
 interface RegenerateCaptionClipsOptions {
   captionClip: any;
@@ -14,13 +15,13 @@ interface RegenerateCaptionClipsOptions {
 }
 
 const CUSTOM_ANIMATIONS_CAPTIONS = [
-  "charTypewriter",
-  "scaleMidCaption",
-  "scaleDownCaption",
-  "upDownCaption",
-  "upLeftCaption",
-  "fadeByWord",
-  "slideFadeByWord",
+  'charTypewriter',
+  'scaleMidCaption',
+  'scaleDownCaption',
+  'upDownCaption',
+  'upLeftCaption',
+  'fadeByWord',
+  'slideFadeByWord',
 ];
 
 export async function regenerateCaptionClips({
@@ -33,14 +34,19 @@ export async function regenerateCaptionClips({
 }: RegenerateCaptionClipsOptions) {
   if (!captionClip?.mediaId) return;
 
-  const getAnimationObjects = (animation: string | string[], clipDuration: number) => {
+  const getAnimationObjects = (
+    animation: string | string[],
+    clipDuration: number
+  ) => {
     const animations = Array.isArray(animation) ? animation : [animation];
     return animations
-      .filter((a) => a !== "undefined")
+      .filter((a) => a !== 'undefined')
       .map((a) => ({
         type: a,
         opts: {
-          duration: CUSTOM_ANIMATIONS_CAPTIONS.includes(a) ? clipDuration : clipDuration * 0.2,
+          duration: CUSTOM_ANIMATIONS_CAPTIONS.includes(a)
+            ? clipDuration
+            : clipDuration * 0.2,
           delay: 0,
         },
       }));
@@ -50,13 +56,13 @@ export async function regenerateCaptionClips({
   const project = projectStore.getState();
   const clips = project.clips;
   const tracks = project.tracks;
-  
+
   const siblingClips: any[] = [];
 
   tracks.forEach((track: any) => {
     track.clipIds.forEach((id: string) => {
       const c = clips[id];
-      if (c && c.type === "Caption" && (c as any).mediaId === mediaId) {
+      if (c && c.type === 'Caption' && (c as any).mediaId === mediaId) {
         siblingClips.push(c);
       }
     });
@@ -74,7 +80,8 @@ export async function regenerateCaptionClips({
 
   siblingClips.forEach((c) => {
     const clipStartUs = c.display.from;
-    const words = c.words || c.originalOpts?.words || c.originalOpts?.caption?.words || [];
+    const words =
+      c.words || c.originalOpts?.words || c.originalOpts?.caption?.words || [];
     words.forEach((w: any) => {
       allWords.push({
         ...w,
@@ -99,13 +106,13 @@ export async function regenerateCaptionClips({
     words: allWords,
     mode: mode,
     fontSize: fontSize || currentOpts.fontSize || 80,
-    fontFamily: fontFamily || currentOpts.fontFamily || "Bangers-Regular",
+    fontFamily: fontFamily || currentOpts.fontFamily || 'Bangers-Regular',
     fontUrl: fontUrl || currentOpts.fontUrl,
     style: combinedStyle,
   });
 
   // Find track ID using project state
-  const targetTrack = tracks.find(t => t.clipIds.includes(captionClip.id));
+  const targetTrack = tracks.find((t) => t.clipIds.includes(captionClip.id));
   const trackId = targetTrack?.id;
   if (!trackId) return;
 
@@ -120,8 +127,10 @@ export async function regenerateCaptionClips({
       wordsPerLine: mode,
       top: uniformTop,
       angle: captionClip.angle !== undefined ? captionClip.angle : json.angle,
-      opacity: captionClip.opacity !== undefined ? captionClip.opacity : json.opacity,
-      zIndex: captionClip.zIndex !== undefined ? captionClip.zIndex : json.zIndex,
+      opacity:
+        captionClip.opacity !== undefined ? captionClip.opacity : json.opacity,
+      zIndex:
+        captionClip.zIndex !== undefined ? captionClip.zIndex : json.zIndex,
       flip: captionClip.flip !== undefined ? captionClip.flip : json.flip,
       textBoxStyle: styleUpdate?.textBoxStyle,
       caption: {
@@ -141,14 +150,21 @@ export async function regenerateCaptionClips({
         ...(styleUpdate?.animation && {
           animations: getAnimationObjects(
             styleUpdate.animation,
-            json.display.to - json.display.from,
+            json.display.to - json.display.from
           ),
         }),
-        ...(styleUpdate?.wordAnimation ? { wordAnimation: styleUpdate.wordAnimation } : {}),
-        ...(styleUpdate?.textBoxStyle ? { textBoxStyle: styleUpdate.textBoxStyle } : {}),
+        ...(styleUpdate?.wordAnimation
+          ? { wordAnimation: styleUpdate.wordAnimation }
+          : {}),
+        ...(styleUpdate?.textBoxStyle
+          ? { textBoxStyle: styleUpdate.textBoxStyle }
+          : {}),
       },
       animations: styleUpdate?.animation
-        ? getAnimationObjects(styleUpdate.animation, json.display.to - json.display.from)
+        ? getAnimationObjects(
+            styleUpdate.animation,
+            json.display.to - json.display.from
+          )
         : [],
       display: {
         from: json.display.from + mediaStartUs,
@@ -160,15 +176,21 @@ export async function regenerateCaptionClips({
     if (styleUpdate) {
       if (styleUpdate.fill) enrichedJson.fill = styleUpdate.fill;
       if (styleUpdate.align) enrichedJson.align = styleUpdate.align;
-      if (styleUpdate.fontFamily) enrichedJson.fontFamily = styleUpdate.fontFamily;
+      if (styleUpdate.fontFamily)
+        enrichedJson.fontFamily = styleUpdate.fontFamily;
       if (styleUpdate.fontUrl) enrichedJson.fontUrl = styleUpdate.fontUrl;
       if (styleUpdate.fontSize) enrichedJson.fontSize = styleUpdate.fontSize;
 
       if (styleUpdate.strokeWidth !== undefined || styleUpdate.stroke) {
-        if (typeof enrichedJson.stroke !== "object" || enrichedJson.stroke === null) {
+        if (
+          typeof enrichedJson.stroke !== 'object' ||
+          enrichedJson.stroke === null
+        ) {
           enrichedJson.stroke = {
             color:
-              typeof enrichedJson.stroke === "string" ? enrichedJson.stroke : "#000000",
+              typeof enrichedJson.stroke === 'string'
+                ? enrichedJson.stroke
+                : '#000000',
             width: 0,
           };
         }
@@ -189,7 +211,8 @@ export async function regenerateCaptionClips({
 
       if (styleUpdate.textCase) enrichedJson.textCase = styleUpdate.textCase;
 
-      if (styleUpdate.wordAnimation) enrichedJson.wordAnimation = styleUpdate.wordAnimation;
+      if (styleUpdate.wordAnimation)
+        enrichedJson.wordAnimation = styleUpdate.wordAnimation;
 
       if (styleUpdate.textBoxStyle) {
         enrichedJson.textBoxStyle = styleUpdate.textBoxStyle;
@@ -213,9 +236,24 @@ export async function regenerateCaptionClips({
     clipsToAdd.push(enrichedJson);
   }
 
-  // Atomically remove and add clips via engine
-  await engine.removeClips(siblingClips.map(c => c.id));
-  await engine.addClips(clipsToAdd, { trackId });
+  // 3. Atomically remove and add clips via Core batch
+  const fullClips = await Promise.all(
+    clipsToAdd.map((c) => core.clip.prepare(c as any))
+  );
+
+  const removeCommand = {
+    id: nanoid(),
+    type: 'clip.remove',
+    payload: { ids: siblingClips.map((c) => c.id) },
+  };
+
+  const addCommands = fullClips.map((clip) => ({
+    id: nanoid(),
+    type: 'clip.add',
+    payload: { clip, trackId },
+  }));
+
+  core.batch([removeCommand, ...addCommands] as any[]);
 
   return clipsToAdd;
 }

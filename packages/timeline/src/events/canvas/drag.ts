@@ -5,30 +5,30 @@ import {
   Point,
   classRegistry,
   TPointerEvent,
-  Transform
-} from "fabric";
-import Timeline from "../../timeline";
+  Transform,
+} from 'fabric';
+import Timeline from '../../timeline';
 import {
   Helper,
   Placeholder,
   PreviewTrackItem,
   Track,
-  Transition
-} from "../../objects";
-import TransitionGuide from "../../objects/transition-guide";
-import { DRAG_END, DRAG_START } from "../../global";
-import { generateId, timeUsToUnits, unitsToTimeUs } from "../../utils";
+  Transition,
+} from '../../objects';
+import TransitionGuide from '../../objects/transition-guide';
+import { DRAG_END, DRAG_START } from '../../global';
+import { generateId, timeUsToUnits, unitsToTimeUs } from '../../utils';
 import {
   clearPlaceholderObjects,
-  clearTrackHelperGuides
-} from "../../utils/canvas";
-import { clearAuxiliaryObjects } from "../../utils/guideline";
-import { TIMELINE_OFFSET_CANVAS_LEFT } from "../../constants/constants";
+  clearTrackHelperGuides,
+} from '../../utils/canvas';
+import { clearAuxiliaryObjects } from '../../utils/guideline';
+import { TIMELINE_OFFSET_CANVAS_LEFT } from '../../constants/constants';
 
 let previewItem: TransitionGuide | PreviewTrackItem;
 let nextTransition: Transition;
 let transitions: Transition[] = [];
-let draggedTypeItem: string = "";
+let draggedTypeItem: string = '';
 
 function findNearestObjectToPoint(
   point: Point,
@@ -59,7 +59,7 @@ const createPreviewTrackItem = ({
   left,
   top,
   type,
-  duration
+  duration,
 }: {
   width: number;
   height: number;
@@ -69,17 +69,17 @@ const createPreviewTrackItem = ({
   type: string;
   duration: number;
 }) => {
-  if (type === "transition") {
+  if (type === 'transition') {
     return new TransitionGuide({
       top: 0,
       left: 0,
       height: 48,
       width: 48,
-      id: "TransitionGuide"
+      id: 'TransitionGuide',
     });
   }
   const Klass =
-    (classRegistry.getClass("PreviewTrackItem") as typeof PreviewTrackItem) ||
+    (classRegistry.getClass('PreviewTrackItem') as typeof PreviewTrackItem) ||
     PreviewTrackItem;
   return new Klass({
     top,
@@ -88,7 +88,7 @@ const createPreviewTrackItem = ({
     width,
     id,
     type,
-    duration
+    duration,
   });
 };
 
@@ -96,11 +96,20 @@ function onDragEnter(this: Timeline, e: DragEventData) {
   // Get the drag data
   const draggedDataString = e.e.dataTransfer?.types[0] as string;
   if (!draggedDataString) return;
-  const draggedData = JSON.parse(draggedDataString) as { type: string; duration?: number };
+  const draggedData = JSON.parse(draggedDataString) as {
+    type: string;
+    duration?: number;
+  };
   const draggedType = draggedData.type;
-  if (draggedType !== "transition" && !this.itemTypes.includes(draggedType.toLowerCase())) return;
+  if (
+    draggedType !== 'transition' &&
+    !this.itemTypes.includes(draggedType.toLowerCase())
+  )
+    return;
 
-  const duration = draggedData.duration ? draggedData.duration * 1_000_000 : 5_000_000;
+  const duration = draggedData.duration
+    ? draggedData.duration * 1_000_000
+    : 5_000_000;
   const canvas = this;
   canvas.discardActiveObject();
   canvas.setActiveIds([]);
@@ -112,17 +121,17 @@ function onDragEnter(this: Timeline, e: DragEventData) {
   previewItem = createPreviewTrackItem({
     width: width,
     height: height,
-    id: "TransitionGuide",
+    id: 'TransitionGuide',
     left: 0,
     top: 0,
     type: draggedType,
-    duration
+    duration,
   });
   previewItem.visible = false;
   draggedTypeItem = draggedType;
-  if (draggedType === "transition") {
-    transitions = canvas.getObjects("Transition") as Transition[];
-    const appliedTransitions = transitions.filter((t) => t.key !== "none");
+  if (draggedType === 'transition') {
+    transitions = canvas.getObjects('Transition') as Transition[];
+    const appliedTransitions = transitions.filter((t) => t.key !== 'none');
     transitions.forEach((obj) => {
       const toObj = items.find((i) => i.id === obj.toClipId);
       const fromObj = items.find((i) => i.id === obj.fromClipId);
@@ -163,7 +172,7 @@ function onDragEnter(this: Timeline, e: DragEventData) {
 
   const state = this.dragStateManager.getState();
 
-  canvas.trackIdAfterTransform = "";
+  canvas.trackIdAfterTransform = '';
   canvas.positionAfterTransform = {};
   const activeSelection = previewItem;
   const activeObjects = [previewItem];
@@ -175,12 +184,12 @@ function onDragEnter(this: Timeline, e: DragEventData) {
     trackToItemsMap: {},
     activeObjects: [],
     trackTopToIdMap: {},
-    isDragOver: false
+    isDragOver: false,
   });
 
   this.dragStateManager.setState({ activeObjects });
 
-  const tracks = canvas.getObjects("Track") as Track[];
+  const tracks = canvas.getObjects('Track') as Track[];
 
   const allTrackItems = canvas.itemsManager.getTrackItems();
 
@@ -208,7 +217,7 @@ function onDragEnter(this: Timeline, e: DragEventData) {
   if (activeSelection) {
     canvas.positionBeforeTransform = {
       top: activeSelection.top,
-      left: activeSelection.left
+      left: activeSelection.left,
     };
   }
 
@@ -217,14 +226,14 @@ function onDragEnter(this: Timeline, e: DragEventData) {
 
     state.objectInitialPositions[target.id] = {
       top: targetBounds.top,
-      left: targetBounds.left
+      left: targetBounds.left,
     };
     const targetPlaceholder = new Placeholder({
       id: `${target.id}-placeholder`,
       left: targetBounds.left,
       top: targetBounds.top,
       width: targetBounds.width,
-      height: targetBounds.height
+      height: targetBounds.height,
     });
     targetPlaceholder.visible = false;
     targetPlaceholder.draggedObject = target;
@@ -242,15 +251,15 @@ const clearData = (canvas: Timeline) => {
   clearPlaceholderObjects(canvas, state.placeholderMovingObjects);
   if (!canvas) return;
   clearAuxiliaryObjects(canvas, canvas.getObjects());
-  clearTrackHelperGuides(canvas.getObjects("Helper"));
+  clearTrackHelperGuides(canvas.getObjects('Helper'));
 };
 
 function onDragLeave(this: Timeline) {
-  draggedTypeItem = "";
+  draggedTypeItem = '';
   clearData(this);
   this.dragStateManager.setState({
     draggingOverTrack: null,
-    isPointerOverHelperTrack: false
+    isPointerOverHelperTrack: false,
   });
   if (!previewItem) return;
 
@@ -260,12 +269,12 @@ function onDragLeave(this: Timeline) {
   transitions.forEach((obj) => {
     obj.strokeDashArray = [];
     obj.setSelected(false);
-    if (obj.key === "none") {
+    if (obj.key === 'none') {
       obj.visible = false;
     }
   });
 
-  canvas.getObjects("Helper", "Track").forEach((obj) => {
+  canvas.getObjects('Helper', 'Track').forEach((obj) => {
     if (obj.setSelected) {
       obj.setSelected(false);
     }
@@ -292,7 +301,7 @@ function onDragOver(this: Timeline, e: DragEventData) {
 
   previewItem.set({
     left: point.x - TIMELINE_OFFSET_CANVAS_LEFT,
-    top: point.y - previewItem.height / 2
+    top: point.y - previewItem.height / 2,
   });
 
   const nearestObjectToPoint = findNearestObjectToPoint(
@@ -314,21 +323,21 @@ function onDragOver(this: Timeline, e: DragEventData) {
   previewItem.setCoords();
   const transform = {
     target: previewItem,
-    action: "drag",
-    originX: "center",
-    originY: "center",
+    action: 'drag',
+    originX: 'center',
+    originY: 'center',
     offsetX: point.x - previewItem.left,
     offsetY: point.y - previewItem.top,
     scaleX: previewItem.scaleX,
-    scaleY: previewItem.scaleY
+    scaleY: previewItem.scaleY,
   };
 
-  state.activeObjects[0].type !== "transitionguide" &&
-    canvas.fire("object:moving", {
+  state.activeObjects[0].type !== 'transitionguide' &&
+    canvas.fire('object:moving', {
       target: previewItem,
       e: e.e as unknown as TPointerEvent,
       pointer: point,
-      transform: transform as unknown as Transform
+      transform: transform as unknown as Transform,
     });
   const itemTypes = this.itemTypes;
   if (itemTypes.includes(draggedTypeItem)) {
@@ -365,7 +374,7 @@ function onDragOver(this: Timeline, e: DragEventData) {
       ) {
         state.placeholderMovingObjects[0].left = state.activeObjects[0].left;
         state.placeholderMovingObjects[0].top = state.draggingOverTrack.top;
-        canvas.getObjects("Helper").forEach((obj) => {
+        canvas.getObjects('Helper').forEach((obj) => {
           if (obj.setSelected) {
             obj.setSelected(false);
           }
@@ -385,19 +394,21 @@ function onDragOver(this: Timeline, e: DragEventData) {
 }
 
 function onDrop(this: Timeline, e: DropEventData) {
-  draggedTypeItem = "";
+  draggedTypeItem = '';
   const canvas = this;
   clearData(canvas);
   const state = this.dragStateManager.getState();
   const overTrack = state.draggingOverTrack;
   this.dragStateManager.setState({
     draggingOverTrack: null,
-    isPointerOverHelperTrack: false
+    isPointerOverHelperTrack: false,
   });
   // Get the drag data
   const draggedDataString = e.e.dataTransfer?.types[0] as string;
-  const draggedData = JSON.parse(e.e.dataTransfer!.getData(draggedDataString)) as { type: string; [key: string]: unknown };
-  if (draggedData.type.toLowerCase() !== "transition") {
+  const draggedData = JSON.parse(
+    e.e.dataTransfer!.getData(draggedDataString)
+  ) as { type: string; [key: string]: unknown };
+  if (draggedData.type.toLowerCase() !== 'transition') {
     const previewItem = state.activeObjects[0];
     // Use previewItem.left directly as it's already in canvas coordinates (considering scroll)
     const positionXInTime = unitsToTimeUs(previewItem.left, canvas.tScale);
@@ -405,7 +416,7 @@ function onDrop(this: Timeline, e: DropEventData) {
       const placeholder = state.placeholderMovingObjects[0];
       // add an item when the track is accepted
       if (placeholder.opacity !== 0) {
-        const index = getIndexHelper(overTrack, this.getObjects("Track"));
+        const index = getIndexHelper(overTrack, this.getObjects('Track'));
         if (overTrack.magnetic) {
           const mostRight =
             state.initialTrackPoints[state.initialTrackPoints.length - 1];
@@ -422,13 +433,13 @@ function onDrop(this: Timeline, e: DropEventData) {
           canvas.tScale
         );
         const pointY = scenePoint.y;
-        const helpers = canvas.getObjects("Helper");
+        const helpers = canvas.getObjects('Helper');
         const closestHelp = helpers.reduce((prev, curr) =>
           Math.abs(curr.top - pointY) < Math.abs(prev.top - pointY)
             ? curr
             : prev
         );
-        const index = getIndexHelper(closestHelp, this.getObjects("Track"));
+        const index = getIndexHelper(closestHelp, this.getObjects('Track'));
         addItem(canvas, draggedData, index, positionXInTimeFromPoint, true);
       }
     } else {
@@ -441,7 +452,7 @@ function onDrop(this: Timeline, e: DropEventData) {
       );
       const index = getIndexHelper(
         overTrack as unknown as Helper,
-        this.getObjects("Track")
+        this.getObjects('Track')
       );
       addItem(canvas, draggedData, index, positionXInTimeFromPoint, true);
     }
@@ -454,20 +465,20 @@ function onDrop(this: Timeline, e: DropEventData) {
   if (!previewItem) return;
 
   if (nextTransition) {
-    this.emitter.emit("add:transition", {
+    this.emitter.emit('add:transition', {
       payload: {
         ...draggedData,
-        type: "Transition",
+        type: 'Transition',
         id: nextTransition.id,
         fromClipId: nextTransition.fromClipId,
-        toClipId: nextTransition.toClipId
-      }
+        toClipId: nextTransition.toClipId,
+      },
     });
   }
   transitions.forEach((obj) => {
     obj.strokeDashArray = [];
     obj.setSelected(false);
-    if (obj.key === "none") {
+    if (obj.key === 'none') {
       obj.visible = false;
     }
   });
@@ -506,22 +517,22 @@ const addItem = (
     payload: {
       ...draggedData,
       id: generateId(),
-      display: { from: position }
+      display: { from: position },
     },
-    options: { trackIndex: index, isNewTrack }
+    options: { trackIndex: index, isNewTrack },
   });
 };
 
 export function addDragEvents(timeline: Timeline) {
-  timeline.on("dragover", onDragOver);
-  timeline.on("dragenter", onDragEnter);
-  timeline.on("dragleave", onDragLeave);
-  timeline.on("drop", onDrop);
+  timeline.on('dragover', onDragOver);
+  timeline.on('dragenter', onDragEnter);
+  timeline.on('dragleave', onDragLeave);
+  timeline.on('drop', onDrop);
 }
 
 export function removeDragEvents(timeline: Timeline) {
-  timeline.off("dragover", onDragOver);
-  timeline.off("dragenter", onDragEnter);
-  timeline.off("dragleave", onDragLeave);
-  timeline.off("drop", onDrop);
+  timeline.off('dragover', onDragOver);
+  timeline.off('dragenter', onDragEnter);
+  timeline.off('dragleave', onDragLeave);
+  timeline.off('drop', onDrop);
 }

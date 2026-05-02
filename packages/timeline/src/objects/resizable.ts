@@ -1,13 +1,13 @@
-import { Control, Rect, RectProps, classRegistry } from "fabric";
+import { Control, Rect, RectProps, classRegistry } from 'fabric';
 import {
   ACTIVE_SELECTION_COLOR,
-  ACTIVE_SELECTION_WIDTH
-} from "../constants/objects";
-import { createResizeControls } from "../controls";
-import { IClip, IDisplay } from "../types";
+  ACTIVE_SELECTION_WIDTH,
+} from '../constants/objects';
+import { createResizeControls } from '../controls';
+import { IClip, IDisplay } from '../types';
 
 export interface ResizableBaseProps
-  extends Pick<RectProps, "width" | "height" | "top" | "left"> {
+  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
   id: string;
   tScale: number;
   display: IDisplay;
@@ -16,7 +16,7 @@ export interface ResizableBaseProps
 export type ResizableProps<T extends object = {}> = ResizableBaseProps & T;
 
 class Resizable extends Rect {
-  static type = "Resizable";
+  static type = 'Resizable';
   declare id: string;
   public isSelected = false;
   declare tScale: number;
@@ -28,7 +28,7 @@ class Resizable extends Rect {
   static getDefaults(): Record<string, any> {
     return {
       ...super.getDefaults(),
-      ...Resizable.ownDefaults
+      ...Resizable.ownDefaults,
     };
   }
 
@@ -36,12 +36,12 @@ class Resizable extends Rect {
     rx: 6,
     ry: 6,
     objectCaching: false,
-    borderColor: "transparent",
-    stroke: "transparent",
+    borderColor: 'transparent',
+    stroke: 'transparent',
     strokeWidth: 0,
-    fill: "#27272a",
+    fill: '#27272a',
     borderOpacityWhenMoving: 1,
-    hoverCursor: "default"
+    hoverCursor: 'default',
   };
 
   public isResizable = true;
@@ -88,6 +88,6 @@ class Resizable extends Rect {
     }
   }
 }
-classRegistry.setClass(Resizable, "Resizable");
+classRegistry.setClass(Resizable, 'Resizable');
 
 export default Resizable;

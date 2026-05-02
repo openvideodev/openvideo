@@ -1,7 +1,7 @@
-import { TransformActionHandler, controlsUtils } from "fabric";
-import { CENTER, LEFT, RIGHT } from "../constants/fabric";
-import { isTransformCentered, wrapWithFixedAnchor } from "../utils/fabric";
-import { resolveOrigin, unitsToTimeUs } from "../utils";
+import { TransformActionHandler, controlsUtils } from 'fabric';
+import { CENTER, LEFT, RIGHT } from '../constants/fabric';
+import { isTransformCentered, wrapWithFixedAnchor } from '../utils/fabric';
+import { resolveOrigin, unitsToTimeUs } from '../utils';
 
 const { wrapWithFireEvent, getLocalPoint } = controlsUtils;
 
@@ -44,8 +44,8 @@ export const changeTransitionWidth: TransformActionHandler = (
     } else if (nextDuration < 500_000) {
       return false;
     }
-    target.set("width", Math.max(newWidth, 0));
-    target.set("duration", nextDuration);
+    target.set('width', Math.max(newWidth, 0));
+    target.set('duration', nextDuration);
     //  check against actual target width in case `newWidth` was rejected
     return oldWidth !== target.width;
   }
@@ -53,6 +53,6 @@ export const changeTransitionWidth: TransformActionHandler = (
 };
 
 export const resizeTransitionWidth = wrapWithFireEvent(
-  "resizing",
+  'resizing',
   wrapWithFixedAnchor(changeTransitionWidth)
 );

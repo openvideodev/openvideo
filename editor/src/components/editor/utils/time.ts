@@ -13,13 +13,13 @@ export const frameToTimeString = (
 
   // Format the time string based on whether hours are zero or not
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
       .toString()
-      .padStart(2, "0")}`;
+      .padStart(2, '0')}`;
   }
-  return `${minutes.toString().padStart(2, "0")}:${seconds
+  return `${minutes.toString().padStart(2, '0')}:${seconds
     .toString()
-    .padStart(2, "0")}`;
+    .padStart(2, '0')}`;
 };
 
 export const timeToString = ({ time }: { time: number }): string => {
@@ -34,20 +34,20 @@ export const timeToString = ({ time }: { time: number }): string => {
 
   // Format the time string based on whether hours are zero or not
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
       .toString()
-      .padStart(2, "0")}`;
+      .padStart(2, '0')}`;
   }
-  return `${minutes.toString().padStart(2, "0")}:${seconds
+  return `${minutes.toString().padStart(2, '0')}:${seconds
     .toString()
-    .padStart(2, "0")}`;
+    .padStart(2, '0')}`;
 };
 
 export const getCurrentTime = () => {
-  const currentTimeElement = document.getElementById("video-current-time");
+  const currentTimeElement = document.getElementById('video-current-time');
   const currentTimeSeconds = currentTimeElement
     ? Number.parseFloat(
-        currentTimeElement.getAttribute("data-current-time") ?? "0"
+        currentTimeElement.getAttribute('data-current-time') ?? '0'
       )
     : 0;
   const currentTimeUs = currentTimeSeconds * 1_000_000;
@@ -68,15 +68,15 @@ export const getSafeCurrentFrame = (playerRef: any): number => {
     const frame = playerRef.current.getCurrentFrame();
 
     // Check if frame is a valid finite number
-    if (typeof frame !== "number" || !Number.isFinite(frame)) {
-      console.warn("getCurrentFrame returned non-finite value:", frame);
+    if (typeof frame !== 'number' || !Number.isFinite(frame)) {
+      console.warn('getCurrentFrame returned non-finite value:', frame);
       return 0;
     }
 
     // Ensure frame is non-negative
     return Math.max(0, frame);
   } catch (error) {
-    console.error("Error getting current frame:", error);
+    console.error('Error getting current frame:', error);
     return 0;
   }
 };

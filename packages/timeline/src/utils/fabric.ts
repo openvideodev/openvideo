@@ -1,6 +1,6 @@
-import { Transform, TransformActionHandler } from "fabric";
-import { resolveOrigin } from "./resolve-origin";
-import { CENTER } from "../constants/fabric";
+import { Transform, TransformActionHandler } from 'fabric';
+import { resolveOrigin } from './resolve-origin';
+import { CENTER } from '../constants/fabric';
 
 /**
  * Checks if transform is centered

@@ -3,11 +3,11 @@ import {
   FabricObject,
   TEvent,
   TPointerEvent,
-  Transform
-} from "fabric";
-import { Track, Placeholder, Transition } from "../../objects";
-import Timeline from "../../timeline";
-import { findRelativePosition } from "../../utils/array";
+  Transform,
+} from 'fabric';
+import { Track, Placeholder, Transition } from '../../objects';
+import Timeline from '../../timeline';
+import { findRelativePosition } from '../../utils/array';
 
 function onBeforeTransform(
   this: Timeline,
@@ -28,10 +28,10 @@ function onBeforeTransform(
     trackTopToIdMap: {},
     isDragOver: false,
     initialTrackPoints: [],
-    updateItemsInTrack: null
+    updateItemsInTrack: null,
   });
 
-  canvas.trackIdAfterTransform = "";
+  canvas.trackIdAfterTransform = '';
   canvas.positionAfterTransform = {};
 
   const activeSelection = canvas.getActiveObject();
@@ -46,7 +46,7 @@ function onBeforeTransform(
 
   const pointer = canvas.getScenePoint(e.e!);
 
-  const tracks = canvas.getObjects("Track") as Track[];
+  const tracks = canvas.getObjects('Track') as Track[];
 
   const activeObjectsIds = canvas.getActiveObjects().map((obj) => obj.id);
   const activeTracks = tracks.filter((track) => {
@@ -121,7 +121,7 @@ function onBeforeTransform(
       )!;
       state.primaryTracks[trackId] = {
         objects: [obj],
-        index
+        index,
       };
     }
   });
@@ -148,7 +148,7 @@ function onBeforeTransform(
       )!;
       state.secondaryTracks[trackId] = {
         objects: [obj],
-        index
+        index,
       };
     }
   });
@@ -159,25 +159,25 @@ function onBeforeTransform(
   if (activeSelection) {
     canvas.positionBeforeTransform = {
       top: activeSelection.top,
-      left: activeSelection.left
+      left: activeSelection.left,
     };
   }
 
-  if (e.transform.action !== "drag") return;
+  if (e.transform.action !== 'drag') return;
 
   state.placeholderMovingObjects = state.primaryMovingObjects.map((target) => {
     const targetBounds = target.getBoundingRect();
 
     state.objectInitialPositions[target.id] = {
       top: targetBounds.top,
-      left: targetBounds.left
+      left: targetBounds.left,
     };
     const targetPlaceholder = new Placeholder({
       id: `${target.id}-placeholder`,
       left: targetBounds.left,
       top: targetBounds.top,
       width: targetBounds.width,
-      height: targetBounds.height
+      height: targetBounds.height,
     });
     targetPlaceholder.draggedObject = target;
     return targetPlaceholder;
@@ -187,9 +187,9 @@ function onBeforeTransform(
 }
 
 export function addBeforeTransformEvents(timeline: Timeline) {
-  timeline.on("before:transform", onBeforeTransform.bind(timeline));
+  timeline.on('before:transform', onBeforeTransform.bind(timeline));
 }
 
 export function removeBeforeTransformEvents(timeline: Timeline) {
-  timeline.off("before:transform", onBeforeTransform.bind(timeline));
+  timeline.off('before:transform', onBeforeTransform.bind(timeline));
 }

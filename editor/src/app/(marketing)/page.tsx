@@ -1,6 +1,6 @@
-import Hero from "@/components/home/hero";
-import Features from "@/components/home/features";
-import Footer from "@/components/home/footer";
+import Hero from '@/components/home/hero';
+import Features from '@/components/home/features';
+import Footer from '@/components/home/footer';
 // import { Hero } from "@/components/home/vercel-hero";
 
 export default function HomePage() {

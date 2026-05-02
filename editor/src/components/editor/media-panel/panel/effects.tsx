@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
-import { Effect, getEffectOptions, VALUES_FILTER_SPECIAL, registerCustomEffect } from "@openvideo/engine-pixi";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatFilterName } from "@/utils/effects";
-import { engine } from "@/lib/project";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
-import Draggable from "@/components/shared/draggable";
+import { useEffect, useState } from 'react';
+import {
+  Effect,
+  getEffectOptions,
+  VALUES_FILTER_SPECIAL,
+  registerCustomEffect,
+} from '@openvideo/engine-pixi';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatFilterName } from '@/utils/effects';
+import { core } from '@/lib/project';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2 } from 'lucide-react';
+import Draggable from '@/components/shared/draggable';
 
 const EFFECT_DURATION_DEFAULT = 5000000;
 
@@ -24,26 +29,34 @@ type EffectCardProps = {
   badge?: string;
 };
 
-const EffectCard = ({ label, staticSrc, dynamicSrc, onClick, badge }: EffectCardProps) => {
+const EffectCard = ({
+  label,
+  staticSrc,
+  dynamicSrc,
+  onClick,
+  badge,
+}: EffectCardProps) => {
   const [isDynamicLoaded, setIsDynamicLoaded] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
   return (
     <Draggable
       data={{
-        type: "Effect",
+        type: 'Effect',
         name: label,
         display: { from: 0, to: EFFECT_DURATION_DEFAULT },
         duration: EFFECT_DURATION_DEFAULT,
         effect: {
-          id: "eff_" + Date.now(),
+          id: 'eff_' + Date.now(),
           key: label, // We use label as a placeholder if key is not passed, but cards are rendered by components that know the key
           name: label,
         },
       }}
       renderCustomPreview={
         <div className="w-20 aspect-video rounded-md overflow-hidden shadow-xl border-2 border-primary bg-zinc-900 flex items-center justify-center">
-          <span className="text-[10px] text-white font-medium px-2 text-center">{label}</span>
+          <span className="text-[10px] text-white font-medium px-2 text-center">
+            {label}
+          </span>
         </div>
       }
     >
@@ -88,8 +101,9 @@ const EffectCard = ({ label, staticSrc, dynamicSrc, onClick, badge }: EffectCard
           )}
 
           <div
-            className={`absolute bottom-0 left-0 w-full p-2 bg-linear-to-t from-black/80 to-transparent text-white text-xs font-medium truncate text-center transition-opacity duration-200 ${dynamicSrc ? "group-hover:opacity-0" : ""
-              }`}
+            className={`absolute bottom-0 left-0 w-full p-2 bg-linear-to-t from-black/80 to-transparent text-white text-xs font-medium truncate text-center transition-opacity duration-200 ${
+              dynamicSrc ? 'group-hover:opacity-0' : ''
+            }`}
           >
             {label}
           </div>
@@ -103,27 +117,28 @@ const EffectCard = ({ label, staticSrc, dynamicSrc, onClick, badge }: EffectCard
 
 const EffectDefault = () => {
   const effects = getEffectOptions();
-  const specialEffects = Object.keys(VALUES_FILTER_SPECIAL).map((filterName) => ({
-    key: filterName,
-    label: formatFilterName(filterName),
-    previewStatic: `https://cdn.subgen.co/previews/effects/static/effect_${filterName}_static.webp`,
-    previewDynamic: `https://cdn.subgen.co/previews/effects/dynamic/effect_${filterName}_dynamic.webp`,
-  }));
+  const specialEffects = Object.keys(VALUES_FILTER_SPECIAL).map(
+    (filterName) => ({
+      key: filterName,
+      label: formatFilterName(filterName),
+      previewStatic: `https://cdn.subgen.co/previews/effects/static/effect_${filterName}_static.webp`,
+      previewDynamic: `https://cdn.subgen.co/previews/effects/dynamic/effect_${filterName}_dynamic.webp`,
+    })
+  );
   const allEffects = [...specialEffects, ...effects];
 
   const handleClick = async (key: string) => {
-
     const effectValues: Record<string, any> = {};
-    if (key === "embossFilter") effectValues.strength = 5;
-    if (key === "pixelateFilter") effectValues.size = 10;
+    if (key === 'embossFilter') effectValues.strength = 5;
+    if (key === 'pixelateFilter') effectValues.size = 10;
 
-    await engine.addClip({
-      type: "Effect",
+    await core.clip.add({
+      type: 'Effect',
       name: formatFilterName(key),
       display: { from: 0, to: EFFECT_DURATION_DEFAULT },
       duration: EFFECT_DURATION_DEFAULT,
       effect: {
-        id: "eff_" + Date.now(),
+        id: 'eff_' + Date.now(),
         key: key,
         name: key,
         values: effectValues,
@@ -168,13 +183,13 @@ const EffectCustom = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/custom-presets?category=effects");
-        if (!res.ok) throw new Error("Failed to fetch custom effects");
+        const res = await fetch('/api/custom-presets?category=effects');
+        if (!res.ok) throw new Error('Failed to fetch custom effects');
         const json = await res.json();
         setOwnPresets(json.own ?? []);
         setPublishedPresets(json.published ?? []);
       } catch (err) {
-        setError("Could not load custom effects.");
+        setError('Could not load custom effects.');
       } finally {
         setIsLoading(false);
       }
@@ -191,13 +206,13 @@ const EffectCustom = () => {
       label: preset.data.label || preset.name,
       fragment: preset.data.fragment,
     } as any);
-    await engine.addClip({
-      type: "Effect",
+    await core.clip.add({
+      type: 'Effect',
       name: preset.data.label || preset.name,
       display: { from: 0, to: EFFECT_DURATION_DEFAULT },
       duration: EFFECT_DURATION_DEFAULT,
       effect: {
-        id: "eff_" + preset.id,
+        id: 'eff_' + preset.id,
         key: key,
         name: key,
       },
@@ -228,7 +243,9 @@ const EffectCustom = () => {
     return (
       <div className="col-span-full flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
         <span className="text-xs">No custom effects yet.</span>
-        <span className="text-[10px]">Create one from the Gallery to see it here.</span>
+        <span className="text-[10px]">
+          Create one from the Gallery to see it here.
+        </span>
       </div>
     );
   }
@@ -274,8 +291,8 @@ const PanelEffect = () => {
         </TabsList>
 
         {[
-          { value: "default", Component: EffectDefault },
-          { value: "custom", Component: EffectCustom },
+          { value: 'default', Component: EffectDefault },
+          { value: 'custom', Component: EffectCustom },
         ].map(({ value, Component }) => (
           <TabsContent key={value} value={value} className="h-full">
             <ScrollArea className="h-[calc(100%-60px)]">

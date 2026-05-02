@@ -1,4 +1,4 @@
-import { Icons } from "@/components/shared/icons";
+import { Icons } from '@/components/shared/icons';
 import {
   IconFolder,
   IconLetterT,
@@ -12,68 +12,68 @@ import {
   type IconProps,
   IconPhoto,
   IconVideo,
-} from "@tabler/icons-react";
-import { create } from "zustand";
+} from '@tabler/icons-react';
+import { create } from 'zustand';
 
 export type Tab =
-  | "uploads"
-  | "images"
-  | "videos"
-  | "music"
-  | "text"
-  | "captions"
-  | "effects"
-  | "elements"
-  | "voiceovers"
-  | "sfx"
-  | "transitions";
+  | 'uploads'
+  | 'images'
+  | 'videos'
+  | 'music'
+  | 'text'
+  | 'captions'
+  | 'effects'
+  | 'elements'
+  | 'voiceovers'
+  | 'sfx'
+  | 'transitions';
 
 export const tabs: {
   [key in Tab]: { icon: React.FC<IconProps> | React.FC<any>; label: string };
 } = {
   uploads: {
     icon: IconFolder,
-    label: "Uploads",
+    label: 'Uploads',
   },
   images: {
     icon: IconPhoto,
-    label: "Images",
+    label: 'Images',
   },
   videos: {
     icon: IconVideo,
-    label: "Videos",
+    label: 'Videos',
   },
   text: {
     icon: IconLetterT,
-    label: "Text",
+    label: 'Text',
   },
   elements: {
     icon: IconCircleSquare,
-    label: "Elements",
+    label: 'Elements',
   },
   captions: {
     icon: IconSubtitles,
-    label: "Captions",
+    label: 'Captions',
   },
   music: {
     icon: IconMusic,
-    label: "Music",
+    label: 'Music',
   },
   voiceovers: {
     icon: IconMicrophone,
-    label: "Voiceovers",
+    label: 'Voiceovers',
   },
   sfx: {
     icon: IconWaveSine,
-    label: "SFX",
+    label: 'SFX',
   },
   transitions: {
     icon: Icons.transition,
-    label: "Transitions",
+    label: 'Transitions',
   },
   effects: {
     icon: IconSparkles,
-    label: "Effects",
+    label: 'Effects',
   },
 };
 
@@ -88,12 +88,12 @@ interface MediaPanelStore {
 }
 
 export const useMediaPanelStore = create<MediaPanelStore>((set) => ({
-  activeTab: "uploads",
+  activeTab: 'uploads',
   setActiveTab: (tab) => set({ activeTab: tab, showProperties: false }),
   highlightMediaId: null,
   requestRevealMedia: (mediaId) =>
     set({
-      activeTab: "uploads",
+      activeTab: 'uploads',
       highlightMediaId: mediaId,
       showProperties: false,
     }),

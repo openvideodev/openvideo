@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
   const session = await auth.api.getSession({
@@ -9,11 +9,11 @@ export async function GET(req: Request) {
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
-  const category = searchParams.get("category");
+  const category = searchParams.get('category');
 
   const whereBase = category ? { category } : {};
 
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       ...whereBase,
       userId: session.user.id,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
   });
 
   // Fetch published presets from other users
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       published: true,
       userId: { not: session.user.id },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
   });
 
   return NextResponse.json({ own: ownPresets, published: publishedPresets });
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -53,7 +53,10 @@ export async function POST(req: Request) {
     const { name, category, data, published } = body;
 
     if (!name || !category || !data) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     const preset = await prisma.customPreset.create({
@@ -68,7 +71,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(preset);
   } catch (error) {
-    console.error("Error creating custom preset:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('Error creating custom preset:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

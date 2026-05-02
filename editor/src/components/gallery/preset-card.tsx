@@ -1,5 +1,5 @@
-"use client";
-import { Play } from "lucide-react";
+'use client';
+import { Play } from 'lucide-react';
 
 export const PresetCard = ({
   label,
@@ -20,7 +20,9 @@ export const PresetCard = ({
     <div
       onClick={onClick}
       className={`group relative rounded-xl border border-border bg-card overflow-hidden transition-all duration-300 hover:ring-2 hover:ring-primary/20 hover:shadow-xl cursor-pointer ${
-        isActive ? "ring-2 ring-primary border-primary shadow-lg scale-[1.02]" : ""
+        isActive
+          ? 'ring-2 ring-primary border-primary shadow-lg scale-[1.02]'
+          : ''
       }`}
     >
       <div className="aspect-video w-full bg-muted relative overflow-hidden">

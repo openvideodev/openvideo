@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface LayoutStore {
   floatingControl: string;
@@ -9,12 +9,13 @@ interface LayoutStore {
 }
 
 const useLayoutStore = create<LayoutStore>((set) => ({
-  floatingControl: "",
+  floatingControl: '',
   floatingControlData: null,
   setFloatingControl: (control: string, data: any = null) =>
     set({ floatingControl: control, floatingControlData: data }),
   openTransitionDialog: false,
-  setOpenTransitionDialog: (open: boolean) => set({ openTransitionDialog: open }),
+  setOpenTransitionDialog: (open: boolean) =>
+    set({ openTransitionDialog: open }),
 }));
 
 export default useLayoutStore;

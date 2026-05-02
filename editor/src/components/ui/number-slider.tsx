@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { Slider } from "@/components/ui/slider";
+import React, { useEffect, useState } from 'react';
+import { Slider } from '@/components/ui/slider';
 
-interface NumberSliderProps extends Omit<
-  React.ComponentProps<typeof Slider>,
-  "value" | "onValueChange" | "onChange"
-> {
+interface NumberSliderProps
+  extends Omit<
+    React.ComponentProps<typeof Slider>,
+    'value' | 'onValueChange' | 'onChange'
+  > {
   value: number;
   onChange: (value: number) => void;
 }
@@ -21,7 +22,12 @@ interface NumberSliderProps extends Omit<
  *   step={1}
  * />
  */
-export const NumberSlider = ({ value, onChange, className, ...props }: NumberSliderProps) => {
+export const NumberSlider = ({
+  value,
+  onChange,
+  className,
+  ...props
+}: NumberSliderProps) => {
   const [localValue, setLocalValue] = useState<number>(value);
   const [isInteracting, setIsInteracting] = useState(false);
 

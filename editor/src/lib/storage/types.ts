@@ -1,5 +1,5 @@
-import { TProject, Scene } from "@/types/project";
-import { TimelineTrack } from "@/types/timeline";
+import { TProject, Scene } from '@/types/project';
+import { TimelineTrack } from '@/types/timeline';
 
 export interface StorageAdapter<T> {
   get(key: string): Promise<T | null>;
@@ -12,7 +12,7 @@ export interface StorageAdapter<T> {
 export interface MediaFileData {
   id: string;
   name: string;
-  type: "image" | "video" | "audio";
+  type: 'image' | 'video' | 'audio';
   size: number;
   lastModified: number;
   width?: number;
@@ -35,7 +35,7 @@ export interface SceneTimelineData {
   lastModified: string;
 }
 
-export type SerializedScene = Omit<Scene, "createdAt" | "updatedAt"> & {
+export type SerializedScene = Omit<Scene, 'createdAt' | 'updatedAt'> & {
   createdAt: string;
   updatedAt: string;
 };

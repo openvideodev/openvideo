@@ -1,8 +1,11 @@
-import { createStore } from "zustand/vanilla";
-import { IProject, AnyClip, ITrack, IScaleState } from "./types";
-import { loadClip } from "./utils/load-item";
-import { manageTracks, AddClipOptions } from "./utils/manage-tracks";
-import { nanoid } from "nanoid";
+import { createStore } from 'zustand/vanilla';
+import { IProject, AnyClip, ITrack, IScaleState } from './types';
+import { loadClip } from './utils/load-item';
+import { manageTracks, AddClipOptions } from './utils/manage-tracks';
+import { nanoid } from 'nanoid';
+import { Command, HistoryEntry, Patch } from './commands/types';
+import { commandRegistry } from './commands/registry';
+import { applyPatches, invertPatches } from './utils/patch';
 
 export interface ProjectState extends IProject {
   selectedIds: string[];
@@ -12,6 +15,8 @@ export interface ProjectState extends IProject {
   volume: number;
   muted: boolean;
   speed: number;
+  history: HistoryEntry[];
+  future: HistoryEntry[]; // for redo
 }
 
 export interface ProjectActions {
@@ -20,10 +25,18 @@ export interface ProjectActions {
   deselect: (ids?: string | string[]) => void;
 
   // Clips
-  addClip: (clip: Partial<AnyClip> & { type: string }, options?: AddClipOptions | string) => Promise<AnyClip>;
-  addClips: (clips: (Partial<AnyClip> & { type: string })[], options?: AddClipOptions | string) => Promise<AnyClip[]>;
+  addClip: (
+    clip: Partial<AnyClip> & { type: string },
+    options?: AddClipOptions | string
+  ) => Promise<AnyClip>;
+  addClips: (
+    clips: (Partial<AnyClip> & { type: string })[],
+    options?: AddClipOptions | string
+  ) => Promise<AnyClip[]>;
   updateClip: (id: string, updates: Partial<AnyClip>) => void;
-  updateClips: (updatesList: { id: string; updates: Partial<AnyClip> }[]) => void;
+  updateClips: (
+    updatesList: { id: string; updates: Partial<AnyClip> }[]
+  ) => void;
   removeClips: (ids: string[]) => void;
 
   // Tracks
@@ -31,7 +44,7 @@ export interface ProjectActions {
   removeTrack: (id: string) => void;
   moveTrack: (id: string, newIndex: number) => void;
   setTracks: (tracks: ITrack[]) => void;
-  
+
   // Playback
   seek: (time: number) => void;
   setIsPlaying: (isPlaying: boolean) => void;
@@ -40,11 +53,19 @@ export interface ProjectActions {
   setSpeed: (speed: number) => void;
 
   // Scale
-  setScale: (scale: Partial<IScaleState> | ((prev: IScaleState) => Partial<IScaleState>)) => void;
+  setScale: (
+    scale: Partial<IScaleState> | ((prev: IScaleState) => Partial<IScaleState>)
+  ) => void;
 
   // Project
-  updateSettings: (settings: Partial<IProject["settings"]>) => void;
+  updateSettings: (settings: Partial<IProject['settings']>) => void;
   recalculateDuration: () => void;
+
+  // Command API
+  execute: <T>(command: Command<T>) => void;
+  batch: (commands: Command[]) => void;
+  undo: () => void;
+  redo: () => void;
 }
 
 export type ProjectStore = ProjectState & ProjectActions;
@@ -72,12 +93,120 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       segments: 5,
       index: 0,
     },
+    history: [],
+    future: [],
+
+    // --- COMMAND SYSTEM ---
+
+    execute: (command) => {
+      const handler = commandRegistry.get(command.type);
+      if (!handler) {
+        console.warn(`No handler registered for command: ${command.type}`);
+        return;
+      }
+
+      const state = get();
+      const patches = handler(state, command);
+      const inversePatches = invertPatches(patches);
+
+      // Apply patches to local state
+      set((state) => {
+        const nextState = { ...state };
+        applyPatches(nextState, patches);
+
+        return {
+          ...nextState,
+          history: [...state.history, { command, patches, inversePatches }],
+          future: [], // Clear redo stack on new command
+        };
+      });
+
+      // TODO: Emit change event for collaborators/engines
+    },
+
+    batch: (commands) => {
+      // For batching, we wrap multiple commands into a single history entry if needed,
+      // or just execute them sequentially. Requirement says "emits ONE change event".
+      const allPatches: Patch[] = [];
+      const allInversePatches: Patch[] = [];
+      const commandLogs: Command[] = [];
+
+      set((currentState) => {
+        const nextState = { ...currentState };
+
+        commands.forEach((command) => {
+          const handler = commandRegistry.get(command.type);
+          if (handler) {
+            const patches = handler(nextState, command);
+            applyPatches(nextState, patches);
+            allPatches.push(...patches);
+            allInversePatches.push(...invertPatches(patches));
+            commandLogs.push(command);
+          }
+        });
+
+        return {
+          ...nextState,
+          history: [
+            ...currentState.history,
+            {
+              command: {
+                id: nanoid(),
+                type: 'batch',
+                payload: commandLogs,
+              },
+              patches: allPatches,
+              inversePatches: allInversePatches.reverse(), // Reverse order for inverse patches
+            },
+          ],
+          future: [],
+        };
+      });
+    },
+
+    undo: () => {
+      const { history } = get();
+      if (history.length === 0) return;
+
+      const entry = history[history.length - 1];
+      const nextHistory = history.slice(0, -1);
+
+      set((state) => {
+        const nextState = { ...state };
+        applyPatches(nextState, entry.inversePatches);
+        return {
+          ...nextState,
+          history: nextHistory,
+          future: [entry, ...state.future],
+        };
+      });
+    },
+
+    redo: () => {
+      const { future } = get();
+      if (future.length === 0) return;
+
+      const entry = future[0];
+      const nextFuture = future.slice(1);
+
+      set((state) => {
+        const nextState = { ...state };
+        applyPatches(nextState, entry.patches);
+        return {
+          ...nextState,
+          history: [...state.history, entry],
+          future: nextFuture,
+        };
+      });
+    },
 
     // Actions: Selection
     select: (ids, multi = false) => {
       const newIds = Array.isArray(ids) ? ids : [ids];
       set((state) => ({
-        selectedIds: multi ? [...new Set([...state.selectedIds, ...newIds])] : newIds,
+        selectedIds: multi
+          ? [...new Set([...state.selectedIds, ...newIds])]
+          : newIds,
       }));
     },
 
@@ -107,19 +236,24 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
     // Actions: Scale
     setScale: (scale) =>
       set((state) => ({
-        scale: { 
-          ...state.scale, 
-          ...(typeof scale === "function" ? scale(state.scale) : scale) 
+        scale: {
+          ...state.scale,
+          ...(typeof scale === 'function' ? scale(state.scale) : scale),
         },
       })),
 
     // Actions: Clips
     addClip: async (payload, options) => {
       const state = get();
-      const addOptions: AddClipOptions = typeof options === "string" ? { trackId: options } : options || {};
-      
+      const addOptions: AddClipOptions =
+        typeof options === 'string' ? { trackId: options } : options || {};
+
       // Auto-calculate transition timing and placement if junction clips are provided
-      if (payload.type === "Transition" && payload.fromClipId && payload.toClipId) {
+      if (
+        payload.type === 'Transition' &&
+        payload.fromClipId &&
+        payload.toClipId
+      ) {
         const fromClip = state.clips[payload.fromClipId];
         const toClip = state.clips[payload.toClipId];
         if (fromClip && toClip) {
@@ -132,7 +266,9 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
 
           // Also ensure transition is on the same track as the clips it connects
           if (!addOptions.trackId) {
-            const track = state.tracks.find(t => t.clipIds.includes(payload.fromClipId!));
+            const track = state.tracks.find((t) =>
+              t.clipIds.includes(payload.fromClipId!)
+            );
             if (track) {
               addOptions.trackId = track.id;
             }
@@ -140,16 +276,23 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         }
       }
 
-      const newClip = await loadClip(payload, { 
-        canvasSize: { width: state.settings.width, height: state.settings.height } 
+      const newClip = await loadClip(payload, {
+        canvasSize: {
+          width: state.settings.width,
+          height: state.settings.height,
+        },
       });
 
       set((state) => {
-        const { tracks: nextTracks } = manageTracks(state.tracks, newClip, addOptions);
-        
-        return { 
-          clips: { ...state.clips, [newClip.id]: newClip }, 
-          tracks: nextTracks 
+        const { tracks: nextTracks } = manageTracks(
+          state.tracks,
+          newClip,
+          addOptions
+        );
+
+        return {
+          clips: { ...state.clips, [newClip.id]: newClip },
+          tracks: nextTracks,
         };
       });
 
@@ -159,12 +302,16 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
 
     addClips: async (payloads, options) => {
       const state = get();
-      const addOptions: AddClipOptions = typeof options === "string" ? { trackId: options } : options || {};
-      
+      const addOptions: AddClipOptions =
+        typeof options === 'string' ? { trackId: options } : options || {};
+
       const newClips = await Promise.all(
-        payloads.map(payload => 
-          loadClip(payload, { 
-            canvasSize: { width: state.settings.width, height: state.settings.height } 
+        payloads.map((payload) =>
+          loadClip(payload, {
+            canvasSize: {
+              width: state.settings.width,
+              height: state.settings.height,
+            },
           })
         )
       );
@@ -173,15 +320,19 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         let currentTracks = state.tracks;
         const nextClips = { ...state.clips };
 
-        newClips.forEach(newClip => {
-          const { tracks: nextTracks } = manageTracks(currentTracks, newClip, addOptions);
+        newClips.forEach((newClip) => {
+          const { tracks: nextTracks } = manageTracks(
+            currentTracks,
+            newClip,
+            addOptions
+          );
           currentTracks = nextTracks;
           nextClips[newClip.id] = newClip;
         });
-        
-        return { 
-          clips: nextClips, 
-          tracks: currentTracks 
+
+        return {
+          clips: nextClips,
+          tracks: currentTracks,
         };
       });
 
@@ -245,9 +396,9 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
     // Actions: Tracks
     addTrack: (payload) => {
       const newTrack: ITrack = {
-        id: payload?.id || "track_" + nanoid(10),
-        name: payload?.name || "Track " + (get().tracks.length + 1),
-        type: payload?.type || "Video",
+        id: payload?.id || 'track_' + nanoid(10),
+        name: payload?.name || 'Track ' + (get().tracks.length + 1),
+        type: payload?.type || 'Video',
         clipIds: payload?.clipIds || [],
         accepts: payload?.accepts,
       };
@@ -260,17 +411,17 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
     },
 
     removeTrack: (id) => {
-      const track = get().tracks.find(t => t.id === id);
+      const track = get().tracks.find((t) => t.id === id);
       if (!track) return;
       get().removeClips(track.clipIds);
       set((state) => ({
-        tracks: state.tracks.filter(t => t.id !== id),
+        tracks: state.tracks.filter((t) => t.id !== id),
       }));
     },
 
     moveTrack: (id, newIndex) => {
       set((state) => {
-        const currentIndex = state.tracks.findIndex(t => t.id === id);
+        const currentIndex = state.tracks.findIndex((t) => t.id === id);
         if (currentIndex === -1) return state;
         const newTracks = [...state.tracks];
         const [movedTrack] = newTracks.splice(currentIndex, 1);
@@ -292,16 +443,19 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       const { clips } = get();
       let maxUs = 0;
       Object.values(clips).forEach((clip) => {
-        const endUs = clip.display.to > 0 ? clip.display.to : clip.display.from + clip.duration;
+        const endUs =
+          clip.display.to > 0
+            ? clip.display.to
+            : clip.display.from + clip.duration;
         if (endUs > maxUs) maxUs = endUs;
       });
-      
+
       const finalDuration = Math.max(30_000_000, maxUs + 1_000_000);
 
       if (get().settings.duration !== finalDuration) {
         get().updateSettings({ duration: finalDuration });
       }
-    }
+    },
   }));
 };
 

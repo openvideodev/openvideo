@@ -1,16 +1,31 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useStudioStore } from "@/stores/studio-store";
-import { useProjectStore } from "@/stores/project-store";
-import { engine } from "@/lib/project";
-import { Upload, Film, Search, X, HardDrive, Trash2, Music } from "lucide-react";
-import { storageService, type StorageStats } from "@/lib/storage/storage-service";
-import type { MediaFile, MediaType } from "@/types/media";
-import { uploadFile } from "@/lib/upload-utils";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useStudioStore } from '@/stores/studio-store';
+import { useProjectStore } from '@/stores/project-store';
+import { core } from '@/lib/project';
+import {
+  Upload,
+  Film,
+  Search,
+  X,
+  HardDrive,
+  Trash2,
+  Music,
+} from 'lucide-react';
+import {
+  storageService,
+  type StorageStats,
+} from '@/lib/storage/storage-service';
+import type { MediaFile, MediaType } from '@/types/media';
+import { uploadFile } from '@/lib/upload-utils';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 interface VisualAsset {
   id: string;
   type: MediaType;
@@ -23,21 +38,27 @@ interface VisualAsset {
   size?: number;
 }
 
-const STORAGE_KEY = "designcombo_uploads";
-const PROJECT_ID = "local-uploads";
+const STORAGE_KEY = 'designcombo_uploads';
+const PROJECT_ID = 'local-uploads';
 
 // Detect file type from MIME type and extension
 function detectFileType(file: File): MediaType {
   const mime = file.type.toLowerCase();
-  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
 
-  if (mime.startsWith("audio/") || ["mp3", "wav", "ogg", "flac", "aac", "m4a"].includes(ext)) {
-    return "audio";
+  if (
+    mime.startsWith('audio/') ||
+    ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'].includes(ext)
+  ) {
+    return 'audio';
   }
-  if (mime.startsWith("video/") || ["mp4", "webm", "mov", "avi", "mkv"].includes(ext)) {
-    return "video";
+  if (
+    mime.startsWith('video/') ||
+    ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)
+  ) {
+    return 'video';
   }
-  return "image";
+  return 'image';
 }
 
 // Replace old blob URLs with new ones in serialized clips
@@ -55,10 +76,10 @@ function detectFileType(file: File): MediaType {
 
 // Helper to format duration like 00:00
 function formatDuration(seconds?: number) {
-  if (!seconds) return "";
+  if (!seconds) return '';
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
 // Asset card component
@@ -72,13 +93,25 @@ function AssetCard({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 group cursor-pointer" onClick={() => onAdd(asset)}>
+    <div
+      className="flex flex-col gap-1.5 group cursor-pointer"
+      onClick={() => onAdd(asset)}
+    >
       <div className="relative aspect-square rounded-sm overflow-hidden bg-foreground/20 border border-transparent group-hover:border-primary/50 transition-all flex items-center justify-center">
-        {asset.type === "image" ? (
-          <img src={asset.src} alt={asset.name} className="max-w-full max-h-full object-contain" />
-        ) : asset.type === "audio" ? (
+        {asset.type === 'image' ? (
+          <img
+            src={asset.src}
+            alt={asset.name}
+            className="max-w-full max-h-full object-contain"
+          />
+        ) : asset.type === 'audio' ? (
           <div className="w-full h-full flex items-center justify-center relative">
-            <Music className="text-[#2dc28c]" size={32} fill="#2dc28c" fillOpacity={0.2} />
+            <Music
+              className="text-[#2dc28c]"
+              size={32}
+              fill="#2dc28c"
+              fillOpacity={0.2}
+            />
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black/40 relative">
@@ -126,7 +159,7 @@ function AssetCard({
 export default function PanelUploads() {
   const { studio } = useStudioStore();
   const { canvasSize } = useProjectStore();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [uploads, setUploads] = useState<VisualAsset[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
@@ -170,7 +203,9 @@ export default function PanelUploads() {
         }
 
         // Load old localStorage entries for URL mapping
-        const oldEntries: VisualAsset[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        const oldEntries: VisualAsset[] = JSON.parse(
+          localStorage.getItem(STORAGE_KEY) || '[]'
+        );
         const urlMapping: Record<string, string> = {};
 
         // Generate new blob URLs from OPFS files
@@ -178,14 +213,16 @@ export default function PanelUploads() {
           const newBlobUrl = file.url || URL.createObjectURL(file.file);
 
           // Find matching old entry by ID or name to map URLs
-          const oldEntry = oldEntries.find((e) => e.id === file.id || e.name === file.name);
+          const oldEntry = oldEntries.find(
+            (e) => e.id === file.id || e.name === file.name
+          );
 
           if (oldEntry?.src && oldEntry.src !== newBlobUrl) {
             urlMapping[oldEntry.src] = newBlobUrl;
           }
 
           // Prefer R2 URL from previous state if available
-          const isR2Url = oldEntry?.src && !oldEntry.src.startsWith("blob:");
+          const isR2Url = oldEntry?.src && !oldEntry.src.startsWith('blob:');
           const finalUrl = isR2Url ? oldEntry.src! : newBlobUrl;
 
           return {
@@ -198,7 +235,7 @@ export default function PanelUploads() {
             duration: file.duration,
           };
         });
-        console.warn("USE THIS LOGIC WHEN NEW CLIPS ARE ADDEDE EVENT");
+        console.warn('USE THIS LOGIC WHEN NEW CLIPS ARE ADDEDE EVENT');
         // // Update timeline clips with new blob URLs if needed
         // if (Object.keys(urlMapping).length > 0 && studio) {
         //   try {
@@ -231,7 +268,7 @@ export default function PanelUploads() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(recoveredAssets));
         await loadStorageStats();
       } catch (error) {
-        console.error("Failed to recover uploads from OPFS:", error);
+        console.error('Failed to recover uploads from OPFS:', error);
         // Fall back to localStorage
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -263,7 +300,7 @@ export default function PanelUploads() {
         try {
           uploadResult = await uploadFile(file);
         } catch (error) {
-          console.error("R2 upload failed, falling back to local only:", error);
+          console.error('R2 upload failed, falling back to local only:', error);
         }
 
         const src = uploadResult?.url || URL.createObjectURL(file);
@@ -297,11 +334,11 @@ export default function PanelUploads() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       await loadStorageStats();
     } catch (error) {
-      console.error("Upload failed:", error);
+      console.error('Upload failed:', error);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -321,7 +358,7 @@ export default function PanelUploads() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       await loadStorageStats();
     } catch (error) {
-      console.error("Failed to delete upload:", error);
+      console.error('Failed to delete upload:', error);
     }
   };
 
@@ -329,24 +366,25 @@ export default function PanelUploads() {
   const addItemToCanvas = async (asset: VisualAsset) => {
     try {
       const typeMap: Record<string, string> = {
-        image: "Image",
-        video: "Video",
-        audio: "Audio",
+        image: 'Image',
+        video: 'Video',
+        audio: 'Audio',
       };
 
-      await engine.addClip({
+      // Use the new Core command API
+      await core.clip.add({
         type: typeMap[asset.type] as any,
         src: asset.src,
         name: asset.name,
       });
     } catch (error) {
-      console.error("Failed to add clip:", error);
+      console.error('Failed to add clip:', error);
     }
   };
 
   // Filter assets by search query
   const filteredAssets = uploads.filter((asset) =>
-    asset.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    asset.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (!isLoaded) {
@@ -386,7 +424,7 @@ export default function PanelUploads() {
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              variant={"outline"}
+              variant={'outline'}
             >
               <Upload size={14} />
             </Button>
@@ -398,7 +436,7 @@ export default function PanelUploads() {
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              variant={"outline"}
+              variant={'outline'}
               className="w-full"
             >
               <Upload size={14} /> Upload
@@ -413,7 +451,7 @@ export default function PanelUploads() {
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
             <Upload size={32} className="opacity-50" />
             <span className="text-sm">
-              {uploads.length === 0 ? "No uploads yet" : "No matches found"}
+              {uploads.length === 0 ? 'No uploads yet' : 'No matches found'}
             </span>
           </div>
         ) : (

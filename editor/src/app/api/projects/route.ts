@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   const session = await auth.api.getSession({
@@ -9,7 +9,7 @@ export async function GET() {
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -18,14 +18,17 @@ export async function GET() {
         userId: session.user.id,
       },
       orderBy: {
-        updatedAt: "desc",
+        updatedAt: 'desc',
       },
     });
 
     return NextResponse.json(projects);
   } catch (error) {
-    console.error("Error fetching projects:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('Error fetching projects:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -35,7 +38,7 @@ export async function POST(req: Request) {
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -43,7 +46,10 @@ export async function POST(req: Request) {
     const { id, name, thumbnail, canvasSize, canvasMode, fps, data } = body;
 
     if (!id || !name) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     const project = await prisma.project.create({
@@ -62,7 +68,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(project);
   } catch (error) {
-    console.error("Error creating project:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('Error creating project:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

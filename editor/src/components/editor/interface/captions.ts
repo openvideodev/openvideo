@@ -5,7 +5,7 @@ export interface IBoxShadow {
   blur: number;
 }
 export interface ICaptionsControlProps {
-  type?: "word" | "lines";
+  type?: 'word' | 'lines';
   appearedColor: string;
   activeColor: string;
   activeFillColor: string;
@@ -24,14 +24,14 @@ export interface ICaptionsControlProps {
   preservedColorKeyWord?: boolean;
   fontSize?: number;
   wordAnimation?: {
-    type: "scale" | "opacity";
-    application: "active" | "keyword" | "none";
+    type: 'scale' | 'opacity';
+    application: 'active' | 'keyword' | 'none';
     value: number;
-    mode?: "static" | "dynamic";
+    mode?: 'static' | 'dynamic';
   };
   textBoxStyle?: {
-    style?: "tiktok" | "none";
-    textAlign?: "left" | "center" | "right" | "";
+    style?: 'tiktok' | 'none';
+    textAlign?: 'left' | 'center' | 'right' | '';
     maxLines?: number;
     borderRadius?: number;
     horizontalPadding?: number;

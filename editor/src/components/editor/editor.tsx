@@ -1,16 +1,20 @@
-"use client";
-import { useState, useEffect } from "react";
-import { MediaPanel } from "@/components/editor/media-panel";
-import { CanvasPanel } from "@/components/editor/canvas-panel";
-import Timeline from "@/components/editor/timeline-new";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { usePanelStore } from "@/stores/panel-store";
-import Header from "@/components/editor/header";
-import { Loading } from "@/components/editor/loading";
-import FloatingControl from "@/components/editor/floating-controls/floating-control";
-import { Compositor } from "@openvideo/engine-pixi";
-import { WebCodecsUnsupportedModal } from "@/components/editor/webcodecs-unsupported-modal";
-import Assistant from "./assistant/assistant";
+'use client';
+import { useState, useEffect } from 'react';
+import { MediaPanel } from '@/components/editor/media-panel';
+import { CanvasPanel } from '@/components/editor/canvas-panel';
+import Timeline from '@/components/editor/timeline-new';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
+import { usePanelStore } from '@/stores/panel-store';
+import Header from '@/components/editor/header';
+import { Loading } from '@/components/editor/loading';
+import FloatingControl from '@/components/editor/floating-controls/floating-control';
+import { Compositor } from '@openvideo/engine-pixi';
+import { WebCodecsUnsupportedModal } from '@/components/editor/webcodecs-unsupported-modal';
+import Assistant from './assistant/assistant';
 
 export default function Editor() {
   const {
@@ -45,7 +49,10 @@ export default function Editor() {
       )}
       <Header />
       <div className="flex-1 min-h-0 min-w-0">
-        <ResizablePanelGroup direction="horizontal" className="h-full w-full gap-0">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full w-full gap-0"
+        >
           {/* Left Column: Media Panel */}
           <ResizablePanel
             defaultSize={toolsPanel}
@@ -62,11 +69,18 @@ export default function Editor() {
 
           {/* Middle Column: Preview + Timeline */}
           <ResizablePanel
-            defaultSize={isCopilotVisible ? 100 - copilotPanel - toolsPanel : 100 - toolsPanel}
+            defaultSize={
+              isCopilotVisible
+                ? 100 - copilotPanel - toolsPanel
+                : 100 - toolsPanel
+            }
             minSize={40}
             className="min-w-0 min-h-0"
           >
-            <ResizablePanelGroup direction="vertical" className="h-full w-full gap-0">
+            <ResizablePanelGroup
+              direction="vertical"
+              className="h-full w-full gap-0"
+            >
               {/* Canvas Panel */}
               <ResizablePanel
                 defaultSize={mainContent}

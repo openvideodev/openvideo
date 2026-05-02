@@ -1,35 +1,35 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Icons } from "./shared/icons";
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Icons } from './shared/icons';
+import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
-  kind: "signup" | "signin";
+  kind: 'signup' | 'signin';
 }
 
 export function UserAuthForm({ className, kind, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [isLoadingGitHub, setIsLoadingGitHub] = React.useState<boolean>(false);
   const [isLoadingGoogle, setIsLoadingGoogle] = React.useState<boolean>(false);
-  const [email, setEmail] = React.useState<string>("");
+  const [email, setEmail] = React.useState<string>('');
   const router = useRouter();
 
   const signinGit = async () => {
     try {
       setIsLoadingGitHub(true);
       await authClient.signIn.social({
-        provider: "github",
-        callbackURL: "/",
+        provider: 'github',
+        callbackURL: '/',
       });
     } catch (error) {
-      console.error("GitHub sign-in error:", error);
+      console.error('GitHub sign-in error:', error);
     } finally {
       setIsLoadingGitHub(false);
     }
@@ -42,20 +42,20 @@ export function UserAuthForm({ className, kind, ...props }: UserAuthFormProps) {
     await authClient.signIn.magicLink(
       {
         email: email,
-        callbackURL: "/",
+        callbackURL: '/',
       },
 
       {
         onSuccess: (ctx) => {
           setIsLoading(false);
           if (router) {
-            router.push("/confirm"); // Navigate to /confirm
+            router.push('/confirm'); // Navigate to /confirm
           }
         },
         onError: (ctx) => {
           setIsLoading(false);
         },
-      },
+      }
     );
   };
 
@@ -63,18 +63,18 @@ export function UserAuthForm({ className, kind, ...props }: UserAuthFormProps) {
     try {
       setIsLoadingGoogle(true);
       await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/",
+        provider: 'google',
+        callbackURL: '/',
       });
     } catch (error) {
-      console.error("Google sign-in error:", error);
+      console.error('Google sign-in error:', error);
     } finally {
       setIsLoadingGoogle(false);
     }
   };
 
   return (
-    <div className={cn("grid gap-6", className)} {...props}>
+    <div className={cn('grid gap-6', className)} {...props}>
       <form onSubmit={authWithMaginLink}>
         <div className="grid gap-2">
           <div className="grid gap-1">
@@ -95,8 +95,10 @@ export function UserAuthForm({ className, kind, ...props }: UserAuthFormProps) {
             />
           </div>
           <Button disabled={isLoading}>
-            {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-            {kind === "signin" ? "Sign In" : "Sign Up"} with Email
+            {isLoading && (
+              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {kind === 'signin' ? 'Sign In' : 'Sign Up'} with Email
           </Button>
         </div>
       </form>
@@ -105,11 +107,18 @@ export function UserAuthForm({ className, kind, ...props }: UserAuthFormProps) {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+          <span className="bg-background px-2 text-muted-foreground">
+            Or continue with
+          </span>
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <Button variant="outline" type="button" disabled={isLoadingGitHub} onClick={signinGit}>
+        <Button
+          variant="outline"
+          type="button"
+          disabled={isLoadingGitHub}
+          onClick={signinGit}
+        >
           {isLoadingGitHub ? (
             <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
           ) : (

@@ -1,4 +1,4 @@
-import { FabricObject, util } from "@openvideo/timeline";
+import { FabricObject, util } from '@openvideo/timeline';
 
 export function drawVerticalLine(
   ctx: CanvasRenderingContext2D,
@@ -16,8 +16,8 @@ export function drawVerticalLine(
 
   // Draw the yellow outline
   ctx.lineWidth = 6; // Total width for the outline (4 + 2)
-  ctx.lineCap = "round";
-  ctx.strokeStyle = "white"; // Yellow color for the outline
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'white'; // Yellow color for the outline
   ctx.beginPath();
   ctx.moveTo(-cSizeBy2, 0);
   ctx.lineTo(cSizeBy2, 0);
@@ -25,7 +25,7 @@ export function drawVerticalLine(
 
   // Draw the main line
   ctx.lineWidth = 4; // Width of the main line
-  ctx.strokeStyle = "black"; // Color of the main line
+  ctx.strokeStyle = 'black'; // Color of the main line
   ctx.beginPath();
   ctx.moveTo(-cSizeBy2, 0);
   ctx.lineTo(cSizeBy2, 0);
@@ -50,7 +50,7 @@ export function drawVerticalLeftIcon(
   ctx.rotate(util.degreesToRadians(fabricObject.angle));
 
   // Draw the rectangle with left corners rounded
-  ctx.fillStyle = "rgba(255,255,255, 1)";
+  ctx.fillStyle = 'rgba(255,255,255, 1)';
   ctx.beginPath();
   ctx.moveTo(-width / 2, -height / 2 + leftBorderRadius);
   ctx.lineTo(-width / 2, height / 2 - leftBorderRadius);
@@ -75,7 +75,7 @@ export function drawVerticalLeftIcon(
   const lineWidth = 2.5;
   const lineHeight = 16;
   const lineRadius = lineWidth / 2;
-  ctx.fillStyle = "#333"; // Line color
+  ctx.fillStyle = '#333'; // Line color
 
   // Draw the rounded line using rounded rectangle
   ctx.beginPath();
@@ -106,7 +106,7 @@ export function drawVerticalRightIcon(
   ctx.rotate(util.degreesToRadians(fabricObject.angle));
 
   // Draw the rectangle with right corners rounded
-  ctx.fillStyle = "rgba(255,255,255, 1)";
+  ctx.fillStyle = 'rgba(255,255,255, 1)';
   ctx.beginPath();
   ctx.moveTo(width / 2, -height / 2 + rightBorderRadius);
   ctx.lineTo(width / 2, height / 2 - rightBorderRadius);
@@ -131,7 +131,7 @@ export function drawVerticalRightIcon(
   const lineWidth = 2.5;
   const lineHeight = 16;
   const lineRadius = lineWidth / 2;
-  ctx.fillStyle = "#333"; // Line color
+  ctx.fillStyle = '#333'; // Line color
 
   // Draw the rounded line using rounded rectangle
   ctx.beginPath();

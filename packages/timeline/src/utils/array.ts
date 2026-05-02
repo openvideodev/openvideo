@@ -1,4 +1,4 @@
-import { ITrack } from "../types";
+import { ITrack } from '../types';
 
 export function findRelativePosition(
   arr: number[],

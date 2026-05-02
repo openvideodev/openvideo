@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { authClient } from "@/lib/auth-client";
+import React from 'react';
+import { authClient } from '@/lib/auth-client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +9,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { LogOut, User } from "lucide-react";
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { LogOut, User } from 'lucide-react';
 
 export function UserMenu() {
   const { data: session } = authClient.useSession();
@@ -22,7 +22,12 @@ export function UserMenu() {
 
   if (!session) {
     return (
-      <Button asChild size="sm" variant="ghost" className="rounded-full text-xs">
+      <Button
+        asChild
+        size="sm"
+        variant="ghost"
+        className="rounded-full text-xs"
+      >
         <Link href="/signin">Sign in</Link>
       </Button>
     );
@@ -34,7 +39,7 @@ export function UserMenu() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/");
+          router.push('/');
           router.refresh();
         },
       },
@@ -49,9 +54,11 @@ export function UserMenu() {
           className="relative h-8 w-8 rounded-full p-0 flex items-center justify-center outline-none"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.image || ""} alt={user.name || "User"} />
+            <AvatarImage src={user.image || ''} alt={user.name || 'User'} />
             <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-              {user.name?.charAt(0).toUpperCase() || <User className="h-3 w-3" />}
+              {user.name?.charAt(0).toUpperCase() || (
+                <User className="h-3 w-3" />
+              )}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -60,7 +67,9 @@ export function UserMenu() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

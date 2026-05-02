@@ -1,16 +1,16 @@
-import { nanoid } from "nanoid";
-import Timeline from "../../timeline";
-import { ITransitionClip, TrackType } from "../../types";
-import { removeItemsFromTrack } from "../../utils/item";
-import { IDropInfo } from "../../interfaces/canvas";
-import { generateId, unitsToTimeUs } from "../../utils";
-import { createCombinedTracksArray } from "../../utils/array";
-import { TPointerEvent, TPointerEventInfo } from "fabric";
-import { TIMELINE_SEEK } from "../../global";
-import { flatten } from "lodash-es";
+import { nanoid } from 'nanoid';
+import Timeline from '../../timeline';
+import { ITransitionClip, TrackType } from '../../types';
+import { removeItemsFromTrack } from '../../utils/item';
+import { IDropInfo } from '../../interfaces/canvas';
+import { generateId, unitsToTimeUs } from '../../utils';
+import { createCombinedTracksArray } from '../../utils/array';
+import { TPointerEvent, TPointerEventInfo } from 'fabric';
+import { TIMELINE_SEEK } from '../../global';
+import { flatten } from 'lodash-es';
 
-import { Transition } from "../../objects";
-import { ITimelineTrack } from "../../timeline";
+import { Transition } from '../../objects';
+import { ITimelineTrack } from '../../timeline';
 
 function addNewTrack(this: Timeline, payload: IDropInfo) {
   const { secondaryTracks, primaryTracks, primaryPositions } = payload;
@@ -28,10 +28,10 @@ function addNewTrack(this: Timeline, payload: IDropInfo) {
   const refTrack: ITimelineTrack = {
     id: generateId(),
     clipIds: primaryTrack.objects.map((obj) => obj.id),
-    name: "",
+    name: '',
     type: currentTrack.type,
     accepts: currentTrack.accepts,
-    muted: currentTrack.muted || false
+    muted: currentTrack.muted || false,
   };
 
   const secondaryIds = flatten(
@@ -42,7 +42,7 @@ function addNewTrack(this: Timeline, payload: IDropInfo) {
 
   let updatedTracks = removeItemsFromTrack(this.tracks, [
     ...Object.keys(positions),
-    ...secondaryIds
+    ...secondaryIds,
   ]);
 
   const newTracks: (ITimelineTrack & { tempIndex: number })[] = [];
@@ -57,7 +57,7 @@ function addNewTrack(this: Timeline, payload: IDropInfo) {
     if (!currentSecondaryTrack) return;
 
     const ids = objects
-      .filter((obj) => obj.type !== "transition")
+      .filter((obj) => obj.type !== 'transition')
       .map((obj) => obj.id);
 
     if (ids.length === 0) return;
@@ -65,11 +65,11 @@ function addNewTrack(this: Timeline, payload: IDropInfo) {
     const newTrack: ITimelineTrack & { tempIndex: number } = {
       id: nanoid(),
       clipIds: ids,
-      name: "",
+      name: '',
       type: currentSecondaryTrack.type,
       accepts: currentSecondaryTrack.accepts,
       tempIndex: index,
-      muted: currentSecondaryTrack.muted || false
+      muted: currentSecondaryTrack.muted || false,
     };
     newTracks.push(newTrack);
   });
@@ -84,7 +84,7 @@ function addNewTrack(this: Timeline, payload: IDropInfo) {
   this.itemsManager.updateTrackItemIdsOrdering();
   this.tracksManager.adjustMagneticTrack();
   this.transitionManager.updateTransitions(true);
-  this.updateState({ updateHistory: true, kind: "update" });
+  this.updateState({ updateHistory: true, kind: 'update' });
 }
 
 // handle when track items are moved
@@ -93,7 +93,7 @@ function onTrackItemsMoved(this: Timeline, payload: IDropInfo) {
     isSecondaryOverlapped,
     secondaryTracks,
     primaryTracks,
-    primaryPositions
+    primaryPositions,
   } = payload;
   const { trackId, positions } = primaryPositions;
   const overTrack = this.tracks.find((track) => track.id === trackId);
@@ -118,7 +118,7 @@ function onTrackItemsMoved(this: Timeline, payload: IDropInfo) {
 
   let updatedTracks = removeItemsFromTrack(this.tracks, [
     ...Object.keys(positions),
-    ...secondaryIds
+    ...secondaryIds,
   ]);
 
   Object.keys(primaryTracks).forEach((trackId) => {
@@ -147,7 +147,7 @@ function onTrackItemsMoved(this: Timeline, payload: IDropInfo) {
   Object.keys(secondaryTracks).forEach((trackId) => {
     const { objects, index } = secondaryTracks[trackId];
     const ids = objects
-      .filter((obj) => obj.type !== "transition")
+      .filter((obj) => obj.type !== 'transition')
       .map((obj) => obj.id);
     const [refId] = ids;
     const target = this.trackItemsMap[refId];
@@ -157,11 +157,11 @@ function onTrackItemsMoved(this: Timeline, payload: IDropInfo) {
       const newTrack: ITimelineTrack & { tempIndex: number } = {
         id: nanoid(),
         clipIds: ids,
-        name: "",
+        name: '',
         type: target.type as TrackType,
         accepts: accepts,
         tempIndex: index,
-        muted: false
+        muted: false,
       };
       newTracks.push(newTrack);
     } else {
@@ -184,19 +184,19 @@ function onTrackItemsMoved(this: Timeline, payload: IDropInfo) {
   this.itemsManager.updateTrackItemIdsOrdering();
   this.tracksManager.adjustMagneticTrack();
   this.transitionManager.updateTransitions(true);
-  this.updateState({ updateHistory: true, kind: "update" });
+  this.updateState({ updateHistory: true, kind: 'update' });
 }
 
 function onTrackItemsResized(
   this: Timeline,
   {
     trackItemIds,
-    isOverlapped
+    isOverlapped,
   }: { trackId: string; trackItemIds: string[]; isOverlapped: boolean }
 ) {
   const [trackItemId] = trackItemIds;
   if (!trackItemId) return;
-  const transitions = this.getObjects("Transition") as Transition[];
+  const transitions = this.getObjects('Transition') as Transition[];
   const transition = transitions.find((obj) => obj.id === trackItemId);
   if (!transition) {
     const currentTrack = this.tracks.find((track) =>
@@ -209,10 +209,10 @@ function onTrackItemsResized(
       const newTrack: ITimelineTrack = {
         id: nanoid(),
         clipIds: [trackItemId],
-        name: "",
+        name: '',
         type: currentTrack.type,
         accepts: currentTrack.accepts,
-        muted: currentTrack.muted || false
+        muted: currentTrack.muted || false,
       };
       const currentTrackIndex = this.tracks.findIndex(
         (track) => track.id === currentTrack.id
@@ -268,7 +268,7 @@ function onTrackItemsResized(
   this.tracksManager.adjustMagneticTrack();
   this.transitionManager.updateTransitions(true);
   this.itemsManager.updateTrackItemIdsOrdering();
-  this.updateState({ updateHistory: true, kind: "update" });
+  this.updateState({ updateHistory: true, kind: 'update' });
 }
 
 let scenePoint = { x: 0, y: 0 };
@@ -283,23 +283,25 @@ function onMouseUpClick(this: Timeline, e: TPointerEventInfo<TPointerEvent>) {
     const canvasEl = this.getElement();
     const canvasBounds = canvasEl.getBoundingClientRect();
     const vt = this.viewportTransform;
-    const clientX = (e.e as MouseEvent).clientX || ((e.e as unknown as TouchEvent).touches?.[0]?.clientX);
+    const clientX =
+      (e.e as MouseEvent).clientX ||
+      (e.e as unknown as TouchEvent).touches?.[0]?.clientX;
     const position = clientX - canvasBounds.left - vt[4];
     const time = unitsToTimeUs(position, this.scale.zoom);
     this.emitter.emit(TIMELINE_SEEK, { payload: { time } });
   }
 }
 export const addTimelineEvents = (timeline: Timeline) => {
-  timeline.on("track:create", addNewTrack.bind(timeline));
-  timeline.on("track-items:resized", onTrackItemsResized.bind(timeline));
-  timeline.on("track-items:moved", onTrackItemsMoved.bind(timeline));
-  timeline.on("mouse:up", onMouseUpClick.bind(timeline));
-  timeline.on("mouse:down", onMouseDownClick.bind(timeline));
+  timeline.on('track:create', addNewTrack.bind(timeline));
+  timeline.on('track-items:resized', onTrackItemsResized.bind(timeline));
+  timeline.on('track-items:moved', onTrackItemsMoved.bind(timeline));
+  timeline.on('mouse:up', onMouseUpClick.bind(timeline));
+  timeline.on('mouse:down', onMouseDownClick.bind(timeline));
 };
 
 export function removeTimelineEvents(timeline: Timeline) {
-  timeline.off("track:create", addNewTrack.bind(timeline));
-  timeline.off("track-items:resized", onTrackItemsResized.bind(timeline));
-  timeline.off("track-items:moved", onTrackItemsMoved.bind(timeline));
-  timeline.off("mouse:up", onMouseUpClick.bind(timeline));
+  timeline.off('track:create', addNewTrack.bind(timeline));
+  timeline.off('track-items:resized', onTrackItemsResized.bind(timeline));
+  timeline.off('track-items:moved', onTrackItemsMoved.bind(timeline));
+  timeline.off('mouse:up', onMouseUpClick.bind(timeline));
 }

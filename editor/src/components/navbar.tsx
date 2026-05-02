@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { LogoIcons } from "@/components/shared/logos";
-import { Menu, X, Sparkles, Wand2, Type, LayoutTemplate } from "lucide-react";
-import { UserMenu } from "@/components/user-menu";
-import { cn } from "@/lib/utils";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { LogoIcons } from '@/components/shared/logos';
+import { Menu, X, Sparkles, Wand2, Type, LayoutTemplate } from 'lucide-react';
+import { UserMenu } from '@/components/user-menu';
+import { cn } from '@/lib/utils';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -13,31 +13,36 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
+} from '@/components/ui/navigation-menu';
 
-const components: { title: string; href: string; description: string; icon: React.ReactNode }[] = [
+const components: {
+  title: string;
+  href: string;
+  description: string;
+  icon: React.ReactNode;
+}[] = [
   {
-    title: "Animations",
-    href: "/components/animations",
-    description: "Dynamic motion effects for your video elements.",
+    title: 'Animations',
+    href: '/components/animations',
+    description: 'Dynamic motion effects for your video elements.',
     icon: <Wand2 className="size-4" />,
   },
   {
-    title: "Captions",
-    href: "/components/captions",
-    description: "Smart text overlays and subtitles generator.",
+    title: 'Captions',
+    href: '/components/captions',
+    description: 'Smart text overlays and subtitles generator.',
     icon: <Type className="size-4" />,
   },
   {
-    title: "Effects",
-    href: "/components/effects",
-    description: "Visual filters and GLSL shader-based effects.",
+    title: 'Effects',
+    href: '/components/effects',
+    description: 'Visual filters and GLSL shader-based effects.',
     icon: <Sparkles className="size-4" />,
   },
   {
-    title: "Transitions",
-    href: "/components/transitions",
-    description: "Seamless scene transitions and cinematic cuts.",
+    title: 'Transitions',
+    href: '/components/transitions',
+    description: 'Seamless scene transitions and cinematic cuts.',
     icon: <LayoutTemplate className="size-4" />,
   },
 ];
@@ -46,12 +51,12 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Docs", href: "https://docs.openvideo.dev" },
-    { name: "Workflows", href: "/workflows" },
-    { name: "Discord", href: "https://discord.gg/SCfMrQx8kr" },
+    { name: 'Docs', href: 'https://docs.openvideo.dev' },
+    { name: 'Workflows', href: '/workflows' },
+    { name: 'Discord', href: 'https://discord.gg/SCfMrQx8kr' },
     {
-      name: "Github",
-      href: "https://github.com/openvideodev/openvideo-editor",
+      name: 'Github',
+      href: 'https://github.com/openvideodev/openvideo-editor',
     },
   ];
 
@@ -98,7 +103,10 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 {navLinks.map((link) => (
                   <NavigationMenuItem key={link.name}>
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink
+                      asChild
+                      className={navigationMenuTriggerStyle()}
+                    >
                       <Link href={link.href}>{link.name}</Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
@@ -115,7 +123,10 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex w-full items-center justify-between">
-          <Link className="inline-flex items-center gap-2.5 font-bold tracking-tight" href="/">
+          <Link
+            className="inline-flex items-center gap-2.5 font-bold tracking-tight"
+            href="/"
+          >
             <LogoIcons.scenify className="text-primary size-5" />
             <span>OpenVideo</span>
           </Link>
@@ -153,7 +164,9 @@ const Navbar = () => {
                   </div>
                   <div>
                     <div className="text-sm font-medium">{c.title}</div>
-                    <div className="text-[10px] text-muted-foreground">{c.description}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {c.description}
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -177,8 +190,11 @@ const Navbar = () => {
 };
 
 const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & { title: string; icon?: React.ReactNode }
+  React.ElementRef<'a'>,
+  React.ComponentPropsWithoutRef<'a'> & {
+    title: string;
+    icon?: React.ReactNode;
+  }
 >(({ className, title, children, href, icon, ...props }, ref) => {
   return (
     <li>
@@ -187,8 +203,8 @@ const ListItem = React.forwardRef<
           ref={ref as any}
           href={href!}
           className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className,
+            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+            className
           )}
           {...props}
         >
@@ -196,12 +212,14 @@ const ListItem = React.forwardRef<
             {icon}
             <div className="text-sm font-medium leading-none">{title}</div>
           </div>
-          <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">{children}</p>
+          <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
+            {children}
+          </p>
         </Link>
       </NavigationMenuLink>
     </li>
   );
 });
-ListItem.displayName = "ListItem";
+ListItem.displayName = 'ListItem';
 
 export default Navbar;

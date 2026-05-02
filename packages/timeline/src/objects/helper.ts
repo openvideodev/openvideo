@@ -1,11 +1,11 @@
-import { Group, GroupProps, Rect, classRegistry } from "fabric";
-import { ACTIVE_SELECTION_COLOR } from "../constants/objects";
+import { Group, GroupProps, Rect, classRegistry } from 'fabric';
+import { ACTIVE_SELECTION_COLOR } from '../constants/objects';
 
 export interface HelperProps extends Partial<GroupProps> {
   id: string;
   metadata: Record<string, any>;
   tScale: number;
-  kind: "top" | "center" | "bottom";
+  kind: 'top' | 'center' | 'bottom';
   activeGuideFill?: string;
 }
 
@@ -18,45 +18,45 @@ const sizes: Record<string, HelperSize> = {
   top: {
     top: 35,
     guide: 2,
-    bottom: 3
+    bottom: 3,
   },
   center: {
     top: 3,
     guide: 2,
-    bottom: 3
+    bottom: 3,
   },
   bottom: {
     top: 3,
     guide: 2,
-    bottom: 35
-  }
+    bottom: 35,
+  },
 };
 
 const getSizes = (kind: string, height: number) => {
   const size = sizes[kind];
 
-  if (kind === "top") {
+  if (kind === 'top') {
     return {
       top: height - (size.guide + size.bottom),
       guide: size!.guide,
-      bottom: size!.bottom
+      bottom: size!.bottom,
     };
   }
-  if (kind === "center") {
+  if (kind === 'center') {
     return {
       top: size!.top,
       guide: size!.guide,
-      bottom: size!.bottom
+      bottom: size!.bottom,
     };
   }
   return {
     top: size?.top,
     guide: size?.guide,
-    bottom: height - (size?.guide + size?.top)
+    bottom: height - (size?.guide + size?.top),
   };
 };
 class Helper extends Group {
-  static type = "Helper";
+  static type = 'Helper';
   public guide: Rect;
   public topGuide: Rect;
   public bottomGuide: Rect;
@@ -67,13 +67,13 @@ class Helper extends Group {
   static getDefaults(): Record<string, any> {
     return {
       ...super.getDefaults(),
-      ...Helper.ownDefaults
+      ...Helper.ownDefaults,
     };
   }
 
   static ownDefaults = {
     selectable: false,
-    evented: false
+    evented: false,
   };
 
   constructor(props: HelperProps) {
@@ -82,28 +82,28 @@ class Helper extends Group {
       top: 0,
       left: 0,
       strokeWidth: 0,
-      fill: "transparent",
+      fill: 'transparent',
       selectable: true,
       height: size!.top,
-      width: props.width
+      width: props.width,
     });
     const guide = new Rect({
       top: size!.top,
       left: 0,
       strokeWidth: 0,
-      fill: "transparent",
+      fill: 'transparent',
       selectable: true,
       height: size!.guide,
-      width: props.width
+      width: props.width,
     });
     const bottom = new Rect({
       top: size!.top + size!.guide,
       left: 0,
       strokeWidth: 0,
-      fill: "transparent",
+      fill: 'transparent',
       selectable: true,
       height: size!.bottom,
-      width: props.width
+      width: props.width,
     });
     super([top, guide, bottom], props);
     Object.assign(this, Helper.ownDefaults);
@@ -120,18 +120,18 @@ class Helper extends Group {
 
   updateCoords(size: number) {
     this.scaleToWidth(size);
-    this.set("scaleY", 1);
+    this.set('scaleY', 1);
   }
 
   public setSelected(selected: boolean) {
     if (selected) {
-      this.guide.set("fill", this.activeGuideFill);
+      this.guide.set('fill', this.activeGuideFill);
     } else {
-      this.guide.set("fill", "transparent");
+      this.guide.set('fill', 'transparent');
     }
   }
 }
 
-classRegistry.setClass(Helper, "Helper");
+classRegistry.setClass(Helper, 'Helper');
 
 export default Helper;

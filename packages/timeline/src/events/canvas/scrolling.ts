@@ -1,5 +1,5 @@
-import { ModifiedEvent, TPointerEvent } from "fabric";
-import Timeline from "../../timeline";
+import { ModifiedEvent, TPointerEvent } from 'fabric';
+import Timeline from '../../timeline';
 
 const SHOULD_SCROLL_RANGE_X = 100;
 const SHOULD_SCROLL_RANGE_Y = 0;
@@ -12,7 +12,7 @@ interface ScrollState {
 }
 
 const state: ScrollState = {
-  scrollInterval: null
+  scrollInterval: null,
 };
 
 function calculateScrollSpeed(distance: number): number {
@@ -41,7 +41,7 @@ function startAutoScroll(timeline: Timeline, e: ModifiedEvent<TPointerEvent>) {
       target.left + targetBounds.width < timeline.bounding.width
     ) {
       const scrollSpeed = calculateScrollSpeed(timeline.width - pointer.x);
-      target.set("left", target.left + scrollSpeed);
+      target.set('left', target.left + scrollSpeed);
       timeline.setViewportPos(vt[4] - scrollSpeed, vt[5]);
     }
 
@@ -54,7 +54,7 @@ function startAutoScroll(timeline: Timeline, e: ModifiedEvent<TPointerEvent>) {
     ) {
       const scrollSpeed = calculateScrollSpeed(pointer.x);
 
-      target.set("left", target.left - scrollSpeed);
+      target.set('left', target.left - scrollSpeed);
       timeline.setViewportPos(vt[4] + scrollSpeed, vt[5]);
     }
 
@@ -63,7 +63,7 @@ function startAutoScroll(timeline: Timeline, e: ModifiedEvent<TPointerEvent>) {
       pointer.y > timeline.height - SHOULD_SCROLL_RANGE_Y &&
       target.top + targetBounds.height < timeline.bounding.height + 80
     ) {
-      target.set("top", target.top + SCROLL_SPEED);
+      target.set('top', target.top + SCROLL_SPEED);
       timeline.setViewportPos(vt[4], vt[5] - SCROLL_SPEED);
     }
 
@@ -73,7 +73,7 @@ function startAutoScroll(timeline: Timeline, e: ModifiedEvent<TPointerEvent>) {
       target.top > -80 &&
       -vt[5] > SHOULD_SCROLL_RANGE_Y
     ) {
-      target.set("top", target.top - SCROLL_SPEED);
+      target.set('top', target.top - SCROLL_SPEED);
       timeline.setViewportPos(vt[4], vt[5] + SCROLL_SPEED);
     }
 
@@ -101,11 +101,11 @@ export function scrollOnMovingForScroll(
 }
 
 export function addScrollEvents(timeline: Timeline) {
-  timeline.on("mouse:up", onMouseUpForScroll);
-  timeline.on("object:moving", scrollOnMovingForScroll.bind(timeline));
+  timeline.on('mouse:up', onMouseUpForScroll);
+  timeline.on('object:moving', scrollOnMovingForScroll.bind(timeline));
 }
 
 export function removeScrollEvents(timeline: Timeline) {
-  timeline.off("mouse:up", onMouseUpForScroll);
-  timeline.off("object:moving", scrollOnMovingForScroll.bind(timeline));
+  timeline.off('mouse:up', onMouseUpForScroll);
+  timeline.off('object:moving', scrollOnMovingForScroll.bind(timeline));
 }

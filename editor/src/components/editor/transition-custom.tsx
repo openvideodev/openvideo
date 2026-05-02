@@ -1,9 +1,9 @@
 export const CUSTOM_TRANSITIONS = [
   {
-    key: "circleSpread",
-    label: "Circle Spread",
-    previewStatic: "",
-    previewDynamic: "",
+    key: 'circleSpread',
+    label: 'Circle Spread',
+    previewStatic: '',
+    previewDynamic: '',
     fragment: `
 const float PI = 3.141592653589;
 
@@ -19,10 +19,10 @@ vec4 transition(vec2 p) {
   },
 
   {
-    key: "zoomIn",
-    label: "Zoom In",
-    previewStatic: "",
-    previewDynamic: "",
+    key: 'zoomIn',
+    label: 'Zoom In',
+    previewStatic: '',
+    previewDynamic: '',
     fragment: `
 vec4 transition(vec2 p) {
   vec2 center = vec2(0.5);
@@ -38,10 +38,10 @@ vec4 transition(vec2 p) {
   },
 
   {
-    key: "ripple",
-    label: "Ripple",
-    previewStatic: "",
-    previewDynamic: "",
+    key: 'ripple',
+    label: 'Ripple',
+    previewStatic: '',
+    previewDynamic: '',
     fragment: `
 const float PI = 3.141592653589;
 
@@ -62,10 +62,10 @@ vec4 transition(vec2 p) {
   },
 
   {
-    key: "glitch",
-    label: "Glitch",
-    previewStatic: "",
-    previewDynamic: "",
+    key: 'glitch',
+    label: 'Glitch',
+    previewStatic: '',
+    previewDynamic: '',
     fragment: `
 float random(vec2 co){
   return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);

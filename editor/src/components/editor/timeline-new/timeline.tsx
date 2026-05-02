@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
-import { useStore } from "zustand";
-import Header from "./header";
-import Ruler from "./ruler";
-import { timeUsToUnits, unitsToTimeUs, ITimelineScaleState } from "@openvideo/timeline";
-import CanvasTimeline from "./items/timeline";
-import { useStudioStore } from "@/stores/studio-store";
-import { useProjectStore } from "@/stores/project-store";
-import { projectStore } from "@/lib/project";
-import Playhead from "./playhead";
-import { useTheme } from "next-themes";
+import { useEffect, useRef, useState } from 'react';
+import { useStore } from 'zustand';
+import Header from './header';
+import Ruler from './ruler';
+import {
+  timeUsToUnits,
+  unitsToTimeUs,
+  TimelineBridge,
+} from '@openvideo/timeline';
+import CanvasTimeline from './items/timeline';
+import { useStudioStore } from '@/stores/studio-store';
+import { projectStore, core } from '@/lib/project';
+import Playhead from './playhead';
 import {
   Audio,
   Image,
@@ -21,13 +23,13 @@ import {
   RadialAudioBars,
   WaveAudioBars,
   HillAudioBars,
-  Transition
-} from "./items";
-import PreviewTrackItem from "./items/preview-drag-item";
-import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
-import { addStudioSync } from "./studio-to-store-sync";
-import { TIMELINE_SCALE_CHANGED, TIMELINE_BOUNDING_CHANGED } from "@openvideo/timeline";
-import Effect from "./items/effect";
+  Transition,
+} from './items';
+import PreviewTrackItem from './items/preview-drag-item';
+import { useTimelineOffsetX } from '../hooks/use-timeline-offset';
+import { addStudioSync } from './studio-to-store-sync';
+import { TIMELINE_SCALE_CHANGED } from '@openvideo/timeline';
+import Effect from './items/effect';
 
 CanvasTimeline.registerItems({
   Text,
@@ -43,7 +45,7 @@ CanvasTimeline.registerItems({
   WaveAudioBars,
   HillAudioBars,
   Effect,
-  Transition
+  Transition,
 });
 
 const EMPTY_SIZE = { width: 0, height: 0 };
@@ -57,26 +59,16 @@ const Timeline = () => {
   const currentTimeUs = useStore(projectStore, (s) => s.currentTime);
   const durationUs = useStore(projectStore, (s) => s.settings.duration);
   const { studio } = useStudioStore();
-  const { fps } = useProjectStore();
   const scale = useStore(projectStore, (s) => s.scale);
   const setScale = projectStore.getState().setScale;
 
-  const [canvasSize, setCanvasSize] = useState(EMPTY_SIZE);
   const timelineOffsetX = useTimelineOffsetX();
   const timelineContainerRef = useRef<HTMLDivElement>(null);
-  const onMouseDown = () => { };
-  const onMouseMove = () => { };
-  const onMouseOut = () => { };
-  const { theme } = useTheme();
+  const onMouseDown = () => {};
+  const onMouseMove = () => {};
+  const onMouseOut = () => {};
 
   const [timeline, setTimeline] = useState<CanvasTimeline | null>(null);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      canvasRef.current?.requestRenderAll();
-    }, 5);
-    return () => clearTimeout(timeout);
-  }, [theme]);
 
   useEffect(() => {
     const position = timeUsToUnits(currentTimeUs, scale.zoom);
@@ -98,22 +90,17 @@ const Timeline = () => {
       if (scaleScroll >= 0) {
         if (scaleScroll > 1)
           horizontalScrollbar.scrollTo({
-            left: currentPosScroll + scrollDivWidth
+            left: currentPosScroll + scrollDivWidth,
           });
         else
           horizontalScrollbar.scrollTo({
-            left: totalScrollWidth - scrollDivWidth
+            left: totalScrollWidth - scrollDivWidth,
           });
       }
     }
   }, [currentTimeUs]);
 
-  const onResizeCanvas = (payload: { width: number; height: number }) => {
-    setCanvasSize({
-      width: payload.width,
-      height: payload.height
-    });
-  };
+  const onResizeCanvas = (payload: { width: number; height: number }) => {};
 
   useEffect(() => {
     const timelineContainerEl = timelineContainerRef.current;
@@ -125,7 +112,7 @@ const Timeline = () => {
 
       const { height, width } = entry.contentRect;
       // Dynamically calculate available height for the canvas
-      // Header is 50px, Ruler is 24px + 1px border = 25px. 
+      // Header is 50px, Ruler is 24px + 1px border = 25px.
       // Total UI offset = 75px.
       const containerWidth = width - timelineOffsetX;
       const containerHeight = height - 75;
@@ -133,12 +120,10 @@ const Timeline = () => {
       canvasRef.current?.resize(
         {
           width: containerWidth,
-          height: containerHeight
+          height: containerHeight,
         },
         { force: true }
       );
-
-      setCanvasSize({ width: containerWidth, height: containerHeight });
     });
 
     resizeObserver.observe(timelineContainerEl);
@@ -152,7 +137,7 @@ const Timeline = () => {
     if (!canvasEl || !timelineContainerEl) return;
 
     const containerWidth =
-      (document.getElementById("timeline-header")?.clientWidth || 0) -
+      (document.getElementById('timeline-header')?.clientWidth || 0) -
       timelineOffsetX;
     const containerHeight = (timelineContainerEl.clientHeight || 320) - 75;
     const canvas = new CanvasTimeline(canvasEl, {
@@ -160,16 +145,16 @@ const Timeline = () => {
       height: containerHeight,
       bounding: {
         width: containerWidth,
-        height: 0
+        height: 0,
       },
-      selectionColor: "rgba(0, 216, 214,0.1)",
-      selectionBorderColor: "rgba(0, 216, 214,1.0)",
+      selectionColor: 'rgba(0, 216, 214,0.1)',
+      selectionBorderColor: 'rgba(0, 216, 214,1.0)',
       onResizeCanvas,
       scale: scale,
       duration: durationUs,
       spacing: {
         left: 16,
-        right: 40
+        right: 40,
       },
       sizesMap: {
         caption: 32,
@@ -178,51 +163,31 @@ const Timeline = () => {
         audio: 36,
         video: 48,
         image: 48,
-        customTrack: 40,
-        customTrack2: 40,
-        linealAudioBars: 40,
-        radialAudioBars: 40,
-        waveAudioBars: 40,
-        hillAudioBars: 40,
-        main: 48
+        transition: 40,
+        main: 48,
       },
       itemTypes: [
-        "text",
-        "image",
-        "audio",
-        "video",
-        "caption",
-        "helper",
-        "effect",
-        "track",
-        "composition",
-        "template",
-        "linealAudioBars",
-        "radialAudioBars",
-        "progressFrame",
-        "progressBar",
-        "waveAudioBars",
-        "hillAudioBars",
-        "transition"
+        'text',
+        'image',
+        'audio',
+        'video',
+        'caption',
+        'helper',
+        'effect',
+        'track',
+        'transition',
       ],
       acceptsMap: {
-        text: ["text", "caption"],
-        effect: ["effect"],
-        image: ["image", "video"],
-        main: ["image", "video"],
-        video: ["video", "image"],
-        audio: ["audio"],
-        caption: ["caption", "text"],
-        template: ["template"],
-        customTrack: ["video", "image"],
-        customTrack2: ["video", "image"],
-        linealAudioBars: ["audio", "linealAudioBars"],
-        radialAudioBars: ["audio", "radialAudioBars"],
-        waveAudioBars: ["audio", "waveAudioBars"],
-        hillAudioBars: ["audio", "hillAudioBars"]
+        text: ['text', 'caption'],
+        effect: ['effect'],
+        image: ['image', 'video'],
+        main: ['image', 'video'],
+        video: ['video', 'image'],
+        audio: ['audio'],
+        caption: ['caption', 'text'],
       },
-      guideLineColor: "#ffffff",
-      withTransitions: ["image", "video"]
+      guideLineColor: '#ffffff',
+      withTransitions: ['image', 'video'],
     });
 
     canvas.initScrollbars({
@@ -231,10 +196,8 @@ const Timeline = () => {
       extraMarginX: 50,
       extraMarginY: 0,
       scrollbarWidth: 8,
-      scrollbarColor: "rgba(33, 33, 33, 0.8)"
+      scrollbarColor: 'rgba(33, 33, 33, 0.8)',
     });
-
-
 
     canvas.onViewportChange((left: number) => {
       setScrollLeft(left + 16);
@@ -249,12 +212,12 @@ const Timeline = () => {
 
     canvasRef.current = canvas;
 
-    const initialWidth = containerWidth;
-    const initialHeight = containerHeight;
-    setCanvasSize({ width: initialWidth, height: initialHeight });
+    const bridge = new TimelineBridge(core, canvas);
+
     setTimeline(canvas);
 
     return () => {
+      bridge.dispose();
       canvas.purge();
     };
   }, []);
@@ -262,7 +225,7 @@ const Timeline = () => {
   useEffect(() => {
     if (!studio || !timeline) return;
 
-    console.log("Studio ready, adding studio events", studio);
+    console.log('Studio ready, adding studio events', studio);
     const disposeStudioSync = addStudioSync(studio, timeline);
 
     return () => {
@@ -334,8 +297,8 @@ const Timeline = () => {
       }
     };
 
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    return () => container.removeEventListener("wheel", handleWheel);
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
   }, [scale, timelineContainerRef, scrollLeft, onRulerScroll]);
 
   return (

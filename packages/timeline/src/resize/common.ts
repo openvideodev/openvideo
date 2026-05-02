@@ -1,8 +1,8 @@
-import { TransformActionHandler, controlsUtils } from "fabric";
-import { resolveOrigin } from "../utils/resolve-origin";
-import { isTransformCentered } from "../utils/fabric";
-import { CENTER, LEFT, RIGHT } from "../constants/fabric";
-import { unitsToTimeUs } from "../utils";
+import { TransformActionHandler, controlsUtils } from 'fabric';
+import { resolveOrigin } from '../utils/resolve-origin';
+import { isTransformCentered } from '../utils/fabric';
+import { CENTER, LEFT, RIGHT } from '../constants/fabric';
+import { unitsToTimeUs } from '../utils';
 
 const { wrapWithFireEvent, getLocalPoint, wrapWithFixedAnchor } = controlsUtils;
 
@@ -45,14 +45,14 @@ export const changeObjectWidth: TransformActionHandler = (
         Math.abs((localPoint.x * multiplier) / target.scaleX) - strokePadding
       );
 
-    const fromLeft = transform.corner === "ml";
+    const fromLeft = transform.corner === 'ml';
     if (target.left < 0) return false;
     if (fromLeft) {
       // check if the object is out of the canvas
       const diffPos = oldWidth - newWidth;
       const nextLeft = target.left + diffPos;
       if (nextLeft < 0) {
-        target.set("width", target.width + target.left);
+        target.set('width', target.width + target.left);
         return true;
       }
     }
@@ -63,7 +63,7 @@ export const changeObjectWidth: TransformActionHandler = (
       target.playbackRate
     );
     if (widthToTime < minTimeToUnits) return false;
-    target.set("width", Math.max(newWidth, 0));
+    target.set('width', Math.max(newWidth, 0));
     //  check against actual target width in case `newWidth` was rejected
     return oldWidth !== target.width;
   }
@@ -71,6 +71,6 @@ export const changeObjectWidth: TransformActionHandler = (
 };
 
 export const changeWidth = wrapWithFireEvent(
-  "resizing",
+  'resizing',
   wrapWithFixedAnchor(changeObjectWidth)
 );
