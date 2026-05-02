@@ -1,9 +1,14 @@
 # Agentic Video Editing
 
-The `openvideo/agents` package provides an AI-first layer for scriptable and autonomous video editing.
+OpenVideo has a **two-tier agent architecture** to separate lightweight in-process scripting from full conversational AI capabilities.
 
-## 🧠 Role in the Ecosystem
+---
 
+## Tier 1 — `@openvideo/agents` (Library Package)
+
+A thin, in-process TypeScript library that lives in `packages/agents`. It provides a **programmable, scriptable agent** that runs inside the editor process and dispatches `core` commands directly.
+
+### Role
 Agents live on top of `core` and act as "power users" that interact with the editor via commands.
 
 ### Responsibilities
@@ -17,7 +22,7 @@ Agents live on top of `core` and act as "power users" that interact with the edi
 
 This ensures that agent actions are perfectly deterministic, undoable, and collaborative.
 
-## Example Agent API
+### Example API
 
 ```ts
 const agent = new VideoAgent({ core });
@@ -55,5 +60,30 @@ core.execute({
 });
 ```
 
+---
+
+## Tier 2 — `@openvideo/director` (Standalone Microservice)
+
+A full-featured, **standalone TypeScript microservice** that powers the **Chat Assistant** panel in the editor UI. It is built on LangChain.js and Google Generative AI (Gemini). Director holds a **server-side `@openvideo/core` instance** and mutates it directly — changes propagate to the browser editor as a **patch stream** over WebSocket.
+
+### Key Differences from Tier 1
+
+| Aspect                | `@openvideo/agents` (Tier 1)     | `@openvideo/director` (Tier 2)            |
+|-----------------------|----------------------------------|-------------------------------------------|
+| Deployment            | In-process library               | Separate HTTP/WS server                   |
+| Core instance         | Borrows the client Core          | Owns an **authoritative server-side Core** |
+| State mutation        | Direct `core.execute()`          | `core.execute()` → patch broadcast to clients |
+| LLM Integration       | Optional / pluggable             | LangChain + Gemini (built-in)             |
+| Pipeline              | Simple run loop                  | Planner → Executor → Queue Workers        |
+| RAG                   | ❌                               | ✅ per-project vector index               |
+| Chat interface        | ❌                               | ✅ WebSocket streaming                    |
+| Asset generation      | ❌                               | ✅ audio, SFX, images via GenAI           |
+| Skills system         | ❌                               | ✅ curated editing skill library + plugins |
+| Async job queue       | ❌                               | ✅ BullMQ workers                         |
+
+> See [`director.md`](./director.md) for the full service specification.
+
+---
+
 ## AI-First Positioning
-By making every editor action a serializable command, OpenVideo is natively built for LLMs. Agents can explore the command registry and "play" with the timeline just like a human would, but with the speed and precision of an API.
+By making every editor action a serializable command, OpenVideo is natively built for LLMs. Both tiers of agents can explore the command registry and "play" with the timeline just like a human would, but with the speed and precision of an API.

@@ -97,3 +97,69 @@ import { Timeline } from "@openvideo/timeline";
 // UI reacts to core state and dispatches commands
 <Timeline core={core} />
 ```
+
+---
+
+## Example 7: AI Chat Assistant Integration (`@openvideo/director`)
+Connecting the editor to Director. Director holds the authoritative Core and pushes patches — the client never re-executes commands.
+
+```ts
+import { createCore } from "@openvideo/core";
+
+// Client-side core (replica)
+const core = createCore();
+
+// 1. Open a WebSocket to Director
+const ws = new WebSocket("ws://localhost:4000/ws");
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+
+  if (msg.type === "patch") {
+    // Director mutated the server Core — apply the patch locally.
+    // The rendering engine reacts automatically.
+    core.applyPatch(msg.patch);
+  }
+
+  if (msg.type === "chat.chunk") {
+    // Stream chat response text to the UI
+    chatUI.append(msg.text);
+  }
+
+  if (msg.type === "plan.created" && msg.plan.requiresConfirmation) {
+    // Show confirmation dialog for destructive/large plans
+    const ok = await showConfirmDialog(msg.plan);
+    ws.send(JSON.stringify({ type: ok ? "plan.confirm" : "plan.reject", planId: msg.plan.id }));
+  }
+};
+
+// 2. Send a chat message — Director's Planner + Executor do the rest
+ws.send(JSON.stringify({
+  type: "chat",
+  sessionId: "sess_abc",
+  message: "Add a cinematic look to the first clip"
+}));
+// → Director: Planner creates Plan, Executor runs core.execute() steps,
+//             onChange(patch) fires, patch is broadcast to all WS clients,
+//             client core.applyPatch() triggers engine-pixi re-render.
+```
+
+---
+
+## Example 8: Asset Upload via Director
+Uploading a file through Director. It registers the asset in the server Core — the `asset.add` patch arrives automatically over WebSocket.
+
+```ts
+const formData = new FormData();
+formData.append("file", audioFile);
+formData.append("projectId", "proj_123");
+formData.append("sessionId", "sess_abc");
+
+await fetch("http://localhost:4000/assets/upload", {
+  method: "POST",
+  body: formData
+});
+
+// No need to call core.execute() — Director handles asset.add on the server Core.
+// The WS patch stream delivers the state update to the client automatically.
+```
