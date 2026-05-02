@@ -3,9 +3,9 @@ import { frameToTimeString, timeToString } from "../utils/time";
 import { SquareSplitHorizontal, Trash2, ZoomIn, ZoomOut, Copy, Scissors } from "lucide-react";
 import { useClipActions } from "../options-floating-menu";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
-import { usePlaybackStore } from "@/stores/playback-store";
+import { useStore } from "zustand";
+import { engine, projectStore } from "@/lib/project";
 import { useStudioStore } from "@/stores/studio-store";
-import { useProjectStore } from "@/stores/project-store";
 import { useEffect, useState } from "react";
 import { ITimelineScaleState } from "@openvideo/timeline";
 import { Slider } from "@/components/ui/slider";
@@ -75,14 +75,19 @@ const Header = ({
   scale: ITimelineScaleState;
   setScale: (scale: ITimelineScaleState) => void;
 }) => {
-  const { duration, isPlaying, play, pause, currentTime, seek } = usePlaybackStore();
+  const currentTimeUs = useStore(projectStore, (s) => s.currentTime);
+  const isPlaying = useStore(projectStore, (s) => s.isPlaying);
+  const durationUs = useStore(projectStore, (s) => s.settings.duration);
+  const currentTime = currentTimeUs / 1_000_000;
+  const duration = durationUs / 1_000_000;
+
   const { studio } = useStudioStore();
-  const { fps } = useProjectStore();
+  const fps = useStore(projectStore, (s) => s.settings.fps);
   const { selectedClip, isLocked, handleDuplicate, handleDelete } = useClipActions();
 
   const handleSplit = () => {
     if (!studio) return;
-    const splitTime = currentTime * 1_000_000;
+    const splitTime = currentTimeUs;
     studio.splitSelected(splitTime);
   };
 
@@ -90,13 +95,9 @@ const Header = ({
     setScale(newScale);
   };
 
-  const handlePlay = () => {
-    play();
-  };
-
-  const handlePause = () => {
-    pause();
-  };
+  const handlePlay = () => engine.play();
+  const handlePause = () => engine.pause();
+  const handleSeek = (time: number) => engine.seek(time * 1_000_000);
 
   return (
     <div
@@ -162,7 +163,7 @@ const Header = ({
             <div>
               <Button
                 className="hidden lg:inline-flex"
-                onClick={() => seek(0)}
+                onClick={() => handleSeek(0)}
                 variant={"ghost"}
                 size={"icon"}
               >
@@ -186,7 +187,7 @@ const Header = ({
               </Button>
               <Button
                 className="hidden lg:inline-flex"
-                onClick={() => seek(duration)}
+                onClick={() => handleSeek(duration)}
                 variant={"ghost"}
                 size={"icon"}
               >

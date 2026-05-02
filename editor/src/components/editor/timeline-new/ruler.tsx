@@ -7,7 +7,8 @@ import {
   TIMELINE_OFFSET_CANVAS_LEFT,
   ITimelineScaleState
 } from "@openvideo/timeline";
-import { usePlaybackStore } from "@/stores/playback-store";
+import { useStore } from "zustand";
+import { projectStore } from "@/lib/project";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
 import { useTheme } from "next-themes";
 import { useMemo } from "react";
@@ -35,7 +36,7 @@ const Ruler = (props: RulerProps) => {
     onScroll,
     scale
   } = props;
-  const { duration } = usePlaybackStore();
+  const durationUs = useStore(projectStore, (s) => s.settings.duration);
   const { theme, resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -143,7 +144,7 @@ const Ruler = (props: RulerProps) => {
         if (x < -50) continue;
 
         const isBeyondDuration =
-          time > duration / MICROSECONDS_PER_SECOND + 0.001;
+          time > durationUs / MICROSECONDS_PER_SECOND + 0.001;
         context.globalAlpha = isBeyondDuration ? 0.4 : 1.0;
 
         const isMain =
@@ -167,7 +168,7 @@ const Ruler = (props: RulerProps) => {
 
       context.restore();
     },
-    [scale.zoom, colors, pixelsPerSecond, offsetX, duration]
+    [scale.zoom, colors, pixelsPerSecond, offsetX, durationUs]
   );
 
   useEffect(() => {

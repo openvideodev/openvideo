@@ -4,7 +4,6 @@ import Header from "./header";
 import Ruler from "./ruler";
 import { timeUsToUnits, unitsToTimeUs, ITimelineScaleState } from "@openvideo/timeline";
 import CanvasTimeline from "./items/timeline";
-import { usePlaybackStore } from "@/stores/playback-store";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
 import { projectStore } from "@/lib/project";
@@ -55,7 +54,8 @@ const Timeline = () => {
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = useRef<CanvasTimeline | null>(null);
   const horizontalScrollbarVpRef = useRef<HTMLDivElement>(null);
-  const { currentTime, duration, seek, setDuration } = usePlaybackStore();
+  const currentTimeUs = useStore(projectStore, (s) => s.currentTime);
+  const durationUs = useStore(projectStore, (s) => s.settings.duration);
   const { studio } = useStudioStore();
   const { fps } = useProjectStore();
   const scale = useStore(projectStore, (s) => s.scale);
@@ -79,7 +79,7 @@ const Timeline = () => {
   }, [theme]);
 
   useEffect(() => {
-    const position = timeUsToUnits(currentTime * 1_000_000, scale.zoom);
+    const position = timeUsToUnits(currentTimeUs, scale.zoom);
     const canvasEl = canvasElRef.current;
     const horizontalScrollbar = horizontalScrollbarVpRef.current;
 
@@ -106,7 +106,7 @@ const Timeline = () => {
           });
       }
     }
-  }, [currentTime]);
+  }, [currentTimeUs]);
 
   const onResizeCanvas = (payload: { width: number; height: number }) => {
     setCanvasSize({
@@ -166,7 +166,7 @@ const Timeline = () => {
       selectionBorderColor: "rgba(0, 216, 214,1.0)",
       onResizeCanvas,
       scale: scale,
-      duration: duration * 1_000_000,
+      duration: durationUs,
       spacing: {
         left: 16,
         right: 40

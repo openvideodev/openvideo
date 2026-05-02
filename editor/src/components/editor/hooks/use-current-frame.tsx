@@ -1,8 +1,9 @@
-import { usePlaybackStore } from "@/stores/playback-store";
+import { useStore } from "zustand";
+import { projectStore } from "@/lib/project";
 
 export const useCurrentPlayerFrame = (
   _ref: React.RefObject<any> | null
 ) => {
-  const currentTime = usePlaybackStore((state) => state.currentTime);
-  return currentTime;
+  const currentTimeUs = useStore(projectStore, (state) => state.currentTime);
+  return currentTimeUs / 1_000_000;
 };

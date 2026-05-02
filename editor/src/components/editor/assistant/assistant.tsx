@@ -15,7 +15,6 @@ import {
   InputGroupTextarea,
 } from "@/components/ui/input-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { usePlaybackStore } from "@/stores/playback-store";
 import { useStore } from "zustand";
 import { IClip } from "@/types/timeline";
 import { chatFlow } from "@/genkit/chat-flow";
@@ -129,7 +128,7 @@ export default function Assistant() {
           metadata: {
             existingAssets,
             selectedAssets,
-            currentTime: usePlaybackStore.getState().currentTime / 1000,
+            currentTime: projectStore.getState().currentTime / 1_000_000,
           },
         },
       });

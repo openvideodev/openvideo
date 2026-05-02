@@ -1,4 +1,5 @@
-import { usePlaybackStore } from "@/stores/playback-store";
+import { useStore } from "zustand";
+import { projectStore } from "@/lib/project";
 import {
   MouseEvent,
   TouchEvent,
@@ -11,7 +12,6 @@ import {
 import { timeUsToUnits, unitsToTimeUs, ITimelineScaleState } from "@openvideo/timeline";
 import { useTimelineOffsetX } from "../hooks/use-timeline-offset";
 import { useTheme } from "next-themes";
-import { projectStore } from "@/lib/project";
 
 const Playhead = ({
   scrollLeft,
@@ -20,7 +20,7 @@ const Playhead = ({
   scrollLeft: number;
   scale: ITimelineScaleState;
 }) => {
-  const { currentTime } = usePlaybackStore();
+  const currentTimeUs = useStore(projectStore, (s) => s.currentTime);
   const timelineOffsetX = useTimelineOffsetX();
   const { theme, resolvedTheme } = useTheme();
   
@@ -35,7 +35,7 @@ const Playhead = ({
   const [localTimeUs, setLocalTimeUs] = useState<number | null>(null);
 
   // Determine which time to use for visual positioning
-  const displayTimeUs = localTimeUs !== null ? localTimeUs : currentTime * 1_000_000;
+  const displayTimeUs = localTimeUs !== null ? localTimeUs : currentTimeUs;
   
   const position = useMemo(() => {
     return timeUsToUnits(displayTimeUs, scale.zoom) - scrollLeft;

@@ -9,6 +9,9 @@ export interface ProjectState extends IProject {
   currentTime: number; // in microseconds
   isPlaying: boolean;
   scale: IScaleState;
+  volume: number;
+  muted: boolean;
+  speed: number;
 }
 
 export interface ProjectActions {
@@ -32,6 +35,9 @@ export interface ProjectActions {
   // Playback
   seek: (time: number) => void;
   setIsPlaying: (isPlaying: boolean) => void;
+  setVolume: (volume: number) => void;
+  setMuted: (muted: boolean) => void;
+  setSpeed: (speed: number) => void;
 
   // Scale
   setScale: (scale: Partial<IScaleState> | ((prev: IScaleState) => Partial<IScaleState>)) => void;
@@ -57,6 +63,9 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
     selectedIds: [],
     currentTime: 0,
     isPlaying: false,
+    volume: 1,
+    muted: false,
+    speed: 1,
     scale: {
       zoom: 1,
       unit: 100,
@@ -91,6 +100,9 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
     },
 
     setIsPlaying: (isPlaying) => set({ isPlaying }),
+    setVolume: (volume) => set({ volume }),
+    setMuted: (muted) => set({ muted }),
+    setSpeed: (speed) => set({ speed }),
 
     // Actions: Scale
     setScale: (scale) =>

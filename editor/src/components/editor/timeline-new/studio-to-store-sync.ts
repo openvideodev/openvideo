@@ -1,4 +1,3 @@
-import { usePlaybackStore } from "@/stores/playback-store";
 import { clipToJSON, type IClip as StudioClip, Studio, jsonToClip } from "openvideo";
 import CanvasTimeline, { TIMELINE_SEEK } from "@openvideo/timeline";
 import { IClip } from "@/types/timeline";
@@ -121,14 +120,6 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
     prevState = state;
 
     try {
-      // Sync to Playback Store (React UI)
-      if (state.currentTime !== currentPrevState.currentTime || state.isPlaying !== currentPrevState.isPlaying) {
-        usePlaybackStore.setState({
-          currentTime: state.currentTime / 1_000_000,
-          isPlaying: state.isPlaying
-        });
-      }
-
       // 3. Sync to Timeline (Engine)
       // Scale
       if (state.scale !== currentPrevState.scale) {

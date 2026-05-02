@@ -1,4 +1,4 @@
-import { usePlaybackStore } from "@/stores/playback-store";
+
 import {
   fontManager,
 } from "openvideo";
@@ -110,7 +110,7 @@ export const handleRemoveClip = async (input: any, engine: any) => {
 
 export const handleSplitClip = async (input: any, engine: any) => {
   const id = input.targetId || input.clipId;
-  const splitTime = input.time || usePlaybackStore.getState().currentTime;
+  const splitTime = input.time || projectStore.getState().currentTime / 1_000_000;
   const clip = projectStore.getState().clips[id];
   
   if (clip && splitTime) {
@@ -176,7 +176,7 @@ export const handleDuplicateClip = async (input: any, engine: any) => {
 
 export const handleSearchAndAddMedia = async (input: any, engine: any) => {
   const { query, type, targetId, from: fromTime } = input;
-  const from = fromTime ?? usePlaybackStore.getState().currentTime / 1000;
+  const from = fromTime ?? projectStore.getState().currentTime / 1_000_000;
   try {
     const response = await fetch(
       `/api/pexels?query=${encodeURIComponent(query)}&type=${type || "video"}`,
@@ -209,7 +209,7 @@ export const handleSearchAndAddMedia = async (input: any, engine: any) => {
 
 export const handleGenerateVoiceover = async (input: any, engine: any) => {
   const { text, voiceId, targetId, from: fromTime } = input;
-  const from = fromTime ?? usePlaybackStore.getState().currentTime / 1000;
+  const from = fromTime ?? projectStore.getState().currentTime / 1_000_000;
 
   try {
     const response = await fetch("/api/elevenlabs/voiceover", {
