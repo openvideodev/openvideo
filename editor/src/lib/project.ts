@@ -1,5 +1,8 @@
-import { Core } from '@openvideo/core';
+import { Core, CoreConfig, BrowserMetadataProvider } from '@openvideo/core';
 import { useProjectStore } from '@/stores/project-store';
+
+// Initialize browser metadata provider for core
+CoreConfig.setMetadataProvider(new BrowserMetadataProvider());
 
 const { canvasSize, fps } = useProjectStore.getState();
 

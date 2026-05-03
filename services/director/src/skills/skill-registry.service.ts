@@ -7,6 +7,7 @@ import { AutoCaptionSkill } from './library/auto-caption.skill';
 import { HighlightReelSkill } from './library/highlight-reel.skill';
 import { PodcastEditSkill } from './library/podcast-edit.skill';
 import { BasicEditingSkill } from './library/basic-editing.skill';
+import { MediaGenerationSkill } from './library/media-generation.skill';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -23,6 +24,7 @@ export class SkillRegistryService implements OnModuleInit {
     private highlightReel: HighlightReelSkill,
     private podcastEdit: PodcastEditSkill,
     private basicEditing: BasicEditingSkill,
+    private mediaGeneration: MediaGenerationSkill,
   ) {
     this.register(this.cinematic);
     this.register(this.socialClip);
@@ -30,6 +32,7 @@ export class SkillRegistryService implements OnModuleInit {
     this.register(this.highlightReel);
     this.register(this.podcastEdit);
     this.register(this.basicEditing);
+    this.register(this.mediaGeneration);
   }
 
   onModuleInit() {

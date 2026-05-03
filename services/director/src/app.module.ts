@@ -14,6 +14,7 @@ import { ProjectModule } from './project/project.module';
 import { SessionModule } from './session/session.module';
 import { DirectorModule } from './director/director.module';
 import { HealthController } from './health/health.controller';
+import { TriggerModule } from './trigger/trigger.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { HealthController } from './health/health.controller';
     ProjectModule,
     SessionModule,
     DirectorModule,
+    TriggerModule,
   ],
   controllers: [HealthController],
   providers: [],

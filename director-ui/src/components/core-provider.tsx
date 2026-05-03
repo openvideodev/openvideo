@@ -1,8 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Core, createProjectStore } from '@openvideo/core';
+import { Core, createProjectStore, CoreConfig, BrowserMetadataProvider } from '@openvideo/core';
 import { useStore } from 'zustand';
+
+// Initialize browser metadata provider for core
+CoreConfig.setMetadataProvider(new BrowserMetadataProvider());
 
 // Create a singleton instance for the client
 export const core = new Core();

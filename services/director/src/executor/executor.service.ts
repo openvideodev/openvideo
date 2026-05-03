@@ -5,6 +5,7 @@ import { CommandBuilderService } from './command-builder.service';
 import { BroadcastService } from '../broadcast/broadcast.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { TriggerService } from '../trigger/trigger.service';
 
 @Injectable()
 export class ExecutorService {
@@ -14,8 +15,8 @@ export class ExecutorService {
     private coreRegistry: CoreRegistryService,
     private commandBuilder: CommandBuilderService,
     private broadcastService: BroadcastService,
+    private triggerService: TriggerService,
     @InjectQueue('generate-audio') private generateAudioQueue: Queue,
-    @InjectQueue('generate-image') private generateImageQueue: Queue,
   ) {}
 
   /**
@@ -25,7 +26,6 @@ export class ExecutorService {
     this.logger.log(`Executing plan ${plan.id} for project ${projectId}`);
     
     const core = await this.coreRegistry.get(projectId);
-    const completedDescriptions: string[] = [];
     let hasError = false;
 
     for (const step of plan.steps) {
@@ -42,30 +42,37 @@ export class ExecutorService {
             type: 'chat.response',
             message: step.description,
           });
-          completedDescriptions.push(`💬 ${step.description}`);
-        } else if (step.type === 'generate') {
-          // Dispatch to job queue, execution is async
+        }
+
+        // 2. Synchronous execution (commands, synchronous skills)
+        const commands = await this.commandBuilder.buildCommandsForStep(projectId, step);
+        if (commands.length > 0) {
+          core.batch(commands);
+        }
+
+        // 3. Dispatch async generation jobs
+        if (step.type === 'generate') {
           if (step.jobType === 'generate-audio') {
             await this.generateAudioQueue.add('generate', { projectId, planId: plan.id, stepId: step.id, params: step.jobParams });
           } else if (step.jobType === 'generate-image') {
-            await this.generateImageQueue.add('generate', { projectId, planId: plan.id, stepId: step.id, params: step.jobParams });
+            await this.triggerService.generateImage(projectId, step.id, step.jobParams?.prompt || step.description);
+          } else if (step.jobType === 'generate-video') {
+            await this.triggerService.generateVideo(
+              projectId, 
+              step.id, 
+              step.jobParams?.imageUrl, 
+              step.jobParams?.prompt || step.description
+            );
           }
-          completedDescriptions.push(`⏳ ${step.description} (queued)`);
-        } else {
-          // Synchronous execution (commands, synchronous skills)
-          const commands = await this.commandBuilder.buildCommandsForStep(projectId, step);
-          if (commands.length > 0) {
-            core.batch(commands);
-          }
-
-          this.broadcastService.broadcast(projectId, {
-            type: 'plan.step',
-            stepId: step.id,
-            status: 'done',
-            description: step.description,
-          });
-          completedDescriptions.push(`✅ ${step.description}`);
         }
+
+        // Mark step as done in UI (generate steps show queued, others show completed)
+        this.broadcastService.broadcast(projectId, {
+          type: 'plan.step',
+          stepId: step.id,
+          status: 'done',
+          description: step.type === 'generate' ? `${step.description} (queued — generating in background)` : step.description,
+        });
       } catch (error) {
         this.logger.error(`Failed to execute step ${step.id}`, error);
         this.broadcastService.broadcast(projectId, {
@@ -74,7 +81,6 @@ export class ExecutorService {
           status: 'error',
           description: `Failed: ${error.message}`,
         });
-        completedDescriptions.push(`❌ ${step.description}: ${error.message}`);
         hasError = true;
         // Stop execution on error
         break;
@@ -85,14 +91,12 @@ export class ExecutorService {
     await this.coreRegistry.persist(projectId);
 
     // Send completion summary to chat
-    const summary = completedDescriptions.length > 0
-      ? `**${hasError ? 'Partially completed' : 'Done'}:** ${plan.goal}\n\n${completedDescriptions.join('\n')}`
-      : `**Done:** ${plan.goal}`;
-
-    this.broadcastService.broadcast(projectId, {
-      type: 'chat.response',
-      message: summary,
-    });
+    if (hasError) {
+      this.broadcastService.broadcast(projectId, {
+        type: 'chat.response',
+        message: `❌ I encountered an error while executing the plan.`,
+      });
+    }
 
     this.broadcastService.broadcast(projectId, {
       type: 'plan.complete',

@@ -22,11 +22,11 @@ ${skillsList}
 
 INSTRUCTIONS:
 1. If the user request is simple chat/greeting, respond with type="chat".
-2. If the user asks a question about the project, call "get_project_state" first, then output a type="chat" step with the answer.
+2. If the user asks a question about the project, invoke the "get_project_state" tool first, then output a type="chat" step with the answer.
 3. For ANY editing operation (add, update, delete clips or tracks), you MUST:
-   a. Call "read_skill_documentation" with skillName="basic-editing" to learn the exact command schema.
-   b. Call "get_project_state" if you need any IDs.
-   c. Output type="command" steps using the schema from the documentation.
+   a. Invoke the "read_skill_documentation" tool with skillName="basic-editing" BEFORE responding to learn the exact command schema.
+   b. Invoke the "get_project_state" tool BEFORE responding if you need any IDs.
+   c. ONLY AFTER using the tools, output the final JSON Plan with type="command" steps using the schema from the documentation. DO NOT output tool calls as steps in the plan.
 4. For advanced high-level skills (e.g. "make it cinematic"), use type="skill" with skillName.
 5. NEVER output a type="chat" step to describe an edit — always use type="command" to actually execute it.
 
@@ -35,6 +35,10 @@ QUICK COMMAND REFERENCE (always verify against read_skill_documentation):
 - Delete a track:   type="command", command.type="track.remove", payload={ id: "track_id" }
 - Add a text clip:  type="command", command.type="clip.add",    payload={ clip: { type: "Text", text: "..." } }
 - Update a clip:    type="command", command.type="clip.update",  payload={ id: "clip_id", updates: { opacity: 0.5 } }
+
+QUICK GENERATION REFERENCE:
+- Generate Image:   type="generate", jobType="generate-image", jobParams={ prompt: "..." }
+- Generate Video:   type="generate", jobType="generate-video", jobParams={ prompt: "...", imageUrl: "..." }
 
 RESPONSE FORMAT:
 You MUST respond with a single valid JSON object:
@@ -58,6 +62,7 @@ You MUST respond with a single valid JSON object:
 RULES:
 - Output raw JSON only. No markdown formatting.
 - "requiresConfirmation" should always be false.
-- NEVER describe an edit in a chat step. Always produce a command step.`;
+- NEVER describe an edit in a chat step. Always produce a command step.
+- When using type="generate", DO NOT output a separate command step to add the clip. The system will add it automatically when generation finishes.`;
   }
 }

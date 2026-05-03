@@ -1,5 +1,6 @@
 import { AnyClip, IDisplay, ITrim } from '../types';
 import { generateId } from './id';
+import { CoreConfig } from '../config';
 
 const DEFAULT_DURATION = 5_000_000; // 5 seconds in microseconds
 
@@ -23,74 +24,12 @@ const getTrim = (
   return { from, to };
 };
 
-/**
- * Helper to get image dimensions in browser
- */
-const getImageDimensions = (
-  src: string
-): Promise<{ width: number; height: number } | null> => {
-  if (typeof window === 'undefined' || typeof Image === 'undefined')
-    return Promise.resolve(null);
-
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () =>
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
-};
-
-/**
- * Helper to get video metadata in browser
- */
-const getVideoMetadata = (
-  src: string
-): Promise<{ width: number; height: number; duration: number } | null> => {
-  if (typeof window === 'undefined' || typeof document === 'undefined')
-    return Promise.resolve(null);
-
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => {
-      resolve({
-        width: video.videoWidth,
-        height: video.videoHeight,
-        duration: Math.floor(video.duration * 1_000_000),
-      });
-    };
-    video.onerror = () => resolve(null);
-    video.src = src;
-  });
-};
-
-/**
- * Helper to get audio duration in browser
- */
-const getAudioMetadata = (
-  src: string
-): Promise<{ duration: number } | null> => {
-  if (typeof window === 'undefined' || typeof Audio === 'undefined')
-    return Promise.resolve(null);
-
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    audio.onloadedmetadata = () => {
-      resolve({
-        duration: Math.floor(audio.duration * 1_000_000),
-      });
-    };
-    audio.onerror = () => resolve(null);
-    audio.src = src;
-  });
-};
 
 export const loadClip = async (
   payload: Partial<AnyClip> & { type: string },
   options: { canvasSize: { width: number; height: number } }
 ): Promise<AnyClip> => {
-  console.log('LOAD CLIP');
+  console.log('LOAD CLIP', { payloadType: payload.type, src: payload.src, hasProvider: !!CoreConfig.metadataProvider });
   const { canvasSize } = options;
 
   // 1. Resolve Dimensions and Duration (Async if needed)
@@ -100,8 +39,13 @@ export const loadClip = async (
 
   if (payload.src) {
     if (payload.type === 'Image' && (!width || !height)) {
-      const dims = await getImageDimensions(payload.src);
-      if (dims) {
+      console.log('Fetching dims...', { hasProvider: !!CoreConfig.metadataProvider });
+      const dims = CoreConfig.metadataProvider 
+        ? await CoreConfig.metadataProvider.getImageMetadata(payload.src)
+        : null;
+
+      console.log({ dims })
+      if (dims?.width && dims?.height) {
         const scale = Math.min(
           canvasSize.width / dims.width,
           canvasSize.height / dims.height,
@@ -111,8 +55,10 @@ export const loadClip = async (
         height = dims.height * scale;
       }
     } else if (payload.type === 'Video') {
-      const meta = await getVideoMetadata(payload.src);
-      if (meta) {
+      const meta = CoreConfig.metadataProvider 
+        ? await CoreConfig.metadataProvider.getVideoMetadata(payload.src)
+        : null;
+      if (meta?.width && meta?.height) {
         if (!width || !height) {
           const scale = Math.min(
             canvasSize.width / meta.width,
@@ -127,8 +73,11 @@ export const loadClip = async (
         }
       }
     } else if (payload.type === 'Audio' && !duration) {
-      const meta = await getAudioMetadata(payload.src);
-      if (meta) {
+      const meta = CoreConfig.metadataProvider 
+        ? await CoreConfig.metadataProvider.getAudioMetadata(payload.src)
+        : null;
+      
+      if (meta?.duration) {
         duration = meta.duration;
       }
     }

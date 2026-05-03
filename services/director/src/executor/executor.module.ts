@@ -7,6 +7,7 @@ import { SkillsModule } from '../skills/skills.module';
 import { BroadcastModule } from '../broadcast/broadcast.module';
 import { QueueModule } from '../queue/queue.module';
 import { DbModule } from '../db/db.module';
+import { TriggerModule } from '../trigger/trigger.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { DbModule } from '../db/db.module';
     BroadcastModule,
     QueueModule,
     DbModule,
+    TriggerModule,
   ],
   providers: [
     ExecutorService,

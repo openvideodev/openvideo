@@ -7,7 +7,7 @@ export interface PlanStep {
   command?: Command;
   skillName?: string;
   skillParams?: Record<string, any>;
-  jobType?: 'generate-audio' | 'generate-image';
+  jobType?: 'generate-audio' | 'generate-image' | 'generate-video';
   jobParams?: Record<string, any>;
 }
 

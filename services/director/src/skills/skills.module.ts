@@ -7,6 +7,7 @@ import { HighlightReelSkill } from './library/highlight-reel.skill';
 import { PodcastEditSkill } from './library/podcast-edit.skill';
 
 import { BasicEditingSkill } from './library/basic-editing.skill';
+import { MediaGenerationSkill } from './library/media-generation.skill';
 
 @Module({
   providers: [
@@ -17,6 +18,7 @@ import { BasicEditingSkill } from './library/basic-editing.skill';
     HighlightReelSkill,
     PodcastEditSkill,
     BasicEditingSkill,
+    MediaGenerationSkill,
   ],
   exports: [SkillRegistryService],
 })

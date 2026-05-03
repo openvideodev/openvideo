@@ -13,3 +13,6 @@ registerDefaultHandlers();
 export * from './utils/load-item';
 export * from './utils/patch';
 export { nanoid } from 'nanoid';
+export * from './config';
+export * from './utils/browser-metadata-provider';
+

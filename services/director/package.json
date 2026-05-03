@@ -16,6 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
     "@aws-sdk/s3-request-presigner": "^3.787.0",
+    "@google/genai": "^1.51.0",
     "@langchain/community": "^0.3.36",
     "@langchain/core": "^0.3.45",
     "@langchain/google-genai": "^0.1.10",
@@ -29,6 +30,7 @@
     "@nestjs/platform-ws": "^10.4.15",
     "@nestjs/websockets": "^10.4.15",
     "@openvideo/core": "workspace:*",
+    "@trigger.dev/sdk": "^4.4.5",
     "bullmq": "^5.51.0",
     "drizzle-orm": "^0.45.2",
     "fastify": "^4.29.0",

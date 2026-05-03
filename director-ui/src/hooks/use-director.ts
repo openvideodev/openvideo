@@ -64,6 +64,36 @@ export function useDirector(projectId: string) {
             payload: data.plan,
           },
         ]);
+      } else if (data.type === 'plan.step') {
+        if (data.status === 'running') {
+          // Add a transient status bubble
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `step-${data.stepId}`,
+              role: 'assistant' as const,
+              content: `⏳ ${data.description}...`,
+              type: 'plan' as const,
+            },
+          ]);
+        } else if (data.status === 'done') {
+          // Replace the running bubble with a done bubble
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === `step-${data.stepId}`
+                ? { ...m, content: `✅ ${data.description}` }
+                : m
+            )
+          );
+        } else if (data.status === 'error') {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === `step-${data.stepId}`
+                ? { ...m, content: `❌ ${data.description}` }
+                : m
+            )
+          );
+        }
       } else if (data.type === 'patch') {
         // Apply patches to the local store
         core.store.setState((state) => {
