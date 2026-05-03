@@ -66,11 +66,27 @@ export interface ProjectActions {
   batch: (commands: Command[]) => void;
   undo: () => void;
   redo: () => void;
+
+  // Patch stream
+  /** Subscribe to patches emitted after every mutation. Returns an unsubscribe function. */
+  onChange: (handler: (patches: Patch[]) => void) => () => void;
+  /** Apply patches from a remote source without recording history (client-side sync). */
+  applyPatch: (patches: Patch[]) => void;
+  /** Return a plain serializable snapshot of the project (settings, tracks, clips). */
+  getSnapshot: () => IProject;
 }
 
 export type ProjectStore = ProjectState & ProjectActions;
 
 export const createProjectStore = (initialState?: Partial<IProject>) => {
+  // Patch listeners live outside Zustand state (not serializable)
+  const patchListeners = new Set<(patches: Patch[]) => void>();
+
+  const emitPatches = (patches: Patch[]) => {
+    if (patches.length === 0) return;
+    patchListeners.forEach((handler) => handler(patches));
+  };
+
   return createStore<ProjectStore>((set, get) => ({
     settings: {
       width: 1920,
@@ -121,7 +137,8 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         };
       });
 
-      // TODO: Emit change event for collaborators/engines
+      // Resolve TODO: emit patches for collaborators/engines
+      emitPatches(patches);
       get().recalculateDuration();
     },
 
@@ -157,13 +174,14 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
                 payload: commandLogs,
               },
               patches: allPatches,
-              inversePatches: allInversePatches.reverse(), // Reverse order for inverse patches
+              inversePatches: allInversePatches.reverse(),
             },
           ],
           future: [],
         };
       });
 
+      emitPatches(allPatches);
       get().recalculateDuration();
     },
 
@@ -183,6 +201,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
           future: [entry, ...state.future],
         };
       });
+      emitPatches(entry.inversePatches);
       get().recalculateDuration();
     },
 
@@ -202,7 +221,35 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
           future: nextFuture,
         };
       });
+      emitPatches(entry.patches);
       get().recalculateDuration();
+    },
+
+    // Patch stream
+    onChange: (handler) => {
+      patchListeners.add(handler);
+      return () => patchListeners.delete(handler);
+    },
+
+    applyPatch: (patches) => {
+      // Applies remote patches silently — no history, no onChange emission
+      set((state) => {
+        const nextState = { ...state };
+        applyPatches(nextState, patches);
+        return nextState;
+      });
+      get().recalculateDuration();
+    },
+
+    getSnapshot: (): IProject => {
+      const { settings, tracks, clips } = get();
+      return {
+        settings: { ...settings },
+        tracks: tracks.map((t) => ({ ...t, clipIds: [...t.clipIds] })),
+        clips: Object.fromEntries(
+          Object.entries(clips).map(([k, v]) => [k, { ...v }])
+        ) as Record<string, AnyClip>,
+      };
     },
 
     // Actions: Selection

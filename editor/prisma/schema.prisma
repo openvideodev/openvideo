@@ -106,3 +106,28 @@ model Project {
   @@index([userId])
   @@map("project")
 }
+
+model DirectorSession {
+  id           String   @id @default(cuid())
+  projectId    String
+  userId       String
+  historyJson  Json     @default("[]")   // serialized BaseMessage[]
+  pendingPlan  Json?                     // Plan | null
+  activePlanId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([projectId, userId])
+  @@map("director_session")
+}
+
+model ClipTranscript {
+  id        String   @id @default(cuid())
+  clipId    String   @unique
+  projectId String
+  segments  Json     // TranscriptSegment[]
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@map("clip_transcript")
+}
