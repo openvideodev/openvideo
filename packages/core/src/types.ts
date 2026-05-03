@@ -152,6 +152,7 @@ export interface ITrack {
   type: string;
   clipIds: string[];
   accepts?: string[];
+  static?: boolean;
 }
 
 export interface IProjectSettings {

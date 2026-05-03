@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { cloneDeep } from 'lodash-es';
+import { applyPatches } from '@openvideo/core';
+import { core } from '../components/core-provider';
+
 
 export interface Message {
   id: string;
@@ -36,7 +40,11 @@ export function useDirector(projectId: string) {
       const data = JSON.parse(event.data);
       console.log('Received:', data);
 
-      if (data.type === 'chat.response') {
+      if (data.type === 'init') {
+        // Initialize the store with the full snapshot
+        core.store.setState(data.state);
+        console.log('Project initialized with snapshot:', data.state);
+      } else if (data.type === 'chat.response') {
         setMessages((prev) => [
           ...prev,
           {
@@ -51,22 +59,19 @@ export function useDirector(projectId: string) {
           {
             id: Math.random().toString(36).substring(7),
             role: 'assistant',
-            content: `Plan created: ${data.plan.description}`,
+            content: `Plan created: ${data.plan.goal}`,
             type: 'plan',
             payload: data.plan,
           },
         ]);
       } else if (data.type === 'patch') {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Math.random().toString(36).substring(7),
-            role: 'system',
-            content: `Project updated: ${data.patch.length} changes applied`,
-            type: 'patch',
-            payload: data.patch,
-          },
-        ]);
+        // Apply patches to the local store
+        core.store.setState((state) => {
+          const newState = cloneDeep(state);
+          applyPatches(newState, data.patch);
+          return newState;
+        });
+        console.log('Project updated:', data.patch);
       }
     };
 

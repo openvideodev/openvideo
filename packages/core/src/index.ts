@@ -11,4 +11,5 @@ import { registerDefaultHandlers } from './commands/index';
 // Initialize default handlers
 registerDefaultHandlers();
 export * from './utils/load-item';
+export * from './utils/patch';
 export { nanoid } from 'nanoid';

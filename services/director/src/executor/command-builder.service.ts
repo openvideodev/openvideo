@@ -20,6 +20,15 @@ export class CommandBuilderService {
    */
   async buildCommandsForStep(projectId: string, step: PlanStep): Promise<Command[]> {
     if (step.type === 'command' && step.command) {
+      this.logger.debug(`Processing command: ${JSON.stringify(step.command)}`);
+      if (step.command.type === 'clip.add' && step.command.payload?.clip) {
+        const core = await this.coreRegistry.get(projectId);
+        const state = core.getSnapshot();
+        const { loadClip } = await import('@openvideo/core');
+        step.command.payload.clip = await loadClip(step.command.payload.clip, {
+          canvasSize: { width: state.settings.width, height: state.settings.height }
+        });
+      }
       return [step.command];
     }
 

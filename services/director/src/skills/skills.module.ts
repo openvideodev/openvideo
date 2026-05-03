@@ -6,6 +6,8 @@ import { AutoCaptionSkill } from './library/auto-caption.skill';
 import { HighlightReelSkill } from './library/highlight-reel.skill';
 import { PodcastEditSkill } from './library/podcast-edit.skill';
 
+import { BasicEditingSkill } from './library/basic-editing.skill';
+
 @Module({
   providers: [
     SkillRegistryService,
@@ -14,6 +16,7 @@ import { PodcastEditSkill } from './library/podcast-edit.skill';
     AutoCaptionSkill,
     HighlightReelSkill,
     PodcastEditSkill,
+    BasicEditingSkill,
   ],
   exports: [SkillRegistryService],
 })

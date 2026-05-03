@@ -23,6 +23,11 @@ export class ConfirmationGateService {
     });
   }
 
+  async getPendingPlan(sessionId: string): Promise<Plan | null> {
+    const session = await this.db.findSessionById(sessionId);
+    return (session?.pendingPlan as Plan) || null;
+  }
+
   async consumePendingPlan(sessionId: string, planId: string): Promise<Plan | null> {
     const session = await this.db.findSessionById(sessionId);
 

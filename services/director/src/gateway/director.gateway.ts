@@ -44,6 +44,9 @@ export class DirectorGateway implements OnGatewayConnection, OnGatewayDisconnect
     // Ensure the ServerCore is loaded
     const core = await this.coreRegistry.get(projectId);
     
+    // Send initial state to the connecting client
+    client.send(JSON.stringify({ type: 'init', state: core.getSnapshot() }));
+
     // Subscribe to patch events if we're the first connection for this project
     // In a real implementation, we might want to check if it's already subscribed.
     // For now, we'll assume ServerCore.onPatch returns an unsubscribe and we manage it.

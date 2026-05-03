@@ -38,12 +38,8 @@ export class DirectorService {
         new AIMessage(`I created a plan: ${plan.goal}`),
       ]);
 
-      // 3. Confirm or Execute
-      if (plan.requiresConfirmation) {
-        await this.gate.requestConfirmation(projectId, sessionId, plan);
-      } else {
-        await this.executor.executePlan(projectId, plan);
-      }
+      // Always execute immediately
+      await this.executor.executePlan(projectId, plan);
     } catch (error) {
       this.logger.error(`Failed to handle user request`, error);
       this.broadcastService.broadcast(projectId, {

@@ -25,6 +25,8 @@ export class ExecutorService {
     this.logger.log(`Executing plan ${plan.id} for project ${projectId}`);
     
     const core = await this.coreRegistry.get(projectId);
+    const completedDescriptions: string[] = [];
+    let hasError = false;
 
     for (const step of plan.steps) {
       this.broadcastService.broadcast(projectId, {
@@ -40,6 +42,7 @@ export class ExecutorService {
             type: 'chat.response',
             message: step.description,
           });
+          completedDescriptions.push(`💬 ${step.description}`);
         } else if (step.type === 'generate') {
           // Dispatch to job queue, execution is async
           if (step.jobType === 'generate-audio') {
@@ -47,6 +50,7 @@ export class ExecutorService {
           } else if (step.jobType === 'generate-image') {
             await this.generateImageQueue.add('generate', { projectId, planId: plan.id, stepId: step.id, params: step.jobParams });
           }
+          completedDescriptions.push(`⏳ ${step.description} (queued)`);
         } else {
           // Synchronous execution (commands, synchronous skills)
           const commands = await this.commandBuilder.buildCommandsForStep(projectId, step);
@@ -60,6 +64,7 @@ export class ExecutorService {
             status: 'done',
             description: step.description,
           });
+          completedDescriptions.push(`✅ ${step.description}`);
         }
       } catch (error) {
         this.logger.error(`Failed to execute step ${step.id}`, error);
@@ -69,6 +74,8 @@ export class ExecutorService {
           status: 'error',
           description: `Failed: ${error.message}`,
         });
+        completedDescriptions.push(`❌ ${step.description}: ${error.message}`);
+        hasError = true;
         // Stop execution on error
         break;
       }
@@ -76,6 +83,16 @@ export class ExecutorService {
 
     // Persist snapshot after synchronous steps
     await this.coreRegistry.persist(projectId);
+
+    // Send completion summary to chat
+    const summary = completedDescriptions.length > 0
+      ? `**${hasError ? 'Partially completed' : 'Done'}:** ${plan.goal}\n\n${completedDescriptions.join('\n')}`
+      : `**Done:** ${plan.goal}`;
+
+    this.broadcastService.broadcast(projectId, {
+      type: 'chat.response',
+      message: summary,
+    });
 
     this.broadcastService.broadcast(projectId, {
       type: 'plan.complete',

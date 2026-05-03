@@ -71,10 +71,15 @@ export const removeClipsHandler: CommandHandler<{ ids: string[] }> = (
     });
   });
 
-  const nextTracks = state.tracks.map((track) => ({
+  const tracksAfterClipRemoval = state.tracks.map((track) => ({
     ...track,
     clipIds: track.clipIds.filter((id) => !ids.includes(id)),
   }));
+
+  // Auto-remove empty tracks unless they are static
+  const nextTracks = tracksAfterClipRemoval.filter(
+    (track) => track.clipIds.length > 0 || track.static === true
+  );
 
   patches.push({
     op: 'update',

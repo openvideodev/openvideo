@@ -160,6 +160,8 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
             allPatches.push(...patches);
             allInversePatches.push(...invertPatches(patches));
             commandLogs.push(command);
+          } else {
+            console.warn(`[Core.batch] No handler registered for command: ${command.type}`);
           }
         });
 

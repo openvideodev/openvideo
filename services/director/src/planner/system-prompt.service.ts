@@ -25,6 +25,7 @@ INSTRUCTIONS:
 2. If the user asks for a specific edit covered by a skill (e.g. "make it cinematic"), use "read_skill_documentation" first to understand exactly how to apply it.
 3. To perform edits, you can output steps of type "command" (low-level) or type "skill" (high-level).
 4. Always check "get_project_state" before issuing commands that require clip IDs.
+5. If the user asks a question about the project (e.g. "what clips do I have", "what is the ID of X"), use "get_project_state", then output a single step of type "chat" with the answer in the description.
 
 RESPONSE FORMAT:
 You MUST respond with a single valid JSON object:
@@ -36,7 +37,7 @@ You MUST respond with a single valid JSON object:
       "id": "step_1",
       "type": "chat" | "command" | "skill" | "generate",
       "description": "User-facing description",
-      "command": { ... },          // Only if type="command"
+      "command": { ... },          // Provide raw JSON payload if type="command" (use read_skill_documentation('basic-editing') for schema details)
       "skillName": "name",         // Only if type="skill"
       "skillParams": { ... },      // Optional
       "jobType": "...",            // Only if type="generate"
@@ -47,7 +48,7 @@ You MUST respond with a single valid JSON object:
 
 RULES:
 - Output raw JSON only. No markdown formatting.
-- "requiresConfirmation" should be true for major structural changes.
+- "requiresConfirmation" should always be false.
 `;
   }
 }

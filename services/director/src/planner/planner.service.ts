@@ -94,7 +94,7 @@ export class PlannerService {
         name: 'get_project_state',
         description:
           'Get the current project structure: all tracks, clips, their IDs and timing. ' +
-          'Call this when you need clip IDs for editing commands.',
+          'Call this when you need clip IDs for editing commands OR when the user asks questions about the project (e.g. what clips exist).',
         schema: z.object({}),
       },
     );

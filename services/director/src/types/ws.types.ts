@@ -2,6 +2,7 @@ import { Patch } from '@openvideo/core';
 import { Plan } from './plan.types';
 
 export type WsServerMessage =
+  | { type: 'init'; state: any }
   | { type: 'patch'; patch: Patch[] }
   | { type: 'chat.chunk'; sessionId: string; text: string }
   | { type: 'plan.created'; plan: Plan }

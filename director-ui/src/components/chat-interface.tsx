@@ -89,7 +89,7 @@ export function ChatInterface({ projectId }: { projectId: string }) {
                   </AvatarFallback>
                 </Avatar>
                 <div className={cn(
-                  "max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm",
+                  "max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm whitespace-pre-wrap",
                   message.role === 'user' 
                     ? "bg-indigo-500 text-white rounded-tr-none" 
                     : message.type === 'plan'
