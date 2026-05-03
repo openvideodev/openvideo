@@ -15,6 +15,7 @@ export interface Plan {
   id: string;
   sessionId: string;
   goal: string;
+  summary?: string;
   steps: PlanStep[];
   requiresConfirmation: boolean;
   estimatedSteps: number;

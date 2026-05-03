@@ -32,11 +32,19 @@ export class DirectorService {
     try {
       const plan = await this.planner.generatePlan(projectId, sessionId, text, history);
       
+      const summary = plan.summary || `I created a plan: ${plan.goal}`;
+
       // Save interaction to history
       await this.session.appendMessages(sessionId, [
         new HumanMessage(text),
-        new AIMessage(`I created a plan: ${plan.goal}`),
+        new AIMessage(summary),
       ]);
+
+      // Broadcast summary as a chat response for immediate UI feedback
+      this.broadcastService.broadcast(projectId, {
+        type: 'chat.response',
+        message: summary,
+      });
 
       // Always execute immediately
       await this.executor.executePlan(projectId, plan);

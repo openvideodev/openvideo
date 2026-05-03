@@ -44,12 +44,13 @@ RESPONSE FORMAT:
 You MUST respond with a single valid JSON object:
 {
   "goal": "Brief description of the plan",
+  "summary": "A friendly, conversational explanation of what you are about to do. This is what the user will see first.",
   "requiresConfirmation": false,
   "steps": [
     {
       "id": "step_1",
       "type": "chat" | "command" | "skill" | "generate",
-      "description": "User-facing description",
+      "description": "User-facing description of this specific step",
       "command": { "type": "clip.remove", "payload": { "ids": ["..."] } },
       "skillName": "name",
       "skillParams": { ... },
@@ -62,7 +63,9 @@ You MUST respond with a single valid JSON object:
 RULES:
 - Output raw JSON only. No markdown formatting.
 - "requiresConfirmation" should always be false.
-- NEVER describe an edit in a chat step. Always produce a command step.
+- ALWAYS provide a conversational "summary" that makes the interaction feel natural.
+- NEVER describe an edit *only* in a chat step. If you are making a change, you MUST produce a command step.
+- Use the "summary" to explain the "why" and "how" to the user in a friendly tone.
 - When using type="generate", DO NOT output a separate command step to add the clip. The system will add it automatically when generation finishes.`;
   }
 }

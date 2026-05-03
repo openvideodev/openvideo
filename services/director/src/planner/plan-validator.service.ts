@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 const PlanSchema = z.object({
   goal: z.string(),
+  summary: z.string().optional(),
   requiresConfirmation: z.boolean(),
   steps: z.array(
     z.object({
@@ -37,6 +38,7 @@ export class PlanValidatorService {
         id: `plan_${Date.now()}`,
         sessionId,
         goal: parsed.goal,
+        summary: parsed.summary,
         requiresConfirmation: parsed.requiresConfirmation,
         steps: parsed.steps as any,
         estimatedSteps: parsed.steps.length,
