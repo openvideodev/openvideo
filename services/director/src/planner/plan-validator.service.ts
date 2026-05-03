@@ -8,7 +8,7 @@ const PlanSchema = z.object({
   steps: z.array(
     z.object({
       id: z.string(),
-      type: z.enum(['command', 'skill', 'generate']),
+      type: z.enum(['command', 'skill', 'generate', 'chat']),
       description: z.string(),
       command: z.record(z.any()).optional(),
       skillName: z.string().optional(),

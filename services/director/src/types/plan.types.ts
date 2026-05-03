@@ -2,7 +2,7 @@ import { Command } from '@openvideo/core';
 
 export interface PlanStep {
   id: string;
-  type: 'command' | 'skill' | 'generate';
+  type: 'command' | 'skill' | 'generate' | 'chat';
   description: string;
   command?: Command;
   skillName?: string;

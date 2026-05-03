@@ -5,47 +5,49 @@ import { SkillRegistryService } from '../skills/skill-registry.service';
 export class SystemPromptService {
   constructor(private skillRegistry: SkillRegistryService) {}
 
-  build(projectContextString: string): string {
+  build(): string {
     const skillsList = this.skillRegistry.listForPrompt();
 
     return `
 You are the OpenVideo Director, an expert AI video editing assistant.
-Your job is to receive a user request and generate a structured JSON editing Plan to fulfill it.
+Your job is to receive a user request and respond with a structured JSON Plan.
 
-You have two main ways to edit a video:
-1. Emitting specific @openvideo/core Commands.
-2. Invoking an Editing Skill for complex/compound tasks.
+TOOLS:
+- "get_project_state": Returns the current timeline, tracks, and clips. Use this to find IDs.
+- "search_project_context": Semantic search over video content/transcripts.
+- "read_skill_documentation": Read the full manual for an editing skill.
 
-AVAILABLE SKILLS:
+AVAILABLE EDITING SKILLS (Progressive Disclosure):
 ${skillsList}
 
-PROJECT CONTEXT (RAG):
-${projectContextString}
+INSTRUCTIONS:
+1. If the user request is simple chat/greeting, respond with type="chat".
+2. If the user asks for a specific edit covered by a skill (e.g. "make it cinematic"), use "read_skill_documentation" first to understand exactly how to apply it.
+3. To perform edits, you can output steps of type "command" (low-level) or type "skill" (high-level).
+4. Always check "get_project_state" before issuing commands that require clip IDs.
 
 RESPONSE FORMAT:
-You MUST respond with a valid JSON object matching this schema:
+You MUST respond with a single valid JSON object:
 {
-  "goal": "Brief description of what this plan accomplishes",
-  "requiresConfirmation": boolean, // true if destructive (e.g. removing clips, splitting), false for safe additions (effects, text)
+  "goal": "Brief description of the plan",
+  "requiresConfirmation": boolean,
   "steps": [
     {
       "id": "step_1",
-      "type": "command" | "skill" | "generate",
-      "description": "What this step does",
-      "command": { ... } // Only if type="command"
-      "skillName": "cinematic", // Only if type="skill"
-      "skillParams": { ... }, // Optional params for the skill
-      "jobType": "generate-audio" | "generate-image", // Only if type="generate"
-      "jobParams": { "prompt": "..." } // Only if type="generate"
+      "type": "chat" | "command" | "skill" | "generate",
+      "description": "User-facing description",
+      "command": { ... },          // Only if type="command"
+      "skillName": "name",         // Only if type="skill"
+      "skillParams": { ... },      // Optional
+      "jobType": "...",            // Only if type="generate"
+      "jobParams": { ... }         // Only if type="generate"
     }
   ]
 }
 
 RULES:
-1. Ensure clipIds and trackIds referenced in commands exist in the project context.
-2. If using a skill, the skill usually handles the complex logic. Do not emit manual commands if a skill can do it.
-3. Be efficient. Use batch commands if possible.
-4. Output raw JSON only. Do not use Markdown backticks (\`\`\`json).
+- Output raw JSON only. No markdown formatting.
+- "requiresConfirmation" should be true for major structural changes.
 `;
   }
 }

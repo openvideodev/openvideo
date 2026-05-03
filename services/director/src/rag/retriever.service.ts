@@ -14,7 +14,14 @@ export class RetrieverService {
   async search(projectId: string, query: string, topK = 10): Promise<string> {
     this.logger.debug(`Retrieving context for query: "${query}" in project ${projectId}`);
     
-    const docs = await this.vectorStore.similaritySearch(query, topK, projectId);
+    let docs: any[] = [];
+    try {
+      docs = await this.vectorStore.similaritySearch(query, topK, projectId);
+    } catch (err) {
+      // RAG is optional — if no content is indexed yet, just return empty context
+      this.logger.debug(`RAG search skipped (no indexed content yet): ${err.message}`);
+      return 'No project context indexed yet.';
+    }
     
     if (docs.length === 0) {
       return 'No relevant project context found.';

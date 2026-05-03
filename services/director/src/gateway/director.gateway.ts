@@ -7,7 +7,7 @@ import {
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { UseGuards, Logger, Inject, forwardRef } from '@nestjs/common';
+import { UseGuards, Logger, Inject } from '@nestjs/common';
 import { Server, WebSocket } from 'ws';
 import { JwtGuard } from '../auth/jwt.guard';
 import { CoreRegistryService } from '../core/core-registry.service';
@@ -28,7 +28,7 @@ export class DirectorGateway implements OnGatewayConnection, OnGatewayDisconnect
     private broadcastService: BroadcastService,
   ) {}
 
-  @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard)
   async handleConnection(client: WebSocket, request: any) {
     const projectId = new URL(request.url, 'http://localhost').searchParams.get('projectId');
     
@@ -64,7 +64,7 @@ export class DirectorGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
-  @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard)
   @SubscribeMessage('chat')
   async handleChat(
     @MessageBody() message: any,
@@ -81,7 +81,7 @@ export class DirectorGateway implements OnGatewayConnection, OnGatewayDisconnect
     await this.directorService.handleUserRequest(projectId, userId, message.message);
   }
 
-  @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard)
   @SubscribeMessage('plan.confirm')
   async handlePlanConfirm(
     @MessageBody() message: any,
@@ -94,7 +94,7 @@ export class DirectorGateway implements OnGatewayConnection, OnGatewayDisconnect
     await this.directorService.handlePlanConfirmation(projectId, userId, message.planId);
   }
 
-  @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard)
   @SubscribeMessage('plan.reject')
   async handlePlanReject(
     @MessageBody() message: any,

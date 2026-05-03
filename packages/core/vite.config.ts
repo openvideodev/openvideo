@@ -7,7 +7,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'OpenVideoCore',
-      fileName: (format) => `index.${format}.js`,
+      fileName: (format) => (format === 'es' ? 'index.es.js' : 'index.umd.cjs'),
       formats: ['es', 'umd'],
     },
     rollupOptions: {

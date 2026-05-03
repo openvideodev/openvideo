@@ -4,3 +4,4 @@ packages:
   - "services/*"
   - "docs"
   - "examples"
+  - "director-ui"

@@ -35,7 +35,12 @@ export class ExecutorService {
       });
 
       try {
-        if (step.type === 'generate') {
+        if (step.type === 'chat') {
+          this.broadcastService.broadcast(projectId, {
+            type: 'chat.response',
+            message: step.description,
+          });
+        } else if (step.type === 'generate') {
           // Dispatch to job queue, execution is async
           if (step.jobType === 'generate-audio') {
             await this.generateAudioQueue.add('generate', { projectId, planId: plan.id, stepId: step.id, params: step.jobParams });

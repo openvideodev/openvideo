@@ -8,7 +8,7 @@ export class EmbedderService {
 
   constructor(private configService: ConfigService) {
     this.embedder = new GoogleGenerativeAIEmbeddings({
-      modelName: 'text-embedding-004',
+      modelName: 'embedding-001',
       apiKey: this.configService.get<string>('GOOGLE_API_KEY'),
     });
   }

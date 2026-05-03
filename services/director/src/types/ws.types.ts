@@ -7,6 +7,7 @@ export type WsServerMessage =
   | { type: 'plan.created'; plan: Plan }
   | { type: 'plan.step'; stepId: string; status: 'running' | 'done' | 'error'; description: string }
   | { type: 'plan.complete'; planId: string }
+  | { type: 'chat.response'; message: string }
   | { type: 'error'; code: string; message: string };
 
 export type WsClientMessage =

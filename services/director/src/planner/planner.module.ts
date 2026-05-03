@@ -4,10 +4,12 @@ import { SystemPromptService } from './system-prompt.service';
 import { PlanValidatorService } from './plan-validator.service';
 import { RagModule } from '../rag/rag.module';
 import { SkillsModule } from '../skills/skills.module';
+import { CoreModule } from '../core/core.module';
 
 @Module({
-  imports: [RagModule, SkillsModule],
+  imports: [RagModule, SkillsModule, CoreModule],
   providers: [PlannerService, SystemPromptService, PlanValidatorService],
   exports: [PlannerService],
 })
 export class PlannerModule {}
+

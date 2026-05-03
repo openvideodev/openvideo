@@ -49,7 +49,7 @@ export class DirectorService {
       this.broadcastService.broadcast(projectId, {
         type: 'error',
         code: 'PLAN_GENERATION_FAILED',
-        message: 'I had trouble understanding that request. Could you rephrase?',
+        message: error.message || 'I had trouble understanding that request. Could you rephrase?',
       });
     }
   }
