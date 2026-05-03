@@ -22,26 +22,35 @@ ${skillsList}
 
 INSTRUCTIONS:
 1. If the user request is simple chat/greeting, respond with type="chat".
-2. If the user asks for a specific edit covered by a skill (e.g. "make it cinematic"), use "read_skill_documentation" first to understand exactly how to apply it.
-3. To perform edits, you can output steps of type "command" (low-level) or type "skill" (high-level).
-4. Always check "get_project_state" before issuing commands that require clip IDs.
-5. If the user asks a question about the project (e.g. "what clips do I have", "what is the ID of X"), use "get_project_state", then output a single step of type "chat" with the answer in the description.
+2. If the user asks a question about the project, call "get_project_state" first, then output a type="chat" step with the answer.
+3. For ANY editing operation (add, update, delete clips or tracks), you MUST:
+   a. Call "read_skill_documentation" with skillName="basic-editing" to learn the exact command schema.
+   b. Call "get_project_state" if you need any IDs.
+   c. Output type="command" steps using the schema from the documentation.
+4. For advanced high-level skills (e.g. "make it cinematic"), use type="skill" with skillName.
+5. NEVER output a type="chat" step to describe an edit — always use type="command" to actually execute it.
+
+QUICK COMMAND REFERENCE (always verify against read_skill_documentation):
+- Delete a clip:    type="command", command.type="clip.remove", payload={ ids: ["clip_id"] }
+- Delete a track:   type="command", command.type="track.remove", payload={ id: "track_id" }
+- Add a text clip:  type="command", command.type="clip.add",    payload={ clip: { type: "Text", text: "..." } }
+- Update a clip:    type="command", command.type="clip.update",  payload={ id: "clip_id", updates: { opacity: 0.5 } }
 
 RESPONSE FORMAT:
 You MUST respond with a single valid JSON object:
 {
   "goal": "Brief description of the plan",
-  "requiresConfirmation": boolean,
+  "requiresConfirmation": false,
   "steps": [
     {
       "id": "step_1",
       "type": "chat" | "command" | "skill" | "generate",
       "description": "User-facing description",
-      "command": { ... },          // Provide raw JSON payload if type="command" (use read_skill_documentation('basic-editing') for schema details)
-      "skillName": "name",         // Only if type="skill"
-      "skillParams": { ... },      // Optional
-      "jobType": "...",            // Only if type="generate"
-      "jobParams": { ... }         // Only if type="generate"
+      "command": { "type": "clip.remove", "payload": { "ids": ["..."] } },
+      "skillName": "name",
+      "skillParams": { ... },
+      "jobType": "...",
+      "jobParams": { ... }
     }
   ]
 }
@@ -49,6 +58,6 @@ You MUST respond with a single valid JSON object:
 RULES:
 - Output raw JSON only. No markdown formatting.
 - "requiresConfirmation" should always be false.
-`;
+- NEVER describe an edit in a chat step. Always produce a command step.`;
   }
 }

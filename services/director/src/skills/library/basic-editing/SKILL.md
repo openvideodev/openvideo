@@ -105,6 +105,27 @@ Use the `clip.remove` command to delete one or more clips by their IDs.
 }
 ```
 
+### 4. Removing a Track (and all its clips)
+Use the `track.remove` command to delete an entire track by its ID. This will automatically remove all clips that belong to that track as well.
+
+> First call `get_project_state` to find the track ID you want to remove.
+
+**Example: Deleting a track**
+```json
+{
+  "type": "command",
+  "description": "Removing the text track",
+  "command": {
+    "type": "track.remove",
+    "payload": {
+      "id": "track_abc123"
+    }
+  }
+}
+```
+
+> ⚠️ Tracks with `static: true` cannot be auto-removed by the system during clip cleanup. You can still explicitly remove them with `track.remove`.
+
 ### Important Properties Reference
 - `type`: Must be `"Text"`, `"Image"`, `"Video"`, or `"Audio"`.
 - `text`: The string content (only for Text clips).
