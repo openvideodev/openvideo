@@ -108,8 +108,23 @@ export class StudioBridge {
     }
   }
 
-  private handlePatches(patches: Patch[]) {
+  private async handlePatches(patches: Patch[]) {
     console.log('handlePatches', patches);
+
+    // Check if any patch is a root or top-level collection replacement
+    const hasRootUpdate = patches.some(
+      (patch) =>
+        patch.path === '/' ||
+        (patch.path.split('/').filter(Boolean).length === 1 &&
+          patch.op === 'update')
+    );
+
+    if (hasRootUpdate) {
+      await this.syncInitialState();
+      // If we did a full sync, we usually don't need to process other granular patches in this batch
+      return;
+    }
+
     patches.forEach((patch) => {
       const parts = patch.path.split('/').filter(Boolean);
 
@@ -127,7 +142,7 @@ export class StudioBridge {
 
       // Handle Tracks
       if (parts[0] === 'tracks') {
-        console.log("SETTING TRACKS")
+        console.log('SETTING TRACKS');
         this.studio.setTracks(this.core.store.getState().tracks as any);
       }
 
@@ -194,15 +209,25 @@ export class StudioBridge {
   }
 
   private async syncInitialState() {
-    const state = this.core.store.getState();
-    this.studio.setSize(state.settings.width, state.settings.height);
-    this.studio.setTracks(state.tracks as any);
+    if (this.isSyncing) return;
+    this.isSyncing = true;
 
-    for (const id in state.clips) {
-      await this.handleAddClip(state.clips[id]);
+    try {
+      console.log('[StudioBridge] syncInitialState starting...');
+      await this.studio.clear();
+      const state = this.core.store.getState();
+      this.studio.setSize(state.settings.width, state.settings.height);
+      this.studio.setTracks(state.tracks as any);
+
+      for (const id in state.clips) {
+        await this.handleAddClip(state.clips[id]);
+      }
+
+      this.studio.updateFrame(state.currentTime);
+    } finally {
+      this.isSyncing = false;
+      console.log('[StudioBridge] syncInitialState finished.');
     }
-
-    this.studio.updateFrame(state.currentTime);
   }
 
   private findTrackIdForClip(clipId: string): string | undefined {

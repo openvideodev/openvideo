@@ -49,3 +49,43 @@ export const deselectClipsHandler: CommandHandler<string[] | undefined> = (
     },
   ];
 };
+
+export const resetProjectHandler: CommandHandler<IProject> = (
+  _state,
+  command
+) => {
+  const newProject = command.payload;
+
+  return [
+    {
+      op: 'update',
+      path: '/settings',
+      value: newProject.settings,
+      oldValue: _state.settings,
+    },
+    {
+      op: 'update',
+      path: '/tracks',
+      value: newProject.tracks || [],
+      oldValue: _state.tracks,
+    },
+    {
+      op: 'update',
+      path: '/clips',
+      value: newProject.clips || {},
+      oldValue: _state.clips,
+    },
+    {
+      op: 'update',
+      path: '/selectedIds',
+      value: [],
+      oldValue: _state.selectedIds,
+    },
+    {
+      op: 'update',
+      path: '/currentTime',
+      value: 0,
+      oldValue: _state.currentTime,
+    },
+  ];
+};

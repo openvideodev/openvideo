@@ -159,6 +159,65 @@ export class Core extends EventEmitter {
     },
   };
 
+  public project = {
+    new: () => {
+      this.store.getState().reset({
+        settings: {
+          width: 1920,
+          height: 1080,
+          fps: 30,
+          duration: 30_000_000,
+        },
+        tracks: [],
+        clips: {},
+      });
+    },
+
+    export: () => {
+      return this.store.getState().getSnapshot();
+    },
+
+    import: (json: any) => {
+      // Basic validation
+      if (!json.clips && !json.tracks) {
+        throw new Error('Invalid project JSON: missing clips or tracks');
+      }
+
+      const clipsArr = Array.isArray(json.clips)
+        ? json.clips
+        : Object.values(json.clips || {});
+
+      // Filter out clips with empty sources (except Text, Caption, and Effect)
+      const validClipsArr = clipsArr.filter((clipJSON: any) => {
+        if (
+          ['Text', 'Caption', 'Effect', 'Transition'].includes(clipJSON.type)
+        ) {
+          return true;
+        }
+        return clipJSON.src && clipJSON.src.trim() !== '';
+      });
+
+      // Convert array back to record
+      const clips: Record<string, AnyClip> = {};
+      validClipsArr.forEach((c: any) => {
+        clips[c.id] = c;
+      });
+
+      const project: IProject = {
+        settings: json.settings || {
+          width: 1920,
+          height: 1080,
+          fps: 30,
+          duration: 30_000_000,
+        },
+        tracks: json.tracks || [],
+        clips,
+      };
+
+      this.store.getState().reset(project);
+    },
+  };
+
   // Playback proxies
   public play() {
     this.playback.play();
@@ -170,67 +229,6 @@ export class Core extends EventEmitter {
     this.playback.seek(time);
   }
 
-  // --- LEGACY API SHIMS (keep old CoreEngine callers working) ---
-
-  /** @deprecated use core.clip.add */
-  public async addClip(
-    payload: Partial<AnyClip> & { type: string },
-    options?: AddClipOptions | string
-  ) {
-    return this.clip.add(payload, options);
-  }
-
-  /** @deprecated use core.clip.add in a loop or batch */
-  public async addClips(
-    clips: (Partial<AnyClip> & { type: string })[],
-    options?: AddClipOptions | string
-  ) {
-    const addOptions: AddClipOptions =
-      typeof options === 'string' ? { trackId: options } : options || {};
-
-    const fullClips = await Promise.all(
-      clips.map((clip) => this.clip.prepare(clip))
-    );
-
-    const commands = fullClips.map((clip) => ({
-      id: nanoid(),
-      type: 'clip.add',
-      payload: { clip, trackId: addOptions.trackId },
-    }));
-
-    this.batch(commands as any[]);
-  }
-
-  /** @deprecated use core.clip.update */
-  public updateClip(id: string, updates: Partial<AnyClip>) {
-    this.clip.update(id, updates);
-  }
-
-  /** @deprecated use core.clip.update in a loop or batch */
-  public updateClips(list: { id: string; updates: Partial<AnyClip> }[]) {
-    const commands = list.map(({ id, updates }) => ({
-      id: nanoid(),
-      type: 'clip.update',
-      payload: { id, updates },
-    }));
-    this.batch(commands as any[]);
-  }
-
-  /** @deprecated use core.clip.remove */
-  public removeClips(ids: string[]) {
-    this.execute({
-      id: nanoid(),
-      type: 'clip.remove',
-      payload: { ids },
-    });
-  }
-
-  /** @deprecated use core.track.add */
-  public addTrack(payload?: Partial<ITrack>) {
-    const id = payload?.id || 'track_' + nanoid(10);
-    this.track.add({ ...payload, id });
-    return { id, ...payload };
-  }
 }
 
 // Backward compatibility or singleton

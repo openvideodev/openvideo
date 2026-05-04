@@ -273,40 +273,32 @@ export default function Header() {
   }, [studio, projectId]);
 
   const handleNew = () => {
-    if (!studio) return;
     const confirmed = window.confirm(
       'Are you sure you want to start a new project? Unsaved changes will be lost.'
     );
     if (confirmed) {
-      studio.clear();
+      core.project.new();
     }
   };
 
   const handleExportJSON = () => {
-    if (!studio) return;
-
     try {
-      // Get all clips from studio
-      const clips = (studio as any).clips as IClip[];
-      if (clips.length === 0) {
+      const json = core.project.export();
+      if (Object.keys(json.clips).length === 0) {
         alert('No clips to export');
         return;
       }
 
-      // Export to JSON
-      const json = studio.exportToJSON();
       const jsonString = JSON.stringify(json, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
 
-      // Download the JSON file
       const aEl = document.createElement('a');
       document.body.appendChild(aEl);
       aEl.href = url;
-      aEl.download = `combo-project-${Date.now()}.json`;
+      aEl.download = `${projectName || 'project'}-${Date.now()}.json`;
       aEl.click();
 
-      // Cleanup
       setTimeout(() => {
         if (document.body.contains(aEl)) {
           document.body.removeChild(aEl);
@@ -332,41 +324,15 @@ export default function Header() {
       try {
         const text = await file.text();
         const json = JSON.parse(text);
-
-        if (!json.clips || !Array.isArray(json.clips)) {
-          throw new Error('Invalid JSON format: missing clips array');
-        }
-
-        if (!studio) {
-          throw new Error('Studio not initialized');
-        }
-
-        // Filter out clips with empty sources (except Text, Caption, and Effect)
-        const validClips = json.clips.filter((clipJSON: any) => {
-          if (
-            clipJSON.type === 'Text' ||
-            clipJSON.type === 'Caption' ||
-            clipJSON.type === 'Effect' ||
-            clipJSON.type === 'Transition'
-          ) {
-            return true;
-          }
-          return clipJSON.src && clipJSON.src.trim() !== '';
-        });
-
-        if (validClips.length === 0) {
-          throw new Error(
-            'No valid clips found in JSON. All clips have empty source URLs.'
-          );
-        }
-
-        const validJson = { ...json, clips: validClips };
-        await studio.loadFromJSON(validJson);
+        core.project.import(json);
+        toast.success('Project imported successfully');
       } catch (error) {
         Log.error('Load from JSON error:', error);
         alert('Failed to load from JSON: ' + (error as Error).message);
       } finally {
-        document.body.removeChild(input);
+        if (document.body.contains(input)) {
+          document.body.removeChild(input);
+        }
       }
     };
 

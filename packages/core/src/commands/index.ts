@@ -25,6 +25,7 @@ export function registerDefaultHandlers() {
     'project.deselect',
     projectHandlers.deselectClipsHandler
   );
+  commandRegistry.register('project.reset', projectHandlers.resetProjectHandler);
 
   commandRegistry.register('playback.seek', playbackHandlers.seekHandler);
   commandRegistry.register(

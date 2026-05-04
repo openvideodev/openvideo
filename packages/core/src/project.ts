@@ -38,6 +38,7 @@ export interface ProjectActions {
 
   // Project
   updateSettings: (settings: Partial<IProject['settings']>) => void;
+  reset: (project: IProject) => void;
   recalculateDuration: () => void;
 
   // Command API
@@ -280,6 +281,14 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       set((state) => ({
         settings: { ...state.settings, ...settings },
       }));
+    },
+    
+    reset: (project) => {
+      get().execute({
+        id: nanoid(),
+        type: 'project.reset',
+        payload: project,
+      });
     },
 
     recalculateDuration: () => {
