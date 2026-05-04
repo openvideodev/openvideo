@@ -35,7 +35,6 @@ class SyncManager {
   }
 
   public syncSelection(activeIds: string[]) {
-    console.log('timeline syncSelection', activeIds);
     const timelineActiveIds = this.timeline.activeIds;
     if (activeIds.length === 1 && timelineActiveIds.length === 1) {
       const activeId = activeIds[0];
@@ -59,10 +58,6 @@ class SyncManager {
     duration: number;
     clips: IClip[];
   }) {
-    console.log(
-      'timeline syncTracksAndClips delegating to syncAddOrRemoveClips',
-      data.clips
-    );
     this.syncAddOrRemoveClips({
       tracks: data.tracks,
       clips: data.clips,
@@ -76,7 +71,6 @@ class SyncManager {
     tracks: ITimelineTrack[];
     changedTracks: string[];
   }) {
-    console.log('timeline syncTracks', data);
     if (data.changedTracks.length) {
       this._setTracks(data.tracks);
       this.timeline.tracksManager.renderTracks();
@@ -92,7 +86,6 @@ class SyncManager {
     changedTrimIds?: string[];
     changedDisplayIds?: string[];
   }) {
-    console.log('timeline syncClipProperties', data.clips);
     const { regular } = splitClips(data.clips);
     const updatedTrackItemsMap = clipsToMap(regular);
 
@@ -175,12 +168,10 @@ class SyncManager {
   }
 
   public syncScale(data: { scale: ITimelineScaleState }) {
-    console.log('timeline syncScale', data);
     this.timeline.setScale(data.scale);
   }
 
   public syncHistory(data: { tracks: ITimelineTrack[]; clips: IClip[] }) {
-    console.log('timeline syncHistory', data.clips);
     this._setTracks(data.tracks);
     const { regular, transitions } = splitClips(data.clips);
     this.timeline.trackItemsMap = clipsToMap(regular);
@@ -204,14 +195,11 @@ class SyncManager {
   }
 
   public syncAddOrRemoveClips(currentState: State) {
-    console.log('timeline syncAddOrRemoveClips', currentState);
     const trackItemIdsInCanvas = this.timeline.itemsManager
       .getTrackItems()
       .map((o) => o.id);
-    const { regular, transitions } = splitClips(currentState.clips);
 
-    console.log('timeline syncAddOrRemoveClips regular', regular);
-    console.log('timeline syncAddOrRemoveClips transitions', transitions);
+    const { regular, transitions } = splitClips(currentState.clips);
     const desiredTrackItemIds = regular.map((c) => c.id);
     const deleteIds: string[] = [];
 
@@ -255,14 +243,6 @@ class SyncManager {
   }
 
   public setActiveIds(activeIds: string[]) {
-    const currentActiveIds = this.timeline.activeIds;
-    if (
-      currentActiveIds.length === activeIds.length &&
-      currentActiveIds.every((id, index) => id === activeIds[index])
-    ) {
-      return;
-    }
-    console.log('timeline setActiveIds', activeIds);
     this.timeline.activeIds = activeIds;
     this.timeline.emitter.emit('STATE_CHANGED', {
       payload: { activeIds: cloneDeep(this.timeline.activeIds) },
@@ -273,7 +253,6 @@ class SyncManager {
   public updateState(
     dataHistory: IUpdateStateOptions = { updateHistory: false, kind: 'update' }
   ) {
-    console.log('timeline updateState');
     this.timeline.tracksManager.filterEmptyTracks();
     this.timeline.itemsManager.synchronizeTrackItemsState();
 
@@ -292,7 +271,6 @@ class SyncManager {
   }
 
   public getUpdatedState() {
-    console.log('timeline getUpdatedState');
     const duration = getDuration(this.timeline.trackItemsMap);
     const transitions = Object.values(this.timeline.transitionsMap);
     return {

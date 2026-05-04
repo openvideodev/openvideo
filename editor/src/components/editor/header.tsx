@@ -43,6 +43,7 @@ import AutosizeInput from '../ui/autosize-input';
 import { authClient } from '@/lib/auth-client';
 import { core, projectStore } from '@/lib/project';
 import { useStore } from 'zustand';
+import { template } from './sample';
 
 export default function Header() {
   const { studio } = useStudioStore();
@@ -339,6 +340,17 @@ export default function Header() {
     document.body.appendChild(input);
     input.click();
   };
+
+  const handleLoadTemplate = () => {
+    try {
+      core.project.import(template as any);
+      toast.success('Template loaded successfully');
+    } catch (error) {
+      console.error('Failed to load template:', error);
+      toast.error('Failed to load template');
+    }
+  };
+
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
   };
@@ -372,7 +384,9 @@ export default function Header() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
+        <Button onClick={handleLoadTemplate}>
+          load template
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 ">

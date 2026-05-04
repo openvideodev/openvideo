@@ -98,7 +98,6 @@ const Timeline = () => {
       }
     }
   }, [currentTimeUs]);
-  console.log('TTTTTT');
   const onResizeCanvas = (payload: { width: number; height: number }) => { };
 
   useEffect(() => {
@@ -192,8 +191,8 @@ const Timeline = () => {
     canvas.initScrollbars({
       offsetX: 16,
       offsetY: 0,
-      extraMarginX: 50,
-      extraMarginY: 0,
+      extraMarginX: 100,
+      extraMarginY: 50,
       scrollbarWidth: 8,
       scrollbarColor: 'rgba(33, 33, 33, 0.8)',
     });

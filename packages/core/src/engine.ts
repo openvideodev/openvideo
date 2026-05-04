@@ -215,6 +215,7 @@ export class Core extends EventEmitter {
       };
 
       this.store.getState().reset(project);
+      this.store.getState().recalculateDuration();
     },
   };
 

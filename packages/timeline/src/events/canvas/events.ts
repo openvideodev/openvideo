@@ -13,10 +13,6 @@ import { addModifiedEvents, removeModifiedEvents } from './modified';
 import { addDragEvents, removeDragEvents } from './drag';
 import { addSelectionEvents, removeSelectionEvents } from './selection';
 import { addMovingEvents, removeMovingEvents } from './moving';
-import {
-  addHoverControlEvents,
-  removeHoverControlsEvents,
-} from './hover-control';
 
 export const addCanvasEvents = (timeline: Timeline) => {
   timeline.dragStateManager.setState({ canvas: timeline });
@@ -30,7 +26,6 @@ export const addCanvasEvents = (timeline: Timeline) => {
   addDragEvents(timeline);
   addSelectionEvents(timeline);
   addMovingEvents(timeline);
-  addHoverControlEvents(timeline);
 };
 
 export const removeCanvasEvents = (timeline: Timeline) => {
@@ -45,5 +40,4 @@ export const removeCanvasEvents = (timeline: Timeline) => {
   removeDragEvents(timeline);
   removeSelectionEvents(timeline);
   removeMovingEvents(timeline);
-  removeHoverControlsEvents(timeline);
 };

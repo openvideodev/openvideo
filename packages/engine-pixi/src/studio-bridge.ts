@@ -60,13 +60,6 @@ export class StudioBridge {
       }
     });
 
-    // 3. Selection Sync (Core -> Studio)
-    this.core.store.subscribe((state, prevState) => {
-      if (state.selectedIds !== prevState.selectedIds) {
-        this.syncSelectionToStudio(state.selectedIds);
-      }
-    });
-
     // 4. Selection Sync (Studio -> Core)
     const handleSelectionFromStudio = (data: { selected: any[] }) => {
       if (this.isSyncing) return;
@@ -94,47 +87,44 @@ export class StudioBridge {
   }
 
   private syncSelectionToStudio(ids: string[]) {
-    if (this.isSyncing) return;
-    this.isSyncing = true;
-    try {
-      const currentStudioSelection = this.studio.selection
-        .getSelection()
-        .map((c: any) => c.id);
-      if (JSON.stringify(ids) !== JSON.stringify(currentStudioSelection)) {
-        this.studio.selectClipsByIds(ids);
-      }
-    } finally {
-      this.isSyncing = false;
+    const currentStudioSelection = this.studio.selection
+      .getSelection()
+      .map((c: any) => c.id);
+    if (JSON.stringify(ids) !== JSON.stringify(currentStudioSelection)) {
+      this.studio.selectClipsByIds(ids);
     }
   }
 
   private async handlePatches(patches: Patch[]) {
-    console.log('handlePatches', patches);
 
-    // Check if any patch is a root or top-level collection replacement
-    const hasRootUpdate = patches.some(
-      (patch) =>
-        patch.path === '/' ||
-        (patch.path.split('/').filter(Boolean).length === 1 &&
-          patch.op === 'update')
-    );
+    // Only trigger a full re-sync for root replacements or settings changes.
+    // Structural changes like tracks and clips are now handled granularly.
+    const structuralProps = ['settings'];
+    const hasRootUpdate = patches.some((patch) => {
+      if (patch.path === '/') return true;
+      const parts = patch.path.split('/').filter(Boolean);
+      return (
+        parts.length === 1 &&
+        patch.op === 'update' &&
+        structuralProps.includes(parts[0])
+      );
+    });
 
     if (hasRootUpdate) {
       await this.syncInitialState();
-      // If we did a full sync, we usually don't need to process other granular patches in this batch
       return;
     }
 
-    patches.forEach((patch) => {
+    for (const patch of patches) {
       const parts = patch.path.split('/').filter(Boolean);
 
       // Handle Clips
       if (parts[0] === 'clips') {
         const clipId = parts[1];
         if (patch.op === 'add' && !parts[2]) {
-          this.handleAddClip(patch.value);
+          await this.handleAddClip(patch.value);
         } else if (patch.op === 'remove' && !parts[2]) {
-          this.handleRemoveClip(clipId);
+          await this.handleRemoveClip(clipId);
         } else if (patch.op === 'update') {
           this.handleUpdateClip(clipId, parts.slice(2), patch.value);
         }
@@ -142,8 +132,7 @@ export class StudioBridge {
 
       // Handle Tracks
       if (parts[0] === 'tracks') {
-        console.log('SETTING TRACKS');
-        this.studio.setTracks(this.core.store.getState().tracks as any);
+        await this.studio.setTracks(this.core.store.getState().tracks as any);
       }
 
       // Handle Settings
@@ -151,7 +140,12 @@ export class StudioBridge {
         const settings = this.core.store.getState().settings;
         this.studio.setSize(settings.width, settings.height);
       }
-    });
+
+      // Handle Selection
+      if (parts[0] === 'selectedIds') {
+        this.syncSelectionToStudio(this.core.store.getState().selectedIds);
+      }
+    }
   }
 
   private async handleAddClip(coreClip: AnyClip) {
@@ -217,11 +211,12 @@ export class StudioBridge {
       await this.studio.clear();
       const state = this.core.store.getState();
       this.studio.setSize(state.settings.width, state.settings.height);
-      this.studio.setTracks(state.tracks as any);
-
       for (const id in state.clips) {
         await this.handleAddClip(state.clips[id]);
       }
+
+      this.studio.setTracks(state.tracks as any);
+      this.syncSelectionToStudio(state.selectedIds);
 
       this.studio.updateFrame(state.currentTime);
     } finally {

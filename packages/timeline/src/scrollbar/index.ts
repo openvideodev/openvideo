@@ -26,6 +26,8 @@ export class Scrollbars {
   scrollbarWidth = 5;
   scrollbarColor = 'rgba(0,0,0,.3)';
   onViewportChange?: (left: number) => void;
+  private _lastViewportLeft?: number;
+  private _lastStateKey?: string;
 
   private _bar?: { type: string; start: number; vpt: TMat2D };
   private _barViewport = {
@@ -130,6 +132,9 @@ export class Scrollbars {
   }
   afterRenderHandler() {
     const { tl, br } = this.canvas.vptCoords;
+    const vpt = this.canvas.viewportTransform;
+    const stateKey = `${vpt[0]},${vpt[4]},${vpt[5]},${this.canvas.width},${this.canvas.height}`;
+
     const mapRect = { left: tl.x, top: tl.y, right: br.x, bottom: br.y };
     const objectRect = this.getObjectsBoundingRect();
 
@@ -149,11 +154,24 @@ export class Scrollbars {
     if (objectRectWithMargin.right < mapRect.right)
       objectRectWithMargin.right = mapRect.right;
 
+    const finalStateKey = `${stateKey},${objectRectWithMargin.left},${objectRectWithMargin.top},${objectRectWithMargin.right},${objectRectWithMargin.bottom}`;
+
+    if (this._lastStateKey === finalStateKey) {
+      // Re-draw on contextTop because Fabric might have cleared it,
+      // but skip the onViewportChange and other logic.
+      this.render(this.canvas.contextTop, mapRect, objectRectWithMargin);
+      return;
+    }
+    this._lastStateKey = finalStateKey;
+
     this.render(this.canvas.contextTop, mapRect, objectRectWithMargin);
 
     if (this.onViewportChange) {
       const left = tl.x;
-      this.onViewportChange(left);
+      if (this._lastViewportLeft !== left) {
+        this.onViewportChange(left);
+        this._lastViewportLeft = left;
+      }
     }
   }
   render(
@@ -161,7 +179,6 @@ export class Scrollbars {
     mapRect: ScrollbarProps,
     objectRect: ScrollbarProps
   ) {
-    console.log('Rendering scrollbars', this.hideX, this.hideY);
     // Clear only scrollbar areas, not the entire canvas
     if (!this.hideX) {
       ctx.clearRect(
@@ -231,7 +248,6 @@ export class Scrollbars {
       w: width,
       h: this.scrollbarSize,
     });
-    console.log('Drawing scrollbar x', x, y, width, this.scrollbarSize);
   }
   drawScrollbarY(
     ctx: CanvasRenderingContext2D,
