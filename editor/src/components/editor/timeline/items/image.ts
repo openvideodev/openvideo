@@ -59,8 +59,8 @@ class Image extends Resizable {
     const borderColor = this.isSelected
       ? 'rgba(255, 255, 255,1.0)'
       : 'rgba(255, 255, 255,0.1)';
-    const borderWidth = 2;
-    const innerRadius = 4;
+    const borderWidth = 1.5;
+    const innerRadius = 0;
 
     ctx.save();
     ctx.fillStyle = borderColor;

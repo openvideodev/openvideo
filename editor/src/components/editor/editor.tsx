@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { MediaPanel } from '@/components/editor/media-panel';
 import { CanvasPanel } from '@/components/editor/canvas-panel';
-import Timeline from '@/components/editor/timeline-new';
+import Timeline from '@/components/editor/timeline';
 import {
   ResizablePanelGroup,
   ResizablePanel,

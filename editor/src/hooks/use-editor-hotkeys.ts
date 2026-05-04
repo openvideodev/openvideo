@@ -3,7 +3,7 @@ import hotkeys from 'hotkeys-js';
 import { useStore } from 'zustand';
 import { projectStore, core } from '@/lib/project';
 import { useStudioStore } from '@/stores/studio-store';
-import CanvasTimeline from '@/components/editor/timeline-new/items/timeline';
+import CanvasTimeline from '@/components/editor/timeline/items/timeline';
 
 interface UseEditorHotkeysProps {
   timelineCanvas: CanvasTimeline | null;
