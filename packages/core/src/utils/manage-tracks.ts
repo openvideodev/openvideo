@@ -5,6 +5,7 @@ export interface AddClipOptions {
   trackId?: string;
   trackIndex?: number;
   isNewTrack?: boolean;
+  objectFit?: 'contain' | 'cover';
 }
 
 export interface TrackManagementResult {

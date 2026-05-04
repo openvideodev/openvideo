@@ -27,10 +27,18 @@ const getTrim = (
 
 export const loadClip = async (
   payload: Partial<AnyClip> & { type: string },
-  options: { canvasSize: { width: number; height: number } }
+  options: {
+    canvasSize: { width: number; height: number };
+    objectFit?: 'contain' | 'cover';
+  }
 ): Promise<AnyClip> => {
-  console.log('LOAD CLIP', { payloadType: payload.type, src: payload.src, hasProvider: !!CoreConfig.metadataProvider });
-  const { canvasSize } = options;
+  console.log('LOAD CLIP', {
+    payloadType: payload.type,
+    src: payload.src,
+    hasProvider: !!CoreConfig.metadataProvider,
+    payload
+  });
+  const { canvasSize, objectFit } = options;
 
   // 1. Resolve Dimensions and Duration (Async if needed)
   let width = payload.width;
@@ -38,35 +46,49 @@ export const loadClip = async (
   let duration = payload.duration;
 
   if (payload.src) {
-    if (payload.type === 'Image' && (!width || !height)) {
+    if (payload.type === 'Image' && (objectFit || !width || !height)) {
       console.log('Fetching dims...', { hasProvider: !!CoreConfig.metadataProvider });
       const dims = CoreConfig.metadataProvider 
         ? await CoreConfig.metadataProvider.getImageMetadata(payload.src)
         : null;
 
       console.log({ dims })
-      if (dims?.width && dims?.height) {
-        const scale = Math.min(
-          canvasSize.width / dims.width,
-          canvasSize.height / dims.height,
-          1
-        );
-        width = dims.width * scale;
-        height = dims.height * scale;
-      }
+        if (dims?.width && dims?.height) {
+          if (objectFit) {
+            const fitScale = canvasSize.width / dims.width;
+            const fitScaleY = canvasSize.height / dims.height;
+            const scale =
+              objectFit === 'cover'
+                ? Math.max(fitScale, fitScaleY)
+                : Math.min(fitScale, fitScaleY);
+
+            width = dims.width * scale;
+            height = dims.height * scale;
+          } else {
+            width = width ?? dims.width;
+            height = height ?? dims.height;
+          }
+        }
     } else if (payload.type === 'Video') {
-      const meta = CoreConfig.metadataProvider 
+      const meta = CoreConfig.metadataProvider
         ? await CoreConfig.metadataProvider.getVideoMetadata(payload.src)
         : null;
+
+        console.log({ meta })
       if (meta?.width && meta?.height) {
-        if (!width || !height) {
-          const scale = Math.min(
-            canvasSize.width / meta.width,
-            canvasSize.height / meta.height,
-            1
-          );
+        if (objectFit) {
+          const fitScale = canvasSize.width / meta.width;
+          const fitScaleY = canvasSize.height / meta.height;
+          const scale =
+            objectFit === 'cover'
+              ? Math.max(fitScale, fitScaleY)
+              : Math.min(fitScale, fitScaleY);
+
           width = meta.width * scale;
           height = meta.height * scale;
+        } else {
+          width = width ?? meta.width;
+          height = height ?? meta.height;
         }
         if (!duration) {
           duration = meta.duration;
@@ -89,8 +111,8 @@ export const loadClip = async (
   duration = duration ?? DEFAULT_DURATION;
 
   // 2. Centering logic
-  const left = payload.left ?? 0;
-  const top = payload.top ?? 0;
+  const left = payload.left ?? (canvasSize.width - width) / 2;
+  const top = payload.top ?? (canvasSize.height - height) / 2;
 
   const trim = getTrim(payload.trim, duration);
   const display = getDisplay(payload.display, trim.to - trim.from);
@@ -130,11 +152,8 @@ export const loadClip = async (
       curves: {},
     },
   } as AnyClip;
-  console.log({
-    baseClip,
-    options,
-    payload,
-  });
+
+  console.log({baseClip})
   if (payload.type === 'Caption') {
     const captionClip = baseClip as any;
     captionClip.mediaId = payload.mediaId ?? '';

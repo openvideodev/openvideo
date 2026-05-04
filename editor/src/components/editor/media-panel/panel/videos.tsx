@@ -94,7 +94,7 @@ export default function PanelVideos() {
         metadata: {
           previewUrl: asset.image,
         },
-      });
+      }, { objectFit: 'contain' });
     } catch (error) {
       Log.error(`Failed to add video:`, error);
     }

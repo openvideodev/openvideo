@@ -81,7 +81,7 @@ export default function PanelImages() {
         src: asset.src.large2x,
         name: `Photo by ${asset.photographer}`,
         display: { from: 0, to: 5_000_000 },
-      });
+      }, { objectFit: 'contain' });
     } catch (error) {
       Log.error(`Failed to add image:`, error);
     }

@@ -376,7 +376,7 @@ export default function PanelUploads() {
         type: typeMap[asset.type] as any,
         src: asset.src,
         name: asset.name,
-      });
+      }, { objectFit: 'contain' });
     } catch (error) {
       console.error('Failed to add clip:', error);
     }

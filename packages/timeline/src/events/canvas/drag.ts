@@ -519,7 +519,7 @@ const addItem = (
       id: generateId(),
       display: { from: position },
     },
-    options: { trackIndex: index, isNewTrack },
+    options: { trackIndex: index, isNewTrack, objectFit: 'contain' },
   });
 };
 

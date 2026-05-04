@@ -66,13 +66,17 @@ export class Core extends EventEmitter {
   // --- DX LAYER (Convenience Methods) ---
 
   public clip = {
-    prepare: async (payload: Partial<AnyClip> & { type: string }) => {
+    prepare: async (
+      payload: Partial<AnyClip> & { type: string },
+      options?: { objectFit?: 'contain' | 'cover' }
+    ) => {
       const state = this.store.getState();
       return await loadClip(payload, {
         canvasSize: {
           width: state.settings.width,
           height: state.settings.height,
         },
+        objectFit: options?.objectFit,
       });
     },
 
@@ -80,10 +84,12 @@ export class Core extends EventEmitter {
       payload: Partial<AnyClip> & { type: string },
       options?: AddClipOptions | string
     ) => {
-      const fullClip = await this.clip.prepare(payload);
-
       const addOptions: AddClipOptions =
         typeof options === 'string' ? { trackId: options } : options || {};
+
+      const fullClip = await this.clip.prepare(payload, {
+        objectFit: addOptions.objectFit,
+      });
       console.log('adding clip', fullClip, addOptions);
       this.execute({
         id: nanoid(),

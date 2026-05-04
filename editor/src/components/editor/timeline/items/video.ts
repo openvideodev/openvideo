@@ -59,7 +59,7 @@ class Video extends Trimmable {
 
   public offscreenSegments = 0;
   public thumbnailWidth = 0;
-  public thumbnailHeight = 40;
+  public thumbnailHeight = 48;
   public thumbnailsList: { url: string; ts: number }[] = [];
   public isFetchingThumbnails = false;
   public thumbnailCache = new ThumbnailCache();
