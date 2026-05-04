@@ -29,8 +29,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import useLayoutStore from '../store/use-layout-store';
 import { useStudioStore } from '@/stores/studio-store';
-import { useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
+import * as Popover from '@radix-ui/react-popover';
 
 type PropertyKey = keyof typeof ANIMATABLE_PROPERTIES;
 
@@ -44,7 +44,6 @@ const SPECIAL_ANIMATIONS_CAPTIONS = [
 export function AnimationPropertiesPicker() {
   const { floatingControlData, setFloatingControl } = useLayoutStore();
   const { studio } = useStudioStore();
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const { clipId, animationId, mode } = floatingControlData || {};
   const clip = studio?.getClipById(clipId) as any;
@@ -105,7 +104,7 @@ export function AnimationPropertiesPicker() {
         animation.type.toLowerCase().includes('out') ||
         (currentDelayMicro > 0 &&
           Math.abs(currentDelayMicro + currentDurationMicro - clipDuration) <
-            1000); // within 1ms tolerance
+          1000); // within 1ms tolerance
 
       if (animation.type === 'keyframes') {
         setActiveTab('custom');
@@ -115,25 +114,7 @@ export function AnimationPropertiesPicker() {
     }
   }, [animation, clipDuration]);
 
-  // Click outside handling
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(target) &&
-        !target.closest('[data-radix-portal]') &&
-        !target.closest('[data-radix-popper-content-wrapper]')
-      ) {
-        setFloatingControl('');
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [setFloatingControl]);
+  // Removed manual click outside handling in favor of Radix Popover
 
   // Handle Tab Change
   const handleTabChange = (tab: string) => {
@@ -351,38 +332,38 @@ export function AnimationPropertiesPicker() {
     { label: 'Pulse', value: 'pulse' },
     ...(isTextLike
       ? [
-          { label: 'Pop', value: 'popCaption' },
-          { label: 'Bounce', value: 'bounceCaption' },
-          { label: 'Scale', value: 'scaleCaption' },
-          { label: 'Slide Left', value: 'slideLeftCaption' },
-          { label: 'Slide Right', value: 'slideRightCaption' },
-          { label: 'Slide Up', value: 'slideUpCaption' },
-          { label: 'Slide Down', value: 'slideDownCaption' },
-          { label: 'Slide Fade By Word', value: 'slideFadeByWord' },
-          { label: 'Up Down', value: 'upDownCaption' },
-          { label: 'Up Left', value: 'upLeftCaption' },
-          { label: 'Char Fade In', value: 'charFadeIn' },
-          { label: 'Char Slide Up', value: 'charSlideUp' },
-          { label: 'Char Typewriter', value: 'charTypewriter' },
-          { label: 'Fade By Word', value: 'fadeByWord' },
-          { label: 'Pop By Word', value: 'popByWord' },
-          { label: 'Scale Fade By Word', value: 'scaleFadeByWord' },
-          { label: 'Bounce By Word', value: 'bounceByWord' },
-          { label: 'Rotate In By Word', value: 'rotateInByWord' },
-          { label: 'Slide Right By Word', value: 'slideRightByWord' },
-          { label: 'Slide Left By Word', value: 'slideLeftByWord' },
-          { label: 'Fade Rotate By Word', value: 'fadeRotateByWord' },
-          { label: 'Skew By Word', value: 'skewByWord' },
-          { label: 'Wave By Word', value: 'waveByWord' },
-          { label: 'Blur In By Word', value: 'blurInByWord' },
-          { label: 'Drop Soft By Word', value: 'dropSoftByWord' },
-          { label: 'Elastic Pop By Word', value: 'elasticPopByWord' },
-          { label: 'Flip Up By Word', value: 'flipUpByWord' },
-          { label: 'Spin In By Word', value: 'spinInByWord' },
-          { label: 'Stretch In By Word', value: 'stretchInByWord' },
-          { label: 'Reveal Zoom By Word', value: 'revealZoomByWord' },
-          { label: 'Float Wave By Word', value: 'floatWaveByWord' },
-        ]
+        { label: 'Pop', value: 'popCaption' },
+        { label: 'Bounce', value: 'bounceCaption' },
+        { label: 'Scale', value: 'scaleCaption' },
+        { label: 'Slide Left', value: 'slideLeftCaption' },
+        { label: 'Slide Right', value: 'slideRightCaption' },
+        { label: 'Slide Up', value: 'slideUpCaption' },
+        { label: 'Slide Down', value: 'slideDownCaption' },
+        { label: 'Slide Fade By Word', value: 'slideFadeByWord' },
+        { label: 'Up Down', value: 'upDownCaption' },
+        { label: 'Up Left', value: 'upLeftCaption' },
+        { label: 'Char Fade In', value: 'charFadeIn' },
+        { label: 'Char Slide Up', value: 'charSlideUp' },
+        { label: 'Char Typewriter', value: 'charTypewriter' },
+        { label: 'Fade By Word', value: 'fadeByWord' },
+        { label: 'Pop By Word', value: 'popByWord' },
+        { label: 'Scale Fade By Word', value: 'scaleFadeByWord' },
+        { label: 'Bounce By Word', value: 'bounceByWord' },
+        { label: 'Rotate In By Word', value: 'rotateInByWord' },
+        { label: 'Slide Right By Word', value: 'slideRightByWord' },
+        { label: 'Slide Left By Word', value: 'slideLeftByWord' },
+        { label: 'Fade Rotate By Word', value: 'fadeRotateByWord' },
+        { label: 'Skew By Word', value: 'skewByWord' },
+        { label: 'Wave By Word', value: 'waveByWord' },
+        { label: 'Blur In By Word', value: 'blurInByWord' },
+        { label: 'Drop Soft By Word', value: 'dropSoftByWord' },
+        { label: 'Elastic Pop By Word', value: 'elasticPopByWord' },
+        { label: 'Flip Up By Word', value: 'flipUpByWord' },
+        { label: 'Spin In By Word', value: 'spinInByWord' },
+        { label: 'Stretch In By Word', value: 'stretchInByWord' },
+        { label: 'Reveal Zoom By Word', value: 'revealZoomByWord' },
+        { label: 'Float Wave By Word', value: 'floatWaveByWord' },
+      ]
       : []),
   ];
 
@@ -440,53 +421,40 @@ export function AnimationPropertiesPicker() {
   }, [keyframes]);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute left-full top-0 z-[200] ml-2 w-72 border bg-background p-0 shadow-xl rounded-lg overflow-hidden"
-    >
-      <ScrollArea className="max-h-[600px]">
-        <div className="flex flex-col gap-4 p-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">
-              {mode === 'add' ? 'Add Animation' : 'Edit Animation'}
-            </h3>
-            <button
-              onClick={() => setFloatingControl('')}
-              className="text-muted-foreground hover:text-white"
-            >
-              <IconX className="size-4" />
-            </button>
-          </div>
-
-          {/* Tabs */}
-
-          {typeClip === 'Caption' ? (
-            <div className="mt-4 flex flex-col gap-4">
-              <PresetOptions
-                preset={preset}
-                activeTab={activeTab}
-                inPresets={inPresets}
-                outPresets={outPresets}
-                comboPresets={comboPresets}
-                handlePresetChange={handlePresetChange}
-              />
-              <EasingOptions easing={easing} setEasing={setEasing} />
+    <Popover.Root open={!!clipId} onOpenChange={(open) => !open && setFloatingControl('')}>
+      <Popover.Anchor className="absolute left-full top-0" />
+      <Popover.Content
+        side="right"
+        align="start"
+        sideOffset={8}
+        className="z-[200] w-72 border bg-background p-0 shadow-xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]"
+        onInteractOutside={(e) => {
+          // Prevent closing when interacting with portals (Select dropdowns)
+          const target = e.target as HTMLElement;
+          if (target.closest('[data-radix-portal]') || target.closest('[data-radix-popper-content-wrapper]')) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-4 p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">
+                {mode === 'add' ? 'Add Animation' : 'Edit Animation'}
+              </h3>
+              <button
+                onClick={() => setFloatingControl('')}
+                className="text-muted-foreground hover:text-white"
+              >
+                <IconX className="size-4" />
+              </button>
             </div>
-          ) : (
-            <Tabs
-              value={activeTab}
-              onValueChange={handleTabChange}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="in">In</TabsTrigger>
-                <TabsTrigger value="out">Out</TabsTrigger>
-                <TabsTrigger value="combo">Combo</TabsTrigger>
-              </TabsList>
 
+            {/* Tabs */}
+
+            {typeClip === 'Caption' ? (
               <div className="mt-4 flex flex-col gap-4">
-                {/* Preset Selector */}
                 <PresetOptions
                   preset={preset}
                   activeTab={activeTab}
@@ -495,227 +463,252 @@ export function AnimationPropertiesPicker() {
                   comboPresets={comboPresets}
                   handlePresetChange={handlePresetChange}
                 />
+                <EasingOptions easing={easing} setEasing={setEasing} />
+              </div>
+            ) : (
+              <Tabs
+                value={activeTab}
+                onValueChange={handleTabChange}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="in">In</TabsTrigger>
+                  <TabsTrigger value="out">Out</TabsTrigger>
+                  <TabsTrigger value="combo">Combo</TabsTrigger>
+                </TabsList>
 
-                {/* Preset Parameters (Slide Only) */}
-                {(preset === 'slideIn' || preset === 'slideOut') && (
-                  <div className="grid grid-cols-2 gap-2 p-2 bg-secondary/20 rounded-md">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-muted-foreground">
-                        Direction
-                      </label>
-                      <Select
-                        value={presetParams.direction}
-                        onValueChange={(val) =>
-                          setPresetParams((prev: any) => ({
-                            ...prev,
-                            direction: val,
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-7 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-[250]">
-                          <SelectItem value="left">Left</SelectItem>
-                          <SelectItem value="right">Right</SelectItem>
-                          <SelectItem value="top">Top</SelectItem>
-                          <SelectItem value="bottom">Bottom</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-muted-foreground">
-                        Distance (px)
-                      </label>
-                      <NumberInput
-                        value={presetParams.distance}
-                        onChange={(val) =>
-                          setPresetParams((prev: any) => ({
-                            ...prev,
-                            distance: val,
-                          }))
-                        }
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                  </div>
-                )}
+                <div className="mt-4 flex flex-col gap-4">
+                  {/* Preset Selector */}
+                  <PresetOptions
+                    preset={preset}
+                    activeTab={activeTab}
+                    inPresets={inPresets}
+                    outPresets={outPresets}
+                    comboPresets={comboPresets}
+                    handlePresetChange={handlePresetChange}
+                  />
 
-                {/* Stagger (for character animations) */}
-                {preset.startsWith('char') && (
-                  <div className="flex flex-col gap-2 p-2 bg-secondary/20 rounded-md">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[10px] text-muted-foreground">
-                        Stagger: {presetParams.stagger}s
-                      </label>
-                    </div>
-                    <Slider
-                      value={[presetParams.stagger || 0.05]}
-                      min={0}
-                      max={0.5}
-                      step={0.01}
-                      onValueChange={([val]) =>
-                        setPresetParams((prev: any) => ({
-                          ...prev,
-                          stagger: val,
-                        }))
-                      }
-                    />
-                  </div>
-                )}
-
-                {/* Keyframes */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Keyframes
-                  </label>
-
-                  {sortedKeyframes.map((keyframe) => (
-                    <KeyframeItem
-                      key={keyframe}
-                      keyframe={keyframe}
-                      properties={keyframes[keyframe] || {}}
-                      onPropertyChange={(prop, val) =>
-                        handlePropertyChange(keyframe, prop, val)
-                      }
-                      onPropertyToggle={(prop, enabled) =>
-                        handlePropertyToggle(keyframe, prop, enabled)
-                      }
-                      onRemove={() => handleRemoveKeyframe(keyframe)}
-                      canRemove={keyframe !== '0%' && keyframe !== '100%'}
-                    />
-                  ))}
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddKeyframe}
-                    className="w-full"
-                  >
-                    <IconPlus className="size-3.5 mr-1" />
-                    Add Keyframe
-                  </Button>
-                </div>
-
-                {/* Mirror Effect */}
-                {typeClip !== 'Text' && (
-                  <div className="flex items-center justify-between p-2 bg-secondary/20 rounded-md border border-dashed">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-medium">Mirror Effect</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        Repeat edges to fill frame
-                      </span>
-                    </div>
-                    <Switch
-                      checked={mirrorEnabled}
-                      onCheckedChange={setMirrorEnabled}
-                    />
-                  </div>
-                )}
-
-                {/* Timing */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Timing
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <InputGroup>
-                      <InputGroupAddon align="inline-start">
-                        <span className="text-[10px] font-medium text-muted-foreground">
-                          Duration
-                        </span>
-                      </InputGroupAddon>
-                      <NumberInput
-                        value={duration}
-                        onChange={setDuration}
-                        className="p-0"
-                      />
-                      <InputGroupAddon align="inline-end">
-                        <span className="text-[10px] text-muted-foreground">
-                          ms
-                        </span>
-                      </InputGroupAddon>
-                    </InputGroup>
-
-                    <InputGroup
-                      className={cn(
-                        activeTab !== 'custom' &&
-                          'opacity-60 pointer-events-none'
-                      )}
-                    >
-                      <InputGroupAddon align="inline-start">
-                        <span className="text-[10px] font-medium text-muted-foreground">
-                          Delay
-                        </span>
-                      </InputGroupAddon>
-                      <NumberInput
-                        value={delay}
-                        onChange={setDelay}
-                        className="p-0"
-                      />
-                      <InputGroupAddon align="inline-end">
-                        <span className="text-[10px] text-muted-foreground">
-                          ms
-                        </span>
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </div>
-
-                  {activeTab === 'out' && (
-                    <div className="text-[10px] text-muted-foreground italic px-1">
-                      * Delay matches clip end automatically
+                  {/* Preset Parameters (Slide Only) */}
+                  {(preset === 'slideIn' || preset === 'slideOut') && (
+                    <div className="grid grid-cols-2 gap-2 p-2 bg-secondary/20 rounded-md">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] text-muted-foreground">
+                          Direction
+                        </label>
+                        <Select
+                          value={presetParams.direction}
+                          onValueChange={(val) =>
+                            setPresetParams((prev: any) => ({
+                              ...prev,
+                              direction: val,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="h-7 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="z-[250]">
+                            <SelectItem value="left">Left</SelectItem>
+                            <SelectItem value="right">Right</SelectItem>
+                            <SelectItem value="top">Top</SelectItem>
+                            <SelectItem value="bottom">Bottom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] text-muted-foreground">
+                          Distance (px)
+                        </label>
+                        <NumberInput
+                          value={presetParams.distance}
+                          onChange={(val) =>
+                            setPresetParams((prev: any) => ({
+                              ...prev,
+                              distance: val,
+                            }))
+                          }
+                          className="h-7 text-xs"
+                        />
+                      </div>
                     </div>
                   )}
 
-                  <InputGroup>
-                    <InputGroupAddon align="inline-start">
-                      <span className="text-[10px] font-medium text-muted-foreground">
-                        Iterations
-                      </span>
-                    </InputGroupAddon>
-                    <NumberInput
-                      value={iterCount}
-                      onChange={setIterCount}
-                      className="p-0"
-                    />
-                  </InputGroup>
+                  {/* Stagger (for character animations) */}
+                  {preset.startsWith('char') && (
+                    <div className="flex flex-col gap-2 p-2 bg-secondary/20 rounded-md">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] text-muted-foreground">
+                          Stagger: {presetParams.stagger}s
+                        </label>
+                      </div>
+                      <Slider
+                        value={[presetParams.stagger || 0.05]}
+                        min={0}
+                        max={0.5}
+                        step={0.01}
+                        onValueChange={([val]) =>
+                          setPresetParams((prev: any) => ({
+                            ...prev,
+                            stagger: val,
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* Keyframes */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Keyframes
+                    </label>
+
+                    {sortedKeyframes.map((keyframe) => (
+                      <KeyframeItem
+                        key={keyframe}
+                        keyframe={keyframe}
+                        properties={keyframes[keyframe] || {}}
+                        onPropertyChange={(prop, val) =>
+                          handlePropertyChange(keyframe, prop, val)
+                        }
+                        onPropertyToggle={(prop, enabled) =>
+                          handlePropertyToggle(keyframe, prop, enabled)
+                        }
+                        onRemove={() => handleRemoveKeyframe(keyframe)}
+                        canRemove={keyframe !== '0%' && keyframe !== '100%'}
+                      />
+                    ))}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddKeyframe}
+                      className="w-full"
+                    >
+                      <IconPlus className="size-3.5 mr-1" />
+                      Add Keyframe
+                    </Button>
+                  </div>
+
+                  {/* Mirror Effect */}
+                  {typeClip !== 'Text' && (
+                    <div className="flex items-center justify-between p-2 bg-secondary/20 rounded-md border border-dashed">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs font-medium">Mirror Effect</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Repeat edges to fill frame
+                        </span>
+                      </div>
+                      <Switch
+                        checked={mirrorEnabled}
+                        onCheckedChange={setMirrorEnabled}
+                      />
+                    </div>
+                  )}
+
+                  {/* Timing */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Timing
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <InputGroup>
+                        <InputGroupAddon align="inline-start">
+                          <span className="text-[10px] font-medium text-muted-foreground">
+                            Duration
+                          </span>
+                        </InputGroupAddon>
+                        <NumberInput
+                          value={duration}
+                          onChange={setDuration}
+                          className="p-0"
+                        />
+                        <InputGroupAddon align="inline-end">
+                          <span className="text-[10px] text-muted-foreground">
+                            ms
+                          </span>
+                        </InputGroupAddon>
+                      </InputGroup>
+
+                      <InputGroup
+                        className={cn(
+                          activeTab !== 'custom' &&
+                          'opacity-60 pointer-events-none'
+                        )}
+                      >
+                        <InputGroupAddon align="inline-start">
+                          <span className="text-[10px] font-medium text-muted-foreground">
+                            Delay
+                          </span>
+                        </InputGroupAddon>
+                        <NumberInput
+                          value={delay}
+                          onChange={setDelay}
+                          className="p-0"
+                        />
+                        <InputGroupAddon align="inline-end">
+                          <span className="text-[10px] text-muted-foreground">
+                            ms
+                          </span>
+                        </InputGroupAddon>
+                      </InputGroup>
+                    </div>
+
+                    {activeTab === 'out' && (
+                      <div className="text-[10px] text-muted-foreground italic px-1">
+                        * Delay matches clip end automatically
+                      </div>
+                    )}
+
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          Iterations
+                        </span>
+                      </InputGroupAddon>
+                      <NumberInput
+                        value={iterCount}
+                        onChange={setIterCount}
+                        className="p-0"
+                      />
+                    </InputGroup>
+                  </div>
+
+                  {/* Easing */}
+                  <EasingOptions easing={easing} setEasing={setEasing} />
                 </div>
+              </Tabs>
+            )}
 
-                {/* Easing */}
-                <EasingOptions easing={easing} setEasing={setEasing} />
+            {/* Actions */}
+            <div className="flex flex-col gap-2 pt-2 border-t mt-4">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setFloatingControl('')}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={
+                    typeClip === 'Caption' ? handleApplyToAllCaptions : handleSave
+                  }
+                  className="flex-1"
+                  disabled={
+                    !preset &&
+                    !Object.values(keyframes).some(
+                      (frame) => Object.keys(frame).length > 0
+                    )
+                  }
+                >
+                  {mode === 'add' ? 'Add' : 'Save'}
+                </Button>
               </div>
-            </Tabs>
-          )}
-
-          {/* Actions */}
-          <div className="flex flex-col gap-2 pt-2 border-t mt-4">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setFloatingControl('')}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={
-                  typeClip === 'Caption' ? handleApplyToAllCaptions : handleSave
-                }
-                className="flex-1"
-                disabled={
-                  !preset &&
-                  !Object.values(keyframes).some(
-                    (frame) => Object.keys(frame).length > 0
-                  )
-                }
-              >
-                {mode === 'add' ? 'Add' : 'Save'}
-              </Button>
             </div>
           </div>
-        </div>
-      </ScrollArea>
-    </div>
+        </ScrollArea>
+      </Popover.Content>
+    </Popover.Root>
   );
 }
 
