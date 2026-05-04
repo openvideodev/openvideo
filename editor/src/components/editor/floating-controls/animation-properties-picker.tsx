@@ -64,7 +64,7 @@ export function AnimationPropertiesPicker() {
     Record<string, Partial<AnimationProps>>
   >(animation?.params || { '0%': {}, '100%': {} });
   const [duration, setDuration] = useState<number>(() => {
-    if (animation?.options.duration) {
+    if (animation?.options?.duration) {
       return animation.options.duration / 1000;
     }
     if (typeClip === 'Caption') {
@@ -73,13 +73,13 @@ export function AnimationPropertiesPicker() {
     return 1000;
   });
   const [delay, setDelay] = useState<number>(
-    (animation?.options.delay || 0) / 1000
+    (animation?.options?.delay || 0) / 1000
   );
   const [iterCount, setIterCount] = useState<number>(
-    animation?.options.iterCount || 1
+    animation?.options?.iterCount || 1
   );
   const [easing, setEasing] = useState<string>(
-    (animation?.options.easing as string) || 'linear'
+    (animation?.options?.easing as string) || 'linear'
   );
   const [mirrorEnabled, setMirrorEnabled] = useState<boolean>(false);
 
@@ -98,8 +98,8 @@ export function AnimationPropertiesPicker() {
       setMirrorEnabled(hasMirror);
 
       // Determine active tab based on delay and type
-      const currentDelayMicro = animation.options.delay;
-      const currentDurationMicro = animation.options.duration;
+      const currentDelayMicro = animation.options?.delay;
+      const currentDurationMicro = animation.options?.duration;
       const isOut =
         animation.type.toLowerCase().includes('out') ||
         (currentDelayMicro > 0 &&

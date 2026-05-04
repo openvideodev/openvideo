@@ -173,7 +173,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboPendulum1",
-                    "opts": {
+                    "options": {
                         "duration": 2040000,
                         "delay": 0,
                         "easing": "linear",
@@ -249,7 +249,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboWobble",
-                    "opts": {
+                    "options": {
                         "duration": 1760000,
                         "delay": 0,
                         "easing": "linear",
@@ -345,7 +345,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboWobble",
-                    "opts": {
+                    "options": {
                         "duration": 1698000,
                         "delay": 0,
                         "easing": "linear",
@@ -1048,7 +1048,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboLeftDistort",
-                    "opts": {
+                    "options": {
                         "duration": 3540000,
                         "delay": 0,
                         "easing": "linear",
@@ -1124,7 +1124,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboRightDistort",
-                    "opts": {
+                    "options": {
                         "duration": 3243000,
                         "delay": 0,
                         "easing": "linear",
@@ -1851,7 +1851,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboPendulum2",
-                    "opts": {
+                    "options": {
                         "duration": 2980000,
                         "delay": 0,
                         "easing": "linear",
@@ -1927,7 +1927,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboPendulum1",
-                    "opts": {
+                    "options": {
                         "duration": 2915000,
                         "delay": 0,
                         "easing": "linear",
@@ -2527,7 +2527,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboZoom1",
-                    "opts": {
+                    "options": {
                         "duration": 1700000,
                         "delay": 0,
                         "easing": "linear",
@@ -2591,7 +2591,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboSwayOut",
-                    "opts": {
+                    "options": {
                         "duration": 4952000,
                         "delay": 0,
                         "easing": "linear",
@@ -3255,7 +3255,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboLeftDistort",
-                    "opts": {
+                    "options": {
                         "duration": 3060000,
                         "delay": 0,
                         "easing": "linear",
@@ -3331,7 +3331,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboRightDistort",
-                    "opts": {
+                    "options": {
                         "duration": 2756000,
                         "delay": 0,
                         "easing": "linear",
@@ -4024,7 +4024,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboSwayIn",
-                    "opts": {
+                    "options": {
                         "duration": 5700000,
                         "delay": 0,
                         "easing": "linear",
@@ -4081,7 +4081,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboSwayOut",
-                    "opts": {
+                    "options": {
                         "duration": 2990000,
                         "delay": 0,
                         "easing": "linear",
@@ -5000,7 +5000,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboRightDistort",
-                    "opts": {
+                    "options": {
                         "duration": 3140000,
                         "delay": 0,
                         "easing": "linear",
@@ -5072,7 +5072,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboLeftDistort",
-                    "opts": {
+                    "options": {
                         "duration": 2023000,
                         "delay": 0,
                         "easing": "linear",
@@ -5665,7 +5665,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboSwayIn",
-                    "opts": {
+                    "options": {
                         "duration": 2180000,
                         "delay": 0,
                         "easing": "linear",
@@ -5722,7 +5722,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboSwayOut",
-                    "opts": {
+                    "options": {
                         "duration": 2800000,
                         "delay": 0,
                         "easing": "linear",
@@ -6220,7 +6220,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboWobble",
-                    "opts": {
+                    "options": {
                         "duration": 1860000,
                         "delay": 0,
                         "easing": "linear",
@@ -6316,7 +6316,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboPendulum1",
-                    "opts": {
+                    "options": {
                         "duration": 2885000,
                         "delay": 0,
                         "easing": "linear",
@@ -6895,7 +6895,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboLeftDistort",
-                    "opts": {
+                    "options": {
                         "duration": 3060000,
                         "delay": 0,
                         "easing": "linear",
@@ -6971,7 +6971,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboRightDistort",
-                    "opts": {
+                    "options": {
                         "duration": 3174000,
                         "delay": 0,
                         "easing": "linear",
@@ -7691,7 +7691,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboPendulum2",
-                    "opts": {
+                    "options": {
                         "duration": 3620000,
                         "delay": 0,
                         "easing": "linear",
@@ -7767,7 +7767,7 @@ export const template = {
             "animations": [
                 {
                     "type": "comboPendulum1",
-                    "opts": {
+                    "options": {
                         "duration": 5200000,
                         "delay": 0,
                         "easing": "linear",

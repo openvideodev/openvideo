@@ -611,7 +611,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
           ) : (
             animations.map((anim: any) => (
               <div
-                key={anim.id}
+                key={anim.options?.id ?? anim.id}
                 className="flex items-center justify-between p-2 bg-secondary/30 rounded-md group"
               >
                 <div className="flex flex-col flex-1">
@@ -619,7 +619,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
                     {anim.type}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    {Math.round(anim.options.duration / 1e6)}s duration
+                    {Math.round((anim.options?.duration ?? 0) / 1e6)}s duration
                   </span>
                 </div>
                 <div className="flex items-center gap-1">

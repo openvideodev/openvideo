@@ -299,7 +299,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       }
       return {
         type: a.type,
-        opts: a.options,
+        options: a.options,
         params: a.params || {},
       };
     });

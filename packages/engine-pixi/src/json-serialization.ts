@@ -67,7 +67,7 @@ interface BaseClipJSON {
   };
   animations?: Array<{
     type: string;
-    opts: any;
+    options: any;
     params?: any;
   }>;
   main?: boolean; // For Compositor only
@@ -361,7 +361,7 @@ export async function jsonToClip(json: ClipJSON): Promise<IClip> {
   if (json.animations && Array.isArray(json.animations)) {
     clip.clearAnimations();
     for (const anim of json.animations) {
-      clip.addAnimation(anim.type, anim.opts, anim.params);
+      clip.addAnimation(anim.type, anim.options, anim.params);
     }
   }
 

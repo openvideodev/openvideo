@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   ColorPicker,
   ColorPickerEyeDropper,
@@ -232,11 +231,10 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
                 },
               })
             }
-            className={`flex items-center justify-center flex-1 py-1.5 rounded-md border transition-colors ${
-              coreClip.flip?.x
+            className={`flex items-center justify-center flex-1 py-1.5 rounded-md border transition-colors ${coreClip.flip?.x
                 ? 'bg-primary/20 border-primary text-primary'
                 : 'bg-secondary/30 border-transparent text-muted-foreground hover:text-white'
-            }`}
+              }`}
           >
             <IconFlipHorizontal className="size-4 mr-2" />
             <span className="text-xs">Flip X</span>
@@ -250,11 +248,10 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
                 },
               })
             }
-            className={`flex items-center justify-center flex-1 py-1.5 rounded-md border transition-colors ${
-              coreClip.flip?.y
+            className={`flex items-center justify-center flex-1 py-1.5 rounded-md border transition-colors ${coreClip.flip?.y
                 ? 'bg-primary/20 border-primary text-primary'
                 : 'bg-secondary/30 border-transparent text-muted-foreground hover:text-white'
-            }`}
+              }`}
           >
             <IconFlipVertical className="size-4 mr-2" />
             <span className="text-xs">Flip Y</span>
@@ -317,7 +314,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
           ) : (
             animations.map((anim: any) => (
               <div
-                key={anim.id}
+                key={anim.options?.id ?? anim.id}
                 className="flex items-center justify-between p-2 bg-secondary/30 rounded-md group"
               >
                 <div className="flex flex-col flex-1">
@@ -325,7 +322,7 @@ export function ImageProperties({ clip }: ImagePropertiesProps) {
                     {anim.type}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    {Math.round(anim.options.duration / 1e6)}s duration
+                    {Math.round((anim.options?.duration ?? 0) / 1e6)}s duration
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
