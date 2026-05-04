@@ -32,26 +32,104 @@ export const addClipHandler: CommandHandler<{
   return patches;
 };
 
-export const updateClipHandler: CommandHandler<{
-  id: string;
-  updates: Partial<AnyClip>;
-}> = (state, command) => {
-  const { id, updates } = command.payload;
-  const clip = state.clips[id];
-  if (!clip) return [];
+export const updateClipHandler: CommandHandler<
+  | { id: string; updates: Partial<AnyClip> }
+  | { id: string; updates: Partial<AnyClip> }[]
+> = (state, command) => {
+  const updates = Array.isArray(command.payload)
+    ? command.payload
+    : [command.payload];
 
   const patches: Patch[] = [];
-  const updatedClip = { ...clip, ...updates } as AnyClip;
 
-  if (updates.display) {
-    updatedClip.duration = updates.display.to - updates.display.from;
+  for (const { id, updates: clipUpdates } of updates) {
+    const clip = state.clips[id];
+    if (!clip) continue;
+
+    const updatedClip = { ...clip, ...clipUpdates } as AnyClip;
+
+    if (clipUpdates.display) {
+      updatedClip.duration = clipUpdates.display.to - clipUpdates.display.from;
+    }
+
+    patches.push({
+      op: 'update',
+      path: `/clips/${id}`,
+      value: updatedClip,
+      oldValue: clip,
+    });
   }
 
+  return patches;
+};
+
+export const duplicateClipsHandler: CommandHandler<{ ids: string[] }> = (
+  state,
+  command
+) => {
+  const { ids } = command.payload;
+  const patches: Patch[] = [];
+  const nextTracks = [...state.tracks];
+  const newIds: string[] = [];
+
+  // Map to keep track of new tracks created during this duplication
+  // Key: originalTrackId, Value: newTrack object
+  const trackMapping = new Map<string, any>();
+
+  for (const id of ids) {
+    const clip = state.clips[id];
+    if (!clip) continue;
+
+    const newId = generateId();
+    const newClip = { ...clip, id: newId };
+    newIds.push(newId);
+
+    // 1. Add the new clip to the clips record
+    patches.push({
+      op: 'add',
+      path: `/clips/${newId}`,
+      value: newClip,
+    });
+
+    // 2. Find original track and handle track placement
+    const originalTrack = state.tracks.find((t) => t.clipIds.includes(id));
+    if (originalTrack) {
+      let targetTrack = trackMapping.get(originalTrack.id);
+
+      if (!targetTrack) {
+        // Create a new track for duplicates from this original track
+        const newTrackId = `track_${generateId()}`;
+        targetTrack = {
+          id: newTrackId,
+          name: `${originalTrack.name} (Copy)`,
+          type: originalTrack.type,
+          clipIds: [newId],
+          accepts: originalTrack.accepts || [originalTrack.type],
+        };
+        trackMapping.set(originalTrack.id, targetTrack);
+        // Prepend the new track (top-most in some UIs, or just next to it)
+        nextTracks.unshift(targetTrack);
+      } else {
+        // Add clip to the already created track for this group
+        targetTrack.clipIds.push(newId);
+      }
+    }
+  }
+
+  // 3. Update the tracks array
   patches.push({
     op: 'update',
-    path: `/clips/${id}`,
-    value: updatedClip,
-    oldValue: clip,
+    path: '/tracks',
+    value: nextTracks,
+    oldValue: state.tracks,
+  });
+
+  // 4. Update selection to the new duplicates
+  patches.push({
+    op: 'update',
+    path: '/selectedIds',
+    value: newIds,
+    oldValue: state.selectedIds,
   });
 
   return patches;

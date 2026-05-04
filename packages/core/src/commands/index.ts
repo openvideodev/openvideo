@@ -9,6 +9,7 @@ export function registerDefaultHandlers() {
   commandRegistry.register('clip.update', clipHandlers.updateClipHandler);
   commandRegistry.register('clip.remove', clipHandlers.removeClipsHandler);
   commandRegistry.register('clip.split', clipHandlers.splitClipHandler);
+  commandRegistry.register('clip.duplicate', clipHandlers.duplicateClipsHandler);
 
   commandRegistry.register('track.add', trackHandlers.addTrackHandler);
   commandRegistry.register('track.remove', trackHandlers.removeTrackHandler);
@@ -18,6 +19,11 @@ export function registerDefaultHandlers() {
   commandRegistry.register(
     'project.updateSettings',
     projectHandlers.updateSettingsHandler
+  );
+  commandRegistry.register('project.select', projectHandlers.selectClipsHandler);
+  commandRegistry.register(
+    'project.deselect',
+    projectHandlers.deselectClipsHandler
   );
 
   commandRegistry.register('playback.seek', playbackHandlers.seekHandler);

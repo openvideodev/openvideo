@@ -8,7 +8,7 @@ import {
   Copy,
   Scissors,
 } from 'lucide-react';
-import { useClipActions } from '../options-floating-menu';
+import { useClipActions } from '../studio-context-menu';
 import { useTimelineOffsetX } from '../hooks/use-timeline-offset';
 import { useStore } from 'zustand';
 import { core, projectStore } from '@/lib/project';

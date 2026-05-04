@@ -1,5 +1,6 @@
-import { Core, AnyClip, Patch } from '@openvideo/core';
+import { Core, AnyClip, Patch, } from '@openvideo/core';
 import { Studio } from './studio';
+import { IClip } from './clips/iclip';
 import { jsonToClip } from './json-serialization';
 
 /**
@@ -59,11 +60,52 @@ export class StudioBridge {
       }
     });
 
-    // 3. Sync via Patches
+    // 3. Selection Sync (Core -> Studio)
+    this.core.store.subscribe((state, prevState) => {
+      if (state.selectedIds !== prevState.selectedIds) {
+        this.syncSelectionToStudio(state.selectedIds);
+      }
+    });
+
+    // 4. Selection Sync (Studio -> Core)
+    const handleSelectionFromStudio = (data: { selected: any[] }) => {
+      if (this.isSyncing) return;
+      this.isSyncing = true;
+      try {
+        const ids = data.selected.map((c: any) => c.id);
+        const currentSelectedIds = this.core.store.getState().selectedIds;
+        if (JSON.stringify(ids) !== JSON.stringify(currentSelectedIds)) {
+          this.core.store.getState().select(ids);
+        }
+      } finally {
+        this.isSyncing = false;
+      }
+    };
+
+    this.studio.on('selection:created', handleSelectionFromStudio);
+    this.studio.on('selection:updated', handleSelectionFromStudio);
+    this.studio.on('selection:cleared', () => handleSelectionFromStudio({ selected: [] }));
+
+    // 5. Sync via Patches
     this.core.on('change', (patches: Patch[]) => this.handlePatches(patches));
 
-    // 4. Initial Sync
+    // 6. Initial Sync
     this.syncInitialState();
+  }
+
+  private syncSelectionToStudio(ids: string[]) {
+    if (this.isSyncing) return;
+    this.isSyncing = true;
+    try {
+      const currentStudioSelection = this.studio.selection
+        .getSelection()
+        .map((c: any) => c.id);
+      if (JSON.stringify(ids) !== JSON.stringify(currentStudioSelection)) {
+        this.studio.selectClipsByIds(ids);
+      }
+    } finally {
+      this.isSyncing = false;
+    }
   }
 
   private handlePatches(patches: Patch[]) {
@@ -127,14 +169,25 @@ export class StudioBridge {
     // Simple property update
     if (pathParts.length === 0) {
       // Full clip update
+      const wasLocked = clip.locked;
       this.syncClipProperties(clip, value);
+      
+      // If lock status changed and it's selected, refresh transformer
+      if (wasLocked !== clip.locked && this.studio.selection.selectedClips.has(clip)) {
+        this.studio.selection.recreateTransformer();
+      }
     } else {
       // Granular update (e.g. /clips/c1/left)
       const prop = pathParts[0];
       if (prop === 'display') {
         clip.display = { ...value };
       } else {
-        (clip as any)[prop] = value;
+        const wasLocked = clip.locked;
+        Object.assign(clip, { [prop]: value });
+
+        if (prop === 'locked' && wasLocked !== value && this.studio.selection.selectedClips.has(clip)) {
+          this.studio.selection.recreateTransformer();
+        }
       }
       this.studio.updateFrame(this.studio.currentTime);
     }
@@ -158,7 +211,7 @@ export class StudioBridge {
       .tracks.find((t) => t.clipIds.includes(clipId))?.id;
   }
 
-  private syncClipProperties(clip: any, coreClip: AnyClip) {
+  private syncClipProperties(clip: IClip, coreClip: AnyClip) {
     // Legacy sync logic for full updates
     const props: (keyof AnyClip)[] = [
       'left',
@@ -176,10 +229,11 @@ export class StudioBridge {
       'chromaKey',
       'colorAdjustment',
       'animations',
+      'locked',
     ];
     props.forEach((prop) => {
       if (coreClip[prop] !== undefined) {
-        clip[prop] = coreClip[prop];
+        Object.assign(clip, { [prop]: coreClip[prop] });
       }
     });
     clip.display = { ...coreClip.display };

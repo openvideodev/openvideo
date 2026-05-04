@@ -13,7 +13,7 @@ import { editorFont } from './constants';
 import { CUSTOM_TRANSITIONS } from './transition-custom';
 import { CUSTOM_EFFECTS } from './effect-custom';
 import { TextEditorOverlay } from './text-editor-overlay';
-import { useClipActions } from './options-floating-menu';
+import { useClipActions } from './studio-context-menu';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -179,31 +179,16 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
 
     const studio = studioRef.current;
 
-    const handleSelection = (data: { selected: any[] }) => {
-      setSelectedClips(data.selected);
-    };
-
-    const handleClear = () => {
-      setSelectedClips([]);
-      setEditingClip(null);
-    };
-
     const handleDblClick = ({ clip }: { clip: any }) => {
       setEditingClip(clip);
     };
 
-    studio.on('selection:created', handleSelection);
-    studio.on('selection:updated', handleSelection);
-    studio.on('selection:cleared', handleClear);
     studio.on('clip:dblclick', handleDblClick);
 
     return () => {
-      studio.off('selection:created', handleSelection);
-      studio.off('selection:updated', handleSelection);
-      studio.off('selection:cleared', handleClear);
       studio.off('clip:dblclick', handleDblClick);
     };
-  }, [setSelectedClips]);
+  }, []);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     if (!studioRef.current || !canvasRef.current) return;
@@ -219,9 +204,9 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     });
 
     if (topmostClip) {
-      studioRef.current.selection.selectClip(topmostClip);
+      core.store.getState().select(topmostClip.id);
     } else {
-      studioRef.current.selection.deselectClip();
+      core.store.getState().deselect();
     }
   };
 

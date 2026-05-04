@@ -236,23 +236,21 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
 
     // Actions: Selection
     select: (ids, multi = false) => {
-      const newIds = Array.isArray(ids) ? ids : [ids];
-      set((state) => ({
-        selectedIds: multi
-          ? [...new Set([...state.selectedIds, ...newIds])]
-          : newIds,
-      }));
+      const idArray = Array.isArray(ids) ? ids : [ids];
+      get().execute({
+        id: nanoid(),
+        type: 'project.select',
+        payload: { ids: idArray, multi },
+      });
     },
 
     deselect: (ids) => {
-      if (!ids) {
-        set({ selectedIds: [] });
-        return;
-      }
-      const toRemove = Array.isArray(ids) ? ids : [ids];
-      set((state) => ({
-        selectedIds: state.selectedIds.filter((id) => !toRemove.includes(id)),
-      }));
+      const idArray = ids ? (Array.isArray(ids) ? ids : [ids]) : undefined;
+      get().execute({
+        id: nanoid(),
+        type: 'project.deselect',
+        payload: idArray,
+      });
     },
 
     // Actions: Playback

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useCallback } from 'react';
+import { useStore } from 'zustand';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -27,80 +28,72 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useStudioStore } from '@/stores/studio-store';
-import { clipToJSON, jsonToClip, type ClipJSON } from '@openvideo/engine-pixi';
-import { generateUUID } from '@/utils/id';
+import { core, projectStore } from '@/lib/project';
+import { nanoid, AnyClip } from '@openvideo/core';
 
 // Module-level clipboard — persists across renders
-export let clipboardClipJSON: ClipJSON | null = null;
+export let clipboardClipJSON: AnyClip | null = null;
 
 export function useClipActions(clipOverride?: any) {
-  const { studio, selectedClips } = useStudioStore();
+  const selectedIds = useStore(projectStore, (s) => s.selectedIds);
+  const primaryId = clipOverride?.id || selectedIds[0];
+  const selectedClip = useStore(projectStore, (s) => s.clips[primaryId]);
+
   const [hasClipboard, setHasClipboard] = React.useState(
     clipboardClipJSON !== null
   );
-  const [isLocked, setIsLocked] = React.useState(false);
 
-  const selectedClip = clipOverride || (selectedClips[0] as any);
+  const isLocked = selectedClip?.locked ?? false;
 
-  // Sync lock state
+  // Sync clipboard state
   React.useEffect(() => {
-    const clip = selectedClips[0] as any;
-    setIsLocked(clip?.locked ?? false);
-    setHasClipboard(clipboardClipJSON !== null);
-  }, [selectedClips]);
-
-  React.useEffect(() => {
-    if (!studio) return;
-    const handleLockChanged = ({
-      clip,
-      locked,
-    }: {
-      clip: any;
-      locked: boolean;
-    }) => {
-      const selected = selectedClips[0] as any;
-      if (selected && selected.id === clip.id) {
-        setIsLocked(locked);
-      }
-    };
-    studio.on('clip:lock-changed', handleLockChanged);
-    return () => {
-      studio.off('clip:lock-changed', handleLockChanged);
-    };
-  }, [studio, selectedClips]);
+    const interval = setInterval(() => {
+      setHasClipboard(clipboardClipJSON !== null);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCopy = useCallback(() => {
     if (!selectedClip) return;
-    clipboardClipJSON = clipToJSON(selectedClip, false);
+    clipboardClipJSON = JSON.parse(JSON.stringify(selectedClip));
     setHasClipboard(true);
   }, [selectedClip]);
 
   const handlePaste = useCallback(async () => {
-    if (!studio || !clipboardClipJSON) return;
+    if (!clipboardClipJSON) return;
 
-    // Create a NEW clip from the JSON snapshot
-    const newClip = await jsonToClip(clipboardClipJSON);
-    // Assign a new ID to avoid collisions
-    newClip.id = generateUUID();
+    const newId = nanoid();
+    const currentTime = core.store.getState().currentTime;
+    
+    const newClip = {
+      ...clipboardClipJSON,
+      id: newId,
+      display: {
+        ...clipboardClipJSON.display,
+        from: currentTime,
+        to: currentTime + clipboardClipJSON.duration,
+      },
+    };
 
-    // Add to studio
-    await studio.addClip(newClip);
-  }, [studio]);
+    await core.clip.add(newClip as any);
+  }, []);
 
   const handleDuplicate = useCallback(async () => {
-    if (!studio) return;
-    await studio.duplicateSelected();
-  }, [studio]);
+    const ids = clipOverride ? [clipOverride.id] : selectedIds;
+    if (ids.length === 0) return;
+    core.clip.duplicate(ids);
+  }, [selectedIds, clipOverride]);
 
   const handleToggleLock = useCallback(async () => {
-    if (!studio || !selectedClip) return;
-    await studio.lockClip(selectedClip.id, !selectedClip.locked);
-  }, [studio, selectedClip]);
+    if (!selectedClip) return;
+    core.clip.update(selectedClip.id, { locked: !isLocked });
+  }, [selectedClip, isLocked]);
 
   const handleDelete = useCallback(async () => {
-    if (!studio) return;
-    await studio.deleteSelected();
-  }, [studio]);
+    const ids = clipOverride ? [clipOverride.id] : selectedIds;
+    if (ids.length === 0) return;
+    core.clip.remove(ids);
+  }, [selectedIds, clipOverride]);
 
   return {
     selectedClip,
@@ -114,7 +107,7 @@ export function useClipActions(clipOverride?: any) {
   };
 }
 
-export function OptionsFloatingMenu() {
+export function StudioContextMenu() {
   const {
     selectedClip,
     isLocked,

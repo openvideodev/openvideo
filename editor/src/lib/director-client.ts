@@ -1,7 +1,7 @@
 import { Patch } from '@openvideo/core';
 import { Plan } from '../../../services/director/src/types/plan.types';
 import { WsServerMessage, WsClientMessage } from '../../../services/director/src/types/ws.types';
-import { projectStore } from '@openvideo/core';
+import { projectStore } from '@/lib/project';
 
 export class DirectorClient {
   private ws: WebSocket | null = null;

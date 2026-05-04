@@ -126,6 +126,13 @@ export class Core extends EventEmitter {
         payload: { id: splitId, time: splitTime },
       });
     },
+    duplicate: (ids: string[]) => {
+      this.execute({
+        id: nanoid(),
+        type: 'clip.duplicate',
+        payload: { ids },
+      });
+    },
   };
 
   public track = {

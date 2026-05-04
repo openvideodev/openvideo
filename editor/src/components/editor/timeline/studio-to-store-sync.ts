@@ -7,6 +7,7 @@ import {
 import CanvasTimeline, { TIMELINE_SEEK } from '@openvideo/timeline';
 import { IClip } from '@/types/timeline';
 import { core, projectStore } from '@/lib/project';
+import { useStudioStore } from '@/stores/studio-store';
 import { nanoid } from 'nanoid';
 
 /**
@@ -37,59 +38,9 @@ export const addStudioSync = (
   // When Core is attached (via StudioBridge) the Studio no longer needs to write
   // back to the store directly — the core command pipeline handles it. We only
   // sync selection which is still a lightweight store write.
-  const handleSelectionFromStudio = (data: { selected: any[] }) => {
-    const ids = data.selected.map((c: any) => c.id);
-    projectStore.getState().select(ids);
-  };
-
-  const handleSelectionClearedFromStudio = () =>
-    projectStore.getState().deselect();
-
   studio.on('clip:transforming', handleClipTransforming as any);
-  studio.on('selection:created', handleSelectionFromStudio);
-  studio.on('selection:updated', handleSelectionFromStudio);
-  studio.on('selection:cleared', handleSelectionClearedFromStudio);
 
-  // Captures timeline drag/resize events → route through core commands
-  const handleTimelineStateChanged = async ({ payload, options }: any) => {
-    if (options?.kind === 'layer:selection') {
-      // Selection only
-      if (payload.activeIds) {
-        const storeIds = projectStore.getState().selectedIds;
-        if (JSON.stringify(storeIds) !== JSON.stringify(payload.activeIds)) {
-          projectStore.getState().select(payload.activeIds);
-        }
-      }
-      return;
-    }
-
-    // Structural change: tracks/clips
-    if (payload.clips) {
-      Object.values(payload.clips).forEach((clip: any) => {
-        const coreClip = projectStore.getState().clips[clip.id];
-        if (coreClip && JSON.stringify(coreClip) !== JSON.stringify(clip)) {
-          core.execute({
-            id: nanoid(),
-            type: 'clip.update',
-            payload: { id: clip.id, updates: clip },
-          });
-        }
-      });
-    }
-    if (payload.tracks) {
-      const storeTracksStr = JSON.stringify(projectStore.getState().tracks);
-      if (storeTracksStr !== JSON.stringify(payload.tracks)) {
-        core.execute({
-          id: nanoid(),
-          type: 'track.set',
-          payload: payload.tracks,
-        });
-      }
-    }
-  };
-
-  timeline.emitter.on('STATE_CHANGED', handleTimelineStateChanged);
-
+  // Captures timeline seek events
   const handleTimelineSeek = ({ payload }: any) => {
     projectStore.getState().seek(payload.time);
   };
@@ -126,23 +77,12 @@ export const addStudioSync = (
 
       // Selection cross-sync (Studio <-> Core)
       if (state.selectedIds !== currentPrevState.selectedIds) {
-        const timelineActiveIds = timeline.activeIds;
-        if (
-          JSON.stringify(timelineActiveIds) !==
-          JSON.stringify(state.selectedIds)
-        ) {
-          timeline.syncSelection(state.selectedIds);
-        }
-
-        const currentStudioSelection = studio.selection
-          .getSelection()
-          .map((c: any) => c.id);
-        if (
-          JSON.stringify(currentStudioSelection) !==
-          JSON.stringify(state.selectedIds)
-        ) {
-          studio.selectClipsByIds(state.selectedIds);
-        }
+        // Sync StudioStore (Global UI State)
+        const { setSelectedClips } = useStudioStore.getState();
+        const engineClips = state.selectedIds
+          .map((id) => studio.timeline.getClipById(id))
+          .filter(Boolean);
+        setSelectedClips(engineClips as any[]);
       }
     } catch (e) {
       console.warn('Core subscription error:', e);
@@ -151,10 +91,6 @@ export const addStudioSync = (
 
   return () => {
     studio.off('clip:transforming', handleClipTransforming as any);
-    studio.off('selection:created', handleSelectionFromStudio);
-    studio.off('selection:updated', handleSelectionFromStudio);
-    studio.off('selection:cleared', handleSelectionClearedFromStudio);
-    timeline.emitter.off('STATE_CHANGED', handleTimelineStateChanged);
     timeline.emitter.off(TIMELINE_SEEK, handleTimelineSeek);
     timeline.emitter.off('add:video', handleAddClip);
     timeline.emitter.off('add:image', handleAddClip);
