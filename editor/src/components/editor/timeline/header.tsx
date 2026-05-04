@@ -11,7 +11,7 @@ import {
 import { useClipActions } from '../options-floating-menu';
 import { useTimelineOffsetX } from '../hooks/use-timeline-offset';
 import { useStore } from 'zustand';
-import { engine, projectStore } from '@/lib/project';
+import { core, projectStore } from '@/lib/project';
 import { useStudioStore } from '@/stores/studio-store';
 import { useEffect, useState } from 'react';
 import { ITimelineScaleState } from '@openvideo/timeline';
@@ -94,18 +94,16 @@ const Header = ({
     useClipActions();
 
   const handleSplit = () => {
-    if (!studio) return;
-    const splitTime = currentTimeUs;
-    studio.splitSelected(splitTime);
+    core.clip.split(currentTimeUs);
   };
 
   const changeScale = (newScale: ITimelineScaleState) => {
     setScale(newScale);
   };
 
-  const handlePlay = () => engine.play();
-  const handlePause = () => engine.pause();
-  const handleSeek = (time: number) => engine.seek(time * 1_000_000);
+  const handlePlay = () => core.play();
+  const handlePause = () => core.pause();
+  const handleSeek = (time: number) => core.seek(time * 1_000_000);
 
   return (
     <div
@@ -142,8 +140,7 @@ const Header = ({
               size={'sm'}
               className="flex items-center gap-1 px-2"
             >
-              <Trash2 size={14} />{' '}
-              <span className="hidden lg:block">Delete</span>
+              <Trash2 size={14} />
             </Button>
 
             <Button
@@ -153,8 +150,7 @@ const Header = ({
               size={'sm'}
               className="flex items-center gap-1 px-2"
             >
-              <Scissors size={15} />{' '}
-              <span className="hidden lg:block">Split</span>
+              <Scissors size={15} />
             </Button>
             <Button
               disabled={!selectedClip || isLocked}
@@ -163,7 +159,7 @@ const Header = ({
               size={'sm'}
               className="flex items-center gap-1 px-2"
             >
-              <Copy size={15} /> <span className="hidden lg:block">Clone</span>
+              <Copy size={15} />
             </Button>
           </div>
           <div className="flex items-center justify-center">

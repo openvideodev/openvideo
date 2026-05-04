@@ -113,6 +113,19 @@ export class Core extends EventEmitter {
         payload: { id, updates },
       });
     },
+    split: (time?: number, id?: string) => {
+      const state = this.store.getState();
+      const splitId = id || state.selectedIds[0];
+      const splitTime = time !== undefined ? time : state.currentTime;
+
+      if (!splitId) return;
+
+      this.execute({
+        id: nanoid(),
+        type: 'clip.split',
+        payload: { id: splitId, time: splitTime },
+      });
+    },
   };
 
   public track = {

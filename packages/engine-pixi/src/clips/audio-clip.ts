@@ -125,11 +125,16 @@ export class Audio extends BaseClip implements IPlaybackCapable {
 
     clip.zIndex = json.zIndex;
     clip.opacity = json.opacity;
-    clip.flip = json.flip;
 
     // Apply animation if present
     if (json.animation) {
       clip.setAnimation(json.animation.keyFrames, json.animation.opts);
+    }
+
+    // Apply trim if present
+    if (json.trim) {
+      clip.trim.from = json.trim.from;
+      clip.trim.to = json.trim.to;
     }
 
     return clip;
@@ -230,16 +235,12 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     audio: Float32Array[];
     state: 'success' | 'done';
   }> {
-    if (!this.opts.loop && time >= this._meta.duration) {
-      // TODO: if time span is large, return done, theoretically may lose some audio frames
-      return await this.tickInterceptor(time, { audio: [], state: 'done' });
-    }
-
-    const deltaTime = time - this.timestamp;
+    const trimmedTime = time + this.trim.from;
+    const deltaTime = trimmedTime - this.timestamp;
 
     // reset
-    if (time < this.timestamp || deltaTime > 3e6) {
-      this.timestamp = time;
+    if (trimmedTime < this.timestamp || deltaTime > 3e6) {
+      this.timestamp = trimmedTime;
       this.frameOffset = Math.ceil(
         (this.timestamp / 1e6) * DEFAULT_AUDIO_CONF.sampleRate
       );
@@ -249,7 +250,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
       });
     }
 
-    this.timestamp = time;
+    this.timestamp = trimmedTime;
     const frameCnt = Math.ceil(
       (deltaTime / 1e6) * DEFAULT_AUDIO_CONF.sampleRate
     );
@@ -379,9 +380,10 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     timeSeconds: number
   ): Promise<void> {
     const audio = element as HTMLAudioElement;
+    const trimmedTime = timeSeconds + this.trim.from / 1e6;
     // Set time if needed
-    if (Math.abs(audio.currentTime - timeSeconds) > 0.1) {
-      audio.currentTime = timeSeconds;
+    if (Math.abs(audio.currentTime - trimmedTime) > 0.1) {
+      audio.currentTime = trimmedTime;
     }
 
     if (audio.paused) {
@@ -408,8 +410,9 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     timeSeconds: number
   ): Promise<void> {
     const audio = element as HTMLAudioElement;
+    const trimmedTime = timeSeconds + this.trim.from / 1e6;
     audio.pause();
-    audio.currentTime = timeSeconds;
+    audio.currentTime = trimmedTime;
 
     // Wait for seek to complete
     return new Promise<void>((resolve) => {
@@ -439,9 +442,10 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     timeSeconds: number
   ): void {
     const audio = element as HTMLAudioElement;
-    const clipDuration = this.meta.duration / 1e6; // Convert to seconds
+    const clipDuration = (this.trim.to - this.trim.from) / 1e6;
     const isWithinClip = timeSeconds >= 0 && timeSeconds < clipDuration;
 
+    const trimmedTime = timeSeconds + this.trim.from / 1e6;
     // Sync volume
     audio.volume = this.volume;
 
@@ -457,8 +461,8 @@ export class Audio extends BaseClip implements IPlaybackCapable {
       }
 
       // Update time when paused
-      if (isWithinClip && Math.abs(audio.currentTime - timeSeconds) > 0.1) {
-        audio.currentTime = timeSeconds;
+      if (isWithinClip && Math.abs(audio.currentTime - trimmedTime) > 0.1) {
+        audio.currentTime = trimmedTime;
       }
     }
   }

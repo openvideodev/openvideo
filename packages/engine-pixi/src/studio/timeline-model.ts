@@ -1267,6 +1267,11 @@ export class TimelineModel {
    * Split the selected clip at the given time or current time
    */
   async splitSelected(splitTime?: number): Promise<void> {
+    if (this.studio.opts.core) {
+      this.studio.opts.core.clip.split(splitTime);
+      return;
+    }
+
     const selected = Array.from(this.studio.selection.selectedClips);
     if (selected.length !== 1) {
       console.warn('[Studio] Split requires exactly one selected clip');

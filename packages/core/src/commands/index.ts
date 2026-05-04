@@ -8,6 +8,7 @@ export function registerDefaultHandlers() {
   commandRegistry.register('clip.add', clipHandlers.addClipHandler);
   commandRegistry.register('clip.update', clipHandlers.updateClipHandler);
   commandRegistry.register('clip.remove', clipHandlers.removeClipsHandler);
+  commandRegistry.register('clip.split', clipHandlers.splitClipHandler);
 
   commandRegistry.register('track.add', trackHandlers.addTrackHandler);
   commandRegistry.register('track.remove', trackHandlers.removeTrackHandler);

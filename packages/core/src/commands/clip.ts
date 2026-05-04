@@ -1,6 +1,7 @@
 import { CommandHandler, Patch } from './types';
 import { AnyClip } from '../types';
 import { manageTracks } from '../utils/manage-tracks';
+import { generateId } from '../utils/id';
 
 export const addClipHandler: CommandHandler<{
   clip: AnyClip;
@@ -98,6 +99,115 @@ export const removeClipsHandler: CommandHandler<{ ids: string[] }> = (
       oldValue: state.selectedIds,
     });
   }
+
+  return patches;
+};
+
+export const splitClipHandler: CommandHandler<{
+  id: string;
+  time: number;
+}> = (state, command) => {
+  const { id, time } = command.payload;
+  const clip = state.clips[id];
+  if (!clip || clip.locked) return [];
+
+  if (
+    time <= clip.display.from ||
+    (clip.display.to > 0 && time >= clip.display.to)
+  ) {
+    return [];
+  }
+
+  const patches: Patch[] = [];
+  const splitOffset = time - clip.display.from;
+  const playbackRate = clip.playbackRate || 1;
+  const splitOffsetInSource = splitOffset * playbackRate;
+
+  // 1. Update original clip (Left Part)
+  const leftClip = {
+    ...clip,
+    duration: splitOffset,
+    display: {
+      ...clip.display,
+      to: time,
+    },
+  };
+
+  if (clip.trim) {
+    leftClip.trim = {
+      ...clip.trim,
+      to: clip.trim.from + splitOffsetInSource,
+    };
+  }
+
+  patches.push({
+    op: 'update',
+    path: `/clips/${id}`,
+    value: leftClip,
+    oldValue: clip,
+  });
+
+  // 2. Create new clip (Right Part)
+  const newClipId = generateId();
+  const rightClip: AnyClip = {
+    ...clip,
+    id: newClipId,
+    display: {
+      ...clip.display,
+      from: time,
+    },
+    duration: clip.duration - splitOffset,
+  };
+
+  console.log('split', {
+    leftClip,
+    rightClip,
+    splitOffsetInSource,
+    playbackRate,
+    splitOffset,
+    time,
+    clip,
+  });
+
+  if (clip.trim) {
+    rightClip.trim = {
+      ...clip.trim,
+      from: clip.trim.from + splitOffsetInSource,
+    };
+  }
+
+  patches.push({
+    op: 'add',
+    path: `/clips/${newClipId}`,
+    value: rightClip,
+  });
+
+  // 3. Update track
+  const track = state.tracks.find((t) => t.clipIds.includes(id));
+  if (track) {
+    const nextClipIds = [...track.clipIds];
+    const index = nextClipIds.indexOf(id);
+    nextClipIds.splice(index + 1, 0, newClipId);
+
+    const nextTracks = state.tracks.map((t) =>
+      t.id === track.id ? { ...t, clipIds: nextClipIds } : t
+    );
+
+    patches.push({
+      op: 'update',
+      path: '/tracks',
+      value: nextTracks,
+      oldValue: state.tracks,
+    });
+  }
+
+  // 4. Update selection
+  patches.push({
+    op: 'update',
+    path: '/selectedIds',
+    value: [newClipId],
+    oldValue: state.selectedIds,
+  });
 
   return patches;
 };

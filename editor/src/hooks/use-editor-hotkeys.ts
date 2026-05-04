@@ -30,11 +30,7 @@ export function useEditorHotkeys({
     // Split
     hotkeys('command+b, ctrl+b', (event, handler) => {
       event.preventDefault();
-      if (studio) {
-        // Studio expects microseconds
-        const splitTime = currentTimeUs;
-        studio.splitSelected(splitTime);
-      }
+      core.clip.split(currentTimeUs);
     });
 
     // Delete
