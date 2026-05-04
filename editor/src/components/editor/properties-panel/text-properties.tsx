@@ -40,6 +40,8 @@ import {
   IconPlus,
   IconTrash,
   IconEdit,
+  IconChevronDown,
+  IconCheck,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import {
@@ -51,6 +53,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import color from 'color';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 
 import { fontManager } from '@openvideo/engine-pixi';
 import { getGroupedFonts, getFontByPostScriptName } from '@/utils/font-utils';
@@ -73,41 +77,49 @@ const FontPicker = React.memo(
     const [isOpen, setIsOpen] = useState(false);
 
     const fontItems = useMemo(() => {
-      if (!isOpen) return null;
       return GROUPED_FONTS.map((family) => (
-        <SelectItem key={family.family} value={family.family}>
-          <div className="flex items-center py-1">
-            <img
-              src={family.mainFont.preview}
-              alt={family.family}
-              className="h-6 invert object-contain"
-              loading="lazy"
-            />
-          </div>
-        </SelectItem>
+        <button
+          key={family.family}
+          className={cn(
+            'flex w-full items-center px-2 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground',
+            currentFamily.family === family.family &&
+            'bg-accent/50 text-accent-foreground'
+          )}
+          onClick={() => {
+            handleFontChange(family.mainFont.postScriptName);
+            setIsOpen(false);
+          }}
+        >
+          <span className="flex-1 text-left">{family.family}</span>
+          {currentFamily.family === family.family && (
+            <IconCheck className="size-4 ml-2" />
+          )}
+        </button>
       ));
-    }, [isOpen]);
+    }, [currentFamily.family, handleFontChange]);
 
     return (
-      <Select
-        value={currentFamily.family}
-        onValueChange={(v) => {
-          const family = GROUPED_FONTS.find((f) => f.family === v);
-          if (family) {
-            handleFontChange(family.mainFont.postScriptName);
-          }
-        }}
-        onOpenChange={setIsOpen}
-      >
-        <SelectTrigger className="w-full h-12">
-          <SelectValue placeholder="Select font">
-            <div className="flex items-center h-full">
-              {currentFamily.family}
-            </div>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent className="max-h-[300px]">{fontItems}</SelectContent>
-      </Select>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={isOpen}
+            className="w-full h-9 justify-between px-3 border-input"
+          >
+            <span className="truncate">{currentFamily.family}</span>
+            <IconChevronDown className="size-4 opacity-50 shrink-0 ml-2" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] p-0 gap-0"
+          align="start"
+        >
+          <ScrollArea className="h-72 w-full">
+            <div className="flex flex-col p-1 gap-px">{fontItems}</div>
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
     );
   }
 );
@@ -336,7 +348,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
             value={currentFont.postScriptName}
             onValueChange={(v) => handleFontChange(v)}
           >
-            <SelectTrigger className="bg-input border h-9 w-full overflow-hidden">
+            <SelectTrigger className="border h-9 w-full overflow-hidden">
               <SelectValue placeholder="Style" />
             </SelectTrigger>
             <SelectContent>

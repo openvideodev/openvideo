@@ -1,17 +1,11 @@
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/theme-provider';
+import { Geist, Geist_Mono, Outfit } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import './globals.css';
 
-const interHeading = Inter({ subsets: ['latin'], variable: '--font-heading' });
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit-sans' });
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
@@ -32,7 +26,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} font-sans`}
+      className={cn(geistMono.variable, "font-sans", outfit.variable)}
     >
       <body className={`antialiased dark`}>
         <TooltipProvider>{children}</TooltipProvider>= <Toaster />

@@ -19,6 +19,8 @@
     "@genkit-ai/ai": "^1.28.0",
     "@genkit-ai/google-genai": "^1.28.0",
     "@genkit-ai/next": "^1.28.0",
+    "@hugeicons/core-free-icons": "^4.1.1",
+    "@hugeicons/react": "^1.1.6",
     "@openvideo/core": "workspace:*",
     "@openvideo/engine-pixi": "workspace:*",
     "@openvideo/timeline": "workspace:*",

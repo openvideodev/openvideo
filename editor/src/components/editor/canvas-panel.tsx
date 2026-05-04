@@ -36,10 +36,7 @@ const STUDIO_CONFIG = {
   spacing: 20,
 } as const;
 
-const THEME_COLORS = {
-  dark: '#1C160D',
-  light: '#ffffff',
-} as const;
+
 
 interface CanvasPanelProps {
   onReady?: () => void;
@@ -55,7 +52,6 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
   const onReadyRef = useRef(onReady);
   const { setStudio, setSelectedClips } = useStudioStore();
   const { canvasSize, initialStudioJSON } = useProjectStore();
-  const { theme, resolvedTheme } = useTheme();
   const {
     selectedClip,
     isLocked,
@@ -92,7 +88,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     studioRef.current = new Studio({
       ...canvasSize,
       ...STUDIO_CONFIG,
-      bgColor: '#262028',
+      bgColor: '#222222',
       canvas: canvasRef.current,
       core: core,
     });
