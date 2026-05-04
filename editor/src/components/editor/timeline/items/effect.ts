@@ -1,5 +1,6 @@
-import { Resizable, ResizableProps } from '@openvideo/timeline';
+import { Control, Resizable, ResizableProps } from '@openvideo/timeline';
 import { editorFont } from '@/components/editor/constants';
+import { createResizeControls } from '../controls';
 
 interface EffectProps extends ResizableProps {
   name: string;
@@ -13,16 +14,21 @@ class Effect extends Resizable {
   static type = 'Effect';
   public name: string;
   public effect: { key: string; name: string };
-  public backgroundColorDiv: string = '#7c2d12';
+  static createControls(): { controls: Record<string, Control> } {
+    return { controls: createResizeControls() };
+  }
 
   constructor(props: EffectProps) {
     super(props);
+    console.log('Effect props', props);
     this.id = props.id;
+    this.rx = 0;
+    this.ry = 0;
     this.display = props.display;
     this.tScale = props.tScale;
     this.name = props.name;
     this.effect = props.effect;
-    this.fill = '#7c2d12';
+    this.fill = '#3f6212';
   }
 
   public _render(ctx: CanvasRenderingContext2D) {
@@ -56,8 +62,8 @@ class Effect extends Resizable {
     if (!this.isSelected) return;
 
     const borderColor = 'rgba(255, 255, 255, 1.0)';
-    const borderWidth = 2;
-    const innerRadius = 4;
+    const borderWidth = 1.5;
+    const innerRadius = 0;
 
     ctx.save();
     ctx.fillStyle = borderColor;

@@ -16,6 +16,8 @@ class ItemManager {
   }
 
   public addTrackItem(trackItem: IClip) {
+    console.log('addTrackItem', trackItem);
+
     const object = loadObject(trackItem, {
       tScale: this.timeline.tScale,
       sizesMap: this.timeline.sizesMap,

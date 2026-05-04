@@ -26,6 +26,8 @@ class Image extends Resizable {
     this.src = props.src;
     this.display = props.display;
     this.tScale = props.tScale;
+    this.rx = 0;
+    this.ry = 0;
     this.loadImage();
   }
 

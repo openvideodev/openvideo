@@ -64,9 +64,9 @@ const Timeline = () => {
 
   const timelineOffsetX = useTimelineOffsetX();
   const timelineContainerRef = useRef<HTMLDivElement>(null);
-  const onMouseDown = () => {};
-  const onMouseMove = () => {};
-  const onMouseOut = () => {};
+  const onMouseDown = () => { };
+  const onMouseMove = () => { };
+  const onMouseOut = () => { };
 
   const [timeline, setTimeline] = useState<CanvasTimeline | null>(null);
   useEffect(() => {
@@ -99,7 +99,7 @@ const Timeline = () => {
     }
   }, [currentTimeUs]);
   console.log('TTTTTT');
-  const onResizeCanvas = (payload: { width: number; height: number }) => {};
+  const onResizeCanvas = (payload: { width: number; height: number }) => { };
 
   useEffect(() => {
     const timelineContainerEl = timelineContainerRef.current;
@@ -158,7 +158,7 @@ const Timeline = () => {
       sizesMap: {
         caption: 32,
         text: 32,
-        effect: 36,
+        effect: 32,
         audio: 36,
         video: 48,
         image: 48,

@@ -19,10 +19,12 @@ class Caption extends Resizable {
 
   constructor(props: CaptionsProps) {
     super(props);
-    this.fill = '#1B272C';
+    this.fill = '#701a75';
     this.tScale = props.tScale;
     this.display = props.display;
     this.text = props.text;
+    this.rx = 0;
+    this.ry = 0;
 
     this.borderColor = 'transparent';
     this.stroke = 'transparent';
@@ -81,8 +83,8 @@ class Caption extends Resizable {
     const borderColor = this.isSelected
       ? 'rgba(255, 255, 255,1.0)'
       : 'rgba(255, 255, 255,0.05)';
-    const borderWidth = 2;
-    const innerRadius = 4;
+    const borderWidth = 1.5;
+    const innerRadius = 0;
 
     ctx.save();
     ctx.fillStyle = borderColor;

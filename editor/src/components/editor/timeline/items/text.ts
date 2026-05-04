@@ -20,13 +20,13 @@ class Text extends Resizable {
     super(props);
     console.log('Text props', props);
 
-    this.fill = '#201630';
+    this.fill = '#7c2d12';
     this.id = props.id;
     this.borderColor = 'transparent';
     this.stroke = 'transparent';
     this.text = props.text;
-    // this.rx = 0;
-    // this.ry = 0;
+    this.rx = 0;
+    this.ry = 0;
   }
 
   public _render(ctx: CanvasRenderingContext2D) {

@@ -575,24 +575,7 @@ export default function Header() {
           >
             <Keyboard className="size-5" />
           </Button>
-
-          <Button
-            size={'sm'}
-            variant="outline"
-            onClick={toggleCopilot}
-            className="h-7"
-            title="Toggle Chat Copilot"
-          >
-            <Icons.ai className="size-5" />
-            <span className="hidden md:block">AI Chat</span>
-          </Button>
         </div>
-        <Link href="https://discord.gg/SCfMrQx8kr" target="_blank">
-          <Button className="h-7 rounded-lg" variant={'outline'}>
-            <LogoIcons.discord className="w-6 h-6" />
-            <span className="hidden md:block">Join Us</span>
-          </Button>
-        </Link>
 
         {/* End of right actions */}
 
@@ -604,8 +587,6 @@ export default function Header() {
           open={isShortcutsModalOpen}
           onOpenChange={setIsShortcutsModalOpen}
         />
-
-        <ModeToggle />
 
         <Button
           size="sm"

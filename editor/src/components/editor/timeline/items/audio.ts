@@ -66,13 +66,16 @@ class Audio extends Trimmable {
 
   constructor(props: AudioProps) {
     super(props);
+    console.log('Audio props', props);
     this.id = props.id;
     this.tScale = props.tScale;
     this.display = props.display;
     this.trim = props.trim;
     this.duration = props.duration;
-    this.fill = '#2D1625';
+    this.fill = '#064e3b';
     this.src = props.src;
+    this.rx = 0;
+    this.ry = 0;
     this.objectCaching = false;
     this.initOffscreenCanvas();
     this.initialize();
@@ -190,8 +193,8 @@ class Audio extends Trimmable {
     const borderColor = this.isSelected
       ? 'rgba(255, 255, 255,1.0)'
       : 'rgba(255, 255, 255,0.05)';
-    const borderWidth = 2;
-    const innerRadius = 4;
+    const borderWidth = 1.5;
+    const innerRadius = 0;
 
     ctx.save();
     ctx.fillStyle = borderColor;
@@ -273,9 +276,10 @@ class Audio extends Trimmable {
         const x = Math.round(i * barWidth - visibleStart);
         if (x >= 0 && x < this.offscreenCanvas!.width) {
           const amplitude = bar.amplitude || 0;
-          const height = Math.round(amplitude * 15);
-          const y = Math.round((20 - height) / 2 + 8);
-          ctx.rect(x, y, 1, height);
+          const barMaxHeight = this.height * 0.4;
+          const barHeight = Math.round(amplitude * barMaxHeight);
+          const y = this.height - barHeight - 4;
+          ctx.rect(x, y, 1, barHeight);
         }
       }
     }

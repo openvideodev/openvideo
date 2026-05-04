@@ -87,8 +87,8 @@ class Video extends Trimmable {
     this.id = props.id;
     this.tScale = props.tScale;
     this.objectCaching = false;
-    this.rx = 4;
-    this.ry = 4;
+    this.rx = 0;
+    this.ry = 0;
     this.display = props.display;
     this.trim = props.trim;
     this.duration = props.duration;

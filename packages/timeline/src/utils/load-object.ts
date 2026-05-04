@@ -37,8 +37,8 @@ export const loadObject = (
       to: item.duration || display.to - display.from,
     },
     text: itemAny.text,
+    name: itemAny.name,
     srcs: (itemAny.srcs as string[]) || [],
-    backgroundColorDiv: itemAny.backgroundColor,
     svgString: itemAny.svgString,
     preview: itemAny.preview,
   };
