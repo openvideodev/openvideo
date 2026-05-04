@@ -24,6 +24,7 @@
   "main": "src/index.ts",
   "module": "src/index.ts",
   "types": "src/index.ts",
+
   "scripts": {
     "test": "vitest",
     "test:browser": "vitest run --project unit-chromium",

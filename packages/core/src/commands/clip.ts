@@ -17,8 +17,8 @@ export const addClipHandler: CommandHandler<{
   });
 
   // Manage tracks (add clip to track)
-  const { tracks: nextTracks } = manageTracks(state.tracks, clip, { trackId });
-
+  const { tracks: nextTracks } = manageTracks(state.tracks, clip, state.clips, { trackId });
+  console.log("ADD CLIP", {nextTracks, clip})
   // Since tracks is an array, we might want to replace the whole thing or do specific updates.
   // Replacing the whole tracks array is safer for now given our simple patch system.
   patches.push({

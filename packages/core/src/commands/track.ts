@@ -75,3 +75,14 @@ export const moveTrackHandler: CommandHandler<{
     },
   ];
 };
+
+export const setTracksHandler: CommandHandler<ITrack[]> = (state, command) => {
+  return [
+    {
+      op: 'update',
+      path: '/tracks',
+      value: command.payload,
+      oldValue: state.tracks,
+    },
+  ];
+};

@@ -1,8 +1,8 @@
 import { fontManager } from '@openvideo/engine-pixi';
 import { duplicateClip, splitClip, trimClip } from './action-handlers';
 import { core, projectStore } from '@/lib/project';
-import { nanoid } from '@openvideo/core';
 import { generateCaptionClips } from '@/lib/caption-generator';
+import { nanoid } from '@openvideo/core';
 
 export const handleAddClip = async (input: any) => {
   const {
@@ -156,7 +156,7 @@ export const handleAddEffect = async (input: any) => {
   const to = input.to ? (input.to - from < 1 ? 1 : input.to) : from + 5;
 
   await core.clip.add({
-    type: 'effect',
+    type: 'Effect',
     name: input.effectName,
     display: {
       from: from * 1_000_000,
@@ -220,7 +220,7 @@ export const handleGenerateVoiceover = async (input: any) => {
 
     if (data.url) {
       await core.clip.add({
-        type: 'audio',
+        type: 'Audio',
         src: data.url,
         display: {
           from: from * 1000000,
@@ -294,7 +294,15 @@ export const handleGenerateCaptions = async (input: any) => {
     }
 
     if (clipsToAdd.length > 0) {
-      await core.addClips(clipsToAdd);
+      const fullClips = await Promise.all(
+        clipsToAdd.map((clip) => core.clip.prepare(clip))
+      );
+      const commands = fullClips.map((clip) => ({
+        id: nanoid(),
+        type: 'clip.add',
+        payload: { clip },
+      }));
+      core.batch(commands as any);
     }
   } catch (error) {
     console.error('Failed to generate captions:', error);

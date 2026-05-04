@@ -85,6 +85,7 @@ export class StudioBridge {
 
       // Handle Tracks
       if (parts[0] === 'tracks') {
+        console.log("SETTING TRACKS")
         this.studio.setTracks(this.core.store.getState().tracks as any);
       }
 

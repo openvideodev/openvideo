@@ -29,6 +29,7 @@ const ACCEPTS_MAP: Record<string, string[]> = {
 export const manageTracks = (
   tracks: ITrack[],
   clip: AnyClip,
+  allClips: Record<string, AnyClip>,
   options?: AddClipOptions
 ): TrackManagementResult => {
   let nextTracks = [...tracks];
@@ -67,10 +68,10 @@ export const manageTracks = (
   }
 
   if (!targetTrackId) {
-    // For Effects, we usually want a new track every time to avoid overlapping filters
+    // For Effects, we always want a new track to avoid overlapping filters affecting the same range
     if (clip.type === 'Effect') {
       const newTrack: ITrack = {
-        id: 'track_' + generateId(),
+        id: generateId(),
         name: `Effect Track ${tracks.filter((t) => t.type === 'effect').length + 1}`,
         type: 'effect',
         clipIds: [clip.id],
@@ -79,16 +80,30 @@ export const manageTracks = (
       nextTracks.push(newTrack);
       targetTrackId = newTrack.id;
     } else {
-      // Find first track of same type
+      // Find a track of the same type that DOES NOT overlap with the new clip
       const existingType = clip.type.toLowerCase();
-      const existingTrack = tracks.find(
-        (t) => t.type === existingType || t.type === clip.type
-      );
+      const compatibleTrack = tracks.find((t) => {
+        const isCorrectType = t.type === existingType || t.type === clip.type;
+        if (!isCorrectType) return false;
 
-      if (existingTrack) {
-        targetTrackId = existingTrack.id;
+        // Check for overlaps with existing clips on this track
+        const hasOverlap = t.clipIds.some((id) => {
+          const existingClip = allClips[id];
+          if (!existingClip) return false;
+
+          return !(
+            clip.display.to <= existingClip.display.from ||
+            clip.display.from >= existingClip.display.to
+          );
+        });
+
+        return !hasOverlap;
+      });
+
+      if (compatibleTrack) {
+        targetTrackId = compatibleTrack.id;
       } else {
-        // Create new track
+        // Create new track if no compatible non-overlapping track found
         const newTrack: ITrack = {
           id: generateId(),
           name: `${clip.type} Track`,

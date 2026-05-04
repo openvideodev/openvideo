@@ -12,6 +12,7 @@ export function registerDefaultHandlers() {
   commandRegistry.register('track.add', trackHandlers.addTrackHandler);
   commandRegistry.register('track.remove', trackHandlers.removeTrackHandler);
   commandRegistry.register('track.move', trackHandlers.moveTrackHandler);
+  commandRegistry.register('track.set', trackHandlers.setTracksHandler);
 
   commandRegistry.register(
     'project.updateSettings',

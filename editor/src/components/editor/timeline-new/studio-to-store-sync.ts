@@ -79,8 +79,11 @@ export const addStudioSync = (
     if (payload.tracks) {
       const storeTracksStr = JSON.stringify(projectStore.getState().tracks);
       if (storeTracksStr !== JSON.stringify(payload.tracks)) {
-        // Track reorder — use direct store write (no undo needed for track reorders within timeline)
-        projectStore.getState().setTracks(payload.tracks);
+        core.execute({
+          id: nanoid(),
+          type: 'track.set',
+          payload: payload.tracks,
+        });
       }
     }
   };
