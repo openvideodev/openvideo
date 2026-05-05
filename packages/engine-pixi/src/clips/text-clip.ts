@@ -764,6 +764,11 @@ export class Text extends BaseClip<ITextEvents> {
 
     // Split text into words for SplitBitmapText
     const words = textToRender.split(/\s+/).filter((v) => v.length > 0);
+    let distanceDropShadow = 0;
+
+    if (this.textStyle._dropShadow) {
+      distanceDropShadow = this.textStyle._dropShadow.distance;
+    }
 
     // Cleanup old word texts
     this.wordTexts.forEach((w) => w.destroy());
@@ -898,7 +903,7 @@ export class Text extends BaseClip<ITextEvents> {
 
       line.words.forEach((wordText, wordIndex) => {
         wordText.x = Math.round(currentX);
-        wordText.y = Math.round(currentY);
+        wordText.y = Math.round(currentY - distanceDropShadow);
         currentX +=
           (wordText.getLocalBounds().width || wordText.width) +
           (wordIndex < line.words.length - 1 ? spaceWidth : 0);
