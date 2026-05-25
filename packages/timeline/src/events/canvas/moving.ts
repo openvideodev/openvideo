@@ -1,6 +1,6 @@
-import { Track } from '../../objects';
-import Timeline from '../../timeline';
-import { timeUsToUnits } from '../../utils';
+import { Track } from "../../objects";
+import Timeline from "../../timeline";
+import { timeUsToUnits } from "../../utils";
 
 function handleMovingEvent(this: Timeline) {
   const state = this.dragStateManager.getState();
@@ -12,17 +12,12 @@ function handleMovingEvent(this: Timeline) {
 
   const activeObjectIds = new Set(state.activeObjects.map((obj) => obj.id));
   const placeholders = state.placeholderMovingObjects;
-  const totalPlaceholderWidth = placeholders.reduce(
-    (total, obj) => total + obj.width,
-    0
-  );
+  const totalPlaceholderWidth = placeholders.reduce((total, obj) => total + obj.width, 0);
   const minPlaceholderLeft =
-    placeholders.length > 0
-      ? Math.min(...placeholders.map((obj) => obj.left))
-      : 0;
+    placeholders.length > 0 ? Math.min(...placeholders.map((obj) => obj.left)) : 0;
 
   // Adjust all magnetic tracks to ensure no gaps
-  const tracks = canvas.getObjects('Track') as Track[];
+  const tracks = canvas.getObjects("Track") as Track[];
   tracks.forEach((track) => {
     if (!track.magnetic) return;
 
@@ -48,42 +43,26 @@ function handleMovingEvent(this: Timeline) {
   });
 
   // 3. Handle normal track ordering (if target is not magnetic)
-  if (
-    targetTrack instanceof Track &&
-    !isMagnetic &&
-    state.orderNormalTrack
-  ) {
+  if (targetTrack instanceof Track && !isMagnetic && state.orderNormalTrack) {
     const itemsIdsInTrack = targetTrack.clipIds;
     const objectsInTrack = canvas.itemsManager
       .getTrackItems()
-      .filter(
-        (o) => !activeObjectIds.has(o.id) && itemsIdsInTrack.includes(o.id)
-      );
+      .filter((o) => !activeObjectIds.has(o.id) && itemsIdsInTrack.includes(o.id));
     const sortObjectInTrack = objectsInTrack.sort((a, b) => a.left - b.left);
     const firstPlaceholderObj = state.placeholderMovingObjects[0];
     const lastPlaceholderObj =
-      state.placeholderMovingObjects[
-        state.placeholderMovingObjects.length - 1
-      ];
+      state.placeholderMovingObjects[state.placeholderMovingObjects.length - 1];
     if (firstPlaceholderObj && lastPlaceholderObj) {
       const placeholderLeft = firstPlaceholderObj.left;
       const placeholderWidth =
-        lastPlaceholderObj.left -
-        firstPlaceholderObj.left +
-        lastPlaceholderObj.width;
+        lastPlaceholderObj.left - firstPlaceholderObj.left + lastPlaceholderObj.width;
       const nextObj = sortObjectInTrack.find((obj, index) => {
         if (obj.left >= placeholderLeft - 1) return sortObjectInTrack[index];
       });
-      const filterRightObj = objectsInTrack.filter(
-        (o) => o.left >= placeholderLeft - 1
-      );
+      const filterRightObj = objectsInTrack.filter((o) => o.left >= placeholderLeft - 1);
 
-      if (
-        nextObj &&
-        firstPlaceholderObj.left + placeholderWidth > nextObj.left
-      ) {
-        const diffBetweenObjs =
-          placeholderWidth - (nextObj.left - firstPlaceholderObj.left);
+      if (nextObj && firstPlaceholderObj.left + placeholderWidth > nextObj.left) {
+        const diffBetweenObjs = placeholderWidth - (nextObj.left - firstPlaceholderObj.left);
         filterRightObj.forEach((o) => {
           const currentLeft = timeUsToUnits(o.display.from, canvas.tScale);
           o.left = currentLeft + diffBetweenObjs;
@@ -95,9 +74,9 @@ function handleMovingEvent(this: Timeline) {
 }
 
 export function addMovingEvents(timeline: Timeline) {
-  timeline.on('object:moving', handleMovingEvent.bind(timeline));
+  timeline.on("object:moving", handleMovingEvent.bind(timeline));
 }
 
 export function removeMovingEvents(timeline: Timeline) {
-  timeline.off('object:moving', handleMovingEvent.bind(timeline));
+  timeline.off("object:moving", handleMovingEvent.bind(timeline));
 }

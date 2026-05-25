@@ -1,5 +1,5 @@
-import { Canvas, FabricObject } from 'fabric';
-import { Helper, Placeholder, Track } from '../objects';
+import { Canvas, FabricObject } from "fabric";
+import { Helper, Placeholder, Track } from "../objects";
 
 export interface MovingState {
   canvas: Canvas | null;

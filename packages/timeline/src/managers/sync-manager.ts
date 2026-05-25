@@ -1,13 +1,7 @@
-import {
-  IClip,
-  ITransitionClip,
-  ITimelineScaleState,
-  IUpdateStateOptions,
-  State,
-} from '../types';
-import { splitClips, clipsToMap, getDuration } from '../utils/timeline';
-import Timeline, { ITimelineTrack } from '../timeline';
-import { cloneDeep } from '../utils/clone-deep';
+import { IClip, ITransitionClip, ITimelineScaleState, IUpdateStateOptions, State } from "../types";
+import { splitClips, clipsToMap, getDuration } from "../utils/timeline";
+import Timeline, { ITimelineTrack } from "../timeline";
+import { cloneDeep } from "../utils/clone-deep";
 
 class SyncManager {
   private timeline: Timeline;
@@ -39,25 +33,21 @@ class SyncManager {
     if (activeIds.length === 1 && timelineActiveIds.length === 1) {
       const activeId = activeIds[0];
       const timelineActiveId = timelineActiveIds[0];
-      let templateId: string = '';
+      let templateId: string = "";
       this.timeline.tracks.forEach((s: ITimelineTrack) => {
         if (s.id === timelineActiveId) {
           const items = s.clipIds;
           if (items.includes(activeId)) templateId = s.id;
         }
       });
-      if (templateId !== '') return;
+      if (templateId !== "") return;
       this.timeline.itemsManager.selectTrackItemByIds([activeId]);
     } else {
       this.timeline.itemsManager.selectTrackItemByIds(activeIds);
     }
   }
 
-  public syncTracksAndClips(data: {
-    tracks: ITimelineTrack[];
-    duration: number;
-    clips: IClip[];
-  }) {
+  public syncTracksAndClips(data: { tracks: ITimelineTrack[]; duration: number; clips: IClip[] }) {
     this.syncAddOrRemoveClips({
       tracks: data.tracks,
       clips: data.clips,
@@ -67,10 +57,7 @@ class SyncManager {
     } as any);
   }
 
-  public syncTracks(data: {
-    tracks: ITimelineTrack[];
-    changedTracks: string[];
-  }) {
+  public syncTracks(data: { tracks: ITimelineTrack[]; changedTracks: string[] }) {
     if (data.changedTracks.length) {
       this._setTracks(data.tracks);
       this.timeline.tracksManager.renderTracks();
@@ -116,19 +103,21 @@ class SyncManager {
 
       // Sync Timing
       if (data.changedTrimIds?.includes(item.id)) {
-        const itemTrim = itemDetail.trim;
+        const itemTrim = itemDetail.trim || itemDetail.timing?.trim;
         if (itemTrim) {
           item.set({ trim: { from: itemTrim.from, to: itemTrim.to } });
         }
       }
 
       if (data.changedDisplayIds?.includes(item.id)) {
-        const itemDisplay = itemDetail.display;
-        if (
-          itemDetail.playbackRate !==
-          previousTrackItemsMap[item.id]?.playbackRate
-        ) {
-          item.playbackRate = itemDetail.playbackRate;
+        const itemDisplay = itemDetail.display || itemDetail.timing?.display;
+        const currentPlaybackRate = itemDetail.playbackRate ?? itemDetail.timing?.playbackRate ?? 1;
+        const previousPlaybackRate =
+          previousTrackItemsMap[item.id]?.playbackRate ??
+          previousTrackItemsMap[item.id]?.timing?.playbackRate ??
+          1;
+        if (currentPlaybackRate !== previousPlaybackRate) {
+          item.playbackRate = currentPlaybackRate;
           item.onScale && item.onScale();
         }
         if (itemDisplay) {
@@ -178,10 +167,7 @@ class SyncManager {
     this.timeline.trackItemIds = regular.map((c) => c.id);
 
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
-      string,
-      ITransitionClip
-    >;
+    this.timeline.transitionsMap = clipsToMap(transitions) as Record<string, ITransitionClip>;
 
     this.timeline.tracksManager.renderTracks();
     this.timeline.tracksManager.refreshTrackLayout();
@@ -195,9 +181,7 @@ class SyncManager {
   }
 
   public syncAddOrRemoveClips(currentState: State) {
-    const trackItemIdsInCanvas = this.timeline.itemsManager
-      .getTrackItems()
-      .map((o) => o.id);
+    const trackItemIdsInCanvas = this.timeline.itemsManager.getTrackItems().map((o) => o.id);
 
     const { regular, transitions } = splitClips(currentState.clips);
     const desiredTrackItemIds = regular.map((c) => c.id);
@@ -225,17 +209,13 @@ class SyncManager {
 
     this.timeline.trackItemIds = desiredTrackItemIds;
     this.timeline.transitionIds = transitions.map((c) => c.id);
-    this.timeline.transitionsMap = clipsToMap(transitions) as Record<
-      string,
-      ITransitionClip
-    >;
+    this.timeline.transitionsMap = clipsToMap(transitions) as Record<string, ITransitionClip>;
     this.timeline.activeIds = currentState.activeIds;
 
     this.timeline.tracksManager.renderTracks();
     this.timeline.itemsManager.alignItemsToTrack();
     this.timeline.itemsManager.updateTrackItemCoords();
-    this.timeline.duration =
-      currentState.duration || getDuration(this.timeline.trackItemsMap);
+    this.timeline.duration = currentState.duration || getDuration(this.timeline.trackItemsMap);
     this.timeline.calcBounding();
     this.timeline.transitionManager.updateTransitions();
     this.timeline.tracksManager.refreshTrackLayout();
@@ -244,15 +224,13 @@ class SyncManager {
 
   public setActiveIds(activeIds: string[]) {
     this.timeline.activeIds = activeIds;
-    this.timeline.emitter.emit('STATE_CHANGED', {
+    this.timeline.emitter.emit("STATE_CHANGED", {
       payload: { activeIds: cloneDeep(this.timeline.activeIds) },
-      options: { kind: 'layer:selection', updateHistory: false },
+      options: { kind: "layer:selection", updateHistory: false },
     });
   }
 
-  public updateState(
-    dataHistory: IUpdateStateOptions = { updateHistory: false, kind: 'update' }
-  ) {
+  public updateState(dataHistory: IUpdateStateOptions = { updateHistory: false, kind: "update" }) {
     this.timeline.tracksManager.filterEmptyTracks();
     this.timeline.itemsManager.synchronizeTrackItemsState();
 
@@ -264,7 +242,7 @@ class SyncManager {
 
     const state = this.getUpdatedState();
 
-    this.timeline.emitter.emit('STATE_CHANGED', {
+    this.timeline.emitter.emit("STATE_CHANGED", {
       payload: state,
       options: dataHistory,
     });

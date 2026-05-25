@@ -55,11 +55,7 @@ const POINT_POS = [-1, 1, -1, -1, 1, -1, 1, -1, 1, 1, -1, 1];
 const TEX_COORD_POS = [0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1];
 
 // Initialize shader program to tell WebGL how to render our data
-function initShaderProgram(
-  gl: WebGLRenderingContext,
-  vsSource: string,
-  fsSource: string
-) {
+function initShaderProgram(gl: WebGLRenderingContext, vsSource: string, fsSource: string) {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource)!;
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource)!;
 
@@ -70,10 +66,7 @@ function initShaderProgram(
   gl.linkProgram(shaderProgram);
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    throw Error(
-      gl.getProgramInfoLog(shaderProgram) ??
-        'Unable to initialize the shader program'
-    );
+    throw Error(gl.getProgramInfoLog(shaderProgram) ?? "Unable to initialize the shader program");
   }
 
   return shaderProgram;
@@ -93,17 +86,13 @@ function loadShader(gl: WebGLRenderingContext, type: number, source: string) {
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     const errMsg = gl.getShaderInfoLog(shader);
     gl.deleteShader(shader);
-    throw Error(errMsg ?? 'An error occurred compiling the shaders');
+    throw Error(errMsg ?? "An error occurred compiling the shaders");
   }
 
   return shader;
 }
 
-function updateTexture(
-  gl: WebGLRenderingContext,
-  img: ImgSource,
-  texture: WebGLTexture
-) {
+function updateTexture(gl: WebGLRenderingContext, img: ImgSource, texture: WebGLTexture) {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -111,7 +100,7 @@ function updateTexture(
 
 function initTexture(gl: WebGLRenderingContext) {
   const texture = gl.createTexture();
-  if (texture == null) throw Error('Create WebGL texture error');
+  if (texture == null) throw Error("Create WebGL texture error");
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
   // put a single pixel in the texture so we can use it immediately.
@@ -132,7 +121,7 @@ function initTexture(gl: WebGLRenderingContext) {
     border,
     srcFormat,
     srcType,
-    pixel
+    pixel,
   );
 
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -154,69 +143,45 @@ function initCanvas(
   opts: {
     width: number;
     height: number;
-  } & IChromakeyOpts
+  } & IChromakeyOpts,
 ) {
   const canvas =
-    'document' in globalThis
-      ? globalThis.document.createElement('canvas')
+    "document" in globalThis
+      ? globalThis.document.createElement("canvas")
       : new OffscreenCanvas(opts.width, opts.height);
   canvas.width = opts.width;
   canvas.height = opts.height;
 
-  const gl = canvas.getContext('webgl2', {
+  const gl = canvas.getContext("webgl2", {
     premultipliedAlpha: false,
     alpha: true,
   }) as WebGL2RenderingContext | null;
 
-  if (gl == null) throw Error('Cant create gl context');
+  if (gl == null) throw Error("Cant create gl context");
 
   const shaderProgram = initShaderProgram(gl, vertexShader, fragmentShader);
   gl.useProgram(shaderProgram);
 
   gl.uniform3fv(
-    gl.getUniformLocation(shaderProgram, 'keyColor'),
-    opts.keyColor.map((v) => v / 255)
+    gl.getUniformLocation(shaderProgram, "keyColor"),
+    opts.keyColor.map((v) => v / 255),
   );
-  gl.uniform1f(
-    gl.getUniformLocation(shaderProgram, 'similarity'),
-    opts.similarity
-  );
-  gl.uniform1f(
-    gl.getUniformLocation(shaderProgram, 'smoothness'),
-    opts.smoothness
-  );
-  gl.uniform1f(gl.getUniformLocation(shaderProgram, 'spill'), opts.spill);
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, "similarity"), opts.similarity);
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, "smoothness"), opts.smoothness);
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, "spill"), opts.spill);
 
   const posBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(POINT_POS), gl.STATIC_DRAW);
-  const a_position = gl.getAttribLocation(shaderProgram, 'a_position');
-  gl.vertexAttribPointer(
-    a_position,
-    2,
-    gl.FLOAT,
-    false,
-    Float32Array.BYTES_PER_ELEMENT * 2,
-    0
-  );
+  const a_position = gl.getAttribLocation(shaderProgram, "a_position");
+  gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 2, 0);
   gl.enableVertexAttribArray(a_position);
 
   const texCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array(TEX_COORD_POS),
-    gl.STATIC_DRAW
-  );
-  const a_texCoord = gl.getAttribLocation(shaderProgram, 'a_texCoord');
-  gl.vertexAttribPointer(
-    a_texCoord,
-    2,
-    gl.FLOAT,
-    false,
-    Float32Array.BYTES_PER_ELEMENT * 2,
-    0
-  );
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(TEX_COORD_POS), gl.STATIC_DRAW);
+  const a_texCoord = gl.getAttribLocation(shaderProgram, "a_texCoord");
+  gl.vertexAttribPointer(a_texCoord, 2, gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 2, 0);
   gl.enableVertexAttribArray(a_texCoord);
 
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -240,7 +205,7 @@ function getSourceWH(imgSource: ImgSource) {
 
 function getKeyColor(imgSource: ImgSource) {
   const canvas = new OffscreenCanvas(1, 1);
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
   ctx.drawImage(imgSource, 0, 0);
   const {
     data: [r, g, b],
@@ -262,9 +227,9 @@ function getKeyColor(imgSource: ImgSource) {
  * }
  */
 export const createChromakey = (
-  opts: Omit<IChromakeyOpts, 'keyColor'> & {
+  opts: Omit<IChromakeyOpts, "keyColor"> & {
     keyColor?: [number, number, number];
-  }
+  },
 ) => {
   let canvas: HTMLCanvasElement | OffscreenCanvas | null = null;
   let gl: WebGLRenderingContext | null = null;
@@ -284,12 +249,9 @@ export const createChromakey = (
 
     updateTexture(gl, imgSource, texture);
 
-    if (
-      globalThis.VideoFrame != null &&
-      imgSource instanceof globalThis.VideoFrame
-    ) {
+    if (globalThis.VideoFrame != null && imgSource instanceof globalThis.VideoFrame) {
       const frame = new VideoFrame(canvas, {
-        alpha: 'keep',
+        alpha: "keep",
         timestamp: imgSource.timestamp,
         duration: imgSource.duration ?? undefined,
       });
@@ -298,7 +260,7 @@ export const createChromakey = (
     }
 
     return createImageBitmap(canvas, {
-      imageOrientation: imgSource instanceof ImageBitmap ? 'flipY' : 'none',
+      imageOrientation: imgSource instanceof ImageBitmap ? "flipY" : "none",
     });
   };
 };

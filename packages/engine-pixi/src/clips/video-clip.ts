@@ -1,23 +1,23 @@
-import type { MP4Info, MP4Sample } from 'wrapbox';
-import { file, tmpfile, write } from 'opfs-tools';
-import { Log } from '../utils/log';
+import type { MP4Info, MP4Sample } from "wrapbox";
+import { file, tmpfile, write } from "opfs-tools";
+import { Log } from "../utils/log";
 import {
   createVFRotater,
   extractFileConfig,
   parseMatrix,
   quickParseMP4File,
-} from '../mp4-utils/mp4box-utils';
-import { audioResample, extractPCM4AudioData, sleep } from '../utils';
-import { BaseClip } from './base-clip';
-import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
-import { type VideoJSON } from '../json-serialization';
-import { ResourceManager } from '../studio/resource-manager';
+} from "../mp4-utils/mp4box-utils";
+import { audioResample, extractPCM4AudioData, sleep } from "../utils";
+import { BaseClip } from "./base-clip";
+import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from "./iclip";
+import { type VideoJSON } from "../json-serialization";
+import { ResourceManager } from "../studio/resource-manager";
 
 let CLIP_ID = 0;
 
 type OPFSToolFile = ReturnType<typeof file>;
 function isOTFile(obj: any): obj is OPFSToolFile {
-  return obj.kind === 'file' && obj.createReader instanceof Function;
+  return obj.kind === "file" && obj.createReader instanceof Function;
 }
 
 // Internally used for creating Video instances
@@ -38,13 +38,13 @@ export interface IMP4ClipOpts {
   __unsafe_hardwareAcceleration__?: HardwarePreference;
 }
 
-type ExtMP4Sample = Omit<MP4Sample, 'data'> & {
+type ExtMP4Sample = Omit<MP4Sample, "data"> & {
   is_idr: boolean;
   deleted?: boolean;
   data: null | Uint8Array;
 };
 
-type LocalFileReader = Awaited<ReturnType<OPFSToolFile['createReader']>>;
+type LocalFileReader = Awaited<ReturnType<OPFSToolFile["createReader"]>>;
 /**
  * Video clip, parses MP4 files, uses {@link Video.tick} to decode image frames at specified time on demand
  *
@@ -69,12 +69,12 @@ type LocalFileReader = Awaited<ReturnType<OPFSToolFile['createReader']>>;
  *
  */
 export class Video extends BaseClip implements IPlaybackCapable {
-  readonly type = 'Video';
+  readonly type = "Video";
   private insId = CLIP_ID++;
 
   private logger = Log.create(`Video id:${this.insId},`);
 
-  ready: IClip['ready'];
+  ready: IClip["ready"];
 
   private _meta = {
     // microseconds
@@ -101,12 +101,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
   async getFileHeaderBinData() {
     await this.ready;
     const oFile = await this.localFile.getOriginFile();
-    if (oFile == null) throw Error('Video localFile is not origin file');
+    if (oFile == null) throw Error("Video localFile is not origin file");
 
     return await new Blob(
-      this.headerBoxPos.map(({ start, size }) =>
-        oFile.slice(start, start + size)
-      )
+      this.headerBoxPos.map(({ start, size }) => oFile.slice(start, start + size)),
     ).arrayBuffer();
   }
 
@@ -160,10 +158,8 @@ export class Video extends BaseClip implements IPlaybackCapable {
     duration: number;
   }> = [];
 
-  getVisibleHandles(): Array<
-    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
-  > {
-    return ['tl', 'tr', 'bl', 'br', 'rot'];
+  getVisibleHandles(): Array<"tl" | "tr" | "bl" | "br" | "ml" | "mr" | "mt" | "mb" | "rot"> {
+    return ["tl", "tr", "bl", "br", "rot"];
   }
 
   /**
@@ -187,7 +183,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
       y?: number;
       width?: number;
       height?: number;
-    } = {}
+    } = {},
   ): Promise<Video> {
     const stream = await ResourceManager.getReadableStream(url);
     const clip = new Video(stream, {}, url);
@@ -205,23 +201,23 @@ export class Video extends BaseClip implements IPlaybackCapable {
   constructor(
     source: OPFSToolFile | ReadableStream<Uint8Array> | MPClipCloneArgs,
     opts: IMP4ClipOpts = {},
-    src?: string
+    src?: string,
   ) {
     super();
     // Always set src, defaulting to empty string if not provided
-    this.src = src !== undefined ? src : '';
+    this.src = src !== undefined ? src : "";
     if (
       !(source instanceof ReadableStream) &&
       !isOTFile(source) &&
       !Array.isArray(source.videoSamples)
     ) {
-      throw Error('Illegal argument');
+      throw Error("Illegal argument");
     }
 
     this.opts = { audio: true, ...opts };
-    this.audio = typeof this.opts.audio === 'boolean' ? this.opts.audio : true;
+    this.audio = typeof this.opts.audio === "boolean" ? this.opts.audio : true;
     this.volume =
-      typeof opts.audio === 'object' && 'volume' in opts.audio
+      typeof opts.audio === "object" && "volume" in opts.audio
         ? opts.audio.volume
         : ((opts as any).volume ?? 1);
 
@@ -232,106 +228,82 @@ export class Video extends BaseClip implements IPlaybackCapable {
 
     this.localFile = isOTFile(source)
       ? source
-      : 'localFile' in source
+      : "localFile" in source
         ? source.localFile // from clone
         : tmpfile();
 
     // Override the ready promise from BaseClip with our initialization
     this.ready = (
       source instanceof ReadableStream
-        ? initByStream(source).then((otFile) =>
-            mp4FileToSamples(otFile, this.opts)
-          )
+        ? initByStream(source).then((otFile) => mp4FileToSamples(otFile, this.opts))
         : isOTFile(source)
           ? mp4FileToSamples(source, this.opts)
           : Promise.resolve(source)
-    ).then(
-      async ({
+    ).then(async ({ videoSamples, audioSamples, decoderConf, headerBoxPos, parsedMatrix }) => {
+      this.videoSamples = videoSamples;
+      this.audioSamples = audioSamples;
+      this.decoderConf = decoderConf;
+      this.headerBoxPos = headerBoxPos;
+      this.parsedMatrix = parsedMatrix;
+
+      const { videoFrameFinder, audioFrameFinder } = genDecoder(
+        {
+          video:
+            decoderConf.video == null
+              ? null
+              : {
+                  ...decoderConf.video,
+                  hardwareAcceleration: this.opts.__unsafe_hardwareAcceleration__,
+                },
+          audio: decoderConf.audio,
+        },
+        await this.localFile.createReader(),
         videoSamples,
         audioSamples,
-        decoderConf,
-        headerBoxPos,
-        parsedMatrix,
-      }) => {
-        this.videoSamples = videoSamples;
-        this.audioSamples = audioSamples;
-        this.decoderConf = decoderConf;
-        this.headerBoxPos = headerBoxPos;
-        this.parsedMatrix = parsedMatrix;
+        this.opts.audio !== false ? this.volume : 0,
+      );
+      this.videoFrameFinder = videoFrameFinder;
+      this.audioFrameFinder = audioFrameFinder;
 
-        const { videoFrameFinder, audioFrameFinder } = genDecoder(
-          {
-            video:
-              decoderConf.video == null
-                ? null
-                : {
-                    ...decoderConf.video,
-                    hardwareAcceleration:
-                      this.opts.__unsafe_hardwareAcceleration__,
-                  },
-            audio: decoderConf.audio,
-          },
-          await this.localFile.createReader(),
-          videoSamples,
-          audioSamples,
-          this.opts.audio !== false ? this.volume : 0
-        );
-        this.videoFrameFinder = videoFrameFinder;
-        this.audioFrameFinder = audioFrameFinder;
-
-        const { codedWidth, codedHeight } = decoderConf.video ?? {};
-        if (codedWidth && codedHeight) {
-          this.vfRotater = createVFRotater(
-            codedWidth,
-            codedHeight,
-            parsedMatrix.rotationDeg
-          );
-        }
-
-        this._meta = genMeta(
-          decoderConf,
-          videoSamples,
-          audioSamples,
-          parsedMatrix.rotationDeg
-        );
-
-        this.logger.info('Video meta:', this._meta);
-        const meta = { ...this._meta };
-        // Update rect and duration from meta (BaseClip pattern)
-        this.width = this.width === 0 ? meta.width : this.width;
-        this.height = this.height === 0 ? meta.height : this.height;
-
-        // Update trim.to if not set or exceeds meta.duration
-        this.trim.to =
-          this.trim.to === 0
-            ? meta.duration
-            : Math.min(this.trim.to, meta.duration);
-
-        // Ensure trim.from is also valid
-        this.trim.from = Math.min(this.trim.from, this.trim.to);
-
-        const effectiveDuration =
-          (this.trim.to - this.trim.from) / this.playbackRate;
-        this.duration = this.duration === 0 ? effectiveDuration : this.duration;
-
-        // Display check: if duration was 0 or incorrect from placeholder, sync it
-        if (Math.abs(this.duration - effectiveDuration) > 1) {
-          this.duration = effectiveDuration;
-        }
-
-        // Update display.to when duration changes
-        this.display.to = this.display.from + this.duration;
-
-        // Listen for volume changes to update audio finder
-        this.on('propsChange', (props) => {
-          if (props.volume !== undefined && this.audioFrameFinder) {
-            this.audioFrameFinder.setVolume(props.volume);
-          }
-        });
-
-        return meta;
+      const { codedWidth, codedHeight } = decoderConf.video ?? {};
+      if (codedWidth && codedHeight) {
+        this.vfRotater = createVFRotater(codedWidth, codedHeight, parsedMatrix.rotationDeg);
       }
-    );
+
+      this._meta = genMeta(decoderConf, videoSamples, audioSamples, parsedMatrix.rotationDeg);
+
+      this.logger.info("Video meta:", this._meta);
+      const meta = { ...this._meta };
+      // Update rect and duration from meta (BaseClip pattern)
+      this.width = this.width === 0 ? meta.width : this.width;
+      this.height = this.height === 0 ? meta.height : this.height;
+
+      // Update trim.to if not set or exceeds meta.duration
+      this.trim.to = this.trim.to === 0 ? meta.duration : Math.min(this.trim.to, meta.duration);
+
+      // Ensure trim.from is also valid
+      this.trim.from = Math.min(this.trim.from, this.trim.to);
+
+      const effectiveDuration = (this.trim.to - this.trim.from) / this.playbackRate;
+      this.duration = this.duration === 0 ? effectiveDuration : this.duration;
+
+      // Display check: if duration was 0 or incorrect from placeholder, sync it
+      if (Math.abs(this.duration - effectiveDuration) > 1) {
+        this.duration = effectiveDuration;
+      }
+
+      // Update display.to when duration changes
+      this.display.to = this.display.from + this.duration;
+
+      // Listen for volume changes to update audio finder
+      this.on("propsChange", (props) => {
+        if (props.volume !== undefined && this.audioFrameFinder) {
+          this.audioFrameFinder.setVolume(props.volume);
+        }
+      });
+
+      return meta;
+    });
   }
 
   /**
@@ -340,9 +312,9 @@ export class Video extends BaseClip implements IPlaybackCapable {
    * @param tickRet Data returned by tick
    *
    *    */
-  tickInterceptor: <T extends Awaited<ReturnType<Video['tick']>>>(
+  tickInterceptor: <T extends Awaited<ReturnType<Video["tick"]>>>(
     time: number,
-    tickRet: T
+    tickRet: T,
   ) => Promise<T> = async (_, tickRet) => tickRet;
 
   /**
@@ -352,13 +324,13 @@ export class Video extends BaseClip implements IPlaybackCapable {
   async tick(time: number): Promise<{
     video?: VideoFrame;
     audio: Float32Array[];
-    state: 'success' | 'done';
+    state: "success" | "done";
   }> {
     const trimmedTime = time + this.trim.from;
     if (trimmedTime > this.trim.to || trimmedTime > this._meta.duration) {
       return await this.tickInterceptor(time, {
         audio: (await this.audioFrameFinder?.find(trimmedTime)) ?? [],
-        state: 'done',
+        state: "done",
       });
     }
 
@@ -370,66 +342,18 @@ export class Video extends BaseClip implements IPlaybackCapable {
     if (video == null) {
       return await this.tickInterceptor(time, {
         audio,
-        state: 'success',
+        state: "success",
       });
     }
 
     return await this.tickInterceptor(time, {
       video,
       audio,
-      state: 'success',
+      state: "success",
     });
   }
-  async split(time: number) {
-    await this.ready;
-
-    if (time <= 0 || time >= this._meta.duration)
-      throw Error('time out of bounds');
-
-    const [preVideoSlice, postVideoSlice] = splitVideoSampleByTime(
-      this.videoSamples,
-      time
-    );
-    const [preAudioSlice, postAudioSlice] = splitAudioSampleByTime(
-      this.audioSamples,
-      time
-    );
-    const preClip = new Video(
-      {
-        localFile: this.localFile,
-        videoSamples: preVideoSlice ?? [],
-        audioSamples: preAudioSlice ?? [],
-        decoderConf: this.decoderConf,
-        headerBoxPos: this.headerBoxPos,
-        parsedMatrix: this.parsedMatrix,
-      },
-      this.opts,
-      this.src
-    );
-    const postClip = new Video(
-      {
-        localFile: this.localFile,
-        videoSamples: postVideoSlice ?? [],
-        audioSamples: postAudioSlice ?? [],
-        decoderConf: this.decoderConf,
-        headerBoxPos: this.headerBoxPos,
-        parsedMatrix: this.parsedMatrix,
-      },
-      this.opts,
-      this.src
-    );
-    await Promise.all([preClip.ready, postClip.ready]);
-
-    return [preClip, postClip] as [this, this];
-  }
-
   // Effects
-  addEffect(effect: {
-    id: string;
-    key: string;
-    startTime: number;
-    duration: number;
-  }) {
+  addEffect(effect: { id: string; key: string; startTime: number; duration: number }) {
     this.effects.push(effect);
   }
 
@@ -439,7 +363,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
       key: string;
       startTime: number;
       duration: number;
-    }>
+    }>,
   ) {
     const effect = this.effects.find((e) => e.id === effectId);
     if (effect) {
@@ -454,6 +378,13 @@ export class Video extends BaseClip implements IPlaybackCapable {
     }
   }
 
+  /**
+   * Split is handled by core state, not implemented here
+   */
+  async split(_time: number): Promise<[this, this]> {
+    throw new Error("Video.split is not implemented - use core state instead");
+  }
+
   async clone() {
     await this.ready;
     const clip = new Video(
@@ -466,7 +397,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
         parsedMatrix: this.parsedMatrix,
       },
       this.opts,
-      this.src
+      this.src,
     );
     await clip.ready;
     clip.tickInterceptor = this.tickInterceptor;
@@ -478,61 +409,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
     return clip as this;
   }
 
-  /**
-   * Split Video into VideoClips containing only video track and audio track
-   * @returns VideoClip[]
-   */
-  async splitTrack() {
-    await this.ready;
-    const clips: Video[] = [];
-    if (this.videoSamples.length > 0) {
-      const videoClip = new Video(
-        {
-          localFile: this.localFile,
-          videoSamples: [...this.videoSamples],
-          audioSamples: [],
-          decoderConf: {
-            video: this.decoderConf.video,
-            audio: null,
-          },
-          headerBoxPos: this.headerBoxPos,
-          parsedMatrix: this.parsedMatrix,
-        },
-        this.opts,
-        this.src
-      );
-      await videoClip.ready;
-      videoClip.tickInterceptor = this.tickInterceptor;
-      clips.push(videoClip);
-    }
-    if (this.audioSamples.length > 0) {
-      const audioClip = new Video(
-        {
-          localFile: this.localFile,
-          videoSamples: [],
-          audioSamples: [...this.audioSamples],
-          decoderConf: {
-            audio: this.decoderConf.audio,
-            video: null,
-          },
-          headerBoxPos: this.headerBoxPos,
-          parsedMatrix: this.parsedMatrix,
-        },
-        this.opts,
-        this.src
-      );
-      await audioClip.ready;
-      audioClip.tickInterceptor = this.tickInterceptor;
-      clips.push(audioClip);
-    }
-
-    return clips;
-  }
-
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
-    this.logger.info('Video destroy');
+    this.logger.info("Video destroy");
     super.destroy();
 
     this.videoFrameFinder?.destroy();
@@ -543,7 +423,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
     const base = super.toJSON(main);
     return {
       ...base,
-      type: 'Video',
+      type: "Video",
       audio: this.audio,
       volume: this.volume,
       id: this.id,
@@ -557,7 +437,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
    * @returns Promise that resolves to a Video instance
    */
   static async fromObject(json: VideoJSON): Promise<Video> {
-    if (json.type !== 'Video') {
+    if (json.type !== "Video") {
       throw new Error(`Expected Video, got ${json.type}`);
     }
 
@@ -572,20 +452,28 @@ export class Video extends BaseClip implements IPlaybackCapable {
     // await clip.ready; - Removed for performance
 
     // Apply properties
-    clip.left = json.left;
-    clip.top = json.top;
-    clip.width = json.width;
-    clip.height = json.height;
-    clip.angle = json.angle;
+    if (json.transform) {
+      clip.left = json.transform.x;
+      clip.top = json.transform.y;
+      clip.width = json.transform.width;
+      clip.height = json.transform.height;
+      clip.angle = json.transform.angle;
+      clip.zIndex = json.transform.zIndex;
+      clip.opacity = json.transform.opacity;
+      clip.flip = json.transform.flip ?? null;
+    }
 
-    clip.display.from = json.display.from;
-    clip.display.to = json.display.to;
-    clip.duration = json.duration;
-    clip.playbackRate = json.playbackRate;
+    const timing = json.timing || {
+      display: json.display || { from: 0, to: 0 },
+      trim: json.trim || { from: 0, to: 0 },
+      duration: json.duration ?? 0,
+      playbackRate: json.playbackRate ?? 1,
+    };
 
-    clip.zIndex = json.zIndex;
-    clip.opacity = json.opacity;
-    clip.flip = json.flip ?? null;
+    clip.display.from = timing.display.from;
+    clip.display.to = timing.display.to;
+    clip.duration = timing.duration;
+    clip.playbackRate = timing.playbackRate;
 
     if (json.style) {
       clip.style = { ...clip.style, ...json.style };
@@ -608,9 +496,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
     }
 
     // Apply trim if present
-    if (json.trim) {
-      clip.trim.from = json.trim.from;
-      clip.trim.to = json.trim.to;
+    const trim = json.trim || timing.trim;
+    if (trim) {
+      clip.trim.from = trim.from;
+      clip.trim.to = trim.to;
     }
 
     if (json.volume !== undefined) {
@@ -647,52 +536,49 @@ export class Video extends BaseClip implements IPlaybackCapable {
     const mp4ClipAny = this as any;
     const localFile = mp4ClipAny.localFile;
 
-    if (!localFile || typeof localFile.getOriginFile !== 'function') {
-      throw new Error('Video does not have a local file for playback');
+    if (!localFile || typeof localFile.getOriginFile !== "function") {
+      throw new Error("Video does not have a local file for playback");
     }
 
     const originFile = await localFile.getOriginFile();
     if (!originFile) {
-      throw new Error('Failed to get origin file from VideoClip');
+      throw new Error("Failed to get origin file from VideoClip");
     }
 
     const objectUrl = URL.createObjectURL(originFile);
-    const video = document.createElement('video');
+    const video = document.createElement("video");
 
-    video.crossOrigin = 'anonymous';
+    video.crossOrigin = "anonymous";
     video.muted = true;
     video.autoplay = false;
     video.playsInline = true;
-    video.preload = 'auto';
+    video.preload = "auto";
     video.loop = false;
     video.src = objectUrl;
 
     // Wait for video to be ready
     await new Promise<void>((resolve, reject) => {
       const onLoadedData = () => {
-        video.removeEventListener('loadeddata', onLoadedData);
-        video.removeEventListener('error', onError);
+        video.removeEventListener("loadeddata", onLoadedData);
+        video.removeEventListener("error", onError);
         video.pause();
         video.currentTime = 0;
         resolve();
       };
       const onError = () => {
-        video.removeEventListener('loadeddata', onLoadedData);
-        video.removeEventListener('error', onError);
-        reject(new Error('Failed to load video'));
+        video.removeEventListener("loadeddata", onLoadedData);
+        video.removeEventListener("error", onError);
+        reject(new Error("Failed to load video"));
       };
-      video.addEventListener('loadeddata', onLoadedData, { once: true });
-      video.addEventListener('error', onError, { once: true });
+      video.addEventListener("loadeddata", onLoadedData, { once: true });
+      video.addEventListener("error", onError, { once: true });
       video.load();
     });
 
     return { element: video, objectUrl };
   }
 
-  async play(
-    element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
-  ): Promise<void> {
+  async play(element: HTMLVideoElement | HTMLAudioElement, timeSeconds: number): Promise<void> {
     const video = element as HTMLVideoElement;
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
     // Set time if needed
@@ -710,7 +596,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
         try {
           await video.play();
         } catch (retryErr) {
-          console.warn('Failed to play video:', retryErr);
+          console.warn("Failed to play video:", retryErr);
         }
       }
     }
@@ -722,10 +608,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
     video.muted = true;
   }
 
-  async seek(
-    element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
-  ): Promise<void> {
+  async seek(element: HTMLVideoElement | HTMLAudioElement, timeSeconds: number): Promise<void> {
     const video = element as HTMLVideoElement;
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
     video.pause();
@@ -739,15 +622,15 @@ export class Video extends BaseClip implements IPlaybackCapable {
       }
 
       const onSeeked = () => {
-        video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener("seeked", onSeeked);
         resolve();
       };
 
-      video.addEventListener('seeked', onSeeked, { once: true });
+      video.addEventListener("seeked", onSeeked, { once: true });
 
       // Timeout after 500ms
       setTimeout(() => {
-        video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener("seeked", onSeeked);
         resolve();
       }, 500);
     });
@@ -756,7 +639,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
   syncPlayback(
     element: HTMLVideoElement | HTMLAudioElement,
     isPlaying: boolean,
-    timeSeconds: number
+    timeSeconds: number,
   ): void {
     const video = element as HTMLVideoElement;
     const clipDuration = (this.trim.to - this.trim.from) / 1e6;
@@ -795,13 +678,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
     }
   }
 
-  cleanupPlayback(
-    element: HTMLVideoElement | HTMLAudioElement,
-    objectUrl?: string
-  ): void {
+  cleanupPlayback(element: HTMLVideoElement | HTMLAudioElement, objectUrl?: string): void {
     const video = element as HTMLVideoElement;
     video.pause();
-    video.removeAttribute('src');
+    video.removeAttribute("src");
     video.load();
 
     if (objectUrl) {
@@ -857,7 +737,7 @@ function genMeta(
   decoderConf: MP4DecoderConf,
   videoSamples: ExtMP4Sample[],
   audioSamples: ExtMP4Sample[],
-  rotationDeg: number
+  rotationDeg: number,
 ) {
   const meta = {
     duration: 0,
@@ -904,29 +784,20 @@ function genDecoder(
   localFileReader: LocalFileReader,
   videoSamples: ExtMP4Sample[],
   audioSamples: ExtMP4Sample[],
-  volume: number
+  volume: number,
 ) {
   return {
     audioFrameFinder:
       volume === 0 || decoderConf.audio == null || audioSamples.length === 0
         ? null
-        : new AudioFrameFinder(
-            localFileReader,
-            audioSamples,
-            decoderConf.audio,
-            {
-              volume,
-              targetSampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-            }
-          ),
+        : new AudioFrameFinder(localFileReader, audioSamples, decoderConf.audio, {
+            volume,
+            targetSampleRate: DEFAULT_AUDIO_CONF.sampleRate,
+          }),
     videoFrameFinder:
       decoderConf.video == null || videoSamples.length === 0
         ? null
-        : new VideoFrameFinder(
-            localFileReader,
-            videoSamples,
-            decoderConf.video
-          ),
+        : new VideoFrameFinder(localFileReader, videoSamples, decoderConf.video),
   };
 }
 
@@ -962,12 +833,12 @@ async function mp4FileToSamples(otFile: OPFSToolFile, opts: IMP4ClipOpts = {}) {
 
       let { videoDecoderConf: vc, audioDecoderConf: ac } = extractFileConfig(
         data.mp4boxFile,
-        data.info
+        data.info,
       );
       decoderConf.video = vc ?? null;
       decoderConf.audio = ac ?? null;
       if (vc == null && ac == null) {
-        Log.error('Video no video and audio track');
+        Log.error("Video no video and audio track");
       }
       if (ac != null) {
         const { supported } = await AudioDecoder.isConfigSupported(ac);
@@ -982,41 +853,41 @@ async function mp4FileToSamples(otFile: OPFSToolFile, opts: IMP4ClipOpts = {}) {
         }
       }
       Log.info(
-        'mp4BoxFile moov ready',
+        "mp4BoxFile moov ready",
         {
           ...data.info,
           tracks: null,
           videoTracks: null,
           audioTracks: null,
         },
-        decoderConf
+        decoderConf,
       );
     },
     (_, type, samples) => {
-      if (type === 'video') {
+      if (type === "video") {
         if (videoDeltaTS === -1) videoDeltaTS = samples[0].dts;
         for (const s of samples) {
-          videoSamples.push(normalizeTimescale(s, videoDeltaTS, 'video'));
+          videoSamples.push(normalizeTimescale(s, videoDeltaTS, "video"));
         }
-      } else if (type === 'audio' && opts.audio) {
+      } else if (type === "audio" && opts.audio) {
         if (audioDeltaTS === -1) audioDeltaTS = samples[0].dts;
         for (const s of samples) {
-          audioSamples.push(normalizeTimescale(s, audioDeltaTS, 'audio'));
+          audioSamples.push(normalizeTimescale(s, audioDeltaTS, "audio"));
         }
       }
-    }
+    },
   );
   await reader.close();
 
   const lastSampele = videoSamples.at(-1) ?? audioSamples.at(-1);
   if (mp4Info == null) {
-    throw Error('Video stream is done, but not emit ready');
+    throw Error("Video stream is done, but not emit ready");
   } else if (lastSampele == null) {
-    throw Error('Video stream not contain any sample');
+    throw Error("Video stream not contain any sample");
   }
   // Fix first black frame
   fixFirstBlackFrame(videoSamples);
-  Log.info('mp4 stream parsed');
+  Log.info("mp4 stream parsed");
   return {
     videoSamples,
     audioSamples,
@@ -1026,18 +897,12 @@ async function mp4FileToSamples(otFile: OPFSToolFile, opts: IMP4ClipOpts = {}) {
   };
 }
 
-function normalizeTimescale(
-  s: MP4Sample,
-  delta = 0,
-  sampleType: 'video' | 'audio'
-) {
+function normalizeTimescale(s: MP4Sample, delta = 0, sampleType: "video" | "audio") {
   // todo: perf discard redundant fields, small objects perform better
   let offset = s.offset;
   // When IDR frame contains non-image data (like SEI) before it, decoding may fail
   const idrOffset =
-    sampleType === 'video' && s.is_sync
-      ? idrNALUOffset(s.data, s.description.type)
-      : -1;
+    sampleType === "video" && s.is_sync ? idrNALUOffset(s.data, s.description.type) : -1;
 
   let size = s.size;
   if (idrOffset > 0) {
@@ -1056,7 +921,7 @@ function normalizeTimescale(
     duration: (s.duration / s.timescale) * 1e6,
     timescale: 1e6,
     // Audio data volume is controllable, save directly in memory
-    data: sampleType === 'video' ? null : s.data,
+    data: sampleType === "video" ? null : s.data,
   };
 }
 
@@ -1065,7 +930,7 @@ class VideoFrameFinder {
   constructor(
     public localFileReader: LocalFileReader,
     public samples: ExtMP4Sample[],
-    public conf: VideoDecoderConfig
+    public conf: VideoDecoderConfig,
   ) {}
 
   private timestamp = 0;
@@ -1073,7 +938,7 @@ class VideoFrameFinder {
   find = async (time: number): Promise<VideoFrame | null> => {
     if (
       this.decoder == null ||
-      this.decoder.state === 'closed' ||
+      this.decoder.state === "closed" ||
       time <= this.timestamp ||
       time - this.timestamp > 3e6
     ) {
@@ -1102,9 +967,9 @@ class VideoFrameFinder {
   private parseFrame = async (
     time: number,
     dec: VideoDecoder | null,
-    aborter: { abort: boolean; st: number }
+    aborter: { abort: boolean; st: number },
   ): Promise<VideoFrame | null> => {
-    if (dec == null || dec.state === 'closed' || aborter.abort) return null;
+    if (dec == null || dec.state === "closed" || aborter.abort) return null;
 
     if (this.videoFrames.length > 0) {
       const vf = this.videoFrames[0];
@@ -1130,14 +995,9 @@ class VideoFrameFinder {
     }
 
     // Missing frame data
-    if (
-      this.decoding ||
-      (this.outputFrameCnt < this.inputChunkCnt && dec.decodeQueueSize > 0)
-    ) {
+    if (this.decoding || (this.outputFrameCnt < this.inputChunkCnt && dec.decodeQueueSize > 0)) {
       if (performance.now() - aborter.st > 6e3) {
-        throw Error(
-          `Video.tick video timeout, ${JSON.stringify(this.getState())}`
-        );
+        throw Error(`Video.tick video timeout, ${JSON.stringify(this.getState())}`);
       }
       // Decoding, wait, then retry
       this.sleepCnt += 1;
@@ -1179,7 +1039,7 @@ class VideoFrameFinder {
     if (hasValidFrame) {
       const samples = this.samples.slice(this.videoDecCursorIdx, endIdx);
       if (samples[0]?.is_idr !== true) {
-        Log.warn('First sample not idr frame');
+        Log.warn("First sample not idr frame");
       } else {
         const readStartTime = performance.now();
         const chunks = await videosamples2Chunks(samples, this.localFileReader);
@@ -1190,13 +1050,11 @@ class VideoFrameFinder {
           const last = samples.at(-1)!;
           const rangSize = last.offset + last.size - first.offset;
           Log.warn(
-            `Read video samples time cost: ${Math.round(
-              readCost
-            )}ms, file chunk size: ${rangSize}`
+            `Read video samples time cost: ${Math.round(readCost)}ms, file chunk size: ${rangSize}`,
           );
         }
         // Wait for the previous asynchronous operation to complete, at which point the task may have already been terminated
-        if (dec.state === 'closed') return;
+        if (dec.state === "closed") return;
 
         this.lastVfDur = chunks[0]?.duration ?? 0;
         decodeGoP(dec, chunks, {
@@ -1205,7 +1063,7 @@ class VideoFrameFinder {
               throw err;
             } else if (this.outputFrameCnt === 0) {
               this.downgradeSoftDecode = true;
-              Log.warn('Downgrade to software decode');
+              Log.warn("Downgrade to software decode");
               this.reset();
             }
           },
@@ -1236,12 +1094,10 @@ class VideoFrameFinder {
     }
     this.inputChunkCnt = 0;
     this.outputFrameCnt = 0;
-    if (this.decoder?.state !== 'closed') this.decoder?.close();
+    if (this.decoder?.state !== "closed") this.decoder?.close();
     const encoderConf = {
       ...this.conf,
-      ...(this.downgradeSoftDecode
-        ? { hardwareAcceleration: 'prefer-software' }
-        : {}),
+      ...(this.downgradeSoftDecode ? { hardwareAcceleration: "prefer-software" } : {}),
     } as VideoDecoderConfig;
     this.decoder = new VideoDecoder({
       output: (vf) => {
@@ -1260,7 +1116,7 @@ class VideoFrameFinder {
         this.videoFrames.push(rsVf);
       },
       error: (err) => {
-        if (err.message.includes('Codec reclaimed due to inactivity')) {
+        if (err.message.includes("Codec reclaimed due to inactivity")) {
           // todo: Should decoder that was auto-closed due to inactivity be auto-restarted?
           this.decoder = null;
           Log.warn(err.message);
@@ -1269,9 +1125,7 @@ class VideoFrameFinder {
 
         const errMsg = `VideoFinder VideoDecoder err: ${
           err.message
-        }, config: ${JSON.stringify(encoderConf)}, state: ${JSON.stringify(
-          this.getState()
-        )}`;
+        }, config: ${JSON.stringify(encoderConf)}, state: ${JSON.stringify(this.getState())}`;
         Log.error(errMsg);
         throw Error(errMsg);
       },
@@ -1302,7 +1156,7 @@ class VideoFrameFinder {
     this.videoFrames = [];
 
     // Properly close the decoder
-    if (this.decoder && this.decoder.state !== 'closed') {
+    if (this.decoder && this.decoder.state !== "closed") {
       try {
         this.decoder.close();
       } catch {
@@ -1333,7 +1187,7 @@ class AudioFrameFinder {
     public localFileReader: LocalFileReader,
     public samples: ExtMP4Sample[],
     public conf: AudioDecoderConfig,
-    opts: { volume: number; targetSampleRate: number }
+    opts: { volume: number; targetSampleRate: number },
   ) {
     this.volume = opts.volume;
     this.sampleRate = opts.targetSampleRate;
@@ -1347,13 +1201,8 @@ class AudioFrameFinder {
   private decoder: ReturnType<typeof createAudioChunksDecoder> | null = null;
   private curAborter = { abort: false, st: performance.now() };
   find = async (time: number): Promise<Float32Array[]> => {
-    const needResetTime =
-      time <= this.timestamp || time - this.timestamp > 0.1e6;
-    if (
-      this.decoder == null ||
-      this.decoder.state === 'closed' ||
-      needResetTime
-    ) {
+    const needResetTime = time <= this.timestamp || time - this.timestamp > 0.1e6;
+    if (this.decoder == null || this.decoder.state === "closed" || needResetTime) {
       this.reset();
     }
 
@@ -1373,7 +1222,7 @@ class AudioFrameFinder {
     const pcmData = await this.parseFrame(
       Math.ceil(deltaTime * (this.sampleRate / 1e6)),
       this.decoder,
-      this.curAborter
+      this.curAborter,
     );
     this.sleepCnt = 0;
 
@@ -1393,14 +1242,9 @@ class AudioFrameFinder {
   private parseFrame = async (
     emitFrameCnt: number,
     dec: ReturnType<typeof createAudioChunksDecoder> | null = null,
-    aborter: { abort: boolean; st: number }
+    aborter: { abort: boolean; st: number },
   ): Promise<Float32Array[]> => {
-    if (
-      dec == null ||
-      aborter.abort ||
-      dec.state === 'closed' ||
-      emitFrameCnt === 0
-    ) {
+    if (dec == null || aborter.abort || dec.state === "closed" || emitFrameCnt === 0) {
       return [];
     }
 
@@ -1417,9 +1261,7 @@ class AudioFrameFinder {
     if (dec.decoding) {
       if (performance.now() - aborter.st > 3e3) {
         aborter.abort = true;
-        throw Error(
-          `Video.tick audio timeout, ${JSON.stringify(this.getState())}`
-        );
+        throw Error(`Video.tick audio timeout, ${JSON.stringify(this.getState())}`);
       }
       // Decoding, wait
       this.sleepCnt += 1;
@@ -1452,12 +1294,12 @@ class AudioFrameFinder {
       samples.map(
         (s) =>
           new EncodedAudioChunk({
-            type: 'key',
+            type: "key",
             timestamp: s.cts,
             duration: s.duration,
             data: s.data!,
-          })
-      )
+          }),
+      ),
     );
   };
 
@@ -1478,7 +1320,7 @@ class AudioFrameFinder {
       (pcmArr) => {
         this.pcmData.data.push(pcmArr as [Float32Array, Float32Array]);
         this.pcmData.frameCnt += pcmArr[0].length;
-      }
+      },
     );
   };
 
@@ -1508,7 +1350,7 @@ class AudioFrameFinder {
 function createAudioChunksDecoder(
   decoderConf: AudioDecoderConfig,
   opts: { resampleRate: number; volume: number },
-  outputCb: (pcm: Float32Array[]) => void
+  outputCb: (pcm: Float32Array[]) => void,
 ) {
   let inputCnt = 0;
   let outputCnt = 0;
@@ -1517,8 +1359,7 @@ function createAudioChunksDecoder(
     if (pcmArr.length === 0) return;
 
     if (opts.volume !== 1) {
-      for (const pcm of pcmArr)
-        for (let i = 0; i < pcm.length; i++) pcm[i] *= opts.volume;
+      for (const pcm of pcmArr) for (let i = 0; i < pcm.length; i++) pcm[i] *= opts.volume;
     }
 
     // Ensure stereo
@@ -1537,7 +1378,7 @@ function createAudioChunksDecoder(
           audioResample(pcm, ad.sampleRate, {
             rate: opts.resampleRate,
             chanCount: ad.numberOfChannels,
-          })
+          }),
         );
       } else {
         outputHandler(pcm);
@@ -1545,18 +1386,16 @@ function createAudioChunksDecoder(
       ad.close();
     },
     error: (err) => {
-      if (err.message.includes('Codec reclaimed due to inactivity')) {
+      if (err.message.includes("Codec reclaimed due to inactivity")) {
         return;
       }
-      handleDecodeError('Video AudioDecoder err', err as Error);
+      handleDecodeError("Video AudioDecoder err", err as Error);
     },
   });
   adec.configure(decoderConf);
 
   function handleDecodeError(prefixStr: string, err: Error) {
-    const errMsg = `${prefixStr}: ${
-      (err as Error).message
-    }, state: ${JSON.stringify({
+    const errMsg = `${prefixStr}: ${(err as Error).message}, state: ${JSON.stringify({
       qSize: adec.decodeQueueSize,
       state: adec.state,
       inputCnt,
@@ -1572,11 +1411,11 @@ function createAudioChunksDecoder(
       try {
         for (const chunk of chunks) adec.decode(chunk);
       } catch (err) {
-        handleDecodeError('decode audio chunk error', err as Error);
+        handleDecodeError("decode audio chunk error", err as Error);
       }
     },
     close() {
-      if (adec.state !== 'closed') adec.close();
+      if (adec.state !== "closed") adec.close();
     },
     get decoding() {
       return inputCnt > outputCnt && adec.decodeQueueSize > 0;
@@ -1621,7 +1460,7 @@ function createPromiseQueue<T extends any>(onResult: (data: T) => void) {
 
 function emitAudioFrames(
   pcmData: { frameCnt: number; data: [Float32Array, Float32Array][] },
-  emitCnt: number
+  emitCnt: number,
 ) {
   // todo: perf reuse memory space
   const audio = [new Float32Array(emitCnt), new Float32Array(emitCnt)];
@@ -1650,7 +1489,7 @@ function emitAudioFrames(
 
 async function videosamples2Chunks(
   samples: ExtMP4Sample[],
-  reader: Awaited<ReturnType<OPFSToolFile['createReader']>>
+  reader: Awaited<ReturnType<OPFSToolFile["createReader"]>>,
 ): Promise<EncodedVideoChunk[]> {
   const first = samples[0];
   const last = samples.at(-1);
@@ -1659,13 +1498,11 @@ async function videosamples2Chunks(
   const rangSize = last.offset + last.size - first.offset;
   if (rangSize < 30e6) {
     // Single read data < 30M, read all at once to reduce IO frequency
-    const data = new Uint8Array(
-      await reader.read(rangSize, { at: first.offset })
-    );
+    const data = new Uint8Array(await reader.read(rangSize, { at: first.offset }));
     return samples.map((s) => {
       const offset = s.offset - first.offset;
       return new EncodedVideoChunk({
-        type: s.is_sync ? 'key' : 'delta',
+        type: s.is_sync ? "key" : "delta",
         timestamp: s.cts,
         duration: s.duration,
         data: data.subarray(offset, offset + s.size),
@@ -1676,80 +1513,15 @@ async function videosamples2Chunks(
   return await Promise.all(
     samples.map(async (s) => {
       return new EncodedVideoChunk({
-        type: s.is_sync ? 'key' : 'delta',
+        type: s.is_sync ? "key" : "delta",
         timestamp: s.cts,
         duration: s.duration,
         data: await reader.read(s.size, {
           at: s.offset,
         }),
       });
-    })
+    }),
   );
-}
-
-function splitVideoSampleByTime(videoSamples: ExtMP4Sample[], time: number) {
-  if (videoSamples.length === 0) return [];
-  let gopStartIdx = 0;
-  let gopEndIdx = 0;
-  let hitIdx = -1;
-  for (let i = 0; i < videoSamples.length; i++) {
-    const s = videoSamples[i];
-    if (hitIdx === -1 && time < s.cts) hitIdx = i - 1;
-    if (s.is_idr) {
-      if (hitIdx === -1) {
-        gopStartIdx = i;
-      } else {
-        gopEndIdx = i;
-        break;
-      }
-    }
-  }
-
-  const hitSample = videoSamples[hitIdx];
-  if (hitSample == null) throw Error('Not found video sample by time');
-
-  const preSlice = videoSamples
-    .slice(0, gopEndIdx === 0 ? videoSamples.length : gopEndIdx)
-    .map((s) => ({ ...s }));
-  for (let i = gopStartIdx; i < preSlice.length; i++) {
-    const s = preSlice[i];
-    if (time < s.cts) {
-      s.deleted = true;
-      s.cts = -1;
-    }
-  }
-  fixFirstBlackFrame(preSlice);
-
-  const postSlice = videoSamples
-    .slice(hitSample.is_idr ? hitIdx : gopStartIdx)
-    .map((s) => ({ ...s, cts: s.cts - time }));
-
-  for (const s of postSlice) {
-    if (s.cts < 0) {
-      s.deleted = true;
-      s.cts = -1;
-    }
-  }
-  fixFirstBlackFrame(postSlice);
-
-  return [preSlice, postSlice];
-}
-
-function splitAudioSampleByTime(audioSamples: ExtMP4Sample[], time: number) {
-  if (audioSamples.length === 0) return [];
-  let hitIdx = -1;
-  for (let i = 0; i < audioSamples.length; i++) {
-    const s = audioSamples[i];
-    if (time > s.cts) continue;
-    hitIdx = i;
-    break;
-  }
-  if (hitIdx === -1) throw Error('Not found audio sample by time');
-  const preSlice = audioSamples.slice(0, hitIdx).map((s) => ({ ...s }));
-  const postSlice = audioSamples
-    .slice(hitIdx)
-    .map((s) => ({ ...s, cts: s.cts - time }));
-  return [preSlice, postSlice];
 }
 
 // Support decoding errors
@@ -1758,42 +1530,36 @@ function decodeGoP(
   chunks: EncodedVideoChunk[],
   opts: {
     onDecodingError?: (err: Error) => void;
-  }
+  },
 ) {
-  if (dec.state !== 'configured') return;
+  if (dec.state !== "configured") return;
   for (let i = 0; i < chunks.length; i++) dec.decode(chunks[i]);
 
   // todo: The next frame after flush must be an IDR frame. Decide whether to call flush based on context?
   // flush may not be resolved on some Windows devices, so do not await flush
   dec.flush().catch((err) => {
     if (!(err instanceof Error)) throw err;
-    if (
-      err.message.includes('Decoding error') &&
-      opts.onDecodingError != null
-    ) {
+    if (err.message.includes("Decoding error") && opts.onDecodingError != null) {
       opts.onDecodingError(err);
       return;
     }
     // reset interrupts the decoder, expected to throw AbortedError
-    if (!err.message.includes('Aborted due to close')) {
+    if (!err.message.includes("Aborted due to close")) {
       throw err;
     }
   });
 }
 
-function idrNALUOffset(
-  u8Arr: Uint8Array,
-  type: MP4Sample['description']['type']
-) {
-  if (type !== 'avc1' && type !== 'hvc1') return 0;
+function idrNALUOffset(u8Arr: Uint8Array, type: MP4Sample["description"]["type"]) {
+  if (type !== "avc1" && type !== "hvc1") return 0;
 
   const dv = new DataView(u8Arr.buffer);
   for (let i = 0; i < u8Arr.byteLength - 4; ) {
-    if (type === 'avc1') {
+    if (type === "avc1") {
       const nalUnitType = dv.getUint8(i + 4) & 0x1f;
       // 5: IDR frame, 7: SPS, 8: PPS
       if (nalUnitType === 5 || nalUnitType === 7 || nalUnitType === 8) return i;
-    } else if (type === 'hvc1') {
+    } else if (type === "hvc1") {
       const nalUnitType = (dv.getUint8(i + 4) >> 1) & 0x3f;
       // 19-20: IDR frame, 32-34: VPS SPS PPS
       if (

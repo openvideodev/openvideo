@@ -18,11 +18,12 @@ A command is a plain JavaScript object describing an intent:
 
 ```ts
 interface Command<T = any> {
-  id: string;      // Unique ID for the command (e.g., nanoid())
-  type: string;    // The command identifier (e.g., "clip.add")
-  payload: T;      // The data needed for the operation
-  meta?: {         // Optional metadata
-    source?: 'user' | 'agent' | 'system';
+  id: string; // Unique ID for the command (e.g., nanoid())
+  type: string; // The command identifier (e.g., "clip.add")
+  payload: T; // The data needed for the operation
+  meta?: {
+    // Optional metadata
+    source?: "user" | "agent" | "system";
     timestamp?: number;
   };
 }
@@ -42,12 +43,14 @@ import { core, nanoid } from "@openvideo/core";
 core.execute({
   id: nanoid(),
   type: "playback.seek",
-  payload: { time: 5000000 } // Seek to 5 seconds
+  payload: { time: 5000000 }, // Seek to 5 seconds
 });
 ```
 
 ### batch()
+
 Executes multiple commands as a single atomic transaction. This ensures that:
+
 1. **History Consistency**: All commands in the batch are treated as a single entry in the undo/redo history.
 2. **Performance**: Observers are notified only once after all commands are applied, preventing UI jitter and redundant calculations.
 3. **Atomicity**: If one command fails (in a future transactional system), the state remains consistent.
@@ -60,20 +63,22 @@ core.batch([
   {
     id: nanoid(),
     type: "clip.add",
-    payload: { clip: myClip }
+    payload: { clip: myClip },
   },
   {
     id: nanoid(),
     type: "project.select",
-    payload: { ids: [myClip.id] }
-  }
+    payload: { ids: [myClip.id] },
+  },
 ]);
 ```
 
 ## Bulk Updates
+
 Many commands support operations on multiple entities simultaneously. This is the most efficient way to perform global changes (e.g., changing the background color of all text clips).
 
 ### Example: Update Multiple Clips
+
 Instead of sending 10 `clip.update` commands, you can send one command with multiple IDs or a bulk payload.
 
 ```ts
@@ -82,12 +87,13 @@ core.execute({
   type: "clip.update",
   payload: {
     ids: ["clip-1", "clip-2", "clip-3"], // Target multiple clips
-    update: { opacity: 0.5 }           // Apply same change to all
-  }
+    update: { opacity: 0.5 }, // Apply same change to all
+  },
 });
 ```
 
 ### Example: Bulk Caption Styling
+
 AI agents often need to re-style an entire video's captions in one go.
 
 ```ts
@@ -98,8 +104,8 @@ core.execute({
     fontFamily: "Inter",
     fontSize: 48,
     fontWeight: "bold",
-    textAlign: "center"
-  }
+    textAlign: "center",
+  },
 });
 ```
 

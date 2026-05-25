@@ -10,7 +10,7 @@ export function createEl(tagName: string): HTMLElement {
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
-  var binary = '';
+  var binary = "";
   var bytes = new Uint8Array(buffer);
   var len = bytes.byteLength;
   for (let i = 0; i < len; i++) {
@@ -31,9 +31,9 @@ export async function renderTxt2Img(
   opts: {
     font?: { name: string; url: string };
     onCreated?: (el: HTMLElement) => void;
-  } = {}
+  } = {},
 ): Promise<HTMLImageElement> {
-  const div = createEl('pre');
+  const div = createEl("pre");
   div.style.cssText = `margin: 0; ${cssText}; position: fixed;`;
   div.textContent = text;
   document.body.appendChild(div);
@@ -48,7 +48,7 @@ export async function renderTxt2Img(
   img.height = height;
   const fontFaceStr =
     opts.font == null
-      ? ''
+      ? ""
       : `
     @font-face {
       font-family: '${opts.font.name}';
@@ -65,8 +65,8 @@ export async function renderTxt2Img(
       </foreignObject>
     </svg>
   `
-    .replace(/\t/g, '')
-    .replace(/#/g, '%23');
+    .replace(/\t/g, "")
+    .replace(/#/g, "%23");
 
   img.src = `data:image/svg+xml;charset=utf-8,${svgStr}`;
 
@@ -104,11 +104,11 @@ export async function renderTxt2ImgBitmap(
   opts: {
     font?: { name: string; url: string };
     onCreated?: (el: HTMLElement) => void;
-  } = {}
+  } = {},
 ): Promise<ImageBitmap> {
   const imgEl = await renderTxt2Img(text, cssText, opts);
   const canvas = new OffscreenCanvas(imgEl.width, imgEl.height);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx?.drawImage(imgEl, 0, 0, imgEl.width, imgEl.height);
   return await createImageBitmap(canvas);
 }

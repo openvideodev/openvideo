@@ -5,7 +5,7 @@
 
 export interface AudioCodecConfig {
   codec: string;
-  codecType: 'aac' | 'opus'; // Simplified type for recodemux
+  codecType: "aac" | "opus"; // Simplified type for recodemux
   sampleRate: number;
   channelCount: number;
 }
@@ -15,14 +15,14 @@ export interface AudioCodecConfig {
  */
 const CODEC_PREFERENCES = [
   {
-    codec: 'mp4a.40.2', // AAC-LC
-    codecType: 'aac' as const,
+    codec: "mp4a.40.2", // AAC-LC
+    codecType: "aac" as const,
     sampleRate: 48000,
     channelCount: 2,
   },
   {
-    codec: 'opus',
-    codecType: 'opus' as const,
+    codec: "opus",
+    codecType: "opus" as const,
     sampleRate: 48000,
     channelCount: 2,
   },
@@ -33,23 +33,23 @@ let cachedCodec: AudioCodecConfig | null = null;
 /**
  * Detect operating system
  */
-function detectOS(): 'linux' | 'macos' | 'windows' | 'unknown' {
-  if (typeof navigator === 'undefined') return 'unknown';
+function detectOS(): "linux" | "macos" | "windows" | "unknown" {
+  if (typeof navigator === "undefined") return "unknown";
 
   const userAgent = navigator.userAgent.toLowerCase();
 
-  if (userAgent.includes('linux')) return 'linux';
-  if (userAgent.includes('mac')) return 'macos';
-  if (userAgent.includes('win')) return 'windows';
+  if (userAgent.includes("linux")) return "linux";
+  if (userAgent.includes("mac")) return "macos";
+  if (userAgent.includes("win")) return "windows";
 
-  return 'unknown';
+  return "unknown";
 }
 
 /**
  * Test if a specific audio codec configuration is supported
  */
 async function isCodecSupported(config: AudioCodecConfig): Promise<boolean> {
-  if (typeof AudioEncoder === 'undefined') {
+  if (typeof AudioEncoder === "undefined") {
     return false;
   }
 
@@ -92,13 +92,13 @@ export async function getDefaultAudioCodec(): Promise<AudioCodecConfig> {
 
   // Fallback to Opus if nothing else works (should never happen)
   const fallback = {
-    codec: 'opus',
-    codecType: 'opus' as const,
+    codec: "opus",
+    codecType: "opus" as const,
     sampleRate: 48000,
     channelCount: 2,
   };
 
-  console.warn('[AudioCodec] No supported codec found, falling back to Opus');
+  console.warn("[AudioCodec] No supported codec found, falling back to Opus");
   cachedCodec = fallback;
   return fallback;
 }

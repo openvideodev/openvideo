@@ -1,4 +1,4 @@
-import { CommandHandler } from './types';
+import { CommandHandler } from "./types";
 
 class CommandRegistry {
   private handlers: Map<string, CommandHandler> = new Map();

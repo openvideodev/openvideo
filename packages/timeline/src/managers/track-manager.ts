@@ -1,8 +1,8 @@
-import Timeline from '../timeline';
-import { Helper, Track } from '../objects';
-import { classRegistry } from 'fabric';
-import { getHelperHeight } from '../utils/sizes';
-import { ITimelineTrack } from '../timeline';
+import Timeline from "../timeline";
+import { Helper, Track } from "../objects";
+import { classRegistry } from "fabric";
+import { getHelperHeight } from "../utils/sizes";
+import { ITimelineTrack } from "../timeline";
 
 class TrackManager {
   private timeline: Timeline;
@@ -12,7 +12,7 @@ class TrackManager {
   }
 
   private removeTracks() {
-    const trackElements = this.timeline.getObjects('Track', 'Helper');
+    const trackElements = this.timeline.getObjects("Track", "Helper");
     trackElements.forEach((track) => this.timeline.remove(track));
   }
 
@@ -28,18 +28,17 @@ class TrackManager {
             track,
             {
               id: `helper-${track.id}`,
-              type: 'helper' as any,
-              name: '',
+              type: "helper" as any,
+              name: "",
               clipIds: [],
               accepts: [],
             },
-          ] as ITimelineTrack[]
+          ] as ITimelineTrack[],
       )
       .slice(0, -1);
 
     let verticalPosition = -970;
-    const HelperClass =
-      (classRegistry.getClass('Helper') as typeof Helper) || Helper;
+    const HelperClass = (classRegistry.getClass("Helper") as typeof Helper) || Helper;
 
     // Render top helper line
     const topHelper = new HelperClass({
@@ -47,19 +46,19 @@ class TrackManager {
       selectable: false,
       evented: false,
       tScale: this.timeline.tScale,
-      id: 'helper-line-top',
+      id: "helper-line-top",
       width: canvasWidth,
-      kind: 'top',
+      kind: "top",
       height: 1000,
       metadata: {},
     });
-    verticalPosition += getHelperHeight('top');
+    verticalPosition += getHelperHeight("top");
     this.timeline.insertAt(0, topHelper);
 
     // Render tracks and helpers
     tracksWithHelpers.forEach((trackData, index) => {
-      if (trackData.type === ('helper' as any)) {
-        const helperHeight = getHelperHeight('center');
+      if (trackData.type === ("helper" as any)) {
+        const helperHeight = getHelperHeight("center");
         const centerHelper = new HelperClass({
           id: trackData.id,
           top: verticalPosition,
@@ -69,16 +68,14 @@ class TrackManager {
           metadata: {
             order: (index + 1) / 2,
           },
-          kind: 'center',
+          kind: "center",
         });
         verticalPosition += helperHeight;
         this.timeline.insertAt(0, centerHelper);
       } else {
         const trackHeight = this.timeline.getItemSize(trackData.type);
-        const TrackClass =
-          (classRegistry.getClass('Track') as typeof Track) || Track;
-        const accepts =
-          trackData.accepts || this.timeline.getItemAccepts(trackData.type);
+        const TrackClass = (classRegistry.getClass("Track") as typeof Track) || Track;
+        const accepts = trackData.accepts || this.timeline.getItemAccepts(trackData.type);
 
         const track = new TrackClass({
           id: trackData.id,
@@ -99,13 +96,13 @@ class TrackManager {
 
     // Render bottom helper line
     const bottomHelper = new HelperClass({
-      id: 'helper-line-bottom',
+      id: "helper-line-bottom",
       top: verticalPosition,
       selectable: false,
       evented: false,
       tScale: this.timeline.tScale,
       width: canvasWidth,
-      kind: 'bottom',
+      kind: "bottom",
       height: 1000,
       metadata: {},
     });
@@ -126,9 +123,8 @@ class TrackManager {
   }
 
   public refreshTrackLayout() {
-    const totalWidth =
-      this.timeline.bounding.width + this.timeline.spacing.right;
-    this.timeline.getObjects('Track', 'Helper').forEach((track) => {
+    const totalWidth = this.timeline.bounding.width + this.timeline.spacing.right;
+    this.timeline.getObjects("Track", "Helper").forEach((track) => {
       (track as Track | Helper).updateCoords(totalWidth);
       track.setCoords();
     });
@@ -137,9 +133,7 @@ class TrackManager {
   public adjustMagneticTrack() {
     this.timeline.pauseEventListeners();
 
-    const magneticTracks = this.timeline.tracks.filter(
-      (track) => track.magnetic
-    );
+    const magneticTracks = this.timeline.tracks.filter((track) => track.magnetic);
     if (magneticTracks.length > 0) {
       magneticTracks.forEach((magneticTrack) => {
         const accepts = magneticTrack.accepts || [];

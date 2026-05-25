@@ -1,10 +1,10 @@
-import { BaseClip } from './base-clip';
-import { type IClip } from './iclip';
-import { type TransitionKey } from '../transition/glsl/gl-transition';
+import { BaseClip } from "./base-clip";
+import { type IClip } from "./iclip";
+import { type TransitionKey } from "../transition/glsl/gl-transition";
 
 export class Transition extends BaseClip {
-  readonly type = 'Transition';
-  ready: IClip['ready'];
+  readonly type = "Transition";
+  ready: IClip["ready"];
 
   private _meta = {
     duration: 2e6, // Default 2 seconds
@@ -22,13 +22,9 @@ export class Transition extends BaseClip {
   id: string = `clip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   /**
-   * The transition configuration
+   * The transition key
    */
-  transitionEffect: {
-    id: string;
-    key: TransitionKey;
-    name: string;
-  };
+  transitionKey: TransitionKey;
 
   /**
    * ID of the clip from which the transition starts
@@ -42,11 +38,7 @@ export class Transition extends BaseClip {
 
   constructor(transitionKey: TransitionKey) {
     super();
-    this.transitionEffect = {
-      id: `trans_${Date.now()}`,
-      key: transitionKey,
-      name: transitionKey,
-    };
+    this.transitionKey = transitionKey;
 
     // Ready immediately
     this.ready = Promise.resolve(this._meta);
@@ -54,22 +46,21 @@ export class Transition extends BaseClip {
   }
 
   async clone() {
-    const newClip = new Transition(this.transitionEffect.key);
+    const newClip = new Transition(this.transitionKey);
     this.copyStateTo(newClip);
     newClip.fromClipId = this.fromClipId;
     newClip.toClipId = this.toClipId;
-    // newClip.id = this.id; // Allow new ID generation
     return newClip as this;
   }
 
   // Transition is invisible (it's applied via renderer logic), so it returns empty/dummy data
   async tick(_time: number): Promise<{
     video: ImageBitmap | undefined;
-    state: 'success';
+    state: "success";
   }> {
     return {
       video: undefined,
-      state: 'success',
+      state: "success",
     };
   }
 
@@ -79,16 +70,26 @@ export class Transition extends BaseClip {
     return [clone1, clone2];
   }
 
-  toJSON(main: boolean = false): any {
-    const base = super.toJSON(main);
+  toJSON(_main: boolean = false): any {
     return {
-      ...base,
-      type: 'Transition',
-      transitionEffect: this.transitionEffect,
+      id: this.id,
+      type: "Transition",
+      name: this.name,
+      timing: {
+        display: {
+          from: this.timing.display.from,
+          to: this.timing.display.to,
+        },
+        trim: {
+          from: this.timing.trim.from,
+          to: this.timing.trim.to,
+        },
+        duration: this.timing.duration,
+        playbackRate: this.timing.playbackRate,
+      },
+      transitionKey: this.transitionKey,
       fromClipId: this.fromClipId,
       toClipId: this.toClipId,
-      id: this.id,
-      effects: this.effects,
     };
   }
 
@@ -96,37 +97,30 @@ export class Transition extends BaseClip {
    * Create a Transition instance from a JSON object
    */
   static async fromObject(json: any): Promise<Transition> {
-    if (json.type !== 'Transition') {
+    if (json.type !== "Transition") {
       throw new Error(`Expected Transition, got ${json.type}`);
     }
 
-    const clip = new Transition(json.transitionEffect.key);
-    clip.transitionEffect = json.transitionEffect;
+    const key = json.transitionKey;
+    if (!key) {
+      throw new Error(`Missing transitionKey in Transition JSON`);
+    }
+
+    const clip = new Transition(key);
     clip.fromClipId = json.fromClipId || null;
     clip.toClipId = json.toClipId || null;
 
-    // Apply base properties
-    clip.left = json.left;
-    clip.top = json.top;
-    clip.width = json.width;
-    clip.height = json.height;
-    clip.angle = json.angle;
+    const timing = json.timing || {
+      display: json.display || { from: 0, to: 0 },
+      trim: json.trim || { from: 0, to: 0 },
+      duration: json.duration ?? 0,
+      playbackRate: json.playbackRate ?? 1,
+    };
 
-    clip.display.from = json.display.from;
-    clip.display.to = json.display.to;
-    clip.duration = json.duration;
-    clip.playbackRate = json.playbackRate;
+    clip.display.from = timing.display.from;
+    clip.display.to = timing.display.to;
+    clip.duration = timing.duration;
 
-    clip.zIndex = json.zIndex;
-    clip.opacity = json.opacity;
-    clip.flip = json.flip;
-
-    // Apply animation if present
-    if (json.animation) {
-      clip.setAnimation(json.animation.keyFrames, json.animation.opts);
-    }
-
-    // Restore id if present
     if (json.id) {
       clip.id = json.id;
     }

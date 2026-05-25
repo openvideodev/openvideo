@@ -1,20 +1,20 @@
-import { mp4box, MP4File, MP4Sample, SampleOpts, TrakBoxParser } from 'wrapbox';
-import { tmpfile, write } from 'opfs-tools';
-import { DEFAULT_AUDIO_CONF } from '../clips';
-import { autoReadStream } from '../utils/stream-utils';
-import { Log } from '../utils/log';
+import { mp4box, MP4File, MP4Sample, SampleOpts, TrakBoxParser } from "wrapbox";
+import { tmpfile, write } from "opfs-tools";
+import { DEFAULT_AUDIO_CONF } from "../clips";
+import { autoReadStream } from "../utils/stream-utils";
+import { Log } from "../utils/log";
 import {
   concatPCMFragments,
   extractPCM4AudioBuffer,
   extractPCM4AudioData,
   mixinPCM,
   ringSliceFloat32Array,
-} from '../utils';
-import { extractFileConfig } from './mp4box-utils';
-import { SampleTransform } from './sample-transform';
+} from "../utils";
+import { extractFileConfig } from "./mp4box-utils";
+import { SampleTransform } from "./sample-transform";
 
 function fixMP4BoxFileDuration(
-  inMP4File: MP4File
+  inMP4File: MP4File,
 ): () => Promise<ReadableStream<Uint8Array> | null> {
   let sentBoxIdx = 0;
   const boxes = inMP4File.boxes;
@@ -28,8 +28,7 @@ function fixMP4BoxFileDuration(
     // todo: use unsafeReleaseMP4BoxFile
     tracks.forEach(({ track, id }) => {
       const s = track.samples.at(-1);
-      if (s != null)
-        totalDuration = Math.max(totalDuration, s.cts + s.duration);
+      if (s != null) totalDuration = Math.max(totalDuration, s.cts + s.duration);
 
       inMP4File.releaseUsedSamples(id, track.samples.length);
       track.samples = [];
@@ -43,7 +42,7 @@ function fixMP4BoxFileDuration(
   function moovBoxReady() {
     if (moovPrevBoxes.length > 0) return true;
 
-    const moovIdx = boxes.findIndex((box: any) => box.type === 'moov');
+    const moovIdx = boxes.findIndex((box: any) => box.type === "moov");
     if (moovIdx === -1) return false;
 
     moovPrevBoxes = boxes.slice(0, moovIdx + 1);
@@ -63,9 +62,7 @@ function fixMP4BoxFileDuration(
   let timerId = 0;
   // Write boxes other than moov to temp file first, then concatenate temp file after updating duration
   const postFile = tmpfile();
-  let tmpFileWriter: Awaited<
-    ReturnType<ReturnType<typeof tmpfile>['createWriter']>
-  > | null = null;
+  let tmpFileWriter: Awaited<ReturnType<ReturnType<typeof tmpfile>["createWriter"]>> | null = null;
 
   const initPromise = (async () => {
     tmpFileWriter = await postFile.createWriter();
@@ -78,7 +75,7 @@ function fixMP4BoxFileDuration(
 
   let stopped = false;
   return async () => {
-    if (stopped) throw Error('File exported');
+    if (stopped) throw Error("File exported");
     stopped = true;
 
     await initPromise;
@@ -89,7 +86,7 @@ function fixMP4BoxFileDuration(
     await write2TmpFile();
     await tmpFileWriter?.close();
 
-    const moov = moovPrevBoxes.find((box: any) => box.type === 'moov') as any;
+    const moov = moovPrevBoxes.find((box: any) => box.type === "moov") as any;
     if (moov == null) return null;
 
     moov.mvhd.duration = totalDuration;
@@ -102,10 +99,7 @@ function fixMP4BoxFileDuration(
     return await resultFile.stream();
   };
 
-  function box2Buf(
-    source: typeof boxes,
-    startIdx: number
-  ): Uint8Array<ArrayBuffer> | null {
+  function box2Buf(source: typeof boxes, startIdx: number): Uint8Array<ArrayBuffer> | null {
     if (startIdx >= source.length) return null;
 
     const ds = new mp4box.DataStream();
@@ -122,9 +116,7 @@ function fixMP4BoxFileDuration(
 /**
  * Convert EncodedAudioChunk | EncodedVideoChunk to parameters required by MP4 addSample
  */
-function chunk2MP4SampleOpts(
-  chunk: EncodedAudioChunk | EncodedVideoChunk
-): SampleOpts & {
+function chunk2MP4SampleOpts(chunk: EncodedAudioChunk | EncodedVideoChunk): SampleOpts & {
   data: ArrayBuffer;
 } {
   const buf = new ArrayBuffer(chunk.byteLength);
@@ -134,7 +126,7 @@ function chunk2MP4SampleOpts(
     duration: chunk.duration ?? 0,
     dts,
     cts: dts,
-    is_sync: chunk.type === 'key',
+    is_sync: chunk.type === "key",
     data: buf,
   };
 }
@@ -152,21 +144,18 @@ function chunk2MP4SampleOpts(
  * const resultStream = await fastConcatMP4(streams);
  */
 export async function fastConcatMP4(
-  streams: ReadableStream<Uint8Array>[]
+  streams: ReadableStream<Uint8Array>[],
 ): Promise<ReadableStream<Uint8Array>> {
   const outfile = mp4box.createFile() as unknown as MP4File;
 
   const dumpFile = fixMP4BoxFileDuration(outfile);
   await concatStreamsToMP4BoxFile(streams, outfile);
   const outStream = await dumpFile();
-  if (outStream == null) throw Error('Can not generate file from streams');
+  if (outStream == null) throw Error("Can not generate file from streams");
   return outStream;
 }
 
-async function concatStreamsToMP4BoxFile(
-  streams: ReadableStream<Uint8Array>[],
-  outfile: MP4File
-) {
+async function concatStreamsToMP4BoxFile(streams: ReadableStream<Uint8Array>[], outfile: MP4File) {
   let vTrackId = 0;
   let vDTS = 0;
   let vCTS = 0;
@@ -187,28 +176,25 @@ async function concatStreamsToMP4BoxFile(
       autoReadStream(stream.pipeThrough(new SampleTransform()), {
         onDone: resolve,
         onChunk: async ({ chunkType, data }) => {
-          if (chunkType === 'ready') {
-            const { videoTrackConf, audioTrackConf } = extractFileConfig(
-              data.file,
-              data.info
-            );
+          if (chunkType === "ready") {
+            const { videoTrackConf, audioTrackConf } = extractFileConfig(data.file, data.info);
             if (vTrackId === 0 && videoTrackConf != null) {
               vTrackId = outfile.addTrack(videoTrackConf);
             }
             if (aTrackId === 0 && audioTrackConf != null) {
               aTrackId = outfile.addTrack(audioTrackConf);
             }
-          } else if (chunkType === 'samples') {
+          } else if (chunkType === "samples") {
             const { type, samples } = data;
-            const trackId = type === 'video' ? vTrackId : aTrackId;
-            const offsetDTS = type === 'video' ? vDTS : aDTS;
-            const offsetCTS = type === 'video' ? vCTS : aCTS;
+            const trackId = type === "video" ? vTrackId : aTrackId;
+            const offsetDTS = type === "video" ? vDTS : aDTS;
+            const offsetCTS = type === "video" ? vCTS : aCTS;
 
             samples.forEach((s) => {
               let normalizedDTS: number;
               let normalizedCTS: number;
 
-              if (type === 'video') {
+              if (type === "video") {
                 // Capture first sample timestamps for normalization
                 if (firstVDTS === null) {
                   firstVDTS = s.dts;
@@ -237,9 +223,9 @@ async function concatStreamsToMP4BoxFile(
 
             const lastSamp = samples.at(-1);
             if (lastSamp == null) return;
-            if (type === 'video') {
+            if (type === "video") {
               lastVSamp = lastSamp;
-            } else if (type === 'audio') {
+            } else if (type === "audio") {
               lastASamp = lastSamp;
             }
           }
@@ -267,7 +253,7 @@ async function concatStreamsToMP4BoxFile(
  * Set correct duration value for fMP4 files generated
  */
 export async function fixFMP4Duration(
-  stream: ReadableStream<Uint8Array>
+  stream: ReadableStream<Uint8Array>,
 ): Promise<ReadableStream<Uint8Array>> {
   return await fastConcatMP4([stream]);
 }
@@ -279,9 +265,7 @@ export async function fixFMP4Duration(
  * - `decode` method is used to decode MP4 audio samples, returns array of decoded audio data.
  * - `close` method is used to close audio decoder.
  */
-function createMP4AudioSampleDecoder(
-  decoderConfig: Parameters<AudioDecoder['configure']>[0]
-) {
+function createMP4AudioSampleDecoder(decoderConfig: Parameters<AudioDecoder["configure"]>[0]) {
   let cacheAD: AudioData[] = [];
   const adDecoder = new AudioDecoder({
     output: (ad) => {
@@ -296,11 +280,11 @@ function createMP4AudioSampleDecoder(
       ss.forEach((s) => {
         adDecoder.decode(
           new EncodedAudioChunk({
-            type: s.is_sync ? 'key' : 'delta',
+            type: s.is_sync ? "key" : "delta",
             timestamp: (1e6 * s.cts) / s.timescale,
             duration: (1e6 * s.duration) / s.timescale,
             data: s.data,
-          })
+          }),
         );
       });
 
@@ -320,8 +304,8 @@ function createMP4AudioSampleDecoder(
 // Audio encoding and decoding APIs have significant differences,
 // because calling AudioEncoder.flush mid-encoding causes audio stuttering
 function createMP4AudioSampleEncoder(
-  encoderConfig: Parameters<AudioEncoder['configure']>[0],
-  onOutput: (s: ReturnType<typeof chunk2MP4SampleOpts>) => void
+  encoderConfig: Parameters<AudioEncoder["configure"]>[0],
+  onOutput: (s: ReturnType<typeof chunk2MP4SampleOpts>) => void,
 ) {
   const encoderConf = {
     codec: encoderConfig.codec,
@@ -334,7 +318,7 @@ function createMP4AudioSampleEncoder(
       onOutput(chunk2MP4SampleOpts(chunk));
     },
     error: (err) => {
-      Log.error('AudioEncoder error:', err, ', config:', encoderConf);
+      Log.error("AudioEncoder error:", err, ", config:", encoderConf);
     },
   });
 
@@ -349,7 +333,7 @@ function createMP4AudioSampleEncoder(
       numberOfChannels: encoderConfig.numberOfChannels,
       numberOfFrames: data.length / encoderConfig.numberOfChannels,
       sampleRate: encoderConfig.sampleRate,
-      format: 'f32-planar',
+      format: "f32-planar",
       data: new Float32Array(data),
     });
   }
@@ -363,11 +347,7 @@ function createMP4AudioSampleEncoder(
     stop: async () => {
       if (lastData != null) {
         // Side effect modifies data
-        audioFade(
-          lastData.data,
-          encoderConfig.numberOfChannels,
-          encoderConfig.sampleRate
-        );
+        audioFade(lastData.data, encoderConfig.numberOfChannels, encoderConfig.sampleRate);
         adEncoder.encode(createAudioData(lastData.data, lastData.ts));
         lastData = null;
       }
@@ -408,9 +388,9 @@ export function mixinMP4AndAudio(
     stream: ReadableStream<Uint8Array>;
     volume: number;
     loop: boolean;
-  }
+  },
 ) {
-  Log.info('mixinMP4AndAudio, opts:', {
+  Log.info("mixinMP4AndAudio, opts:", {
     volume: audio.volume,
     loop: audio.loop,
   });
@@ -425,7 +405,7 @@ export function mixinMP4AndAudio(
 
   const deltaBuf = (): Uint8Array | null => {
     if (!firstMoofReady) {
-      if (boxes.find((box: any) => box.type === 'moof') != null) {
+      if (boxes.find((box: any) => box.type === "moof") != null) {
         firstMoofReady = true;
       } else {
         return null;
@@ -494,13 +474,9 @@ export function mixinMP4AndAudio(
     exit?.(err);
   };
 
-  let audioSampleDecoder: ReturnType<
-    typeof createMP4AudioSampleDecoder
-  > | null = null;
+  let audioSampleDecoder: ReturnType<typeof createMP4AudioSampleDecoder> | null = null;
 
-  let audioSampleEncoder: ReturnType<
-    typeof createMP4AudioSampleEncoder
-  > | null = null;
+  let audioSampleEncoder: ReturnType<typeof createMP4AudioSampleEncoder> | null = null;
 
   let inputAudioPCM: Float32Array[] = [];
 
@@ -516,9 +492,11 @@ export function mixinMP4AndAudio(
       stopOut();
     },
     onChunk: async ({ chunkType, data }) => {
-      if (chunkType === 'ready') {
-        const { videoTrackConf, audioTrackConf, audioDecoderConf } =
-          extractFileConfig(data.file, data.info);
+      if (chunkType === "ready") {
+        const { videoTrackConf, audioTrackConf, audioDecoderConf } = extractFileConfig(
+          data.file,
+          data.info,
+        );
         if (vTrackId === 0 && videoTrackConf != null) {
           vTrackId = outfile.addTrack(videoTrackConf as any);
         }
@@ -527,9 +505,9 @@ export function mixinMP4AndAudio(
           timescale: 1e6,
           samplerate: sampleRate,
           channel_count: DEFAULT_AUDIO_CONF.channelCount,
-          hdlr: 'soun',
-          name: 'SoundHandler',
-          type: 'mp4a',
+          hdlr: "soun",
+          name: "SoundHandler",
+          type: "mp4a",
         };
         if (aTrackId === 0) {
           aTrackId = outfile.addTrack(safeAudioTrackConf as any);
@@ -538,9 +516,7 @@ export function mixinMP4AndAudio(
         }
         const audioCtx = new AudioContext({ sampleRate });
         inputAudioPCM = extractPCM4AudioBuffer(
-          await audioCtx.decodeAudioData(
-            await new Response(audio.stream).arrayBuffer()
-          )
+          await audioCtx.decodeAudioData(await new Response(audio.stream).arrayBuffer()),
         );
 
         if (audioDecoderConf != null) {
@@ -549,26 +525,24 @@ export function mixinMP4AndAudio(
         audioSampleEncoder = createMP4AudioSampleEncoder(
           audioDecoderConf ?? {
             codec:
-              safeAudioTrackConf.type === 'mp4a'
+              safeAudioTrackConf.type === "mp4a"
                 ? DEFAULT_AUDIO_CONF.codec
                 : safeAudioTrackConf.type,
             numberOfChannels: safeAudioTrackConf.channel_count,
             sampleRate: safeAudioTrackConf.samplerate,
           },
-          (s) => outfile.addSample(aTrackId, new Uint8Array(s.data), s)
+          (s) => outfile.addSample(aTrackId, new Uint8Array(s.data), s),
         );
-      } else if (chunkType === 'samples') {
+      } else if (chunkType === "samples") {
         const { id, type, samples } = data;
-        if (type === 'video') {
-          samples.forEach((s) =>
-            outfile.addSample(id, new Uint8Array(s.data), s)
-          );
+        if (type === "video") {
+          samples.forEach((s) => outfile.addSample(id, new Uint8Array(s.data), s));
 
           if (!mp4HasAudio) await addInputAudio2Track(samples);
           return;
         }
 
-        if (type === 'audio') await mixinAudioSampleAndInputPCM(samples);
+        if (type === "audio") await mixinAudioSampleAndInputPCM(samples);
       }
     },
   });
@@ -577,13 +551,12 @@ export function mixinMP4AndAudio(
     const result = inputAudioPCM.map((chanBuf) =>
       audio.loop
         ? ringSliceFloat32Array(chanBuf, audioOffset, audioOffset + len)
-        : chanBuf.slice(audioOffset, audioOffset + len)
+        : chanBuf.slice(audioOffset, audioOffset + len),
     );
     audioOffset += len;
 
     if (audio.volume !== 1) {
-      for (const buf of result)
-        for (let i = 0; i < buf.length; i++) buf[i] *= audio.volume;
+      for (const buf of result) for (let i = 0; i < buf.length; i++) buf[i] *= audio.volume;
     }
 
     return result;
@@ -593,16 +566,11 @@ export function mixinMP4AndAudio(
     const firstSamp = videoSamples[0];
     const lastSamp = videoSamples[videoSamples.length - 1];
     const pcmLength = Math.floor(
-      ((lastSamp.cts + lastSamp.duration - firstSamp.cts) /
-        firstSamp.timescale) *
-        sampleRate
+      ((lastSamp.cts + lastSamp.duration - firstSamp.cts) / firstSamp.timescale) * sampleRate,
     );
     const audioDataBuf = mixinPCM([getInputAudioSlice(pcmLength)]);
     if (audioDataBuf.length === 0) return;
-    audioSampleEncoder?.encode(
-      audioDataBuf,
-      (firstSamp.cts / firstSamp.timescale) * 1e6
-    );
+    audioSampleEncoder?.encode(audioDataBuf, (firstSamp.cts / firstSamp.timescale) * 1e6);
   }
 
   async function mixinAudioSampleAndInputPCM(samples: MP4Sample[]) {
@@ -610,9 +578,7 @@ export function mixinMP4AndAudio(
 
     // 1. First decode MP4 audio
     // [[chan0, chan1], [chan0, chan1]...]
-    const pcmFragments = (await audioSampleDecoder.decode(samples)).map(
-      extractPCM4AudioData
-    );
+    const pcmFragments = (await audioSampleDecoder.decode(samples)).map(extractPCM4AudioData);
     // [chan0, chan1]
     const mp4AudioPCM = concatPCMFragments(pcmFragments);
     const inputAudioPCM = getInputAudioSlice(mp4AudioPCM[0].length);
@@ -622,7 +588,7 @@ export function mixinMP4AndAudio(
     audioSampleEncoder?.encode(
       // 2. Mix input audio
       mixinPCM([mp4AudioPCM, inputAudioPCM]),
-      (firstSamp.cts / firstSamp.timescale) * 1e6
+      (firstSamp.cts / firstSamp.timescale) * 1e6,
     );
   }
 

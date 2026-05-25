@@ -1,6 +1,6 @@
-import { AnimationFactory, animationRegistry } from './registry';
-import { KeyframeAnimation } from './keyframe-animation';
-import { GsapAnimation } from './gsap-animation';
+import { AnimationFactory, animationRegistry } from "./registry";
+import { KeyframeAnimation } from "./keyframe-animation";
+import { GsapAnimation } from "./gsap-animation";
 
 // Animation Presets
 
@@ -14,13 +14,13 @@ function normalizeParams(params: any): any {
 export const pulse: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   const factor = Math.max(options.duration / 1e6, 1);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('pulse', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("pulse", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
     return new KeyframeAnimation(
       normalized,
       { ...options, iterCount: factor * 3, easing },
-      'pulse'
+      "pulse",
     );
   }
   return new KeyframeAnimation(
@@ -30,156 +30,132 @@ export const pulse: AnimationFactory = (options, params) => {
       easing,
       iterCount: factor * 3,
     },
-    'pulse'
+    "pulse",
   );
 };
 
 export const fadeIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('fadeIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'fadeIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("fadeIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "fadeIn");
   }
-  return new KeyframeAnimation(defaultParams, { ...options, easing }, 'fadeIn');
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "fadeIn");
 };
 
 export const fadeOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeInQuad';
-  const defaultParams = getPresetTemplate('fadeOut', params);
+  const easing = normalized?.easing || options.easing || "easeInQuad";
+  const defaultParams = getPresetTemplate("fadeOut", params);
 
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'fadeOut');
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "fadeOut");
   }
-  return new KeyframeAnimation(defaultParams, { ...options, easing }, 'fadeOut');
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "fadeOut");
 };
 
 export const slideIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutCubic';
-  const defaultParams = getPresetTemplate('slideIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'slideIn');
+  const easing = normalized?.easing || options.easing || "easeOutCubic";
+  const defaultParams = getPresetTemplate("slideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideIn");
   }
-  const anim = new KeyframeAnimation(
-    defaultParams,
-    { ...options, easing },
-    'slideIn'
-  );
+  const anim = new KeyframeAnimation(defaultParams, { ...options, easing }, "slideIn");
   (anim as any).presetParams = params;
   return anim;
 };
 
 export const slideOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeInCubic';
-  const defaultParams = getPresetTemplate('slideOut', params);
+  const easing = normalized?.easing || options.easing || "easeInCubic";
+  const defaultParams = getPresetTemplate("slideOut", params);
 
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'slideOut');
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideOut");
   }
-  const anim = new KeyframeAnimation(
-    defaultParams,
-    { ...options, easing },
-    'slideOut'
-  );
+  const anim = new KeyframeAnimation(defaultParams, { ...options, easing }, "slideOut");
   (anim as any).presetParams = params;
   return anim;
 };
 
 export const zoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutBack';
-  const defaultParams = getPresetTemplate('zoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'zoomIn');
+  const easing = normalized?.easing || options.easing || "easeOutBack";
+  const defaultParams = getPresetTemplate("zoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomIn");
   }
-  return new KeyframeAnimation(defaultParams, { ...options, easing }, 'zoomIn');
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "zoomIn");
 };
 
 export const zoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeInBack';
-  const defaultParams = getPresetTemplate('zoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'zoomOut');
+  const easing = normalized?.easing || options.easing || "easeInBack";
+  const defaultParams = getPresetTemplate("zoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomOut");
   }
-  return new KeyframeAnimation(defaultParams, { ...options, easing }, 'zoomOut');
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "zoomOut");
 };
 
 export const blurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('blurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'blurIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurIn");
   }
-  return new KeyframeAnimation(defaultParams, { ...options, easing }, 'blurIn');
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "blurIn");
 };
 
 export const blurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeInQuad';
-  const defaultParams = getPresetTemplate('blurOut', params);
+  const easing = normalized?.easing || options.easing || "easeInQuad";
+  const defaultParams = getPresetTemplate("blurOut", params);
 
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'blurOut');
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurOut");
   }
-  return new KeyframeAnimation(defaultParams, { ...options, easing }, 'blurOut');
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "blurOut");
 };
 
 export const motionBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('motionBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'motionBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("motionBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "motionBlurIn");
   }
-  return new KeyframeAnimation(
-    defaultParams,
-    { ...options, easing },
-    'motionBlurIn'
-  );
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "motionBlurIn");
 };
 
 export const motionBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeInQuad';
-  const defaultParams = getPresetTemplate('motionBlurOut', params);
+  const easing = normalized?.easing || options.easing || "easeInQuad";
+  const defaultParams = getPresetTemplate("motionBlurOut", params);
 
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'motionBlurOut'
-    );
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "motionBlurOut");
   }
-  return new KeyframeAnimation(
-    defaultParams,
-    { ...options, easing },
-    'motionBlurOut'
-  );
+  return new KeyframeAnimation(defaultParams, { ...options, easing }, "motionBlurOut");
 };
 
 export const charFadeIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'character',
+      type: "character",
       from: { alpha: 0, scale: 0.5 },
       to: { alpha: 1, scale: 1 },
       stagger: normalized?.stagger ?? 0.05,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'back.out',
+      easing: normalized?.easing || options.easing || "back.out",
     },
-    'charFadeIn'
+    "charFadeIn",
   );
 };
 
@@ -187,16 +163,16 @@ export const charSlideUp: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'character',
-      from: { alpha: 0, y: '+=50' },
-      to: { alpha: 1, y: '-=50' },
+      type: "character",
+      from: { alpha: 0, y: "+=50" },
+      to: { alpha: 1, y: "-=50" },
       stagger: normalized?.stagger ?? 0.05,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'charSlideUp'
+    "charSlideUp",
   );
 };
 
@@ -204,16 +180,16 @@ export const charTypewriter: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'character',
+      type: "character",
       from: { alpha: 0 },
       to: { alpha: 1, duration: 0.001 },
       stagger: normalized?.stagger ?? 0.05,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'none',
+      easing: normalized?.easing || options.easing || "none",
     },
-    'charTypewriter'
+    "charTypewriter",
   );
 };
 
@@ -221,32 +197,32 @@ export const fadeByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0 },
       to: { alpha: 1 },
       stagger: normalized?.stagger ?? 0.05,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'none',
+      easing: normalized?.easing || options.easing || "none",
     },
-    'fadeByWord'
+    "fadeByWord",
   );
 };
 export const slideFadeByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
-      from: { alpha: 0, x: '+=50' },
-      to: { alpha: 1, x: '-=50' },
+      type: "word",
+      from: { alpha: 0, x: "+=50" },
+      to: { alpha: 1, x: "-=50" },
       stagger: normalized?.stagger ?? 0.05,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'none',
+      easing: normalized?.easing || options.easing || "none",
     },
-    'slideFadeByWord'
+    "slideFadeByWord",
   );
 };
 export const popByWord: AnimationFactory = (options, params) => {
@@ -254,23 +230,23 @@ export const popByWord: AnimationFactory = (options, params) => {
 
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { scale: 0, immediateRender: true },
       to: {
         keyframes: {
-          '0%': { scale: 0 },
-          '50%': { scale: 1.2 },
-          '100%': { scale: 1 },
+          "0%": { scale: 0 },
+          "50%": { scale: 1.2 },
+          "100%": { scale: 1 },
         },
-        ease: 'none',
+        ease: "none",
       },
       stagger: normalized?.stagger ?? 0.05,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'none',
+      easing: normalized?.easing || options.easing || "none",
     },
-    'popByWord'
+    "popByWord",
   );
 };
 
@@ -278,16 +254,16 @@ export const scaleFadeByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, scale: 0.7 },
       to: { alpha: 1, scale: 1 },
       stagger: normalized?.stagger ?? 0.08,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'back.out(1.5)',
+      easing: normalized?.easing || options.easing || "back.out(1.5)",
     },
-    'scaleFadeByWord'
+    "scaleFadeByWord",
   );
 };
 
@@ -295,16 +271,16 @@ export const bounceByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
-      from: { alpha: 0, y: '-=30', scale: 0.8 },
-      to: { alpha: 1, y: '+=30', scale: 1 },
+      type: "word",
+      from: { alpha: 0, y: "-=30", scale: 0.8 },
+      to: { alpha: 1, y: "+=30", scale: 1 },
       stagger: normalized?.stagger ?? 0.1,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'bounce.out',
+      easing: normalized?.easing || options.easing || "bounce.out",
     },
-    'bounceByWord'
+    "bounceByWord",
   );
 };
 
@@ -312,16 +288,16 @@ export const rotateInByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, rotation: -10 },
       to: { alpha: 1, rotation: 0 },
       stagger: normalized?.stagger ?? 0.08,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'rotateInByWord'
+    "rotateInByWord",
   );
 };
 
@@ -329,16 +305,16 @@ export const slideRightByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
-      from: { alpha: 0, x: '-=50' },
-      to: { alpha: 1, x: '+=50' },
+      type: "word",
+      from: { alpha: 0, x: "-=50" },
+      to: { alpha: 1, x: "+=50" },
       stagger: normalized?.stagger ?? 0.1,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'slideRightByWord'
+    "slideRightByWord",
   );
 };
 
@@ -346,16 +322,16 @@ export const slideLeftByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
-      from: { alpha: 0, x: '+=50' },
-      to: { alpha: 1, x: '-=50' },
+      type: "word",
+      from: { alpha: 0, x: "+=50" },
+      to: { alpha: 1, x: "-=50" },
       stagger: normalized?.stagger ?? 0.1,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'slideLeftByWord'
+    "slideLeftByWord",
   );
 };
 
@@ -363,16 +339,16 @@ export const fadeRotateByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, rotation: 90 },
       to: { alpha: 1, rotation: 0 },
       stagger: normalized?.stagger ?? 0.1,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'fadeRotateByWord'
+    "fadeRotateByWord",
   );
 };
 
@@ -380,16 +356,16 @@ export const skewByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, skewX: 45 },
       to: { alpha: 1, skewX: 0 },
       stagger: normalized?.stagger ?? 0.08,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power3.out',
+      easing: normalized?.easing || options.easing || "power3.out",
     },
-    'skewByWord'
+    "skewByWord",
   );
 };
 
@@ -397,11 +373,11 @@ export const waveByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
-      from: { alpha: 0, y: '+=20' },
+      type: "word",
+      from: { alpha: 0, y: "+=20" },
       to: {
         alpha: 1,
-        y: '-=20',
+        y: "-=20",
         repeat: 1,
         yoyo: true,
       },
@@ -409,9 +385,9 @@ export const waveByWord: AnimationFactory = (options, params) => {
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'sine.inOut',
+      easing: normalized?.easing || options.easing || "sine.inOut",
     },
-    'waveByWord'
+    "waveByWord",
   );
 };
 
@@ -419,32 +395,32 @@ export const blurInByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, blur: 10 },
       to: { alpha: 1, blur: 0 },
       stagger: normalized?.stagger ?? 0.08,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'blurInByWord'
+    "blurInByWord",
   );
 };
 export const dropSoftByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
-      from: { alpha: 0, y: '-=60', scaleY: 2 },
-      to: { alpha: 1, y: '+=60', scaleY: 1 },
+      type: "word",
+      from: { alpha: 0, y: "-=60", scaleY: 2 },
+      to: { alpha: 1, y: "+=60", scaleY: 1 },
       stagger: normalized?.stagger ?? 0.09,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power3.out',
+      easing: normalized?.easing || options.easing || "power3.out",
     },
-    'dropSoftByWord'
+    "dropSoftByWord",
   );
 };
 
@@ -452,16 +428,16 @@ export const elasticPopByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, scale: 0 },
       to: { alpha: 1, scale: 1 },
       stagger: normalized?.stagger ?? 0.07,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'elastic.out(1, 0.5)',
+      easing: normalized?.easing || options.easing || "elastic.out(1, 0.5)",
     },
-    'elasticPopByWord'
+    "elasticPopByWord",
   );
 };
 
@@ -469,32 +445,32 @@ export const flipUpByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, skewX: -20 },
       to: { alpha: 1, skewX: 0 },
       stagger: normalized?.stagger ?? 0.1,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'flipUpByWord'
+    "flipUpByWord",
   );
 };
 export const spinInByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, rotation: -180, scale: 0.5 },
       to: { alpha: 1, rotation: 0, scale: 1 },
       stagger: normalized?.stagger ?? 0.09,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power3.out',
+      easing: normalized?.easing || options.easing || "power3.out",
     },
-    'spinInByWord'
+    "spinInByWord",
   );
 };
 
@@ -502,16 +478,16 @@ export const stretchInByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, scaleX: 1.5, scaleY: 0.5 },
       to: { alpha: 1, scaleX: 1, scaleY: 1 },
       stagger: normalized?.stagger ?? 0.08,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power2.out',
+      easing: normalized?.easing || options.easing || "power2.out",
     },
-    'stretchInByWord'
+    "stretchInByWord",
   );
 };
 
@@ -519,16 +495,16 @@ export const revealZoomByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
+      type: "word",
       from: { alpha: 0, scale: 1.4 },
       to: { alpha: 1, scale: 1 },
       stagger: normalized?.stagger ?? 0.1,
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'power4.out',
+      easing: normalized?.easing || options.easing || "power4.out",
     },
-    'revealZoomByWord'
+    "revealZoomByWord",
   );
 };
 
@@ -536,11 +512,11 @@ export const floatWaveByWord: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
   return new GsapAnimation(
     {
-      type: 'word',
-      from: { alpha: 0, y: '+=25' },
+      type: "word",
+      from: { alpha: 0, y: "+=25" },
       to: {
         alpha: 1,
-        y: '-=25',
+        y: "-=25",
         // repeat: 1,
         // yoyo: true,
       },
@@ -548,23 +524,19 @@ export const floatWaveByWord: AnimationFactory = (options, params) => {
     },
     {
       ...options,
-      easing: normalized?.easing || options.easing || 'sine.out',
+      easing: normalized?.easing || options.easing || "sine.out",
     },
-    'floatWaveByWord'
+    "floatWaveByWord",
   );
 };
 
 //custom presets in
 export const blurSlideRightIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('blurSlideRightIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'blurSlideRightIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideRightIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurSlideRightIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -572,20 +544,16 @@ export const blurSlideRightIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'blurSlideRightIn'
+    "blurSlideRightIn",
   );
 };
 
 export const wobbleZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('wobbleZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'wobbleZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("wobbleZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "wobbleZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -593,16 +561,16 @@ export const wobbleZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'wobbleZoomIn'
+    "wobbleZoomIn",
   );
 };
 
 export const spinZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('spinZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'spinZoomIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spinZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "spinZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -610,20 +578,16 @@ export const spinZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'spinZoomIn'
+    "spinZoomIn",
   );
 };
 
 export const blurSlideLeftIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('blurSlideLeftIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'blurSlideLeftIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideLeftIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurSlideLeftIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -631,20 +595,16 @@ export const blurSlideLeftIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'blurSlideLeftIn'
+    "blurSlideLeftIn",
   );
 };
 
 export const blurSlideRightStrongIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('blurSlideRightStrongIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'blurSlideRightStrongIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideRightStrongIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurSlideRightStrongIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -652,20 +612,16 @@ export const blurSlideRightStrongIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'blurSlideRightStrongIn'
+    "blurSlideRightStrongIn",
   );
 };
 
 export const cinematicZoomSlideIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('cinematicZoomSlideIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'cinematicZoomSlideIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("cinematicZoomSlideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "cinematicZoomSlideIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -673,20 +629,16 @@ export const cinematicZoomSlideIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'cinematicZoomSlideIn'
+    "cinematicZoomSlideIn",
   );
 };
 
 export const elasticTwistIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('elasticTwistIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'elasticTwistIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("elasticTwistIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "elasticTwistIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -694,16 +646,16 @@ export const elasticTwistIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'elasticTwistIn'
+    "elasticTwistIn",
   );
 };
 
 export const spinFadeIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('spinFadeIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'spinFadeIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spinFadeIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "spinFadeIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -711,20 +663,16 @@ export const spinFadeIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'spinFadeIn'
+    "spinFadeIn",
   );
 };
 
 export const flashZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('flashZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'flashZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("flashZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "flashZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -732,20 +680,16 @@ export const flashZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'flashZoomIn'
+    "flashZoomIn",
   );
 };
 
 export const tiltSlideRightIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('tiltSlideRightIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'tiltSlideRightIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltSlideRightIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "tiltSlideRightIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -753,16 +697,16 @@ export const tiltSlideRightIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'tiltSlideRightIn'
+    "tiltSlideRightIn",
   );
 };
 
 export const tiltZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('tiltZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'tiltZoomIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "tiltZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -770,20 +714,16 @@ export const tiltZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'tiltZoomIn'
+    "tiltZoomIn",
   );
 };
 
 export const glitchSlideIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('glitchSlideIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'glitchSlideIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("glitchSlideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "glitchSlideIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -791,16 +731,16 @@ export const glitchSlideIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'glitchSlideIn'
+    "glitchSlideIn",
   );
 };
 
 export const dropBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('dropBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'dropBlurIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dropBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "dropBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -808,16 +748,16 @@ export const dropBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'dropBlurIn'
+    "dropBlurIn",
   );
 };
 
 export const fallZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('fallZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'fallZoomIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("fallZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "fallZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -825,16 +765,16 @@ export const fallZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'fallZoomIn'
+    "fallZoomIn",
   );
 };
 
 export const zoomSpinIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomSpinIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'zoomSpinIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomSpinIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomSpinIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -842,20 +782,16 @@ export const zoomSpinIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomSpinIn'
+    "zoomSpinIn",
   );
 };
 
 export const dramaticSpinSlideIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('dramaticSpinSlideIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'dramaticSpinSlideIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dramaticSpinSlideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "dramaticSpinSlideIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -863,21 +799,17 @@ export const dramaticSpinSlideIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'dramaticSpinSlideIn'
+    "dramaticSpinSlideIn",
   );
 };
 
 //custom presets out
 export const tiltSlideRightOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('tiltSlideRightOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'tiltSlideRightOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltSlideRightOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "tiltSlideRightOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -885,20 +817,16 @@ export const tiltSlideRightOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'tiltSlideRightOut'
+    "tiltSlideRightOut",
   );
 };
 
 export const tiltZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('tiltZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'tiltZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "tiltZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -906,20 +834,16 @@ export const tiltZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'tiltZoomOut'
+    "tiltZoomOut",
   );
 };
 
 export const glitchSlideOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('glitchSlideOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'glitchSlideOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("glitchSlideOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "glitchSlideOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -927,20 +851,16 @@ export const glitchSlideOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'glitchSlideOut'
+    "glitchSlideOut",
   );
 };
 
 export const dropBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('dropBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'dropBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dropBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "dropBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -948,20 +868,16 @@ export const dropBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'dropBlurOut'
+    "dropBlurOut",
   );
 };
 
 export const fallZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('fallZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'fallZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("fallZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "fallZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -969,20 +885,16 @@ export const fallZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'fallZoomOut'
+    "fallZoomOut",
   );
 };
 
 export const zoomSpinOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomSpinOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'zoomSpinOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomSpinOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomSpinOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -990,20 +902,16 @@ export const zoomSpinOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomSpinOut'
+    "zoomSpinOut",
   );
 };
 
 export const dramaticSpinSlideOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('dramaticSpinSlideOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'dramaticSpinSlideOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dramaticSpinSlideOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "dramaticSpinSlideOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1011,20 +919,16 @@ export const dramaticSpinSlideOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'dramaticSpinSlideOut'
+    "dramaticSpinSlideOut",
   );
 };
 
 export const blurSlideRightOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('blurSlideRightOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'blurSlideRightOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideRightOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurSlideRightOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1032,20 +936,16 @@ export const blurSlideRightOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'blurSlideRightOut'
+    "blurSlideRightOut",
   );
 };
 
 export const wobbleZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('wobbleZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'wobbleZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("wobbleZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "wobbleZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1053,20 +953,16 @@ export const wobbleZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'wobbleZoomOut'
+    "wobbleZoomOut",
   );
 };
 
 export const spinZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('spinZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'spinZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spinZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "spinZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1074,20 +970,16 @@ export const spinZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'spinZoomOut'
+    "spinZoomOut",
   );
 };
 
 export const blurSlideLeftOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('blurSlideLeftOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'blurSlideLeftOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideLeftOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurSlideLeftOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1095,20 +987,16 @@ export const blurSlideLeftOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'blurSlideLeftOut'
+    "blurSlideLeftOut",
   );
 };
 
 export const blurSlideRightStrongOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('blurSlideRightStrongOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'blurSlideRightStrongOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("blurSlideRightStrongOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "blurSlideRightStrongOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1116,20 +1004,16 @@ export const blurSlideRightStrongOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'blurSlideRightStrongOut'
+    "blurSlideRightStrongOut",
   );
 };
 
 export const cinematicZoomSlideOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('cinematicZoomSlideOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'cinematicZoomSlideOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("cinematicZoomSlideOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "cinematicZoomSlideOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1137,20 +1021,16 @@ export const cinematicZoomSlideOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'cinematicZoomSlideOut'
+    "cinematicZoomSlideOut",
   );
 };
 
 export const elasticTwistOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('elasticTwistOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'elasticTwistOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("elasticTwistOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "elasticTwistOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1158,20 +1038,16 @@ export const elasticTwistOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'elasticTwistOut'
+    "elasticTwistOut",
   );
 };
 
 export const spinFadeOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('spinFadeOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'spinFadeOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spinFadeOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "spinFadeOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1179,20 +1055,16 @@ export const spinFadeOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'spinFadeOut'
+    "spinFadeOut",
   );
 };
 
 export const flashZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('flashZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'flashZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("flashZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "flashZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1200,7 +1072,7 @@ export const flashZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'flashZoomOut'
+    "flashZoomOut",
   );
 };
 
@@ -1208,14 +1080,10 @@ export const flashZoomOut: AnimationFactory = (options, params) => {
 
 export const slideRotateIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideRotateIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideRotateIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideRotateIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideRotateIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1223,20 +1091,16 @@ export const slideRotateIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideRotateIn'
+    "slideRotateIn",
   );
 };
 
 export const slideRotateOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideRotateOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideRotateOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideRotateOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideRotateOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1244,20 +1108,16 @@ export const slideRotateOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideRotateOut'
+    "slideRotateOut",
   );
 };
 
 export const slideBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1265,20 +1125,16 @@ export const slideBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideBlurIn'
+    "slideBlurIn",
   );
 };
 
 export const slideBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1286,20 +1142,16 @@ export const slideBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideBlurOut'
+    "slideBlurOut",
   );
 };
 
 export const zoomRotateIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomRotateIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'zoomRotateIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomRotateIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomRotateIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1307,20 +1159,16 @@ export const zoomRotateIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomRotateIn'
+    "zoomRotateIn",
   );
 };
 
 export const zoomRotateOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomRotateOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'zoomRotateOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomRotateOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomRotateOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1328,16 +1176,16 @@ export const zoomRotateOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomRotateOut'
+    "zoomRotateOut",
   );
 };
 
 export const zoomBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'zoomBlurIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1345,20 +1193,16 @@ export const zoomBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomBlurIn'
+    "zoomBlurIn",
   );
 };
 
 export const zoomBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'zoomBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1366,20 +1210,16 @@ export const zoomBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomBlurOut'
+    "zoomBlurOut",
   );
 };
 
 export const slideZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1387,20 +1227,16 @@ export const slideZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideZoomIn'
+    "slideZoomIn",
   );
 };
 
 export const slideZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1408,20 +1244,16 @@ export const slideZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideZoomOut'
+    "slideZoomOut",
   );
 };
 
 export const verticalBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('verticalBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'verticalBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("verticalBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "verticalBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1429,20 +1261,16 @@ export const verticalBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'verticalBlurIn'
+    "verticalBlurIn",
   );
 };
 
 export const verticalBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('verticalBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'verticalBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("verticalBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "verticalBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1450,20 +1278,16 @@ export const verticalBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'verticalBlurOut'
+    "verticalBlurOut",
   );
 };
 
 export const rotateBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('rotateBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'rotateBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("rotateBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "rotateBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1471,20 +1295,16 @@ export const rotateBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'rotateBlurIn'
+    "rotateBlurIn",
   );
 };
 
 export const rotateBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('rotateBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'rotateBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("rotateBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "rotateBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1492,20 +1312,16 @@ export const rotateBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'rotateBlurOut'
+    "rotateBlurOut",
   );
 };
 
 export const cinematicSlideZoomBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('cinematicSlideZoomBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'cinematicSlideZoomBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("cinematicSlideZoomBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "cinematicSlideZoomBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1513,20 +1329,16 @@ export const cinematicSlideZoomBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'cinematicSlideZoomBlurIn'
+    "cinematicSlideZoomBlurIn",
   );
 };
 
 export const cinematicSlideZoomBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('cinematicSlideZoomBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'cinematicSlideZoomBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("cinematicSlideZoomBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "cinematicSlideZoomBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1534,20 +1346,16 @@ export const cinematicSlideZoomBlurOut: AnimationFactory = (options, params) => 
       ...options,
       easing,
     },
-    'cinematicSlideZoomBlurOut'
+    "cinematicSlideZoomBlurOut",
   );
 };
 
 export const brightnessZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('brightnessZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'brightnessZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("brightnessZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "brightnessZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1555,20 +1363,16 @@ export const brightnessZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'brightnessZoomIn'
+    "brightnessZoomIn",
   );
 };
 
 export const brightnessZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('brightnessZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'brightnessZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("brightnessZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "brightnessZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1576,20 +1380,16 @@ export const brightnessZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'brightnessZoomOut'
+    "brightnessZoomOut",
   );
 };
 
 export const brightnessSlideIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('brightnessSlideIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'brightnessSlideIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("brightnessSlideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "brightnessSlideIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1597,20 +1397,16 @@ export const brightnessSlideIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'brightnessSlideIn'
+    "brightnessSlideIn",
   );
 };
 
 export const brightnessSlideOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('brightnessSlideOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'brightnessSlideOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("brightnessSlideOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "brightnessSlideOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1618,20 +1414,16 @@ export const brightnessSlideOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'brightnessSlideOut'
+    "brightnessSlideOut",
   );
 };
 
 export const tiltZoomBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('tiltZoomBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'tiltZoomBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltZoomBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "tiltZoomBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1639,20 +1431,16 @@ export const tiltZoomBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'tiltZoomBlurIn'
+    "tiltZoomBlurIn",
   );
 };
 
 export const tiltZoomBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('tiltZoomBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'tiltZoomBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("tiltZoomBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "tiltZoomBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1660,20 +1448,16 @@ export const tiltZoomBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'tiltZoomBlurOut'
+    "tiltZoomBlurOut",
   );
 };
 
 export const dropRotateIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('dropRotateIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'dropRotateIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dropRotateIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "dropRotateIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1681,20 +1465,16 @@ export const dropRotateIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'dropRotateIn'
+    "dropRotateIn",
   );
 };
 
 export const dropRotateOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('dropRotateOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'dropRotateOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("dropRotateOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "dropRotateOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1702,16 +1482,16 @@ export const dropRotateOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'dropRotateOut'
+    "dropRotateOut",
   );
 };
 
 export const spiralIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('spiralIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'spiralIn');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spiralIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "spiralIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1719,16 +1499,16 @@ export const spiralIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'spiralIn'
+    "spiralIn",
   );
 };
 
 export const spiralOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('spiralOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'spiralOut');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("spiralOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "spiralOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1736,20 +1516,16 @@ export const spiralOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'spiralOut'
+    "spiralOut",
   );
 };
 
 export const flashSlideIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('flashSlideIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'flashSlideIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("flashSlideIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "flashSlideIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1757,20 +1533,16 @@ export const flashSlideIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'flashSlideIn'
+    "flashSlideIn",
   );
 };
 
 export const flashSlideOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('flashSlideOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'flashSlideOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("flashSlideOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "flashSlideOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1778,20 +1550,16 @@ export const flashSlideOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'flashSlideOut'
+    "flashSlideOut",
   );
 };
 
 export const heavyCinematicIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('heavyCinematicIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'heavyCinematicIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("heavyCinematicIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "heavyCinematicIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1799,20 +1567,16 @@ export const heavyCinematicIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'heavyCinematicIn'
+    "heavyCinematicIn",
   );
 };
 
 export const heavyCinematicOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('heavyCinematicOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'heavyCinematicOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("heavyCinematicOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "heavyCinematicOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1820,20 +1584,16 @@ export const heavyCinematicOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'heavyCinematicOut'
+    "heavyCinematicOut",
   );
 };
 
 export const diagonalSlideRotateIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('diagonalSlideRotateIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'diagonalSlideRotateIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("diagonalSlideRotateIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "diagonalSlideRotateIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1841,20 +1601,16 @@ export const diagonalSlideRotateIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'diagonalSlideRotateIn'
+    "diagonalSlideRotateIn",
   );
 };
 
 export const diagonalSlideRotateOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('diagonalSlideRotateOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'diagonalSlideRotateOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("diagonalSlideRotateOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "diagonalSlideRotateOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1862,20 +1618,16 @@ export const diagonalSlideRotateOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'diagonalSlideRotateOut'
+    "diagonalSlideRotateOut",
   );
 };
 
 export const diagonalBlurZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('diagonalBlurZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'diagonalBlurZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("diagonalBlurZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "diagonalBlurZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1883,20 +1635,16 @@ export const diagonalBlurZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'diagonalBlurZoomIn'
+    "diagonalBlurZoomIn",
   );
 };
 
 export const diagonalBlurZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('diagonalBlurZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'diagonalBlurZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("diagonalBlurZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "diagonalBlurZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1904,20 +1652,16 @@ export const diagonalBlurZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'diagonalBlurZoomOut'
+    "diagonalBlurZoomOut",
   );
 };
 
 export const rotateBrightnessIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('rotateBrightnessIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'rotateBrightnessIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("rotateBrightnessIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "rotateBrightnessIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1925,20 +1669,16 @@ export const rotateBrightnessIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'rotateBrightnessIn'
+    "rotateBrightnessIn",
   );
 };
 
 export const rotateBrightnessOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('rotateBrightnessOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'rotateBrightnessOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("rotateBrightnessOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "rotateBrightnessOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1946,20 +1686,16 @@ export const rotateBrightnessOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'rotateBrightnessOut'
+    "rotateBrightnessOut",
   );
 };
 
 export const zoomBrightnessBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomBrightnessBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'zoomBrightnessBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomBrightnessBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomBrightnessBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1967,20 +1703,16 @@ export const zoomBrightnessBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomBrightnessBlurIn'
+    "zoomBrightnessBlurIn",
   );
 };
 
 export const zoomBrightnessBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('zoomBrightnessBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'zoomBrightnessBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("zoomBrightnessBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "zoomBrightnessBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -1988,20 +1720,16 @@ export const zoomBrightnessBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'zoomBrightnessBlurOut'
+    "zoomBrightnessBlurOut",
   );
 };
 
 export const slideUpRotateZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideUpRotateZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideUpRotateZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideUpRotateZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideUpRotateZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2009,20 +1737,16 @@ export const slideUpRotateZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideUpRotateZoomIn'
+    "slideUpRotateZoomIn",
   );
 };
 
 export const slideUpRotateZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideUpRotateZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideUpRotateZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideUpRotateZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideUpRotateZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2030,20 +1754,16 @@ export const slideUpRotateZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideUpRotateZoomOut'
+    "slideUpRotateZoomOut",
   );
 };
 
 export const fallBlurRotateIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('fallBlurRotateIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'fallBlurRotateIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("fallBlurRotateIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "fallBlurRotateIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2051,20 +1771,16 @@ export const fallBlurRotateIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'fallBlurRotateIn'
+    "fallBlurRotateIn",
   );
 };
 
 export const fallBlurRotateOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('fallBlurRotateOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'fallBlurRotateOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("fallBlurRotateOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "fallBlurRotateOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2072,20 +1788,16 @@ export const fallBlurRotateOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'fallBlurRotateOut'
+    "fallBlurRotateOut",
   );
 };
 
 export const sideStretchZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('sideStretchZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'sideStretchZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("sideStretchZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "sideStretchZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2093,20 +1805,16 @@ export const sideStretchZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'sideStretchZoomIn'
+    "sideStretchZoomIn",
   );
 };
 
 export const sideStretchZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('sideStretchZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'sideStretchZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("sideStretchZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "sideStretchZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2114,20 +1822,16 @@ export const sideStretchZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'sideStretchZoomOut'
+    "sideStretchZoomOut",
   );
 };
 
 export const darkSlideBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('darkSlideBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'darkSlideBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("darkSlideBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "darkSlideBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2135,20 +1839,16 @@ export const darkSlideBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'darkSlideBlurIn'
+    "darkSlideBlurIn",
   );
 };
 
 export const darkSlideBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('darkSlideBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'darkSlideBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("darkSlideBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "darkSlideBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2156,20 +1856,16 @@ export const darkSlideBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'darkSlideBlurOut'
+    "darkSlideBlurOut",
   );
 };
 
 export const liftZoomRotateIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('liftZoomRotateIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'liftZoomRotateIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("liftZoomRotateIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "liftZoomRotateIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2177,20 +1873,16 @@ export const liftZoomRotateIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'liftZoomRotateIn'
+    "liftZoomRotateIn",
   );
 };
 
 export const liftZoomRotateOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('liftZoomRotateOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'liftZoomRotateOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("liftZoomRotateOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "liftZoomRotateOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2198,20 +1890,16 @@ export const liftZoomRotateOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'liftZoomRotateOut'
+    "liftZoomRotateOut",
   );
 };
 
 export const overexposedZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('overexposedZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'overexposedZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("overexposedZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "overexposedZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2219,20 +1907,16 @@ export const overexposedZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'overexposedZoomIn'
+    "overexposedZoomIn",
   );
 };
 
 export const overexposedZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('overexposedZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'overexposedZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("overexposedZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "overexposedZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2240,20 +1924,16 @@ export const overexposedZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'overexposedZoomOut'
+    "overexposedZoomOut",
   );
 };
 
 export const pushDownZoomBlurIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('pushDownZoomBlurIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'pushDownZoomBlurIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("pushDownZoomBlurIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "pushDownZoomBlurIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2261,20 +1941,16 @@ export const pushDownZoomBlurIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'pushDownZoomBlurIn'
+    "pushDownZoomBlurIn",
   );
 };
 
 export const pushDownZoomBlurOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('pushDownZoomBlurOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'pushDownZoomBlurOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("pushDownZoomBlurOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "pushDownZoomBlurOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2282,20 +1958,16 @@ export const pushDownZoomBlurOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'pushDownZoomBlurOut'
+    "pushDownZoomBlurOut",
   );
 };
 
 export const twistSlideBrightnessIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('twistSlideBrightnessIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'twistSlideBrightnessIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("twistSlideBrightnessIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "twistSlideBrightnessIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2303,20 +1975,16 @@ export const twistSlideBrightnessIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'twistSlideBrightnessIn'
+    "twistSlideBrightnessIn",
   );
 };
 
 export const twistSlideBrightnessOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('twistSlideBrightnessOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'twistSlideBrightnessOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("twistSlideBrightnessOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "twistSlideBrightnessOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2324,20 +1992,16 @@ export const twistSlideBrightnessOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'twistSlideBrightnessOut'
+    "twistSlideBrightnessOut",
   );
 };
 
 export const collapseRotateZoomIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('collapseRotateZoomIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'collapseRotateZoomIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("collapseRotateZoomIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "collapseRotateZoomIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2345,20 +2009,16 @@ export const collapseRotateZoomIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'collapseRotateZoomIn'
+    "collapseRotateZoomIn",
   );
 };
 
 export const collapseRotateZoomOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('collapseRotateZoomOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'collapseRotateZoomOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("collapseRotateZoomOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "collapseRotateZoomOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2366,20 +2026,16 @@ export const collapseRotateZoomOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'collapseRotateZoomOut'
+    "collapseRotateZoomOut",
   );
 };
 
 export const ultraCinematicIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('ultraCinematicIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'ultraCinematicIn'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("ultraCinematicIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "ultraCinematicIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2387,20 +2043,16 @@ export const ultraCinematicIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'ultraCinematicIn'
+    "ultraCinematicIn",
   );
 };
 
 export const ultraCinematicOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('ultraCinematicOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'ultraCinematicOut'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("ultraCinematicOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "ultraCinematicOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2408,7 +2060,7 @@ export const ultraCinematicOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'ultraCinematicOut'
+    "ultraCinematicOut",
   );
 };
 
@@ -2416,10 +2068,10 @@ export const ultraCinematicOut: AnimationFactory = (options, params) => {
 
 export const popCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('popCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'popCaption');
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("popCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "popCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2427,20 +2079,16 @@ export const popCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'popCaption'
+    "popCaption",
   );
 };
 
 export const bounceCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('bounceCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'bounceCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("bounceCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "bounceCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2448,20 +2096,16 @@ export const bounceCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'bounceCaption'
+    "bounceCaption",
   );
 };
 
 export const scaleCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('scaleCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'scaleCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("scaleCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "scaleCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2469,20 +2113,16 @@ export const scaleCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'scaleCaption'
+    "scaleCaption",
   );
 };
 
 export const slideLeftCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideLeftCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideLeftCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideLeftCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideLeftCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2490,20 +2130,16 @@ export const slideLeftCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideLeftCaption'
+    "slideLeftCaption",
   );
 };
 
 export const slideRightCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideRightCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideRightCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideRightCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideRightCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2511,20 +2147,16 @@ export const slideRightCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideRightCaption'
+    "slideRightCaption",
   );
 };
 
 export const slideUpCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideUpCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideUpCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideUpCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideUpCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2532,20 +2164,16 @@ export const slideUpCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideUpCaption'
+    "slideUpCaption",
   );
 };
 
 export const slideDownCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('slideDownCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'slideDownCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("slideDownCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "slideDownCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2553,20 +2181,16 @@ export const slideDownCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'slideDownCaption'
+    "slideDownCaption",
   );
 };
 
 export const fadeCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('fadeCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'fadeCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("fadeCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "fadeCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2574,20 +2198,16 @@ export const fadeCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'fadeCaption'
+    "fadeCaption",
   );
 };
 
 export const scaleMidCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('scaleMidCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'scaleMidCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("scaleMidCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "scaleMidCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2595,20 +2215,16 @@ export const scaleMidCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'scaleMidCaption'
+    "scaleMidCaption",
   );
 };
 
 export const scaleDownCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('scaleDownCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'scaleDownCaption'
-    );
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("scaleDownCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "scaleDownCaption");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2616,19 +2232,19 @@ export const scaleDownCaption: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'scaleDownCaption'
+    "scaleDownCaption",
   );
 };
 
 export const upDownCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('upDownCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("upDownCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
     return new KeyframeAnimation(
       normalized,
       { ...options, easing, iterCount: Infinity },
-      'upDownCaption'
+      "upDownCaption",
     );
   }
   return new KeyframeAnimation(
@@ -2638,19 +2254,19 @@ export const upDownCaption: AnimationFactory = (options, params) => {
       easing,
       iterCount: Infinity,
     },
-    'upDownCaption'
+    "upDownCaption",
   );
 };
 
 export const upLeftCaption: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'easeOutQuad';
-  const defaultParams = getPresetTemplate('upLeftCaption', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
+  const easing = normalized?.easing || options.easing || "easeOutQuad";
+  const defaultParams = getPresetTemplate("upLeftCaption", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
     return new KeyframeAnimation(
       normalized,
       { ...options, easing, iterCount: Infinity },
-      'upLeftCaption'
+      "upLeftCaption",
     );
   }
   return new KeyframeAnimation(
@@ -2660,7 +2276,7 @@ export const upLeftCaption: AnimationFactory = (options, params) => {
       easing,
       iterCount: Infinity,
     },
-    'upLeftCaption'
+    "upLeftCaption",
   );
 };
 
@@ -2668,10 +2284,10 @@ export const upLeftCaption: AnimationFactory = (options, params) => {
 
 export const comboZoom1: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboZoom1', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'comboZoom1');
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboZoom1", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboZoom1");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2679,16 +2295,16 @@ export const comboZoom1: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboZoom1'
+    "comboZoom1",
   );
 };
 
 export const comboZoom2: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboZoom2', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(normalized, { ...options, easing }, 'comboZoom2');
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboZoom2", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboZoom2");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2696,20 +2312,16 @@ export const comboZoom2: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboZoom2'
+    "comboZoom2",
   );
 };
 
 export const comboPendulum1: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboPendulum1', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboPendulum1'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboPendulum1", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboPendulum1");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2717,20 +2329,16 @@ export const comboPendulum1: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboPendulum1'
+    "comboPendulum1",
   );
 };
 
 export const comboPendulum2: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboPendulum2', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboPendulum2'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboPendulum2", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboPendulum2");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2738,20 +2346,16 @@ export const comboPendulum2: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboPendulum2'
+    "comboPendulum2",
   );
 };
 
 export const comboRightDistort: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboRightDistort', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboRightDistort'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboRightDistort", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboRightDistort");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2759,20 +2363,16 @@ export const comboRightDistort: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboRightDistort'
+    "comboRightDistort",
   );
 };
 
 export const comboLeftDistort: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboLeftDistort', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboLeftDistort'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboLeftDistort", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboLeftDistort");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2780,20 +2380,16 @@ export const comboLeftDistort: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboLeftDistort'
+    "comboLeftDistort",
   );
 };
 
 export const comboWobble: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboWobble', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboWobble'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboWobble", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboWobble");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2801,20 +2397,16 @@ export const comboWobble: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboWobble'
+    "comboWobble",
   );
 };
 
 export const comboSpinningTop1: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboSpinningTop1', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboSpinningTop1'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboSpinningTop1", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboSpinningTop1");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2822,20 +2414,16 @@ export const comboSpinningTop1: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboSpinningTop1'
+    "comboSpinningTop1",
   );
 };
 
 export const comboSwayOut: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboSwayOut', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboSwayOut'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboSwayOut", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboSwayOut");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2843,20 +2431,16 @@ export const comboSwayOut: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboSwayOut'
+    "comboSwayOut",
   );
 };
 
 export const comboBounce1: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboBounce1', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboBounce1'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboBounce1", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboBounce1");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2864,20 +2448,16 @@ export const comboBounce1: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboBounce1'
+    "comboBounce1",
   );
 };
 
 export const comboSwayIn: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboSwayIn', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboSwayIn'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboSwayIn", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboSwayIn");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2885,20 +2465,16 @@ export const comboSwayIn: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboSwayIn'
+    "comboSwayIn",
   );
 };
 
 export const comboSpinningTop2: AnimationFactory = (options, params) => {
   const normalized = normalizeParams(params);
-  const easing = normalized?.easing || options.easing || 'linear';
-  const defaultParams = getPresetTemplate('comboSpinningTop2', params);
-  if (normalized && (normalized['0%'] || normalized['100%'])) {
-    return new KeyframeAnimation(
-      normalized,
-      { ...options, easing },
-      'comboSpinningTop2'
-    );
+  const easing = normalized?.easing || options.easing || "linear";
+  const defaultParams = getPresetTemplate("comboSpinningTop2", params);
+  if (normalized && (normalized["0%"] || normalized["100%"])) {
+    return new KeyframeAnimation(normalized, { ...options, easing }, "comboSpinningTop2");
   }
   return new KeyframeAnimation(
     defaultParams,
@@ -2906,173 +2482,167 @@ export const comboSpinningTop2: AnimationFactory = (options, params) => {
       ...options,
       easing,
     },
-    'comboSpinningTop2'
+    "comboSpinningTop2",
   );
 };
 
 // Register them
-animationRegistry.register('fadeIn', fadeIn);
-animationRegistry.register('fadeOut', fadeOut);
-animationRegistry.register('slideIn', slideIn);
-animationRegistry.register('slideOut', slideOut);
-animationRegistry.register('zoomIn', zoomIn);
-animationRegistry.register('zoomOut', zoomOut);
-animationRegistry.register('charFadeIn', charFadeIn);
-animationRegistry.register('charSlideUp', charSlideUp);
-animationRegistry.register('charTypewriter', charTypewriter);
-animationRegistry.register('fadeByWord', fadeByWord);
-animationRegistry.register('slideFadeByWord', slideFadeByWord);
-animationRegistry.register('popByWord', popByWord);
-animationRegistry.register('scaleFadeByWord', scaleFadeByWord);
-animationRegistry.register('bounceByWord', bounceByWord);
-animationRegistry.register('rotateInByWord', rotateInByWord);
-animationRegistry.register('slideRightByWord', slideRightByWord);
-animationRegistry.register('slideLeftByWord', slideLeftByWord);
-animationRegistry.register('fadeRotateByWord', fadeRotateByWord);
-animationRegistry.register('skewByWord', skewByWord);
-animationRegistry.register('waveByWord', waveByWord);
-animationRegistry.register('blurInByWord', blurInByWord);
-animationRegistry.register('dropSoftByWord', dropSoftByWord);
-animationRegistry.register('elasticPopByWord', elasticPopByWord);
-animationRegistry.register('flipUpByWord', flipUpByWord);
-animationRegistry.register('spinInByWord', spinInByWord);
-animationRegistry.register('stretchInByWord', stretchInByWord);
-animationRegistry.register('revealZoomByWord', revealZoomByWord);
-animationRegistry.register('floatWaveByWord', floatWaveByWord);
-animationRegistry.register('pulse', pulse);
-animationRegistry.register('blurIn', blurIn);
-animationRegistry.register('blurOut', blurOut);
+animationRegistry.register("fadeIn", fadeIn);
+animationRegistry.register("fadeOut", fadeOut);
+animationRegistry.register("slideIn", slideIn);
+animationRegistry.register("slideOut", slideOut);
+animationRegistry.register("zoomIn", zoomIn);
+animationRegistry.register("zoomOut", zoomOut);
+animationRegistry.register("charFadeIn", charFadeIn);
+animationRegistry.register("charSlideUp", charSlideUp);
+animationRegistry.register("charTypewriter", charTypewriter);
+animationRegistry.register("fadeByWord", fadeByWord);
+animationRegistry.register("slideFadeByWord", slideFadeByWord);
+animationRegistry.register("popByWord", popByWord);
+animationRegistry.register("scaleFadeByWord", scaleFadeByWord);
+animationRegistry.register("bounceByWord", bounceByWord);
+animationRegistry.register("rotateInByWord", rotateInByWord);
+animationRegistry.register("slideRightByWord", slideRightByWord);
+animationRegistry.register("slideLeftByWord", slideLeftByWord);
+animationRegistry.register("fadeRotateByWord", fadeRotateByWord);
+animationRegistry.register("skewByWord", skewByWord);
+animationRegistry.register("waveByWord", waveByWord);
+animationRegistry.register("blurInByWord", blurInByWord);
+animationRegistry.register("dropSoftByWord", dropSoftByWord);
+animationRegistry.register("elasticPopByWord", elasticPopByWord);
+animationRegistry.register("flipUpByWord", flipUpByWord);
+animationRegistry.register("spinInByWord", spinInByWord);
+animationRegistry.register("stretchInByWord", stretchInByWord);
+animationRegistry.register("revealZoomByWord", revealZoomByWord);
+animationRegistry.register("floatWaveByWord", floatWaveByWord);
+animationRegistry.register("pulse", pulse);
+animationRegistry.register("blurIn", blurIn);
+animationRegistry.register("blurOut", blurOut);
 //custom presets in
-animationRegistry.register('blurSlideRightIn', blurSlideRightIn);
-animationRegistry.register('wobbleZoomIn', wobbleZoomIn);
-animationRegistry.register('spinZoomIn', spinZoomIn);
-animationRegistry.register('blurSlideLeftIn', blurSlideLeftIn);
-animationRegistry.register('blurSlideRightStrongIn', blurSlideRightStrongIn);
-animationRegistry.register('cinematicZoomSlideIn', cinematicZoomSlideIn);
-animationRegistry.register('elasticTwistIn', elasticTwistIn);
-animationRegistry.register('spinFadeIn', spinFadeIn);
-animationRegistry.register('flashZoomIn', flashZoomIn);
-animationRegistry.register('tiltSlideRightIn', tiltSlideRightIn);
-animationRegistry.register('tiltZoomIn', tiltZoomIn);
-animationRegistry.register('glitchSlideIn', glitchSlideIn);
-animationRegistry.register('dropBlurIn', dropBlurIn);
-animationRegistry.register('fallZoomIn', fallZoomIn);
-animationRegistry.register('zoomSpinIn', zoomSpinIn);
-animationRegistry.register('dramaticSpinSlideIn', dramaticSpinSlideIn);
+animationRegistry.register("blurSlideRightIn", blurSlideRightIn);
+animationRegistry.register("wobbleZoomIn", wobbleZoomIn);
+animationRegistry.register("spinZoomIn", spinZoomIn);
+animationRegistry.register("blurSlideLeftIn", blurSlideLeftIn);
+animationRegistry.register("blurSlideRightStrongIn", blurSlideRightStrongIn);
+animationRegistry.register("cinematicZoomSlideIn", cinematicZoomSlideIn);
+animationRegistry.register("elasticTwistIn", elasticTwistIn);
+animationRegistry.register("spinFadeIn", spinFadeIn);
+animationRegistry.register("flashZoomIn", flashZoomIn);
+animationRegistry.register("tiltSlideRightIn", tiltSlideRightIn);
+animationRegistry.register("tiltZoomIn", tiltZoomIn);
+animationRegistry.register("glitchSlideIn", glitchSlideIn);
+animationRegistry.register("dropBlurIn", dropBlurIn);
+animationRegistry.register("fallZoomIn", fallZoomIn);
+animationRegistry.register("zoomSpinIn", zoomSpinIn);
+animationRegistry.register("dramaticSpinSlideIn", dramaticSpinSlideIn);
 
 //custom presets out
-animationRegistry.register('tiltSlideRightOut', tiltSlideRightOut);
-animationRegistry.register('tiltZoomOut', tiltZoomOut);
-animationRegistry.register('glitchSlideOut', glitchSlideOut);
-animationRegistry.register('dropBlurOut', dropBlurOut);
-animationRegistry.register('fallZoomOut', fallZoomOut);
-animationRegistry.register('zoomSpinOut', zoomSpinOut);
-animationRegistry.register('dramaticSpinSlideOut', dramaticSpinSlideOut);
-animationRegistry.register('blurSlideRightOut', blurSlideRightOut);
-animationRegistry.register('wobbleZoomOut', wobbleZoomOut);
-animationRegistry.register('spinZoomOut', spinZoomOut);
-animationRegistry.register('blurSlideLeftOut', blurSlideLeftOut);
-animationRegistry.register('blurSlideRightStrongOut', blurSlideRightStrongOut);
-animationRegistry.register('cinematicZoomSlideOut', cinematicZoomSlideOut);
-animationRegistry.register('elasticTwistOut', elasticTwistOut);
-animationRegistry.register('spinFadeOut', spinFadeOut);
-animationRegistry.register('flashZoomOut', flashZoomOut);
+animationRegistry.register("tiltSlideRightOut", tiltSlideRightOut);
+animationRegistry.register("tiltZoomOut", tiltZoomOut);
+animationRegistry.register("glitchSlideOut", glitchSlideOut);
+animationRegistry.register("dropBlurOut", dropBlurOut);
+animationRegistry.register("fallZoomOut", fallZoomOut);
+animationRegistry.register("zoomSpinOut", zoomSpinOut);
+animationRegistry.register("dramaticSpinSlideOut", dramaticSpinSlideOut);
+animationRegistry.register("blurSlideRightOut", blurSlideRightOut);
+animationRegistry.register("wobbleZoomOut", wobbleZoomOut);
+animationRegistry.register("spinZoomOut", spinZoomOut);
+animationRegistry.register("blurSlideLeftOut", blurSlideLeftOut);
+animationRegistry.register("blurSlideRightStrongOut", blurSlideRightStrongOut);
+animationRegistry.register("cinematicZoomSlideOut", cinematicZoomSlideOut);
+animationRegistry.register("elasticTwistOut", elasticTwistOut);
+animationRegistry.register("spinFadeOut", spinFadeOut);
+animationRegistry.register("flashZoomOut", flashZoomOut);
 
 //presets special
-animationRegistry.register('slideRotateIn', slideRotateIn);
-animationRegistry.register('slideRotateOut', slideRotateOut);
-animationRegistry.register('slideBlurIn', slideBlurIn);
-animationRegistry.register('slideBlurOut', slideBlurOut);
-animationRegistry.register('zoomRotateIn', zoomRotateIn);
-animationRegistry.register('zoomRotateOut', zoomRotateOut);
-animationRegistry.register('zoomBlurIn', zoomBlurIn);
-animationRegistry.register('zoomBlurOut', zoomBlurOut);
-animationRegistry.register('slideZoomIn', slideZoomIn);
-animationRegistry.register('slideZoomOut', slideZoomOut);
-animationRegistry.register('verticalBlurIn', verticalBlurIn);
-animationRegistry.register('verticalBlurOut', verticalBlurOut);
-animationRegistry.register('rotateBlurIn', rotateBlurIn);
-animationRegistry.register('rotateBlurOut', rotateBlurOut);
-animationRegistry.register(
-  'cinematicSlideZoomBlurIn',
-  cinematicSlideZoomBlurIn
-);
-animationRegistry.register(
-  'cinematicSlideZoomBlurOut',
-  cinematicSlideZoomBlurOut
-);
-animationRegistry.register('brightnessZoomIn', brightnessZoomIn);
-animationRegistry.register('brightnessZoomOut', brightnessZoomOut);
-animationRegistry.register('brightnessSlideIn', brightnessSlideIn);
-animationRegistry.register('brightnessSlideOut', brightnessSlideOut);
-animationRegistry.register('tiltZoomBlurIn', tiltZoomBlurIn);
-animationRegistry.register('tiltZoomBlurOut', tiltZoomBlurOut);
-animationRegistry.register('dropRotateIn', dropRotateIn);
-animationRegistry.register('dropRotateOut', dropRotateOut);
-animationRegistry.register('spiralIn', spiralIn);
-animationRegistry.register('spiralOut', spiralOut);
-animationRegistry.register('flashSlideIn', flashSlideIn);
-animationRegistry.register('flashSlideOut', flashSlideOut);
-animationRegistry.register('heavyCinematicIn', heavyCinematicIn);
-animationRegistry.register('heavyCinematicOut', heavyCinematicOut);
-animationRegistry.register('diagonalSlideRotateIn', diagonalSlideRotateIn);
-animationRegistry.register('diagonalSlideRotateOut', diagonalSlideRotateOut);
-animationRegistry.register('diagonalBlurZoomIn', diagonalBlurZoomIn);
-animationRegistry.register('diagonalBlurZoomOut', diagonalBlurZoomOut);
-animationRegistry.register('rotateBrightnessIn', rotateBrightnessIn);
-animationRegistry.register('rotateBrightnessOut', rotateBrightnessOut);
-animationRegistry.register('zoomBrightnessBlurIn', zoomBrightnessBlurIn);
-animationRegistry.register('zoomBrightnessBlurOut', zoomBrightnessBlurOut);
-animationRegistry.register('slideUpRotateZoomIn', slideUpRotateZoomIn);
-animationRegistry.register('slideUpRotateZoomOut', slideUpRotateZoomOut);
-animationRegistry.register('fallBlurRotateIn', fallBlurRotateIn);
-animationRegistry.register('fallBlurRotateOut', fallBlurRotateOut);
-animationRegistry.register('sideStretchZoomIn', sideStretchZoomIn);
-animationRegistry.register('sideStretchZoomOut', sideStretchZoomOut);
-animationRegistry.register('darkSlideBlurIn', darkSlideBlurIn);
-animationRegistry.register('darkSlideBlurOut', darkSlideBlurOut);
-animationRegistry.register('liftZoomRotateIn', liftZoomRotateIn);
-animationRegistry.register('liftZoomRotateOut', liftZoomRotateOut);
-animationRegistry.register('overexposedZoomIn', overexposedZoomIn);
-animationRegistry.register('overexposedZoomOut', overexposedZoomOut);
-animationRegistry.register('pushDownZoomBlurIn', pushDownZoomBlurIn);
-animationRegistry.register('pushDownZoomBlurOut', pushDownZoomBlurOut);
-animationRegistry.register('twistSlideBrightnessIn', twistSlideBrightnessIn);
-animationRegistry.register('twistSlideBrightnessOut', twistSlideBrightnessOut);
-animationRegistry.register('collapseRotateZoomIn', collapseRotateZoomIn);
-animationRegistry.register('collapseRotateZoomOut', collapseRotateZoomOut);
-animationRegistry.register('ultraCinematicIn', ultraCinematicIn);
-animationRegistry.register('ultraCinematicOut', ultraCinematicOut);
-animationRegistry.register('motionBlurIn', motionBlurIn);
-animationRegistry.register('motionBlurOut', motionBlurOut);
+animationRegistry.register("slideRotateIn", slideRotateIn);
+animationRegistry.register("slideRotateOut", slideRotateOut);
+animationRegistry.register("slideBlurIn", slideBlurIn);
+animationRegistry.register("slideBlurOut", slideBlurOut);
+animationRegistry.register("zoomRotateIn", zoomRotateIn);
+animationRegistry.register("zoomRotateOut", zoomRotateOut);
+animationRegistry.register("zoomBlurIn", zoomBlurIn);
+animationRegistry.register("zoomBlurOut", zoomBlurOut);
+animationRegistry.register("slideZoomIn", slideZoomIn);
+animationRegistry.register("slideZoomOut", slideZoomOut);
+animationRegistry.register("verticalBlurIn", verticalBlurIn);
+animationRegistry.register("verticalBlurOut", verticalBlurOut);
+animationRegistry.register("rotateBlurIn", rotateBlurIn);
+animationRegistry.register("rotateBlurOut", rotateBlurOut);
+animationRegistry.register("cinematicSlideZoomBlurIn", cinematicSlideZoomBlurIn);
+animationRegistry.register("cinematicSlideZoomBlurOut", cinematicSlideZoomBlurOut);
+animationRegistry.register("brightnessZoomIn", brightnessZoomIn);
+animationRegistry.register("brightnessZoomOut", brightnessZoomOut);
+animationRegistry.register("brightnessSlideIn", brightnessSlideIn);
+animationRegistry.register("brightnessSlideOut", brightnessSlideOut);
+animationRegistry.register("tiltZoomBlurIn", tiltZoomBlurIn);
+animationRegistry.register("tiltZoomBlurOut", tiltZoomBlurOut);
+animationRegistry.register("dropRotateIn", dropRotateIn);
+animationRegistry.register("dropRotateOut", dropRotateOut);
+animationRegistry.register("spiralIn", spiralIn);
+animationRegistry.register("spiralOut", spiralOut);
+animationRegistry.register("flashSlideIn", flashSlideIn);
+animationRegistry.register("flashSlideOut", flashSlideOut);
+animationRegistry.register("heavyCinematicIn", heavyCinematicIn);
+animationRegistry.register("heavyCinematicOut", heavyCinematicOut);
+animationRegistry.register("diagonalSlideRotateIn", diagonalSlideRotateIn);
+animationRegistry.register("diagonalSlideRotateOut", diagonalSlideRotateOut);
+animationRegistry.register("diagonalBlurZoomIn", diagonalBlurZoomIn);
+animationRegistry.register("diagonalBlurZoomOut", diagonalBlurZoomOut);
+animationRegistry.register("rotateBrightnessIn", rotateBrightnessIn);
+animationRegistry.register("rotateBrightnessOut", rotateBrightnessOut);
+animationRegistry.register("zoomBrightnessBlurIn", zoomBrightnessBlurIn);
+animationRegistry.register("zoomBrightnessBlurOut", zoomBrightnessBlurOut);
+animationRegistry.register("slideUpRotateZoomIn", slideUpRotateZoomIn);
+animationRegistry.register("slideUpRotateZoomOut", slideUpRotateZoomOut);
+animationRegistry.register("fallBlurRotateIn", fallBlurRotateIn);
+animationRegistry.register("fallBlurRotateOut", fallBlurRotateOut);
+animationRegistry.register("sideStretchZoomIn", sideStretchZoomIn);
+animationRegistry.register("sideStretchZoomOut", sideStretchZoomOut);
+animationRegistry.register("darkSlideBlurIn", darkSlideBlurIn);
+animationRegistry.register("darkSlideBlurOut", darkSlideBlurOut);
+animationRegistry.register("liftZoomRotateIn", liftZoomRotateIn);
+animationRegistry.register("liftZoomRotateOut", liftZoomRotateOut);
+animationRegistry.register("overexposedZoomIn", overexposedZoomIn);
+animationRegistry.register("overexposedZoomOut", overexposedZoomOut);
+animationRegistry.register("pushDownZoomBlurIn", pushDownZoomBlurIn);
+animationRegistry.register("pushDownZoomBlurOut", pushDownZoomBlurOut);
+animationRegistry.register("twistSlideBrightnessIn", twistSlideBrightnessIn);
+animationRegistry.register("twistSlideBrightnessOut", twistSlideBrightnessOut);
+animationRegistry.register("collapseRotateZoomIn", collapseRotateZoomIn);
+animationRegistry.register("collapseRotateZoomOut", collapseRotateZoomOut);
+animationRegistry.register("ultraCinematicIn", ultraCinematicIn);
+animationRegistry.register("ultraCinematicOut", ultraCinematicOut);
+animationRegistry.register("motionBlurIn", motionBlurIn);
+animationRegistry.register("motionBlurOut", motionBlurOut);
 
 //register animations captions
-animationRegistry.register('popCaption', popCaption);
-animationRegistry.register('bounceCaption', bounceCaption);
-animationRegistry.register('scaleCaption', scaleCaption);
-animationRegistry.register('slideLeftCaption', slideLeftCaption);
-animationRegistry.register('slideRightCaption', slideRightCaption);
-animationRegistry.register('slideUpCaption', slideUpCaption);
-animationRegistry.register('slideDownCaption', slideDownCaption);
-animationRegistry.register('fadeCaption', fadeCaption);
-animationRegistry.register('scaleMidCaption', scaleMidCaption);
-animationRegistry.register('scaleDownCaption', scaleDownCaption);
-animationRegistry.register('upDownCaption', upDownCaption);
-animationRegistry.register('upLeftCaption', upLeftCaption);
+animationRegistry.register("popCaption", popCaption);
+animationRegistry.register("bounceCaption", bounceCaption);
+animationRegistry.register("scaleCaption", scaleCaption);
+animationRegistry.register("slideLeftCaption", slideLeftCaption);
+animationRegistry.register("slideRightCaption", slideRightCaption);
+animationRegistry.register("slideUpCaption", slideUpCaption);
+animationRegistry.register("slideDownCaption", slideDownCaption);
+animationRegistry.register("fadeCaption", fadeCaption);
+animationRegistry.register("scaleMidCaption", scaleMidCaption);
+animationRegistry.register("scaleDownCaption", scaleDownCaption);
+animationRegistry.register("upDownCaption", upDownCaption);
+animationRegistry.register("upLeftCaption", upLeftCaption);
 
 //register combo animations
-animationRegistry.register('comboZoom1', comboZoom1);
-animationRegistry.register('comboZoom2', comboZoom2);
-animationRegistry.register('comboPendulum1', comboPendulum1);
-animationRegistry.register('comboPendulum2', comboPendulum2);
-animationRegistry.register('comboRightDistort', comboRightDistort);
-animationRegistry.register('comboLeftDistort', comboLeftDistort);
-animationRegistry.register('comboWobble', comboWobble);
-animationRegistry.register('comboSpinningTop1', comboSpinningTop1);
-animationRegistry.register('comboSwayOut', comboSwayOut);
-animationRegistry.register('comboBounce1', comboBounce1);
-animationRegistry.register('comboSwayIn', comboSwayIn);
-animationRegistry.register('comboSpinningTop2', comboSpinningTop2);
+animationRegistry.register("comboZoom1", comboZoom1);
+animationRegistry.register("comboZoom2", comboZoom2);
+animationRegistry.register("comboPendulum1", comboPendulum1);
+animationRegistry.register("comboPendulum2", comboPendulum2);
+animationRegistry.register("comboRightDistort", comboRightDistort);
+animationRegistry.register("comboLeftDistort", comboLeftDistort);
+animationRegistry.register("comboWobble", comboWobble);
+animationRegistry.register("comboSpinningTop1", comboSpinningTop1);
+animationRegistry.register("comboSwayOut", comboSwayOut);
+animationRegistry.register("comboBounce1", comboBounce1);
+animationRegistry.register("comboSwayIn", comboSwayIn);
+animationRegistry.register("comboSpinningTop2", comboSpinningTop2);
 
 /**
  * Get the keyframe template for a preset animation
@@ -3099,63 +2669,63 @@ export function getPresetTemplate(type: string, params?: any): any {
   const motionBlurEnd = normalized?.motionBlurEnd || null;
 
   switch (type) {
-    case 'fadeIn':
+    case "fadeIn":
       return {
-        '0%': { opacity: opacityInit ?? 0, scale: 0.9, mirror: defaultMirror },
-        '100%': { opacity: opacityEnd ?? 1, scale: 1, mirror: defaultMirror },
+        "0%": { opacity: opacityInit ?? 0, scale: 0.9, mirror: defaultMirror },
+        "100%": { opacity: opacityEnd ?? 1, scale: 1, mirror: defaultMirror },
       };
-    case 'fadeOut':
+    case "fadeOut":
       return {
-        '0%': { opacity: opacityInit ?? 1, mirror: defaultMirror },
-        '100%': { opacity: opacityEnd ?? 0, mirror: defaultMirror },
+        "0%": { opacity: opacityInit ?? 1, mirror: defaultMirror },
+        "100%": { opacity: opacityEnd ?? 0, mirror: defaultMirror },
       };
-    case 'zoomIn':
+    case "zoomIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 0,
           opacity: opacityInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           opacity: opacityEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'zoomOut':
+    case "zoomOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           opacity: opacityInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 0,
           opacity: opacityEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'slideIn': {
-      const direction = normalized?.direction || 'left';
+    case "slideIn": {
+      const direction = normalized?.direction || "left";
       const distance = normalized?.distance || 300;
       return {
-        '0%': {
+        "0%": {
           x:
-            direction === 'left'
+            direction === "left"
               ? -distance
-              : direction === 'right'
+              : direction === "right"
                 ? distance
                 : (xPositionInit ?? 0),
           y:
-            direction === 'top'
+            direction === "top"
               ? -distance
-              : direction === 'bottom'
+              : direction === "bottom"
                 ? distance
                 : (yPositionInit ?? 0),
           opacity: opacityInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           y: yPositionEnd ?? 0,
           opacity: opacityEnd ?? 1,
@@ -3163,27 +2733,27 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
     }
-    case 'slideOut': {
-      const direction = normalized?.direction || 'left';
+    case "slideOut": {
+      const direction = normalized?.direction || "left";
       const distance = normalized?.distance || 300;
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           y: yPositionInit ?? 0,
           opacity: opacityInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x:
-            direction === 'left'
+            direction === "left"
               ? -distance
-              : direction === 'right'
+              : direction === "right"
                 ? distance
                 : (xPositionEnd ?? 0),
           y:
-            direction === 'top'
+            direction === "top"
               ? -distance
-              : direction === 'bottom'
+              : direction === "bottom"
                 ? distance
                 : (yPositionEnd ?? 0),
           opacity: opacityEnd ?? 0,
@@ -3191,81 +2761,81 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
     }
-    case 'pulse':
+    case "pulse":
       return {
-        '0%': { scale: scaleInit ?? 1, mirror: defaultMirror },
-        '25%': { scale: scaleEnd ?? 0.9, mirror: defaultMirror },
-        '50%': { scale: scaleInit ?? 1, mirror: defaultMirror },
-        '75%': { scale: scaleEnd ?? 0.9, mirror: defaultMirror },
-        '100%': { scale: scaleInit ?? 1, mirror: defaultMirror },
+        "0%": { scale: scaleInit ?? 1, mirror: defaultMirror },
+        "25%": { scale: scaleEnd ?? 0.9, mirror: defaultMirror },
+        "50%": { scale: scaleInit ?? 1, mirror: defaultMirror },
+        "75%": { scale: scaleEnd ?? 0.9, mirror: defaultMirror },
+        "100%": { scale: scaleInit ?? 1, mirror: defaultMirror },
       };
-    case 'blurIn':
+    case "blurIn":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 20,
           opacity: opacityInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 0,
           opacity: opacityEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'blurOut':
+    case "blurOut":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 0,
           opacity: opacityInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 20,
           opacity: opacityEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'motionBlurIn':
+    case "motionBlurIn":
       return {
-        '0%': {
+        "0%": {
           motionBlur: motionBlurInit ?? 40,
           opacity: opacityInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           motionBlur: motionBlurEnd ?? 0,
           opacity: opacityEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'motionBlurOut':
+    case "motionBlurOut":
       return {
-        '0%': {
+        "0%": {
           motionBlur: motionBlurInit ?? 0,
           opacity: opacityInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           motionBlur: motionBlurEnd ?? 40,
           opacity: opacityEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'blurSlideRightIn':
+    case "blurSlideRightIn":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 20,
           x: xPositionInit ?? 300,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '40%': {
+        "40%": {
           blur: 5,
           x: 20,
           scale: 1.05,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 0,
           x: xPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -3273,45 +2843,45 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'wobbleZoomIn':
+    case "wobbleZoomIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.3,
           angle: angleInit ?? -8,
           mirror: defaultMirror,
         },
-        '15%': {
+        "15%": {
           scale: 0.95,
           angle: 4,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           scale: 1.05,
           angle: -2,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
 
-    case 'spinZoomIn':
+    case "spinZoomIn":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 15,
           angle: angleInit ?? 180,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '60%': {
+        "60%": {
           blur: 5,
           angle: -10,
           scale: 1.1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 0,
           angle: angleEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -3319,21 +2889,21 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'blurSlideLeftIn':
+    case "blurSlideLeftIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? -400,
           blur: blurInit ?? 25,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           x: xPositionEnd ?? 0,
           blur: 0,
           scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           blur: 0,
           scale: scaleEnd ?? 1,
@@ -3341,38 +2911,38 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'blurSlideRightStrongIn':
+    case "blurSlideRightStrongIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 600,
           blur: blurInit ?? 40,
           scale: scaleInit ?? 0.8,
           mirror: defaultMirror,
         },
-        '25%': {
+        "25%": {
           x: -20,
           blur: 10,
           scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
-        '100%': { x: 0, blur: 0, scale: scaleEnd ?? 1, mirror: defaultMirror },
+        "100%": { x: 0, blur: 0, scale: scaleEnd ?? 1, mirror: defaultMirror },
       };
 
-    case 'cinematicZoomSlideIn':
+    case "cinematicZoomSlideIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.5,
           blur: blurInit ?? 20,
           x: xPositionInit ?? 100,
           mirror: defaultMirror,
         },
-        '40%': {
+        "40%": {
           scale: 1.1,
           blur: 5,
           x: xPositionEnd ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           blur: blurEnd ?? 0,
           x: xPositionEnd ?? 0,
@@ -3380,17 +2950,17 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'elasticTwistIn':
+    case "elasticTwistIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 0.7,
           blur: blurInit ?? 15,
           angle: angleInit ?? 45,
           mirror: defaultMirror,
         },
-        '50%': { scale: 1.2, blur: 0, angle: -10, mirror: defaultMirror },
-        '75%': { scale: 0.95, blur: 0, angle: 5, mirror: defaultMirror },
-        '100%': {
+        "50%": { scale: 1.2, blur: 0, angle: -10, mirror: defaultMirror },
+        "75%": { scale: 0.95, blur: 0, angle: 5, mirror: defaultMirror },
+        "100%": {
           scale: scaleEnd ?? 1,
           blur: blurEnd ?? 0,
           angle: angleEnd ?? 0,
@@ -3398,15 +2968,15 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'spinFadeIn':
+    case "spinFadeIn":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 30,
           angle: angleInit ?? 90,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 0,
           angle: angleEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -3414,29 +2984,29 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'flashZoomIn':
+    case "flashZoomIn":
       return {
-        '0%': { scale: 1, brightness: 6, mirror: defaultMirror },
-        '15%': { scale: 1.3, brightness: 4, mirror: defaultMirror },
-        '30%': { scale: 1, brightness: 1, mirror: defaultMirror },
-        '100%': { scale: 1, brightness: 1, mirror: defaultMirror },
+        "0%": { scale: 1, brightness: 6, mirror: defaultMirror },
+        "15%": { scale: 1.3, brightness: 4, mirror: defaultMirror },
+        "30%": { scale: 1, brightness: 1, mirror: defaultMirror },
+        "100%": { scale: 1, brightness: 1, mirror: defaultMirror },
       };
 
-    case 'tiltSlideRightIn':
+    case "tiltSlideRightIn":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? -12,
           x: xPositionInit ?? -400,
           scale: scaleInit ?? 1.1,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           angle: 3,
           x: 10,
           scale: 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 0,
           x: xPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -3444,41 +3014,41 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'tiltZoomIn':
+    case "tiltZoomIn":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 15,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 0,
           scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
       };
 
-    case 'glitchSlideIn':
+    case "glitchSlideIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 600,
           angle: angleInit ?? 25,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '20%': {
+        "20%": {
           x: 50,
           angle: -10,
           scale: 1.1,
           mirror: defaultMirror,
         },
-        '40%': {
+        "40%": {
           x: -30,
           angle: 5,
           scale: 1.05,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -3486,15 +3056,15 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'dropBlurIn':
+    case "dropBlurIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? -500,
           blur: blurInit ?? 30,
           scale: scaleInit ?? 0.9,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           blur: blurEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -3502,34 +3072,34 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'fallZoomIn':
+    case "fallZoomIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? -400,
           scale: scaleInit ?? 1.5,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           y: 20,
           scale: 1.05,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
       };
 
-    case 'zoomSpinIn':
+    case "zoomSpinIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 3,
           angle: angleInit ?? -45,
           blur: blurInit ?? 15,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           angle: angleEnd ?? 0,
           blur: blurEnd ?? 0,
@@ -3537,23 +3107,23 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'dramaticSpinSlideIn':
+    case "dramaticSpinSlideIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 800,
           angle: angleInit ?? -60,
           blur: blurInit ?? 40,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           x: -50,
           angle: 5,
           blur: 0,
           scale: 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           blur: blurEnd ?? 0,
@@ -3562,21 +3132,21 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'blurSlideRightOut':
+    case "blurSlideRightOut":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 0,
           x: xPositionInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '40%': {
+        "40%": {
           blur: 5,
           x: -20,
           scale: 1.05,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 20,
           x: xPositionEnd ?? 300,
           scale: scaleEnd ?? 0.7,
@@ -3584,45 +3154,45 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'wobbleZoomOut':
+    case "wobbleZoomOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '15%': {
+        "15%": {
           scale: 1.05,
           angle: -4,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           scale: 0.95,
           angle: 2,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1.3,
           angle: angleEnd ?? 8,
           mirror: defaultMirror,
         },
       };
 
-    case 'spinZoomOut':
+    case "spinZoomOut":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 0,
           angle: angleInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '60%': {
+        "60%": {
           blur: 5,
           angle: 10,
           scale: 1.1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 15,
           angle: angleEnd ?? -180,
           scale: scaleEnd ?? 0.7,
@@ -3630,21 +3200,21 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'blurSlideLeftOut':
+    case "blurSlideLeftOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           blur: blurInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           x: 0,
           blur: 5,
           scale: 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? -400,
           blur: blurEnd ?? 25,
           scale: scaleEnd ?? 0.7,
@@ -3652,21 +3222,21 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'blurSlideRightStrongOut':
+    case "blurSlideRightStrongOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           blur: blurInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '25%': {
+        "25%": {
           x: 20,
           blur: 10,
           scale: 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 600,
           blur: blurEnd ?? 40,
           scale: scaleEnd ?? 0.8,
@@ -3674,21 +3244,21 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'cinematicZoomSlideOut':
+    case "cinematicZoomSlideOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           blur: blurInit ?? 0,
           x: xPositionInit ?? 0,
           mirror: defaultMirror,
         },
-        '40%': {
+        "40%": {
           scale: 1.1,
           blur: 5,
           x: -50,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1.5,
           blur: blurEnd ?? 20,
           x: xPositionEnd ?? -100,
@@ -3696,27 +3266,27 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'elasticTwistOut':
+    case "elasticTwistOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           blur: blurInit ?? 0,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '50%': {
+        "50%": {
           scale: 0.9,
           blur: 0,
           angle: 10,
           mirror: defaultMirror,
         },
-        '75%': {
+        "75%": {
           scale: 1.1,
           blur: 5,
           angle: -5,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 0.7,
           blur: blurEnd ?? 15,
           angle: angleEnd ?? -45,
@@ -3724,15 +3294,15 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'spinFadeOut':
+    case "spinFadeOut":
       return {
-        '0%': {
+        "0%": {
           blur: blurInit ?? 0,
           angle: angleInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           blur: blurEnd ?? 30,
           angle: angleEnd ?? -90,
           scale: scaleEnd ?? 0.7,
@@ -3740,40 +3310,40 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'flashZoomOut':
+    case "flashZoomOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '15%': {
+        "15%": {
           scale: 1.3,
           brightness: 3,
           mirror: defaultMirror,
         },
-        '30%': {
+        "30%": {
           scale: 1,
           brightness: 5,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           brightness: brightnessEnd ?? 6,
           mirror: defaultMirror,
         },
       };
 
-    case 'tiltSlideRightOut':
+    case "tiltSlideRightOut":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 0,
           x: xPositionInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '30%': { angle: -3, x: -10, scale: 1, mirror: defaultMirror },
-        '100%': {
+        "30%": { angle: -3, x: -10, scale: 1, mirror: defaultMirror },
+        "100%": {
           angle: angleEnd ?? 12,
           x: xPositionEnd ?? 400,
           scale: scaleEnd ?? 1.1,
@@ -3781,31 +3351,31 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'tiltZoomOut':
+    case "tiltZoomOut":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? -15,
           scale: scaleEnd ?? 0.7,
           mirror: defaultMirror,
         },
       };
 
-    case 'glitchSlideOut':
+    case "glitchSlideOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           angle: angleInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '20%': { x: -30, angle: 5, scale: 1.05, mirror: defaultMirror },
-        '40%': { x: 50, angle: -10, scale: 1.1, mirror: defaultMirror },
-        '100%': {
+        "20%": { x: -30, angle: 5, scale: 1.05, mirror: defaultMirror },
+        "40%": { x: 50, angle: -10, scale: 1.1, mirror: defaultMirror },
+        "100%": {
           x: xPositionEnd ?? -600,
           angle: angleEnd ?? -25,
           scale: scaleEnd ?? 0.7,
@@ -3813,15 +3383,15 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'dropBlurOut':
+    case "dropBlurOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           blur: blurInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 500,
           blur: blurEnd ?? 30,
           scale: scaleEnd ?? 0.9,
@@ -3829,30 +3399,30 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'fallZoomOut':
+    case "fallZoomOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '30%': { y: -20, scale: 1.05, mirror: defaultMirror },
-        '100%': {
+        "30%": { y: -20, scale: 1.05, mirror: defaultMirror },
+        "100%": {
           y: yPositionEnd ?? 400,
           scale: scaleEnd ?? 1.5,
           mirror: defaultMirror,
         },
       };
 
-    case 'zoomSpinOut':
+    case "zoomSpinOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 3,
           angle: angleEnd ?? 45,
           blur: blurEnd ?? 15,
@@ -3860,17 +3430,17 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'dramaticSpinSlideOut':
+    case "dramaticSpinSlideOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           angle: angleInit ?? 0,
           blur: blurInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '30%': { x: 50, angle: -5, blur: 0, scale: 1, mirror: defaultMirror },
-        '100%': {
+        "30%": { x: 50, angle: -5, blur: 0, scale: 1, mirror: defaultMirror },
+        "100%": {
           x: xPositionEnd ?? -800,
           angle: angleEnd ?? 60,
           blur: blurEnd ?? 40,
@@ -3878,395 +3448,395 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
-    case 'slideRotateIn':
+    case "slideRotateIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? -200,
           angle: angleInit ?? -15,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'slideRotateOut':
+    case "slideRotateOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? -200,
           angle: angleEnd ?? -15,
           mirror: defaultMirror,
         },
       };
-    case 'slideBlurIn':
+    case "slideBlurIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 250,
           blur: blurInit ?? 20,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'slideBlurOut':
+    case "slideBlurOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 250,
           blur: blurEnd ?? 20,
           mirror: defaultMirror,
         },
       };
-    case 'zoomRotateIn':
+    case "zoomRotateIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.4,
           angle: angleInit ?? 20,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'zoomRotateOut':
+    case "zoomRotateOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1.4,
           angle: angleEnd ?? 20,
           mirror: defaultMirror,
         },
       };
-    case 'zoomBlurIn':
+    case "zoomBlurIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.6,
           blur: blurInit ?? 30,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'zoomBlurOut':
+    case "zoomBlurOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1.6,
           blur: blurEnd ?? 30,
           mirror: defaultMirror,
         },
       };
-    case 'slideZoomIn':
+    case "slideZoomIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? -300,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'slideZoomOut':
+    case "slideZoomOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? -300,
           scale: scaleEnd ?? 0.7,
           mirror: defaultMirror,
         },
       };
-    case 'verticalBlurIn':
+    case "verticalBlurIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 200,
           blur: blurInit ?? 25,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'verticalBlurOut':
+    case "verticalBlurOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 200,
           blur: blurEnd ?? 25,
           mirror: defaultMirror,
         },
       };
-    case 'rotateBlurIn':
+    case "rotateBlurIn":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 45,
           blur: blurInit ?? 20,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 0,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'rotateBlurOut':
+    case "rotateBlurOut":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 0,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 45,
           blur: blurEnd ?? 20,
           mirror: defaultMirror,
         },
       };
 
-    case 'cinematicSlideZoomBlurIn':
+    case "cinematicSlideZoomBlurIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 300,
           scale: scaleInit ?? 0.7,
           blur: blurInit ?? 40,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'cinematicSlideZoomBlurOut':
+    case "cinematicSlideZoomBlurOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           scale: scaleInit ?? 1,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 300,
           scale: scaleEnd ?? 0.7,
           blur: blurEnd ?? 40,
           mirror: defaultMirror,
         },
       };
-    case 'brightnessZoomIn':
+    case "brightnessZoomIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.3,
           brightness: brightnessInit ?? 3,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           brightness: brightnessEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'brightnessZoomOut':
+    case "brightnessZoomOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1.3,
           brightness: brightnessEnd ?? 3,
           mirror: defaultMirror,
         },
       };
 
-    case 'brightnessSlideIn':
+    case "brightnessSlideIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? -200,
           brightness: brightnessInit ?? 0.3,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           brightness: brightnessEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'brightnessSlideOut':
+    case "brightnessSlideOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? -200,
           brightness: brightnessEnd ?? 0.3,
           mirror: defaultMirror,
         },
       };
 
-    case 'tiltZoomBlurIn':
+    case "tiltZoomBlurIn":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? -10,
           scale: scaleInit ?? 1.4,
           blur: blurInit ?? 20,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 0,
           scale: scaleEnd ?? 1,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'tiltZoomBlurOut':
+    case "tiltZoomBlurOut":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 0,
           scale: scaleInit ?? 1,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? -10,
           scale: scaleEnd ?? 1.4,
           blur: blurEnd ?? 20,
           mirror: defaultMirror,
         },
       };
-    case 'dropRotateIn':
+    case "dropRotateIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? -250,
           angle: angleInit ?? 15,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'dropRotateOut':
+    case "dropRotateOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? -250,
           angle: angleEnd ?? 15,
           mirror: defaultMirror,
         },
       };
-    case 'spiralIn':
+    case "spiralIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 0.7,
           angle: angleInit ?? 90,
           blur: blurInit ?? 30,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           angle: angleEnd ?? 0,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'spiralOut':
+    case "spiralOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 0.7,
           angle: angleEnd ?? 90,
           blur: blurEnd ?? 30,
           mirror: defaultMirror,
         },
       };
-    case 'flashSlideIn':
+    case "flashSlideIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 150,
           brightness: brightnessInit ?? 4,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           brightness: brightnessEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'flashSlideOut':
+    case "flashSlideOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 150,
           brightness: brightnessEnd ?? 4,
           mirror: defaultMirror,
         },
       };
-    case 'heavyCinematicIn':
+    case "heavyCinematicIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? -300,
           scale: scaleInit ?? 0.7,
           angle: angleInit ?? -20,
           blur: blurInit ?? 50,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
           angle: angleEnd ?? 0,
@@ -4274,16 +3844,16 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
-    case 'heavyCinematicOut':
+    case "heavyCinematicOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? -300,
           scale: scaleEnd ?? 0.7,
           angle: angleEnd ?? -20,
@@ -4291,46 +3861,46 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
-    case 'diagonalSlideRotateIn':
+    case "diagonalSlideRotateIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? -200,
           y: yPositionInit ?? 150,
           angle: angleInit ?? -20,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           y: yPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'diagonalSlideRotateOut':
+    case "diagonalSlideRotateOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           y: yPositionInit ?? 0,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? -200,
           y: yPositionEnd ?? 150,
           angle: angleEnd ?? -20,
           mirror: defaultMirror,
         },
       };
-    case 'diagonalBlurZoomIn':
+    case "diagonalBlurZoomIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 150,
           y: yPositionInit ?? -150,
           scale: scaleInit ?? 0.7,
           blur: blurInit ?? 30,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           y: yPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -4338,16 +3908,16 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
-    case 'diagonalBlurZoomOut':
+    case "diagonalBlurZoomOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           y: yPositionInit ?? 0,
           scale: scaleInit ?? 1,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 150,
           y: yPositionEnd ?? -150,
           scale: scaleEnd ?? 0.7,
@@ -4355,290 +3925,290 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
-    case 'rotateBrightnessIn':
+    case "rotateBrightnessIn":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 60,
           brightness: brightnessInit ?? 0.2,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 0,
           brightness: brightnessEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'rotateBrightnessOut':
+    case "rotateBrightnessOut":
       return {
-        '0%': {
+        "0%": {
           angle: angleInit ?? 0,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 60,
           brightness: brightnessEnd ?? 0.2,
           mirror: defaultMirror,
         },
       };
 
-    case 'zoomBrightnessBlurIn':
+    case "zoomBrightnessBlurIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.8,
           brightness: brightnessInit ?? 3,
           blur: blurInit ?? 25,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           brightness: brightnessEnd ?? 1,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'zoomBrightnessBlurOut':
+    case "zoomBrightnessBlurOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           brightness: brightnessInit ?? 1,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1.8,
           brightness: brightnessEnd ?? 3,
           blur: blurEnd ?? 25,
           mirror: defaultMirror,
         },
       };
-    case 'slideUpRotateZoomIn':
+    case "slideUpRotateZoomIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 250,
           angle: angleInit ?? -15,
           scale: scaleInit ?? 0.7,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'slideUpRotateZoomOut':
+    case "slideUpRotateZoomOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           angle: angleInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 250,
           angle: angleEnd ?? -15,
           scale: scaleEnd ?? 0.7,
           mirror: defaultMirror,
         },
       };
-    case 'fallBlurRotateIn':
+    case "fallBlurRotateIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? -300,
           blur: blurInit ?? 40,
           angle: angleInit ?? 25,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           blur: blurEnd ?? 0,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'fallBlurRotateOut':
+    case "fallBlurRotateOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           blur: blurInit ?? 0,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? -300,
           blur: blurEnd ?? 40,
           angle: angleEnd ?? 25,
           mirror: defaultMirror,
         },
       };
-    case 'sideStretchZoomIn':
+    case "sideStretchZoomIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 300,
           scale: scaleInit ?? 1.6,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'sideStretchZoomOut':
+    case "sideStretchZoomOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           scale: scaleInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 300,
           scale: scaleEnd ?? 1.6,
           mirror: defaultMirror,
         },
       };
-    case 'darkSlideBlurIn':
+    case "darkSlideBlurIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? -250,
           blur: blurInit ?? 35,
           brightness: brightnessInit ?? 0.3,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           blur: blurEnd ?? 0,
           brightness: brightnessEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'darkSlideBlurOut':
+    case "darkSlideBlurOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           blur: blurInit ?? 0,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? -250,
           blur: blurEnd ?? 35,
           brightness: brightnessEnd ?? 0.3,
           mirror: defaultMirror,
         },
       };
-    case 'liftZoomRotateIn':
+    case "liftZoomRotateIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 200,
           scale: scaleInit ?? 0.7,
           angle: angleInit ?? 12,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'liftZoomRotateOut':
+    case "liftZoomRotateOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 200,
           scale: scaleEnd ?? 0.7,
           angle: angleEnd ?? 12,
           mirror: defaultMirror,
         },
       };
-    case 'overexposedZoomIn':
+    case "overexposedZoomIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.4,
           brightness: brightnessInit ?? 4,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           brightness: brightnessEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'overexposedZoomOut':
+    case "overexposedZoomOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1.4,
           brightness: brightnessEnd ?? 4,
           mirror: defaultMirror,
         },
       };
 
-    case 'driftRotateBlurIn':
+    case "driftRotateBlurIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 120,
           angle: angleInit ?? -30,
           blur: blurInit ?? 25,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'driftRotateBlurOut':
+    case "driftRotateBlurOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           angle: angleInit ?? 0,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 120,
           angle: angleEnd ?? -30,
           blur: blurEnd ?? 25,
           mirror: defaultMirror,
         },
       };
-    case 'pushDownZoomBlurIn':
+    case "pushDownZoomBlurIn":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? -180,
           scale: scaleInit ?? 1.5,
           blur: blurInit ?? 20,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
           blur: blurEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'pushDownZoomBlurOut':
+    case "pushDownZoomBlurOut":
       return {
-        '0%': {
+        "0%": {
           y: yPositionInit ?? 0,
           scale: scaleInit ?? 1,
           blur: blurInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           y: yPositionEnd ?? -180,
           scale: scaleEnd ?? 1.5,
           blur: blurEnd ?? 20,
@@ -4646,30 +4216,30 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'twistSlideBrightnessIn':
+    case "twistSlideBrightnessIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 200,
           angle: angleInit ?? 25,
           brightness: brightnessInit ?? 0.4,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           angle: angleEnd ?? 0,
           brightness: brightnessEnd ?? 1,
           mirror: defaultMirror,
         },
       };
-    case 'twistSlideBrightnessOut':
+    case "twistSlideBrightnessOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           angle: angleInit ?? 0,
           brightness: brightnessInit ?? 1,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 200,
           angle: angleEnd ?? 25,
           brightness: brightnessEnd ?? 0.4,
@@ -4677,35 +4247,35 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'collapseRotateZoomIn':
+    case "collapseRotateZoomIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 0.7,
           angle: angleInit ?? -45,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
           angle: angleEnd ?? 0,
           mirror: defaultMirror,
         },
       };
-    case 'collapseRotateZoomOut':
+    case "collapseRotateZoomOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1,
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 0.7,
           angle: angleEnd ?? -45,
           mirror: defaultMirror,
         },
       };
-    case 'ultraCinematicIn':
+    case "ultraCinematicIn":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 400,
           y: yPositionInit ?? 200,
           scale: scaleInit ?? 0.7,
@@ -4713,7 +4283,7 @@ export function getPresetTemplate(type: string, params?: any): any {
           angle: angleInit ?? 30,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 0,
           y: yPositionEnd ?? 0,
           scale: scaleEnd ?? 1,
@@ -4722,9 +4292,9 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
-    case 'ultraCinematicOut':
+    case "ultraCinematicOut":
       return {
-        '0%': {
+        "0%": {
           x: xPositionInit ?? 0,
           y: yPositionInit ?? 0,
           scale: scaleInit ?? 1,
@@ -4732,7 +4302,7 @@ export function getPresetTemplate(type: string, params?: any): any {
           angle: angleInit ?? 0,
           mirror: defaultMirror,
         },
-        '100%': {
+        "100%": {
           x: xPositionEnd ?? 400,
           y: yPositionEnd ?? 200,
           scale: scaleEnd ?? 0.7,
@@ -4741,101 +4311,101 @@ export function getPresetTemplate(type: string, params?: any): any {
           mirror: defaultMirror,
         },
       };
-    case 'popCaption':
+    case "popCaption":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 0.7,
         },
-        '50%': {
+        "50%": {
           scale: 1.1,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 1,
         },
       };
-    case 'bounceCaption':
+    case "bounceCaption":
       return {
-        '0%': { y: 0, scaleY: 1, scaleX: 1 },
-        '20%': { y: 30, scaleY: 0.8, scaleX: 1.2 },
-        '40%': { y: 15, scaleY: 1, scaleX: 1 },
-        '60%': { y: 20, scaleY: 0.9, scaleX: 1.1 },
-        '80%': { y: 10, scaleY: 1, scaleX: 1 },
-        '100%': { y: 0, scaleY: 1, scaleX: 1 },
+        "0%": { y: 0, scaleY: 1, scaleX: 1 },
+        "20%": { y: 30, scaleY: 0.8, scaleX: 1.2 },
+        "40%": { y: 15, scaleY: 1, scaleX: 1 },
+        "60%": { y: 20, scaleY: 0.9, scaleX: 1.1 },
+        "80%": { y: 10, scaleY: 1, scaleX: 1 },
+        "100%": { y: 0, scaleY: 1, scaleX: 1 },
       };
-    case 'scaleCaption':
+    case "scaleCaption":
       return {
-        '0%': { scale: scaleInit ?? 0 },
-        '100%': { scale: scaleEnd ?? 1 },
+        "0%": { scale: scaleInit ?? 0 },
+        "100%": { scale: scaleEnd ?? 1 },
       };
-    case 'slideLeftCaption':
+    case "slideLeftCaption":
       return {
-        '0%': { x: xPositionInit ?? 50 },
-        '100%': { x: xPositionEnd ?? 0 },
+        "0%": { x: xPositionInit ?? 50 },
+        "100%": { x: xPositionEnd ?? 0 },
       };
-    case 'slideRightCaption':
+    case "slideRightCaption":
       return {
-        '0%': { x: xPositionInit ?? -50 },
-        '100%': { x: xPositionEnd ?? 0 },
+        "0%": { x: xPositionInit ?? -50 },
+        "100%": { x: xPositionEnd ?? 0 },
       };
-    case 'slideUpCaption':
+    case "slideUpCaption":
       return {
-        '0%': { y: yPositionInit ?? 50 },
-        '100%': { y: yPositionEnd ?? 0 },
+        "0%": { y: yPositionInit ?? 50 },
+        "100%": { y: yPositionEnd ?? 0 },
       };
-    case 'slideDownCaption':
+    case "slideDownCaption":
       return {
-        '0%': { y: yPositionInit ?? -50 },
-        '100%': { y: yPositionEnd ?? 0 },
+        "0%": { y: yPositionInit ?? -50 },
+        "100%": { y: yPositionEnd ?? 0 },
       };
-    case 'fadeCaption':
+    case "fadeCaption":
       return {
-        '0%': { opacity: opacityInit ?? 0 },
-        '100%': { opacity: opacityEnd ?? 1 },
+        "0%": { opacity: opacityInit ?? 0 },
+        "100%": { opacity: opacityEnd ?? 1 },
       };
-    case 'scaleMidCaption':
+    case "scaleMidCaption":
       return {
-        '0%': { scale: scaleInit ?? 0.8 },
-        '100%': { scale: scaleEnd ?? 1 },
+        "0%": { scale: scaleInit ?? 0.8 },
+        "100%": { scale: scaleEnd ?? 1 },
       };
-    case 'scaleDownCaption':
+    case "scaleDownCaption":
       return {
-        '0%': { scale: scaleInit ?? 1.2 },
-        '100%': { scale: scaleEnd ?? 1 },
+        "0%": { scale: scaleInit ?? 1.2 },
+        "100%": { scale: scaleEnd ?? 1 },
       };
-    case 'upDownCaption':
+    case "upDownCaption":
       return {
-        '0%': { y: 0 },
-        '50%': { y: -300 },
-        '100%': { y: 0 },
+        "0%": { y: 0 },
+        "50%": { y: -300 },
+        "100%": { y: 0 },
       };
-    case 'upLeftCaption':
+    case "upLeftCaption":
       return {
-        '0%': { x: 0, y: 0 },
-        '50%': { x: -50, y: -50 },
-        '100%': { x: 0, y: 0 },
+        "0%": { x: 0, y: 0 },
+        "50%": { x: -50, y: -50 },
+        "100%": { x: 0, y: 0 },
       };
     // combo Animations
-    case 'comboZoom1':
+    case "comboZoom1":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 2.5,
           motionBlur: motionBlurInit ?? 8,
           angle: angleInit ?? 0,
           mirror: 1,
         },
-        '30%': {
+        "30%": {
           scale: 1.2,
           motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
-        '60%': {
+        "60%": {
           scale: 1,
           motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 2.5,
           motionBlur: motionBlurEnd ?? 8,
           angle: angleEnd ?? 0,
@@ -4843,27 +4413,27 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'comboZoom2':
+    case "comboZoom2":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 0.7,
           motionBlur: motionBlurInit ?? 8,
           angle: angleInit ?? 0,
           mirror: 1,
         },
-        '30%': {
+        "30%": {
           scale: 1,
           motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
-        '60%': {
+        "60%": {
           scale: 1,
           motionBlur: 0,
           angle: 0,
           mirror: 1,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 0.7,
           motionBlur: motionBlurEnd ?? 8,
           angle: angleEnd ?? 0,
@@ -4871,39 +4441,39 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'comboPendulum1':
+    case "comboPendulum1":
       return {
-        '0%': {
+        "0%": {
           x: -250,
           blur: blurInit ?? 7,
           angle: angleInit ?? 5,
           mirror: 1,
         },
-        '45%': {
+        "45%": {
           x: -40,
           blur: 1,
           angle: 2,
           mirror: 1,
         },
-        '55%': {
+        "55%": {
           x: 0,
           blur: 0,
           angle: 0,
           mirror: 1,
         },
-        '60%': {
+        "60%": {
           x: 0,
           blur: 0,
           angle: 0,
           mirror: 1,
         },
-        '85%': {
+        "85%": {
           x: -40,
           blur: 0,
           angle: -2,
           mirror: 1,
         },
-        '100%': {
+        "100%": {
           x: -250,
           blur: blurEnd ?? 0,
           angle: angleEnd ?? -5,
@@ -4911,39 +4481,39 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'comboPendulum2':
+    case "comboPendulum2":
       return {
-        '0%': {
+        "0%": {
           x: 250,
           blur: blurInit ?? 7,
           angle: angleInit ?? -5,
           mirror: 1,
         },
-        '45%': {
+        "45%": {
           x: 40,
           blur: 1,
           angle: -2,
           mirror: 1,
         },
-        '55%': {
+        "55%": {
           x: 0,
           blur: 0,
           angle: 0,
           mirror: 1,
         },
-        '60%': {
+        "60%": {
           x: 0,
           blur: 0,
           angle: 0,
           mirror: 1,
         },
-        '85%': {
+        "85%": {
           x: 40,
           blur: 0,
           angle: 2,
           mirror: 1,
         },
-        '100%': {
+        "100%": {
           x: 250,
           blur: blurEnd ?? 0,
           angle: angleEnd ?? 5,
@@ -4951,74 +4521,74 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'comboRightDistort':
+    case "comboRightDistort":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 3,
           angle: angleInit ?? -15,
           blur: blurInit ?? 5,
           mirror: 1,
         },
-        '40%': {
+        "40%": {
           blur: 1,
           angle: -6,
           scale: 1.5,
           mirror: 1,
         },
-        '60%': {
+        "60%": {
           blur: 0,
           angle: 0,
           scale: 1,
           mirror: 1,
         },
-        '70%': {
+        "70%": {
           blur: 0,
           angle: 0,
           scale: 1,
           mirror: 1,
         },
-        '85%': {
+        "85%": {
           scale: 0.95,
           mirror: 1,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 0.8,
           mirror: 1,
         },
       };
-    case 'comboLeftDistort':
+    case "comboLeftDistort":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 2.5,
           blur: blurInit ?? 5,
           mirror: 1,
           angle: 0,
         },
-        '45%': {
+        "45%": {
           blur: 0,
           scale: 1,
           mirror: 1,
           angle: 0,
         },
-        '50%': {
+        "50%": {
           blur: 0,
           scale: 1,
           mirror: 1,
           angle: 0,
         },
-        '60%': {
+        "60%": {
           blur: 0,
           angle: -3,
           scale: 1,
           mirror: 1,
         },
-        '75%': {
+        "75%": {
           blur: 0,
           angle: -6,
           scale: 1,
           mirror: 1,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 0.7,
           angle: -6,
           blur: 0,
@@ -5026,106 +4596,106 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'comboWobble':
+    case "comboWobble":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.2,
           angle: angleInit ?? 15,
           x: xPositionInit ?? -400,
           blur: blurInit ?? 5,
           mirror: 1,
         },
-        '6%': {
+        "6%": {
           scale: 1,
           mirror: 1,
           angle: 0,
           blur: 0,
           x: 0,
         },
-        '18%': {
+        "18%": {
           scale: 1,
           mirror: 1,
           angle: -10,
           x: -100,
         },
-        '30%': {
+        "30%": {
           angle: -10,
           scale: 1,
           mirror: 1,
           x: 0,
         },
-        '35%': {
+        "35%": {
           angle: 0,
           scale: 1,
           mirror: 1,
           x: 0,
         },
-        '45%': {
+        "45%": {
           angle: 5,
           scale: 1,
           mirror: 1,
           x: 0,
         },
-        '55%': {
+        "55%": {
           angle: 0,
           scale: 1,
           mirror: 1,
           x: 0,
         },
-        '60%': {
+        "60%": {
           angle: 0,
           scale: 1,
           mirror: 1,
           blur: 0,
           x: 0,
         },
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 2.5,
           blur: blurEnd ?? 5,
           mirror: 1,
         },
       };
 
-    case 'comboSpinningTop1':
+    case "comboSpinningTop1":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 3,
           blur: blurInit ?? 5,
           mirror: 1,
         },
-        '25%': {
+        "25%": {
           scale: 1,
           mirror: 1,
           blur: 0,
           angle: 0,
         },
-        '55%': {
+        "55%": {
           scale: 0.7,
           mirror: 1,
           angle: 8,
         },
 
-        '100%': {
+        "100%": {
           angle: angleEnd ?? 90,
           scale: scaleEnd ?? 0.7,
           mirror: 1,
         },
       };
 
-    case 'comboSwayOut':
+    case "comboSwayOut":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 3,
           blur: blurInit ?? 5,
           mirror: 1,
         },
-        '50%': {
+        "50%": {
           scale: 1,
           mirror: 1,
           blur: 0,
           angle: 0,
         },
-        '100%': {
+        "100%": {
           mirror: 1,
           angle: angleEnd ?? 45,
           scale: scaleEnd ?? 3,
@@ -5133,88 +4703,88 @@ export function getPresetTemplate(type: string, params?: any): any {
         },
       };
 
-    case 'comboBounce1':
+    case "comboBounce1":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 1.2,
           blur: blurInit ?? 5,
           mirror: 1,
         },
-        '18%': {
+        "18%": {
           scale: 1,
           mirror: 1,
           blur: 0,
           angle: 0,
         },
-        '50%': {
+        "50%": {
           scale: 1.5,
           mirror: 1,
           blur: 0,
           angle: -5,
         },
-        '55%': {
+        "55%": {
           scale: 1.5,
           mirror: 1,
           blur: 0,
           angle: -5,
         },
-        '100%': {
+        "100%": {
           mirror: 1,
           angle: angleEnd ?? 0,
           scale: scaleEnd ?? 0.9,
         },
       };
 
-    case 'comboSwayIn':
+    case "comboSwayIn":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 3,
           blur: blurInit ?? 5,
           angle: angleInit ?? -45,
           mirror: 1,
         },
-        '50%': {
+        "50%": {
           scale: 1,
           mirror: 1,
           blur: 0,
           angle: 0,
         },
-        '100%': {
+        "100%": {
           mirror: 1,
           scale: scaleEnd ?? 3,
           blur: blurEnd ?? 5,
         },
       };
-    case 'comboSpinningTop2':
+    case "comboSpinningTop2":
       return {
-        '0%': {
+        "0%": {
           scale: scaleInit ?? 0.8,
           angle: angleInit ?? -90,
           mirror: 1,
         },
-        '40%': {
+        "40%": {
           scale: 0.8,
           mirror: 1,
           angle: -15,
         },
-        '60%': {
+        "60%": {
           scale: 1,
           mirror: 1,
           angle: 0,
           blur: 0,
         },
 
-        '100%': {
+        "100%": {
           scale: scaleEnd ?? 3,
           blur: blurEnd ?? 5,
           mirror: 1,
         },
       };
-    case 'custom':
+    case "custom":
     default:
       return {
-        '0%': {},
-        '100%': {},
+        "0%": {},
+        "100%": {},
       };
   }
 }

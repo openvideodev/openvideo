@@ -4,12 +4,10 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "biome lint .",
-    "lint:fix": "biome lint --apply .",
-    "format": "biome format --write .",
-    "format:check": "biome format .",
-    "check": "biome check .",
-    "check:fix": "biome check --write .",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "check-types": "turbo run check-types",
     "prepare": "husky",
     "changeset": "changeset",
@@ -17,21 +15,25 @@
     "release": "turbo run build --filter=\"@openvideo/*\" && changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.5",
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "oxfmt": "^0.51.0",
+    "oxlint": "^0.16.8",
     "turbo": "^2.5.8",
     "typescript": "5.9.2"
   },
-  "packageManager": "pnpm@9.15.4",
+  "lint-staged": {
+    "*.{js,ts,tsx,mjs,cjs}": [
+      "oxlint",
+      "oxfmt"
+    ]
+  },
   "engines": {
     "node": ">=18"
   },
-  "lint-staged": {
-    "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
-  },
+  "packageManager": "pnpm@9.15.4",
   "pnpm": {
     "overrides": {
       "@types/react": "19.2.8",

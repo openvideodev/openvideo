@@ -2,53 +2,33 @@
   "name": "@openvideo/engine-pixi",
   "version": "1.0.0",
   "description": "Video rendering and processing library",
-  "type": "module",
-  "publishConfig": {
-    "access": "public",
-    "tag": "latest"
-  },
+  "keywords": [
+    "mp4",
+    "rendering",
+    "video",
+    "webcodecs"
+  ],
+  "license": "MIT",
+  "author": "OpenVideoDev",
   "repository": {
     "type": "git",
     "url": "https://github.com/openvideodev/openvideo.git"
   },
-  "keywords": [
-    "video",
-    "rendering",
-    "webcodecs",
-    "mp4"
-  ],
-  "author": "OpenVideoDev",
-  "license": "SEE LICENSE IN LICENSE",
-   "files": [
+  "files": [
     "dist"
   ],
-  "main": "dist/index.umd.cjs",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.umd.cjs"
-    }
+  "type": "module",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
   },
   "scripts": {
     "test": "vitest",
     "test:browser": "vitest run --project unit-chromium",
     "build": "vite build"
-  },
-  "devDependencies": {
-    "@types/dom-webcodecs": "^0.1.17",
-    "@types/rollup-plugin-peer-deps-external": "^2.2.6",
-    "@vitest/browser": "^4.0.18",
-    "@vitest/browser-playwright": "^4.0.18",
-    "@vitest/ui": "^4.0.18",
-    "jsdom": "^27.4.0",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "typescript": "~5.9.2",
-    "vite": "^7.1.5",
-    "vite-plugin-dts": "^4.5.4",
-    "vitest": "^4.0.18"
   },
   "dependencies": {
     "@openvideo/core": "workspace:*",
@@ -63,5 +43,18 @@
     "pixi.js": "^8.14.3",
     "wave-resampler": "^1.0.0",
     "wrapbox": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/dom-webcodecs": "^0.1.17",
+    "@types/rollup-plugin-peer-deps-external": "^2.2.6",
+    "@vitest/browser": "^4.0.18",
+    "@vitest/browser-playwright": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^27.4.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.5",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.18"
   }
 }

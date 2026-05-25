@@ -1,16 +1,12 @@
-import { type FabricObject, Rect, type RectProps, classRegistry } from 'fabric';
-import {
-  ACTIVE_SELECTION_COLOR,
-  ACTIVE_SELECTION_WIDTH,
-} from '../constants/objects';
+import { type FabricObject, Rect, type RectProps, classRegistry } from "fabric";
+import { ACTIVE_SELECTION_COLOR, ACTIVE_SELECTION_WIDTH } from "../constants/objects";
 
-interface PlaceholderProps
-  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
+interface PlaceholderProps extends Pick<RectProps, "width" | "height" | "top" | "left"> {
   id: string;
 }
 
 class Placeholder extends Rect {
-  static type = 'Placeholder';
+  static type = "Placeholder";
   public guideItemId?: string;
   public distXToActCenter?: number;
   public trackItemType?: string;
@@ -27,13 +23,13 @@ class Placeholder extends Rect {
     rx: 0,
     ry: 0,
     objectCaching: false,
-    borderColor: 'transparent',
+    borderColor: "transparent",
     strokeWidth: 0,
-    fill: 'rgba(255, 211, 42,0.1)',
-    stroke: 'rgba(255, 211, 42,1.0)',
+    fill: "rgba(255, 211, 42,0.1)",
+    stroke: "rgba(255, 211, 42,1.0)",
     selectable: false,
     borderOpacityWhenMoving: 1,
-    hoverCursor: 'default',
+    hoverCursor: "default",
     strokeDashArray: [5, 1],
     evented: false,
   };
@@ -52,13 +48,7 @@ class Placeholder extends Rect {
   public updateSelected(ctx: CanvasRenderingContext2D) {
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(
-      -this.width / 2,
-      -this.height / 2,
-      this.width,
-      this.height,
-      this.rx
-    );
+    ctx.roundRect(-this.width / 2, -this.height / 2, this.width, this.height, this.rx);
     ctx.lineWidth = ACTIVE_SELECTION_WIDTH;
     ctx.setLineDash(this.strokeDashArray as any); // Set the dash pattern
     ctx.strokeStyle = ACTIVE_SELECTION_COLOR;
@@ -67,6 +57,6 @@ class Placeholder extends Rect {
   }
 }
 
-classRegistry.setClass(Placeholder, 'Placeholder');
+classRegistry.setClass(Placeholder, "Placeholder");
 
 export default Placeholder;

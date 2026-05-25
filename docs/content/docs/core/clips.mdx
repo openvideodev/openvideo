@@ -58,13 +58,13 @@ core.clip.update(clipId, { left: 500 });
 core.clip.update(clipId, {
   top: 300,
   opacity: 0.5,
-  scale: 1.2
+  scale: 1.2,
 });
 
 // For Text clips, styles are nested
 core.clip.update(textClipId, {
   text: "New Heading",
-  style: { fill: "#ff0000" }
+  style: { fill: "#ff0000" },
 });
 ```
 
@@ -106,8 +106,8 @@ core.execute({
   type: "clip.update",
   payload: {
     id: "clip_123",
-    updates: { opacity: 0.8 }
-  }
+    updates: { opacity: 0.8 },
+  },
 });
 ```
 
@@ -120,13 +120,13 @@ core.batch([
   {
     id: nanoid(),
     type: "clip.add",
-    payload: { clip: myNewClip }
+    payload: { clip: myNewClip },
   },
   {
     id: nanoid(),
     type: "project.select",
-    payload: { ids: [myNewClip.id] }
-  }
+    payload: { ids: [myNewClip.id] },
+  },
 ]);
 ```
 

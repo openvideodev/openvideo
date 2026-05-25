@@ -8,6 +8,7 @@ Tracks serve as an organizational layer in OpenVideo. They define the layering (
 ## Understanding Tracks
 
 In OpenVideo, a **Track** is a logical container for clips.
+
 - **Layering**: Tracks determine render order. Tracks at the start of the `tracks` array are rendered **on top** (front-most).
 - **Organization**: Helps group clips (e.g., "Captions", "B-Roll", "Background Music").
 
@@ -21,9 +22,9 @@ The `core.track` utility provides high-level methods to manage tracks.
 import { core } from "@openvideo/core";
 
 // Add a new track
-core.track.add({ 
-  name: "Subtitles", 
-  type: "Caption" 
+core.track.add({
+  name: "Subtitles",
+  type: "Caption",
 });
 ```
 
@@ -55,14 +56,14 @@ import { core, nanoid } from "@openvideo/core";
 core.execute({
   id: nanoid(),
   type: "track.add",
-  payload: { name: "New Track" }
+  payload: { name: "New Track" },
 });
 
 // Reorder all tracks at once
 core.execute({
   id: nanoid(),
   type: "track.set",
-  payload: [track1, track2, track3]
+  payload: [track1, track2, track3],
 });
 ```
 

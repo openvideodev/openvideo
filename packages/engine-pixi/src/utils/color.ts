@@ -1,22 +1,20 @@
-import { Color } from 'pixi.js';
+import { Color } from "pixi.js";
 
 /**
  * Convert color string or number to PixiJS color number
  */
-export function parseColor(
-  color: string | number | undefined
-): number | undefined {
+export function parseColor(color: string | number | undefined): number | undefined {
   if (color === undefined || color === null) return undefined;
-  if (typeof color === 'number') return color;
-  if (typeof color === 'string') {
-    if (color === 'transparent') return undefined;
+  if (typeof color === "number") return color;
+  if (typeof color === "string") {
+    if (color === "transparent") return undefined;
 
     // Handle hex strings like '#ff0000' or '0xff0000'
-    if (color.startsWith('#')) {
+    if (color.startsWith("#")) {
       const parsed = parseInt(color.slice(1), 16);
       if (!isNaN(parsed)) return parsed;
     }
-    if (color.startsWith('0x')) {
+    if (color.startsWith("0x")) {
       const parsed = parseInt(color, 16);
       if (!isNaN(parsed)) return parsed;
     }
@@ -36,12 +34,9 @@ export function parseColor(
 }
 
 export const isTransparent = (color?: any) =>
-  color === 'transparent' || color === '' || color === undefined || color === null;
+  color === "transparent" || color === "" || color === undefined || color === null;
 
-export const resolveColor = (
-  color?: string | number | null,
-  fallback = 0xffffff
-) => {
+export const resolveColor = (color?: string | number | null, fallback = 0xffffff) => {
   if (isTransparent(color)) {
     return { color: fallback, alpha: 0 };
   }
@@ -54,9 +49,7 @@ export const resolveColor = (
 /**
  * Convert hex color string to RGB object
  */
-export function hexToRgb(
-  hex: string
-): { r: number; g: number; b: number } | null {
+export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   try {
     const colorObj = new Color(hex);
     const rgb = colorObj.toRgbArray(); // Pixi v8 Color returns [r, g, b] in 0-1 range

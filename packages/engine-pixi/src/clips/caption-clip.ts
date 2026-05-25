@@ -1,14 +1,14 @@
-import { Log } from '../utils/log';
-import { redistributeCaptionWords, ICaptionWord } from '@openvideo/core';
-import { BaseClip } from './base-clip';
-import type { IClip } from './iclip';
+import { Log } from "../utils/log";
+import { redistributeCaptionWords, ICaptionWord } from "@openvideo/core";
+import { BaseClip } from "./base-clip";
+import type { IClip } from "./iclip";
 import type {
   CaptionJSON,
   TextStyleJSON,
   CaptionDataJSON,
   CaptionPositioningJSON,
   ICaptionWordAnimation,
-} from '../json-serialization';
+} from "../json-serialization";
 import {
   type Application,
   SplitBitmapText,
@@ -21,27 +21,26 @@ import {
   Container,
   Graphics,
   CanvasTextMetrics,
-} from 'pixi.js';
-import { isTransparent, parseColor, resolveColor } from '../utils/color';
-import type { BaseSpriteEvents } from '../sprite/base-sprite';
+} from "pixi.js";
+import { isTransparent, parseColor, resolveColor } from "../utils/color";
+import type { BaseSpriteEvents } from "../sprite/base-sprite";
 
 interface CaptionSplitBitmapText extends SplitBitmapText {
   segmentIndex: number;
 }
 
-interface LocalTextStyleOptions
-  extends Omit<
-    Partial<TextStyleOptions>,
-    'fontWeight' | 'fontStyle' | 'align' | 'fill' | 'dropShadow' | 'stroke'
-  > {
+interface LocalTextStyleOptions extends Omit<
+  Partial<TextStyleOptions>,
+  "fontWeight" | "fontStyle" | "align" | "fill" | "dropShadow" | "stroke"
+> {
   // We extend from TextStyleOptions which should define the correct types for Pixi
   // If some properties mismatch with our internal opts, we'll cast at the assignment site
   fontSize?: number;
   fontFamily?: string;
-  fontWeight?: TextStyleOptions['fontWeight'];
-  fontStyle?: TextStyleOptions['fontStyle'];
-  align?: TextStyleOptions['align'];
-  fill?: number | { fill: FillGradient } | TextStyleOptions['fill'];
+  fontWeight?: TextStyleOptions["fontWeight"];
+  fontStyle?: TextStyleOptions["fontStyle"];
+  align?: TextStyleOptions["align"];
+  fill?: number | { fill: FillGradient } | TextStyleOptions["fill"];
   dropShadow?:
     | boolean
     | {
@@ -57,12 +56,12 @@ interface LocalTextStyleOptions
         width: number;
         join?: LineJoin;
       }
-    | TextStyleOptions['stroke'];
+    | TextStyleOptions["stroke"];
 }
 
 export interface ITextBoxStyle {
-  style?: 'tiktok' | 'none';
-  textAlign?: 'left' | 'center' | 'right' | '';
+  style?: "tiktok" | "none";
+  textAlign?: "left" | "center" | "right" | "";
   maxLines?: number;
   borderRadius?: number;
   horizontalPadding?: number;
@@ -74,19 +73,18 @@ export interface ICaptionStyle {
   fontFamily?: string;
   fontWeight?: string | number;
   fontStyle?: string;
-  color?: ICaptionOpts['fill'];
-  fill?: ICaptionOpts['fill'];
-  align?: ICaptionOpts['align'];
-  textCase?: ICaptionOpts['textCase'];
-  verticalAlign?: ICaptionOpts['verticalAlign'];
-  wordsPerLine?: ICaptionOpts['wordsPerLine'];
+  color?: ICaptionOpts["color"];
+  align?: ICaptionOpts["align"];
+  textCase?: ICaptionOpts["textCase"];
+  verticalAlign?: ICaptionOpts["verticalAlign"];
+  wordsPerLine?: ICaptionOpts["wordsPerLine"];
   stroke?: { color: string | number; width: number };
   shadow?: {
-    color: string | number;
-    alpha: number;
-    blur: number;
-    distance: number;
-    angle: number;
+    color?: string | number;
+    alpha?: number;
+    blur?: number;
+    offsetX?: number;
+    offsetY?: number;
   };
   wordAnimation?: ICaptionWordAnimation;
   textBoxStyle?: ITextBoxStyle;
@@ -104,13 +102,13 @@ export interface ICaptionEvents extends BaseSpriteEvents {
     volume: number;
     text: string;
     words: ICaptionWord[];
-    fill: ICaptionOpts['fill'];
-    align: ICaptionOpts['align'];
-    textCase: ICaptionOpts['textCase'];
-    stroke: ICaptionOpts['stroke'];
-    dropShadow: ICaptionOpts['dropShadow'];
-    caption: ICaptionOpts['caption'];
-    wordsPerLine: ICaptionOpts['wordsPerLine'];
+    color: ICaptionOpts["color"];
+    align: ICaptionOpts["align"];
+    textCase: ICaptionOpts["textCase"];
+    stroke: ICaptionOpts["stroke"];
+    shadow: ICaptionOpts["shadow"];
+    caption: ICaptionOpts["caption"];
+    wordsPerLine: ICaptionOpts["wordsPerLine"];
     textBoxStyle: ITextBoxStyle;
   }>;
 }
@@ -141,11 +139,11 @@ export interface ICaptionOpts {
    * Text color (hex string, color name, or gradient object)
    * @default '#ffffff'
    */
-  fill?:
+  color?:
     | string
     | number
     | {
-        type: 'gradient';
+        type: "gradient";
         x0: number;
         y0: number;
         x1: number;
@@ -189,7 +187,7 @@ export interface ICaptionOpts {
     | {
         color: string | number;
         width: number;
-        join?: 'miter' | 'round' | 'bevel';
+        join?: "miter" | "round" | "bevel";
       };
   /**
    * Stroke width in pixels (used when stroke is a simple color)
@@ -200,16 +198,16 @@ export interface ICaptionOpts {
    * Text alignment ('left', 'center', 'right')
    * @default 'center'
    */
-  align?: 'left' | 'center' | 'right';
+  align?: "left" | "center" | "right";
   /**
-   * Drop shadow configuration
+   * Shadow configuration
    */
-  dropShadow?: {
+  shadow?: {
     color?: string | number;
     alpha?: number;
     blur?: number;
-    angle?: number;
-    distance?: number;
+    offsetX?: number;
+    offsetY?: number;
   };
   /**
    * Word wrap width (0 = no wrap)
@@ -220,7 +218,7 @@ export interface ICaptionOpts {
    * Word wrap mode ('break-word' or 'normal')
    * @default 'break-word'
    */
-  wordWrapMode?: 'break-word' | 'normal';
+  wordWrapMode?: "break-word" | "normal";
   /**
    * Whether to enable word wrap
    * @default true
@@ -230,7 +228,7 @@ export interface ICaptionOpts {
    * Vertical alignment ('top', 'center', 'bottom')
    * @default 'bottom'
    */
-  verticalAlign?: 'top' | 'center' | 'bottom';
+  verticalAlign?: "top" | "center" | "bottom";
   /**
    * Line height (multiplier)
    * @default 1
@@ -245,7 +243,7 @@ export interface ICaptionOpts {
    * Text case transformation
    * @default 'none'
    */
-  textCase?: 'none' | 'uppercase' | 'lowercase' | 'title';
+  textCase?: "none" | "uppercase" | "lowercase" | "title";
   /**
    * Media ID to which the captions were applied
    */
@@ -258,7 +256,7 @@ export interface ICaptionOpts {
    * Words per line mode ('single' or 'multiple')
    * @default 'multiple'
    */
-  wordsPerLine?: 'single' | 'multiple';
+  wordsPerLine?: "single" | "multiple";
   wordAnimation?: ICaptionWordAnimation;
   textBoxStyle?: ITextBoxStyle;
 }
@@ -279,8 +277,8 @@ export interface ICaptionOpts {
  * captionClip.duration = 3e6; // 3 seconds
  */
 export class Caption extends BaseClip<ICaptionEvents> implements IClip {
-  readonly type = 'Caption';
-  declare ready: IClip['ready'];
+  readonly type = "Caption";
+  declare ready: IClip["ready"];
 
   private _meta = {
     duration: Infinity,
@@ -332,7 +330,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       }
     }
     this.refreshCaptions().then(() => {
-      this.emit('propsChange', { width: this._width });
+      this.emit("propsChange", { width: this._width });
     });
   }
 
@@ -344,7 +342,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     if (Math.abs(this._height - v) < 0.1) return;
     this._height = v;
     this.refreshCaptions().then(() => {
-      this.emit('propsChange', { height: this._height });
+      this.emit("propsChange", { height: this._height });
     });
   }
 
@@ -358,7 +356,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     if (!this._refreshing) {
       this._isXPositionedManually = true;
     }
-    this.emit('propsChange', { left: v });
+    this.emit("propsChange", { left: v });
   }
 
   override get top(): number {
@@ -368,7 +366,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   override set top(v: number) {
     if (Math.abs(this._top - v) < 0.1) return;
     this._top = v;
-    this.emit('propsChange', { top: v });
+    this.emit("propsChange", { top: v });
   }
 
   private _initialLayoutApplied = false;
@@ -376,9 +374,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   private _isWidthConstrained = false;
   private _lastContentWidth = 0;
   private _lastContentHeight = 0;
-  private _lastProcessedText = '';
+  private _lastProcessedText = "";
 
-  private _text: string = '';
+  private _text: string = "";
 
   /**
    * Caption text content (hybrid JSON structure)
@@ -387,18 +385,12 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     return this._text;
   }
 
-
-
   set text(v: string) {
     if (this._text === v) return;
     this._text = v;
     // Don't reset _isWidthConstrained here to allow persistent wrap limit
 
-    this.opts.words = redistributeCaptionWords(
-      v,
-      this.opts.words,
-      this.duration
-    );
+    this.opts.words = redistributeCaptionWords(v, this.opts.words, this.duration);
 
     // Sync originalOpts
     if (this.originalOpts) {
@@ -409,7 +401,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     // Only refresh if already initialized
     if (this.originalOpts && this.textStyle) {
       this.refreshCaptions().then(() => {
-        this.emit('propsChange', { text: v });
+        this.emit("propsChange", { text: v });
       });
     }
   }
@@ -423,10 +415,8 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       fontFamily: opts.fontFamily,
       fontWeight: opts.fontWeight,
       fontStyle: opts.fontStyle,
-      color: opts.fill,
-      fill: opts.fill,
+      color: opts.color,
       align: opts.align,
-
 
       textCase: opts.textCase,
       verticalAlign: opts.verticalAlign,
@@ -434,17 +424,17 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       wordAnimation: opts.wordAnimation,
       textBoxStyle: opts.textBoxStyle,
       stroke: opts.stroke
-        ? typeof opts.stroke === 'object'
+        ? typeof opts.stroke === "object"
           ? { color: opts.stroke.color, width: opts.stroke.width }
           : { color: opts.stroke, width: opts.strokeWidth ?? 0 }
         : undefined,
-      shadow: opts.dropShadow
+      shadow: opts.shadow
         ? {
-            color: opts.dropShadow.color ?? '#000000',
-            alpha: opts.dropShadow.alpha ?? 0.5,
-            blur: opts.dropShadow.blur ?? 4,
-            distance: opts.dropShadow.distance ?? 0,
-            angle: opts.dropShadow.angle ?? 0,
+            color: opts.shadow.color ?? "#000000",
+            alpha: opts.shadow.alpha ?? 0.5,
+            blur: opts.shadow.blur ?? 4,
+            offsetX: opts.shadow.offsetX ?? 0,
+            offsetY: opts.shadow.offsetY ?? 0,
           }
         : undefined,
     };
@@ -454,11 +444,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this.updateStyle(v as Partial<ICaptionOpts>);
   }
 
-  get wordsPerLine(): 'single' | 'multiple' {
+  get wordsPerLine(): "single" | "multiple" {
     return this.opts.wordsPerLine;
   }
 
-  set wordsPerLine(v: 'single' | 'multiple') {
+  set wordsPerLine(v: "single" | "multiple") {
     this.updateStyle({ wordsPerLine: v });
   }
 
@@ -494,35 +484,35 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this.updateStyle({ fontWeight: v });
   }
 
-  get fontStyle(): 'normal' | 'italic' | 'oblique' {
+  get fontStyle(): "normal" | "italic" | "oblique" {
     return this.opts.fontStyle;
   }
 
-  set fontStyle(v: 'normal' | 'italic' | 'oblique') {
+  set fontStyle(v: "normal" | "italic" | "oblique") {
     this.updateStyle({ fontStyle: v });
   }
 
-  get fill(): ICaptionOpts['fill'] {
-    return this.opts.fill;
+  get color(): ICaptionOpts["color"] {
+    return this.opts.color;
   }
 
-  set fill(v: ICaptionOpts['fill']) {
-    this.updateStyle({ fill: v });
+  set color(v: ICaptionOpts["color"]) {
+    this.updateStyle({ color: v });
   }
 
-  get align(): 'left' | 'center' | 'right' {
+  get align(): "left" | "center" | "right" {
     return this.opts.align;
   }
 
-  set align(v: 'left' | 'center' | 'right') {
+  set align(v: "left" | "center" | "right") {
     this.updateStyle({ align: v });
   }
 
-  get stroke(): ICaptionOpts['stroke'] {
+  get stroke(): ICaptionOpts["stroke"] {
     return this.originalOpts?.stroke;
   }
 
-  set stroke(v: ICaptionOpts['stroke']) {
+  set stroke(v: ICaptionOpts["stroke"]) {
     this.updateStyle({ stroke: v });
   }
 
@@ -534,44 +524,38 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this.updateStyle({ strokeWidth: v });
   }
 
-  get dropShadow(): ICaptionOpts['dropShadow'] {
-    return this.originalOpts?.dropShadow;
+  get shadow(): ICaptionOpts["shadow"] {
+    return this.originalOpts?.shadow;
   }
 
-  set dropShadow(v: ICaptionOpts['dropShadow']) {
-    this.updateStyle({ dropShadow: v });
+  set shadow(v: ICaptionOpts["shadow"]) {
+    this.updateStyle({ shadow: v });
   }
 
-  get caption(): ICaptionOpts['caption'] {
+  get caption(): ICaptionOpts["caption"] {
     return this.originalOpts?.caption;
   }
 
-  set caption(v: ICaptionOpts['caption']) {
+  set caption(v: ICaptionOpts["caption"]) {
     this.updateStyle({ caption: v });
   }
 
   get textBoxStyle(): ITextBoxStyle {
-    return (
-      this.originalOpts?.caption?.textBoxStyle ??
-      this.originalOpts?.textBoxStyle ??
-      {}
-    );
+    return this.originalOpts?.caption?.textBoxStyle ?? this.originalOpts?.textBoxStyle ?? {};
   }
 
   set textBoxStyle(v: ITextBoxStyle) {
     this.updateStyle({ textBoxStyle: v });
   }
 
-
-
   /**
    * Text case proxy
    */
   get textCase(): string {
-    return this.originalOpts?.textCase || 'none';
+    return this.originalOpts?.textCase || "none";
   }
 
-  set textCase(v: 'none' | 'uppercase' | 'lowercase' | 'title') {
+  set textCase(v: "none" | "uppercase" | "lowercase" | "title") {
     this.updateStyle({ textCase: v });
   }
 
@@ -623,15 +607,15 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     // Update text property to match words
     const newText = wordsArray
       .map((w) => w.text)
-      .filter((t) => t && t.trim() !== '')
-      .join(' ');
+      .filter((t) => t && t.trim() !== "")
+      .join(" ");
 
     if (this._text !== newText) {
       this.text = newText; // This will trigger text setter, sync, refresh, and emit
     } else {
       // Text is same, but words metadata/timing might have changed
       this.refreshCaptions().then(() => {
-        this.emit('propsChange', { words: v });
+        this.emit("propsChange", { words: v });
       });
     }
   }
@@ -642,15 +626,15 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     fontFamily: string;
     fontUrl: string;
     fontWeight: string | number;
-    fontStyle: 'normal' | 'italic' | 'oblique';
-    fill: ICaptionOpts['fill'];
+    fontStyle: "normal" | "italic" | "oblique";
+    color: ICaptionOpts["color"];
     strokeWidth: number;
-    align: 'left' | 'center' | 'right';
+    align: "left" | "center" | "right";
     wordWrapWidth: number;
     wordWrap: boolean;
     lineHeight: number;
     letterSpacing: number;
-    textCase: 'none' | 'uppercase' | 'lowercase' | 'title';
+    textCase: "none" | "uppercase" | "lowercase" | "title";
     videoWidth: number;
     videoHeight: number;
     bottomOffset: number;
@@ -668,7 +652,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     }>;
     preserveKeywordColor: boolean;
     mediaId?: string;
-    wordsPerLine: 'single' | 'multiple';
+    wordsPerLine: "single" | "multiple";
     wordAnimation?: ICaptionWordAnimation;
     textBoxStyle: ITextBoxStyle;
   };
@@ -680,15 +664,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   private textStyleBase!: TextStyle;
   private _refreshing = false;
   private _needsRefresh = false;
-  private externalRenderer: Application['renderer'] | null = null;
+  private externalRenderer: Application["renderer"] | null = null;
   private pixiApp: Application | null = null;
   private originalOpts: ICaptionOpts | null = null;
 
-  constructor(
-    text: string,
-    opts: ICaptionOpts = {},
-    renderer?: Application['renderer']
-  ) {
+  constructor(text: string, opts: ICaptionOpts = {}, renderer?: Application["renderer"]) {
     super();
     // Store original options for serialization (shallow copy is fine since options are primitives)
     this.originalOpts = { ...opts };
@@ -697,43 +677,42 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     // Set default options (matching TextClip defaults where applicable)
     this.opts = {
       fontSize: opts.fontSize ?? 30,
-      fontFamily: opts.fontFamily ?? 'Arial',
-      fontUrl: opts.fontUrl ?? '',
-      fontWeight: opts.fontWeight ?? 'normal',
-      fontStyle:
-        (opts.fontStyle as 'normal' | 'italic' | 'oblique') ?? 'normal',
-      fill: opts.fill ?? '#ffffff',
+      fontFamily: opts.fontFamily ?? "Arial",
+      fontUrl: opts.fontUrl ?? "",
+      fontWeight: opts.fontWeight ?? "normal",
+      fontStyle: (opts.fontStyle as "normal" | "italic" | "oblique") ?? "normal",
+      color: opts.color ?? "#ffffff",
       strokeWidth: opts.strokeWidth ?? 0,
-      align: opts.align ?? 'center',
+      align: opts.align ?? "center",
       wordWrapWidth: opts.wordWrapWidth ?? 0,
       wordWrap: opts.wordWrap ?? false,
       lineHeight: opts.lineHeight ?? 1,
       letterSpacing: opts.letterSpacing ?? 0,
-      textCase: opts.textCase ?? 'none',
+      textCase: opts.textCase ?? "none",
       videoWidth: opts.caption?.positioning?.videoWidth ?? 1280,
       videoHeight: opts.caption?.positioning?.videoHeight ?? 720,
       bottomOffset: opts.caption?.positioning?.bottomOffset ?? 30,
-      keyword: opts.caption?.colors?.keyword ?? '#ffff00',
-      background: opts.caption?.colors?.background ?? '#000000',
-      active: opts.caption?.colors?.active ?? '#ffffff',
-      activeFill: opts.caption?.colors?.activeFill ?? '#00ff00',
-      appeared: opts.caption?.colors?.appeared ?? '#ffffff',
+      keyword: opts.caption?.colors?.keyword ?? "#ffff00",
+      background: opts.caption?.colors?.background ?? "#000000",
+      active: opts.caption?.colors?.active ?? "#ffffff",
+      activeFill: opts.caption?.colors?.activeFill ?? "#00ff00",
+      appeared: opts.caption?.colors?.appeared ?? "#ffffff",
       words: opts.caption?.words ?? [],
       preserveKeywordColor: opts.caption?.preserveKeywordColor ?? false,
       mediaId: opts.mediaId,
-      wordsPerLine: opts.wordsPerLine ?? 'multiple',
+      wordsPerLine: opts.wordsPerLine ?? "multiple",
       wordAnimation: opts.caption?.wordAnimation ?? opts.wordAnimation,
       textBoxStyle: opts.caption?.textBoxStyle ?? opts.textBoxStyle ?? {},
     };
 
     // Ensure originalOpts is in sync with defaults for serialization
     if (this.originalOpts) {
-      if (this.originalOpts.fill === undefined) this.originalOpts.fill = this.opts.fill;
+      if (this.originalOpts.color === undefined) this.originalOpts.color = this.opts.color;
       if (this.originalOpts.fontSize === undefined) this.originalOpts.fontSize = this.opts.fontSize;
-      if (this.originalOpts.fontFamily === undefined) this.originalOpts.fontFamily = this.opts.fontFamily;
+      if (this.originalOpts.fontFamily === undefined)
+        this.originalOpts.fontFamily = this.opts.fontFamily;
       if (this.originalOpts.align === undefined) this.originalOpts.align = this.opts.align;
     }
-
 
     this._initialLayoutApplied = opts.initialLayoutApplied ?? false;
     if (this._initialLayoutApplied) {
@@ -756,27 +735,17 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     const styleOptions: LocalTextStyleOptions = {
       fontSize: this.opts.fontSize,
       fontFamily: this.opts.fontFamily,
-      fontWeight: this.opts.fontWeight as TextStyleOptions['fontWeight'],
+      fontWeight: this.opts.fontWeight as TextStyleOptions["fontWeight"],
       fontStyle: this.opts.fontStyle,
       align: this.opts.align,
     };
 
-    // Handle fill - can be color or gradient (same as TextClip)
-    if (
-      opts.fill &&
-      typeof opts.fill === 'object' &&
-      opts.fill.type === 'gradient'
-    ) {
+    // Handle color - can be color or gradient (same as TextClip)
+    if (opts.color && typeof opts.color === "object" && opts.color.type === "gradient") {
       // Create gradient fill
-      const gradient = new FillGradient(
-        opts.fill.x0,
-        opts.fill.y0,
-        opts.fill.x1,
-        opts.fill.y1
-      );
-      opts.fill.colors.forEach(({ ratio, color }) => {
-        const colorNumber =
-          typeof color === 'number' ? color : (parseColor(color) ?? 0xffffff);
+      const gradient = new FillGradient(opts.color.x0, opts.color.y0, opts.color.x1, opts.color.y1);
+      opts.color.colors.forEach(({ ratio, color }) => {
+        const colorNumber = typeof color === "number" ? color : (parseColor(color) ?? 0xffffff);
         gradient.addColorStop(ratio, colorNumber);
       });
       styleOptions.fill = 0xffffff;
@@ -784,15 +753,10 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       styleOptions.fill = 0xffffff;
     }
 
-    const isTransparent = (color?: string | number | null) =>
-      color === 'transparent';
+    const isTransparent = (color?: string | number | null) => color === "transparent";
 
     // Handle stroke - can be color or advanced stroke object (same as TextClip)
-    if (
-      opts.stroke &&
-      typeof opts.stroke === 'object' &&
-      'color' in opts.stroke
-    ) {
+    if (opts.stroke && typeof opts.stroke === "object" && "color" in opts.stroke) {
       if (!isTransparent(opts.stroke.color)) {
         const strokeColor = parseColor(opts.stroke.color);
         if (strokeColor !== undefined) {
@@ -824,15 +788,17 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     }
 
     // Only add dropShadow if provided (same as TextClip)
-    if (opts.dropShadow) {
-      const shadowColor = parseColor(opts.dropShadow.color);
+    if (opts.shadow) {
+      const shadowColor = parseColor(opts.shadow.color);
       if (shadowColor !== undefined) {
+        const dx = opts.shadow.offsetX ?? 0;
+        const dy = opts.shadow.offsetY ?? 0;
         styleOptions.dropShadow = {
           color: shadowColor,
-          alpha: opts.dropShadow.alpha ?? 0.5,
-          blur: opts.dropShadow.blur ?? 4,
-          angle: opts.dropShadow.angle ?? Math.PI / 6,
-          distance: opts.dropShadow.distance ?? 2,
+          alpha: opts.shadow.alpha ?? 0.5,
+          blur: opts.shadow.blur ?? 4,
+          angle: Math.atan2(dy, dx),
+          distance: Math.sqrt(dx * dx + dy * dy),
         };
       }
     }
@@ -847,7 +813,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     this.ready = (async () => {
       await this.refreshCaptions();
       const meta = { ...this._meta };
-      Log.info('CaptionClip ready:', meta);
+      Log.info("CaptionClip ready:", meta);
       return meta;
     })();
   }
@@ -865,8 +831,15 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       delete (processedOpts as any).style;
     }
 
+    if ((processedOpts as any).fill !== undefined) {
+      processedOpts.color = (processedOpts as any).fill;
+      delete (processedOpts as any).fill;
+    }
 
-
+    if ((processedOpts as any).dropShadow !== undefined) {
+      processedOpts.shadow = (processedOpts as any).dropShadow;
+      delete (processedOpts as any).dropShadow;
+    }
 
     // 2. Update originalOpts with new values
     // Deep-merge caption so a single color/wordAnimation update doesn't wipe words/positioning
@@ -880,41 +853,35 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           ? { colors: { ...(prevCaption.colors || {}), ...processedOpts.caption.colors } }
           : {}),
       };
-      
-      const { caption: _cap, textBoxStyle: _tbs, wordAnimation: _wa, ...restProcessed } = processedOpts as any;
+
+      const {
+        caption: _cap,
+        textBoxStyle: _tbs,
+        wordAnimation: _wa,
+        ...restProcessed
+      } = processedOpts as any;
       this.originalOpts = { ...this.originalOpts, ...restProcessed, caption: mergedCaption };
     } else {
       const { textBoxStyle: _tbs, wordAnimation: _wa, ...restProcessed } = processedOpts as any;
       this.originalOpts = { ...this.originalOpts, ...restProcessed };
     }
 
-
     // 2. Update internal opts
-    if (processedOpts.fontSize !== undefined)
-      this.opts.fontSize = processedOpts.fontSize;
-    if (processedOpts.fontFamily !== undefined)
-      this.opts.fontFamily = processedOpts.fontFamily;
-    if (processedOpts.fontUrl !== undefined)
-      this.opts.fontUrl = processedOpts.fontUrl;
-    if (processedOpts.fontWeight !== undefined)
-      this.opts.fontWeight = processedOpts.fontWeight;
+    if (processedOpts.fontSize !== undefined) this.opts.fontSize = processedOpts.fontSize;
+    if (processedOpts.fontFamily !== undefined) this.opts.fontFamily = processedOpts.fontFamily;
+    if (processedOpts.fontUrl !== undefined) this.opts.fontUrl = processedOpts.fontUrl;
+    if (processedOpts.fontWeight !== undefined) this.opts.fontWeight = processedOpts.fontWeight;
     if (processedOpts.fontStyle !== undefined)
-      this.opts.fontStyle = processedOpts.fontStyle as
-        | 'normal'
-        | 'italic'
-        | 'oblique';
-    if (processedOpts.fill !== undefined) {
-      this.opts.fill = processedOpts.fill;
-      if (this.originalOpts) this.originalOpts.fill = processedOpts.fill;
+      this.opts.fontStyle = processedOpts.fontStyle as "normal" | "italic" | "oblique";
+    if (processedOpts.color !== undefined) {
+      this.opts.color = processedOpts.color;
+      if (this.originalOpts) this.originalOpts.color = processedOpts.color;
     }
-    if (processedOpts.align !== undefined)
-      this.opts.align = processedOpts.align;
+    if (processedOpts.align !== undefined) this.opts.align = processedOpts.align;
     if (processedOpts.letterSpacing !== undefined)
       this.opts.letterSpacing = processedOpts.letterSpacing;
-    if (processedOpts.lineHeight !== undefined)
-      this.opts.lineHeight = processedOpts.lineHeight;
-    if (processedOpts.textCase !== undefined)
-      this.opts.textCase = processedOpts.textCase;
+    if (processedOpts.lineHeight !== undefined) this.opts.lineHeight = processedOpts.lineHeight;
+    if (processedOpts.textCase !== undefined) this.opts.textCase = processedOpts.textCase;
     if (processedOpts.wordWrapWidth !== undefined) {
       this.opts.wordWrapWidth = processedOpts.wordWrapWidth;
       if (processedOpts.wordWrapWidth > 0) {
@@ -935,8 +902,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         this.opts.wordAnimation = processedOpts.caption.wordAnimation;
       if (processedOpts.caption.textBoxStyle !== undefined)
         this.opts.textBoxStyle = processedOpts.caption.textBoxStyle;
-      if (processedOpts.caption.words !== undefined)
-        this.opts.words = processedOpts.caption.words;
+      if (processedOpts.caption.words !== undefined) this.opts.words = processedOpts.caption.words;
       if (processedOpts.caption.preserveKeywordColor !== undefined)
         this.opts.preserveKeywordColor = processedOpts.caption.preserveKeywordColor;
 
@@ -953,39 +919,37 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
     // Support top-level color updates (legacy / flattened from .style object)
 
-
     // 3. Update TextStyle
     const styleOptions: LocalTextStyleOptions = {
       fontSize: this.opts.fontSize,
       fontFamily: this.opts.fontFamily,
-      fontWeight: this.opts.fontWeight as TextStyleOptions['fontWeight'],
+      fontWeight: this.opts.fontWeight as TextStyleOptions["fontWeight"],
       fontStyle: this.opts.fontStyle,
       align: this.opts.align,
     };
 
     if (
-      this.opts.fill &&
-      typeof this.opts.fill === 'object' &&
-      this.opts.fill.type === 'gradient'
+      this.opts.color &&
+      typeof this.opts.color === "object" &&
+      "type" in this.opts.color &&
+      this.opts.color.type === "gradient"
     ) {
       const gradient = new FillGradient(
-        this.opts.fill.x0,
-        this.opts.fill.y0,
-        this.opts.fill.x1,
-        this.opts.fill.y1
+        this.opts.color.x0,
+        this.opts.color.y0,
+        this.opts.color.x1,
+        this.opts.color.y1,
       );
-      this.opts.fill.colors.forEach(
+      this.opts.color.colors.forEach(
         ({ ratio, color }: { ratio: number; color: string | number }) => {
-          const colorNumber =
-            typeof color === 'number' ? color : (parseColor(color) ?? 0xffffff);
+          const colorNumber = typeof color === "number" ? color : (parseColor(color) ?? 0xffffff);
           gradient.addColorStop(ratio, colorNumber);
-        }
+        },
       );
       styleOptions.fill = 0xffffff;
     } else {
       styleOptions.fill = 0xffffff;
     }
-
 
     // Handle stroke
     const hasStroke =
@@ -996,8 +960,8 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     if (hasStroke) {
       if (
         this.originalOpts?.stroke &&
-        typeof this.originalOpts.stroke === 'object' &&
-        'color' in this.originalOpts.stroke
+        typeof this.originalOpts.stroke === "object" &&
+        "color" in this.originalOpts.stroke
       ) {
         const strokeColor = parseColor(this.originalOpts.stroke.color);
         if (strokeColor !== undefined) {
@@ -1012,9 +976,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       } else if (this.originalOpts?.stroke) {
         const stroke = this.originalOpts.stroke;
         const strokeColor = parseColor(
-          typeof stroke === 'object' && stroke !== null && 'color' in stroke
+          typeof stroke === "object" && stroke !== null && "color" in stroke
             ? (stroke as { color: string | number }).color
-            : (stroke as string | number)
+            : (stroke as string | number),
         );
         const strokeWidth =
           opts.strokeWidth !== undefined
@@ -1030,21 +994,19 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       }
     }
 
-    // Handle dropShadow
-    const dropShadow =
-      opts.dropShadow !== undefined
-        ? opts.dropShadow
-        : this.originalOpts?.dropShadow;
-    if (dropShadow) {
-      const shadowColor = parseColor(dropShadow.color);
+    // Handle shadow
+    const shadow = opts.shadow !== undefined ? opts.shadow : this.originalOpts?.shadow;
+    if (shadow) {
+      const shadowColor = parseColor(shadow.color);
       if (shadowColor !== undefined) {
+        const dx = shadow.offsetX ?? 0;
+        const dy = shadow.offsetY ?? 0;
         styleOptions.dropShadow = {
           color: shadowColor,
-          alpha: dropShadow.alpha !== undefined ? dropShadow.alpha : 0.5,
-          blur: dropShadow.blur !== undefined ? dropShadow.blur : 4,
-          angle:
-            dropShadow.angle !== undefined ? dropShadow.angle : Math.PI / 6,
-          distance: dropShadow.distance !== undefined ? dropShadow.distance : 2,
+          alpha: shadow.alpha !== undefined ? shadow.alpha : 0.5,
+          blur: shadow.blur !== undefined ? shadow.blur : 4,
+          angle: Math.atan2(dy, dx),
+          distance: Math.sqrt(dx * dx + dy * dy),
         };
       }
     }
@@ -1057,7 +1019,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
     // 4. Refresh captions
     await this.refreshCaptions();
-    this.emit('propsChange', opts);
+    this.emit("propsChange", opts);
   }
 
   private async refreshCaptions() {
@@ -1070,13 +1032,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
     try {
       // Ensure latest fonts are available for measurement
-      if (typeof document !== 'undefined') {
+      if (typeof document !== "undefined") {
         await document.fonts.ready;
       }
       const oldWidth = this._width;
       const oldHeight = this._height;
 
-      const finalVAlign = this.originalOpts?.verticalAlign || 'center';
+      const finalVAlign = this.originalOpts?.verticalAlign || "center";
       if (!this.pixiTextContainer) {
         this.pixiTextContainer = new Container();
       } else {
@@ -1090,24 +1052,23 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       });
       this.wordTexts = [];
 
-      const metrics = CanvasTextMetrics.measureText(' ', this.textStyle);
+      const metrics = CanvasTextMetrics.measureText(" ", this.textStyle);
 
       // 3. Create rendered word objects (flatten segments into individual words)
       const flattenedWords: CaptionSplitBitmapText[] = [];
 
       this.opts.words.forEach((segment, segmentIndex) => {
         const textCase = this.opts.textCase;
-        let segmentText = segment.text || '';
+        let segmentText = segment.text || "";
 
-        if (textCase === 'uppercase') {
+        if (textCase === "uppercase") {
           segmentText = segmentText.toUpperCase();
-        } else if (textCase === 'lowercase') {
+        } else if (textCase === "lowercase") {
           segmentText = segmentText.toLowerCase();
-        } else if (textCase === 'title') {
+        } else if (textCase === "title") {
           segmentText = segmentText.replace(
             /\w\S*/g,
-            (txt) =>
-              txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+            (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
           );
         }
 
@@ -1121,11 +1082,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           }) as unknown as CaptionSplitBitmapText;
           wordText.segmentIndex = segmentIndex;
 
-          const fill = this.opts.fill;
+          const color = this.opts.color;
           const fillToParse =
-            typeof fill === 'object' && fill !== null && 'type' in fill
+            typeof color === "object" && color !== null && "type" in color
               ? 0xffffff
-              : (fill as string | number);
+              : (color as string | number);
           const initialColor = parseColor(fillToParse);
           wordText.tint = initialColor ?? 0xffffff;
 
@@ -1143,11 +1104,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
       // Measure space width precisely for this Bitmap font
       const tempSpace = new SplitBitmapText({
-        text: ' ',
+        text: " ",
         style: this.textStyleBase,
       });
       const spaceWidth = Math.ceil(
-        tempSpace.getLocalBounds().width || tempSpace.width || metrics.width
+        tempSpace.getLocalBounds().width || tempSpace.width || metrics.width,
       );
       tempSpace.destroy();
 
@@ -1161,10 +1122,10 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       const videoWidth = this.opts.videoWidth || 1280;
 
       let wrapWidth = 0;
-      if (this.opts.wordWrapWidth > 0 && this.opts.wordsPerLine !== 'single') {
+      if (this.opts.wordWrapWidth > 0 && this.opts.wordsPerLine !== "single") {
         // Use the persistent wrap limit and subtract padding to keep text inside the box
         wrapWidth = this.opts.wordWrapWidth - paddingX * 2;
-      } else if (this.opts.wordsPerLine === 'single') {
+      } else if (this.opts.wordsPerLine === "single") {
         // If wordsPerLine is 'single', each word gets its own line, so wrapWidth is effectively infinite
         wrapWidth = videoWidth * 5; // A very generous width
       } else if (!isAutoWidthNow && this.width > 0) {
@@ -1188,7 +1149,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
       const align = this.opts.textBoxStyle.textAlign || this.opts.align;
       const tbs = this.opts.textBoxStyle;
-      const isTiktok = tbs.style === 'tiktok';
+      const isTiktok = tbs.style === "tiktok";
       const lineRects: { x: number; y: number; w: number; h: number }[] = [];
       const hPadding = tbs.horizontalPadding ?? 0;
       const vPadding = tbs.verticalPadding ?? 0;
@@ -1204,9 +1165,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         const segmentIndex = wordText.segmentIndex;
         const wordData = this.opts.words[segmentIndex];
         const prevWordText = index > 0 ? this.wordTexts[index - 1] : null;
-        const prevWordData = prevWordText
-          ? this.opts.words[prevWordText.segmentIndex]
-          : null;
+        const prevWordData = prevWordText ? this.opts.words[prevWordText.segmentIndex] : null;
 
         // Force new line if paragraphIndex changed (explicit breaks/newlines)
         // OR if wordsPerLine is set to 'single'
@@ -1215,19 +1174,14 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
             wordData &&
             wordData.paragraphIndex !== undefined &&
             wordData.paragraphIndex !== prevWordData.paragraphIndex) ||
-          this.opts.wordsPerLine === 'single';
+          this.opts.wordsPerLine === "single";
 
         const projectedWidth =
-          currentLineWidth +
-          (currentLineWidth > 0 ? spaceWidth : 0) +
-          wordWidth;
+          currentLineWidth + (currentLineWidth > 0 ? spaceWidth : 0) + wordWidth;
 
         // Heuristic: only wrap if the word DOES NOT FIT anymore.
         // We allow words to fill up to the wrapWidth.
-        if (
-          !shouldForceNewLine &&
-          (projectedWidth <= wrapWidth + 1 || currentLine.length === 0)
-        ) {
+        if (!shouldForceNewLine && (projectedWidth <= wrapWidth + 1 || currentLine.length === 0)) {
           // Word fits!
           currentLine.push(wordText);
           currentLineWidth = projectedWidth;
@@ -1256,10 +1210,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       }
 
       // Apply maxLines constraint
-      if (
-        this.opts.textBoxStyle.maxLines &&
-        this.opts.textBoxStyle.maxLines > 0
-      ) {
+      if (this.opts.textBoxStyle.maxLines && this.opts.textBoxStyle.maxLines > 0) {
         lines = lines.slice(0, this.opts.textBoxStyle.maxLines);
       }
 
@@ -1276,8 +1227,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       const logicalContentHeight = totalHeight;
 
       // Determine padded dimensions
-      const contentWidthWithPadding =
-        logicalContentWidth + Math.max(paddingX, hPadding) * 2;
+      const contentWidthWithPadding = logicalContentWidth + Math.max(paddingX, hPadding) * 2;
       const contentHeightWithPadding = logicalContentHeight;
 
       // Determine Target Width (Selection Box & Texture Size)
@@ -1295,15 +1245,12 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           // Maintain manual stretch on move/sync/manual drag
           targetWidth = Math.max(contentWidthWithPadding, oldWidth);
         }
-        
+
         // Ensure we never cut off content even if constrained
         targetWidth = Math.max(targetWidth, contentWidthWithPadding);
 
         // Update wordWrapWidth to match if it grew, so future wraps are consistent
-        if (
-          targetWidth > (this.opts.wordWrapWidth || 0) &&
-          (this.opts.wordWrapWidth || 0) > 0
-        ) {
+        if (targetWidth > (this.opts.wordWrapWidth || 0) && (this.opts.wordWrapWidth || 0) > 0) {
           this.opts.wordWrapWidth = targetWidth;
           if (this.originalOpts) this.originalOpts.wordWrapWidth = targetWidth;
         }
@@ -1317,7 +1264,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         Math.abs(oldWidth - containerWidth) > 0.1 ||
         Math.abs(oldHeight - containerHeight) > 0.1
       ) {
-        this.emit('propsChange', {
+        this.emit("propsChange", {
           width: containerWidth,
           height: containerHeight,
         });
@@ -1330,9 +1277,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       // Apply Vertical Alignment for the block as a whole
       let startY = 0;
       const effectiveVOffset = Math.max(paddingY, vPadding);
-      if (finalVAlign === 'top') {
+      if (finalVAlign === "top") {
         startY = effectiveVOffset;
-      } else if (finalVAlign === 'bottom') {
+      } else if (finalVAlign === "bottom") {
         startY = containerHeight - textBlockHeight - effectiveVOffset;
       } else {
         startY = (containerHeight - textBlockHeight) / 2;
@@ -1342,7 +1289,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
       lines.forEach((line) => {
         const lineContainer = new Container();
-        lineContainer.label = 'lineContainer';
+        lineContainer.label = "lineContainer";
         this.pixiTextContainer!.addChild(lineContainer);
 
         let currentX = 0;
@@ -1350,9 +1297,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         let lineX = 0;
 
         // Position lineContainer within pixiTextContainer
-        if (align === 'center') {
+        if (align === "center") {
           lineX = (containerWidth - lineRealWidth) / 2;
-        } else if (align === 'right') {
+        } else if (align === "right") {
           lineX = containerWidth - lineRealWidth - paddingX;
         } else {
           lineX = paddingX;
@@ -1385,8 +1332,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           lineContainer.addChild(wordText);
 
           // Advance X (add space unless it's the last word in the line)
-          currentX +=
-            wordW + (wordIndex < line.words.length - 1 ? spaceWidth : 0);
+          currentX += wordW + (wordIndex < line.words.length - 1 ? spaceWidth : 0);
         });
 
         // Advance Y
@@ -1395,7 +1341,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
       if (isTiktok && lineRects.length > 0) {
         const bg = new Graphics();
-        bg.label = 'tiktokBackground';
+        bg.label = "tiktokBackground";
         const { color: bgColor, alpha: bgAlpha } = resolveColor(this.opts.background, 0x000000);
         const borderRadius = tbs.borderRadius ?? 10;
         this.drawRoundedTiktokPath(bg, lineRects, borderRadius, bgColor, bgAlpha);
@@ -1405,25 +1351,17 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       // 8. Background Graphics (Full container background if not tiktok)
       if (!isTiktok) {
         const bgGraphics = new Graphics();
-        bgGraphics.label = 'containerBackground';
+        bgGraphics.label = "containerBackground";
 
         const isTransparentBackground =
-          this.opts.background === 'transparent' || !this.opts.background;
+          this.opts.background === "transparent" || !this.opts.background;
 
-        const bgColor = isTransparentBackground
-          ? 0x000000
-          : parseColor(this.opts.background);
+        const bgColor = isTransparentBackground ? 0x000000 : parseColor(this.opts.background);
 
         const alpha = isTransparentBackground ? 0 : 1;
         const cornerRadius = 10;
 
-        bgGraphics.roundRect(
-          0,
-          0,
-          containerWidth,
-          containerHeight,
-          cornerRadius
-        );
+        bgGraphics.roundRect(0, 0, containerWidth, containerHeight, cornerRadius);
         bgGraphics.fill({ color: bgColor, alpha });
 
         this.pixiTextContainer.addChildAt(bgGraphics, 0);
@@ -1459,7 +1397,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           target: this.renderTexture,
         });
       } catch (err) {
-        Log.warn('CaptionClip: Could not render captions during refresh', err);
+        Log.warn("CaptionClip: Could not render captions during refresh", err);
       }
 
       // 9. Dimension Tracking & Anchoring
@@ -1469,27 +1407,18 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         this._lastContentHeight === 0 ||
         Math.abs(this.height - this._lastContentHeight) < 2;
 
-      if (
-        isAutoWidth &&
-        this._initialLayoutApplied &&
-        oldWidth > 0 &&
-        oldHeight > 0
-      ) {
+      if (isAutoWidth && this._initialLayoutApplied && oldWidth > 0 && oldHeight > 0) {
         // ONLY keep the HORIZONTAL center stable if it's an AUTOMATIC change (not manual resize)
         // This prevents 'fighting' with the transformer during manual resize.
         // We compare unpadded dimensions
         const dx = targetWidth - oldWidth;
 
-        if (
-          Math.abs(dx) > 0.1 &&
-          !this._isXPositionedManually &&
-          this.opts.align === 'center'
-        ) {
+        if (Math.abs(dx) > 0.1 && !this._isXPositionedManually && this.opts.align === "center") {
           this.left -= dx / 2;
         } else if (
           Math.abs(dx) > 0.1 &&
           !this._isXPositionedManually &&
-          this.opts.align === 'right'
+          this.opts.align === "right"
         ) {
           this.left -= dx;
         }
@@ -1566,15 +1495,15 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       let animationFactor = 0;
       let shouldApply = false;
 
-      if (wordAnimation && wordAnimation.application !== 'none') {
-        if (wordAnimation.application === 'active' && isActive) {
+      if (wordAnimation && wordAnimation.application !== "none") {
+        if (wordAnimation.application === "active" && isActive) {
           shouldApply = true;
-        } else if (wordAnimation.application === 'keyword' && word.isKeyWord) {
+        } else if (wordAnimation.application === "keyword" && word.isKeyWord) {
           shouldApply = true;
         }
 
         if (shouldApply) {
-          if (wordAnimation.mode === 'dynamic' && isActive) {
+          if (wordAnimation.mode === "dynamic" && isActive) {
             const duration = word.to - word.from;
             if (duration > 0) {
               const progress = (currentTimeMs - word.from) / duration;
@@ -1591,16 +1520,10 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
             animationFactor = 1;
           }
 
-          if (wordAnimation.type === 'scale') {
+          if (wordAnimation.type === "scale") {
             let scale = 1;
-            if (
-              wordAnimation.value < 1 &&
-              wordAnimation.mode === 'dynamic' &&
-              isActive
-            ) {
-              scale =
-                wordAnimation.value +
-                (1 - wordAnimation.value) * animationFactor;
+            if (wordAnimation.value < 1 && wordAnimation.mode === "dynamic" && isActive) {
+              scale = wordAnimation.value + (1 - wordAnimation.value) * animationFactor;
             } else {
               scale = 1 + (wordAnimation.value - 1) * animationFactor;
             }
@@ -1609,56 +1532,33 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         }
       }
 
-      const isKeywordWithColor =
-        word.isKeyWord && !isTransparent(this.opts.keyword);
+      const isKeywordWithColor = word.isKeyWord && !isTransparent(this.opts.keyword);
 
       let textColor = 0xffffff;
       let textAlpha = 1;
 
-
-
       if (word.isKeyWord && isActive && isKeywordWithColor) {
-        ({ color: textColor, alpha: textAlpha } = resolveColor(
-          this.opts.keyword,
-          0xffff00
-        ));
+        ({ color: textColor, alpha: textAlpha } = resolveColor(this.opts.keyword, 0xffff00));
       } else if (isActive) {
         textAlpha = resolveColor(this.opts.active, 0xffffff).alpha;
         textColor = resolveColor(this.opts.active, 0xffffff).color;
-      } else if (
-        hasBeenActive &&
-        this.opts.preserveKeywordColor &&
-        isKeywordWithColor
-      ) {
-        ({ color: textColor, alpha: textAlpha } = resolveColor(
-          this.opts.keyword
-        ));
+      } else if (hasBeenActive && this.opts.preserveKeywordColor && isKeywordWithColor) {
+        ({ color: textColor, alpha: textAlpha } = resolveColor(this.opts.keyword));
       } else if (hasBeenActive) {
-        ({ color: textColor, alpha: textAlpha } = resolveColor(
-          this.opts.appeared
-        ));
+        ({ color: textColor, alpha: textAlpha } = resolveColor(this.opts.appeared));
       } else {
-        const fill = this.opts.fill;
+        const color = this.opts.color;
         const fillToResolve =
-          typeof fill === 'object' && fill !== null && 'type' in fill
+          typeof color === "object" && color !== null && "type" in color
             ? 0xffffff // Placeholder for gradient, handles elsewhere if needed
-            : (fill as string | number);
-        ({ color: textColor, alpha: textAlpha } = resolveColor(
-          fillToResolve as any
-        ));
+            : (color as string | number);
+        ({ color: textColor, alpha: textAlpha } = resolveColor(fillToResolve as any));
       }
 
-
-
-      if (shouldApply && wordAnimation?.type === 'opacity') {
+      if (shouldApply && wordAnimation?.type === "opacity") {
         let opacityFactor = 1;
-        if (
-          wordAnimation.value < 1 &&
-          wordAnimation.mode === 'dynamic' &&
-          isActive
-        ) {
-          opacityFactor =
-            wordAnimation.value + (1 - wordAnimation.value) * animationFactor;
+        if (wordAnimation.value < 1 && wordAnimation.mode === "dynamic" && isActive) {
+          opacityFactor = wordAnimation.value + (1 - wordAnimation.value) * animationFactor;
         } else {
           opacityFactor = 1 + (wordAnimation.value - 1) * animationFactor;
         }
@@ -1670,12 +1570,12 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
       const applyColor = (obj: any) => {
         // Skip background elements
-        if (obj.label === 'bgRect' || obj.label === 'tiktokBackground') return;
+        if (obj.label === "bgRect" || obj.label === "tiktokBackground") return;
 
-        if ('tint' in obj) {
+        if ("tint" in obj) {
           obj.tint = textColor;
         }
-        if ('alpha' in obj) {
+        if ("alpha" in obj) {
           obj.alpha = textAlpha;
         }
         if (obj.children) {
@@ -1686,16 +1586,12 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       // Apply to children only (text characters)
       wordText.children.forEach(applyColor);
 
-
       // -------- BACKGROUND --------
-      const existingBg = wordText.getChildByLabel('bgRect') as Graphics | null;
+      const existingBg = wordText.getChildByLabel("bgRect") as Graphics | null;
       // const isTiktok = this.opts.textBoxStyle.style === 'tiktok';
 
       if (isActive) {
-        const { color: bgColor, alpha: bgAlpha } = resolveColor(
-          this.opts.activeFill,
-          0xffa500
-        );
+        const { color: bgColor, alpha: bgAlpha } = resolveColor(this.opts.activeFill, 0xffa500);
 
         const padding = 15;
         const paddingX = 40;
@@ -1706,7 +1602,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
         const bg = existingBg ?? new Graphics();
 
-        bg.label = 'bgRect';
+        bg.label = "bgRect";
         bg.clear();
 
         bg.roundRect(
@@ -1714,7 +1610,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
           bounds.y - padding / 2, // extraPadding is already applied to wordText.y
           bounds.width + paddingX,
           bounds.height + padding,
-          cornerRadius
+          cornerRadius,
         );
 
         bg.fill({ color: bgColor, alpha: bgAlpha });
@@ -1753,7 +1649,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
   override async offscreenRender(
     ctx: CanvasRenderingContext2D,
-    time: number
+    time: number,
   ): Promise<{
     audio: Float32Array[];
     done: boolean;
@@ -1787,27 +1683,25 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   /**
    * Set an external renderer (e.g., from Studio) to avoid creating our own Pixi App
    */
-  setRenderer(renderer: Application['renderer']): void {
+  setRenderer(renderer: Application["renderer"]): void {
     this.externalRenderer = renderer;
   }
 
-  private async getRenderer(): Promise<Application['renderer']> {
+  private async getRenderer(): Promise<Application["renderer"]> {
     if (this.externalRenderer != null) return this.externalRenderer;
     if (this.pixiApp?.renderer == null) {
-      throw new Error(
-        'CaptionClip: No renderer available. Provide a renderer via setRenderer().'
-      );
+      throw new Error("CaptionClip: No renderer available. Provide a renderer via setRenderer().");
     }
     return this.pixiApp.renderer;
   }
 
   async tick(time: number): Promise<{
     video: ImageBitmap;
-    state: 'success';
+    state: "success";
   }> {
     await this.ready;
     if (this.pixiTextContainer == null || this.renderTexture == null) {
-      throw new Error('CaptionClip not initialized');
+      throw new Error("CaptionClip not initialized");
     }
 
     this._lastTickTime = time;
@@ -1839,11 +1733,11 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       ) {
         imageBitmap = await createImageBitmap(extractedCanvas);
       } else {
-        throw new Error('Unable to extract canvas from render texture');
+        throw new Error("Unable to extract canvas from render texture");
       }
     }
 
-    return { video: imageBitmap, state: 'success' };
+    return { video: imageBitmap, state: "success" };
   }
 
   async split(_time: number): Promise<[this, this]> {
@@ -1855,12 +1749,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   }
 
   // Effects
-  addEffect(effect: {
-    id: string;
-    key: string;
-    startTime: number;
-    duration: number;
-  }) {
+  addEffect(effect: { id: string; key: string; startTime: number; duration: number }) {
     this.effects.push(effect);
   }
 
@@ -1870,7 +1759,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       key: string;
       startTime: number;
       duration: number;
-    }>
+    }>,
   ) {
     const effect = this.effects.find((e) => e.id === effectId);
     if (effect) {
@@ -1899,7 +1788,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
   destroy(): void {
     if (this.destroyed) return;
-    Log.info('Caption destroy');
+    Log.info("Caption destroy");
 
     // Destroy wordTexts array first
     try {
@@ -1952,7 +1841,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       try {
         const app = this.pixiApp as {
           destroyed?: boolean;
-          renderer?: Application['renderer'];
+          renderer?: Application["renderer"];
         };
         if (app.destroyed !== true && app.renderer != null) {
           this.pixiApp.destroy(true, {
@@ -1981,24 +1870,20 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       if (opts.fontFamily !== undefined) style.fontFamily = opts.fontFamily;
       if (opts.fontWeight !== undefined) style.fontWeight = opts.fontWeight;
       if (opts.fontStyle !== undefined) style.fontStyle = opts.fontStyle;
-      if (opts.fill !== undefined) style.color = opts.fill as any;
+      if (opts.color !== undefined) style.color = opts.color as any;
       if (opts.align !== undefined) style.align = opts.align;
 
       if (opts.textCase !== undefined) style.textCase = opts.textCase;
       if (opts.fontUrl !== undefined) style.fontUrl = opts.fontUrl;
-      if (opts.verticalAlign !== undefined)
-        style.verticalAlign = opts.verticalAlign;
-      if (opts.wordWrapWidth !== undefined)
-        style.wordWrapWidth = opts.wordWrapWidth;
+      if (opts.verticalAlign !== undefined) style.verticalAlign = opts.verticalAlign;
+      if (opts.wordWrapWidth !== undefined) style.wordWrapWidth = opts.wordWrapWidth;
       if (opts.wordWrap !== undefined) style.wordWrap = opts.wordWrap;
-      if (opts.wordAnimation !== undefined)
-        style.wordAnimation = opts.wordAnimation;
-      if (opts.textBoxStyle !== undefined)
-        style.textBoxStyle = opts.textBoxStyle;
+      if (opts.wordAnimation !== undefined) style.wordAnimation = opts.wordAnimation;
+      if (opts.textBoxStyle !== undefined) style.textBoxStyle = opts.textBoxStyle;
 
       // Handle stroke
       if (opts.stroke) {
-        if (typeof opts.stroke === 'object') {
+        if (typeof opts.stroke === "object") {
           style.stroke = {
             color: opts.stroke.color,
             width: opts.stroke.width,
@@ -2011,13 +1896,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         }
       }
 
-      if (opts.dropShadow) {
+      if (opts.shadow) {
         style.shadow = {
-          color: (opts.dropShadow.color ?? '#000000') as string,
-          alpha: opts.dropShadow.alpha ?? 0.5,
-          blur: opts.dropShadow.blur ?? 4,
-          distance: opts.dropShadow.distance ?? 0,
-          angle: opts.dropShadow.angle ?? 0,
+          color: (opts.shadow.color ?? "#000000") as string,
+          alpha: opts.shadow.alpha ?? 0.5,
+          blur: opts.shadow.blur ?? 4,
+          offsetX: opts.shadow.offsetX ?? 0,
+          offsetY: opts.shadow.offsetY ?? 0,
         };
       }
     }
@@ -2082,7 +1967,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
 
     const finalJSON: CaptionJSON = {
       ...base,
-      type: 'Caption',
+      type: "Caption",
       text: this.text,
       style,
       caption: Object.keys(caption).length > 0 ? caption : undefined,
@@ -2093,16 +1978,30 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       fontUrl: this.opts.fontUrl,
     };
 
-    // Defensively remove fields that might have been spread from 'base' 
+    // Defensively remove fields that might have been spread from 'base'
     // but should only exist in 'style' or 'caption'
     const cleanJSON: any = { ...finalJSON };
     const rootPollution = [
-      'fontSize', 'fontFamily', 'fontWeight', 'fontStyle', 'align', 
-      'textCase', 'stroke', 'dropShadow', 'appeared', 'active', 
-      'activeFill', 'background', 'keyword', 'originalOpts', 'textBoxStyle', 'wordAnimation'
+      "fontSize",
+      "fontFamily",
+      "fontWeight",
+      "fontStyle",
+      "align",
+      "textCase",
+      "stroke",
+      "dropShadow",
+      "shadow",
+      "color",
+      "appeared",
+      "active",
+      "activeFill",
+      "background",
+      "keyword",
+      "originalOpts",
+      "textBoxStyle",
+      "wordAnimation",
     ];
-    rootPollution.forEach(field => delete cleanJSON[field]);
-
+    rootPollution.forEach((field) => delete cleanJSON[field]);
 
     return cleanJSON as CaptionJSON;
   }
@@ -2113,35 +2012,28 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
    * @returns Promise that resolves to a Caption instance
    */
   static async fromObject(json: CaptionJSON): Promise<Caption> {
-    if (json.type !== 'Caption') {
+    if (json.type !== "Caption") {
       throw new Error(`Expected Caption, got ${json.type}`);
     }
 
     // Support new structure (text + style) and old structure (options)
-    const text = json.text || '';
+    const text = json.text || "";
     const style = json.style || {};
 
     // Build options object from style
     const captionOpts: ICaptionOpts = {};
     if (style.fontSize !== undefined) captionOpts.fontSize = style.fontSize;
-    if (style.fontFamily !== undefined)
-      captionOpts.fontFamily = style.fontFamily;
-    if (style.fontWeight !== undefined)
-      captionOpts.fontWeight = style.fontWeight;
+    if (style.fontFamily !== undefined) captionOpts.fontFamily = style.fontFamily;
+    if (style.fontWeight !== undefined) captionOpts.fontWeight = style.fontWeight;
     if (style.fontStyle !== undefined)
-      captionOpts.fontStyle = style.fontStyle as
-        | 'normal'
-        | 'italic'
-        | 'oblique';
-    if ((style as any).fill !== undefined) captionOpts.fill = (style as any).fill;
-    else if (style.color !== undefined) captionOpts.fill = style.color;
+      captionOpts.fontStyle = style.fontStyle as "normal" | "italic" | "oblique";
+    if (style.color !== undefined) captionOpts.color = style.color;
+    else if ((style as any).fill !== undefined) captionOpts.color = (style as any).fill;
 
     if (style.align !== undefined) captionOpts.align = style.align;
     if (style.textCase !== undefined) captionOpts.textCase = style.textCase;
-    if (style.verticalAlign !== undefined)
-      captionOpts.verticalAlign = style.verticalAlign;
-    if (style.wordWrapWidth !== undefined)
-      captionOpts.wordWrapWidth = style.wordWrapWidth;
+    if (style.verticalAlign !== undefined) captionOpts.verticalAlign = style.verticalAlign;
+    if (style.wordWrapWidth !== undefined) captionOpts.wordWrapWidth = style.wordWrapWidth;
     if (style.wordWrap !== undefined) captionOpts.wordWrap = style.wordWrap;
 
     // Handle wordsPerLine from style or root
@@ -2170,12 +2062,12 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     }
 
     if (style.shadow) {
-      captionOpts.dropShadow = {
+      captionOpts.shadow = {
         color: style.shadow.color,
         alpha: style.shadow.alpha,
         blur: style.shadow.blur,
-        distance: style.shadow.distance,
-        angle: style.shadow.angle,
+        offsetX: style.shadow.offsetX ?? 0,
+        offsetY: style.shadow.offsetY ?? 0,
       };
     }
 
@@ -2183,7 +2075,13 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
       captionOpts.wordAnimation = style.wordAnimation;
     }
 
-    if (style.appeared !== undefined || style.active !== undefined || style.activeFill !== undefined || style.background !== undefined || style.keyword !== undefined) {
+    if (
+      style.appeared !== undefined ||
+      style.active !== undefined ||
+      style.activeFill !== undefined ||
+      style.background !== undefined ||
+      style.keyword !== undefined
+    ) {
       if (!captionOpts.caption) captionOpts.caption = {};
       if (!captionOpts.caption.colors) captionOpts.caption.colors = {};
       if (style.appeared !== undefined) captionOpts.caption.colors.appeared = style.appeared;
@@ -2215,22 +2113,30 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     const clip = new Caption(text, captionOpts);
 
     // Apply properties
-    clip.left = json.left;
-    clip.top = json.top;
-    clip.width = json.width;
-    clip.height = json.height;
-    clip.angle = json.angle;
+    if (json.transform) {
+      clip.left = json.transform.x;
+      clip.top = json.transform.y;
+      clip.width = json.transform.width;
+      clip.height = json.transform.height;
+      clip.angle = json.transform.angle;
+      clip.zIndex = json.transform.zIndex;
+      clip.opacity = json.transform.opacity;
+      clip.flip = json.transform.flip ?? null;
+    }
 
-    clip.display.from = json.display.from;
-    clip.display.to = json.display.to;
-    clip.duration = json.duration;
-    clip.playbackRate = json.playbackRate;
+    const timing = json.timing || {
+      display: json.display || { from: 0, to: 0 },
+      trim: json.trim || { from: 0, to: 0 },
+      duration: json.duration ?? 0,
+      playbackRate: json.playbackRate ?? 1,
+    };
 
-    clip.zIndex = json.zIndex;
-    clip.opacity = json.opacity;
-    clip.flip = json.flip ?? null;
+    clip.display.from = timing.display.from;
+    clip.display.to = timing.display.to;
+    clip.duration = timing.duration;
+    clip.playbackRate = timing.playbackRate;
 
-    clip.wordsPerLine = json.wordsPerLine ?? 'multiple';
+    clip.wordsPerLine = json.wordsPerLine ?? "multiple";
 
     // Apply animation if present
     if (json.animation) {
@@ -2250,9 +2156,9 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
   }
 
   override getVisibleHandles(): Array<
-    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
+    "tl" | "tr" | "bl" | "br" | "ml" | "mr" | "mt" | "mb" | "rot"
   > {
-    return ['mr', 'mb', 'br', 'rot'];
+    return ["mr", "mb", "br", "rot"];
   }
 
   private drawRoundedTiktokPath(
@@ -2260,7 +2166,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
     rects: { x: number; y: number; w: number; h: number }[],
     radius: number,
     color: number,
-    alpha: number = 1
+    alpha: number = 1,
   ) {
     if (rects.length === 0) return;
 
@@ -2277,10 +2183,7 @@ export class Caption extends BaseClip<ICaptionEvents> implements IClip {
         for (let j = i + 1; j < rects.length; j++) {
           const r1Right = rects[i].x + rects[i].w;
           const r2Right = rects[j].x + rects[j].w;
-          if (
-            Math.abs(r1Right - r2Right) > 0.1 &&
-            Math.abs(r1Right - r2Right) < threshold
-          ) {
+          if (Math.abs(r1Right - r2Right) > 0.1 && Math.abs(r1Right - r2Right) < threshold) {
             const maxR = Math.max(r1Right, r2Right);
             rects[i].w = maxR - rects[i].x;
             rects[j].w = maxR - rects[j].x;

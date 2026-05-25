@@ -13,7 +13,7 @@ const fabricCanvas = new Canvas("timeline-canvas", {
   width: 800,
   height: 400,
   backgroundColor: "#111",
-  selection: true // Recommended for multi-select
+  selection: true, // Recommended for multi-select
 });
 ```
 
@@ -32,14 +32,14 @@ const timeline = new Timeline({
   acceptsMap: {
     video: ["video", "image"],
     audio: ["audio"],
-    text: ["text", "caption"]
+    text: ["text", "caption"],
   },
   // Define visual heights for different track types
   sizesMap: {
     video: 60,
     audio: 40,
-    text: 40
-  }
+    text: 40,
+  },
 });
 ```
 
@@ -60,14 +60,14 @@ The timeline uses a declarative synchronization pattern. You should sync your ap
 timeline.syncTracksAndClips({
   tracks: state.tracks,
   clips: state.clips,
-  duration: state.duration
+  duration: state.duration,
 });
 
 // Update specific properties without full re-render
 timeline.syncClipProperties({
   clips: updatedClips,
   changedTrimIds: ["clip-1"],
-  changedDisplayIds: ["clip-1"]
+  changedDisplayIds: ["clip-1"],
 });
 ```
 
@@ -78,7 +78,7 @@ The timeline emits events when interactions occur (drags, trims, deletes). You s
 ```typescript
 timeline.on("STATE_CHANGED", ({ payload, options }) => {
   const { clips, tracks, duration } = payload;
-  
+
   // Update your app state (Redux, Zustand, etc.)
   updateProjectState({ clips, tracks, duration });
 });

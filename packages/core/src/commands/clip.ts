@@ -1,8 +1,9 @@
-import { CommandHandler, Patch } from './types';
-import { AnyClip } from '../types';
-import { manageTracks } from '../utils/manage-tracks';
-import { generateId } from '../utils/id';
-import { redistributeCaptionWords } from '../utils/caption-utils';
+import { CommandHandler, Patch } from "./types";
+import { AnyClip } from "../types";
+import { manageTracks } from "../utils/manage-tracks";
+import { generateId } from "../utils/id";
+import { redistributeCaptionWords } from "../utils/caption-utils";
+import { normalizeClip, normalizeClipStyle } from "../utils/normalize";
 
 export const addClipHandler: CommandHandler<{
   clip: AnyClip;
@@ -11,11 +12,18 @@ export const addClipHandler: CommandHandler<{
   const { clip, trackId } = command.payload;
   const patches: Patch[] = [];
 
+  // Clone clip and delete legacy root properties to keep clip object clean
+  const cleanClip = { ...clip };
+  delete cleanClip.display;
+  delete cleanClip.trim;
+  delete cleanClip.duration;
+  delete cleanClip.playbackRate;
+
   // Add clip to the clips record
   patches.push({
-    op: 'add',
+    op: "add",
     path: `/clips/${clip.id}`,
-    value: clip,
+    value: cleanClip,
   });
 
   // Manage tracks (add clip to track)
@@ -23,8 +31,8 @@ export const addClipHandler: CommandHandler<{
   // Since tracks is an array, we might want to replace the whole thing or do specific updates.
   // Replacing the whole tracks array is safer for now given our simple patch system.
   patches.push({
-    op: 'update',
-    path: '/tracks',
+    op: "update",
+    path: "/tracks",
     value: nextTracks,
     oldValue: state.tracks,
   });
@@ -33,12 +41,9 @@ export const addClipHandler: CommandHandler<{
 };
 
 export const updateClipHandler: CommandHandler<
-  | { id: string; updates: Partial<AnyClip> }
-  | { id: string; updates: Partial<AnyClip> }[]
+  { id: string; updates: Partial<AnyClip> } | { id: string; updates: Partial<AnyClip> }[]
 > = (state, command) => {
-  const updates = Array.isArray(command.payload)
-    ? command.payload
-    : [command.payload];
+  const updates = Array.isArray(command.payload) ? command.payload : [command.payload];
 
   const patches: Patch[] = [];
 
@@ -46,7 +51,7 @@ export const updateClipHandler: CommandHandler<
     const clip = state.clips[id];
     if (!clip) continue;
 
-    // Generic deep merge for nested objects (like style or caption)
+    // Generic deep merge for nested objects (like style, caption, timing, transform)
     const deepMerge = (target: any, source: any) => {
       if (!source) return target;
       if (!target) return source;
@@ -55,10 +60,10 @@ export const updateClipHandler: CommandHandler<
         const v = source[key];
         if (
           v !== null &&
-          typeof v === 'object' &&
+          typeof v === "object" &&
           !Array.isArray(v) &&
           result[key] &&
-          typeof result[key] === 'object' &&
+          typeof result[key] === "object" &&
           !Array.isArray(result[key])
         ) {
           result[key] = deepMerge(result[key], v);
@@ -69,33 +74,95 @@ export const updateClipHandler: CommandHandler<
       return result;
     };
 
+    // Pre-normalize updates if they contain legacy flat transform/style fields
+    const flatTransformProps = [
+      "left",
+      "top",
+      "width",
+      "height",
+      "angle",
+      "zIndex",
+      "opacity",
+      "flip",
+    ];
+    const hasFlatTransform = flatTransformProps.some(
+      (prop) => (clipUpdates as any)[prop] !== undefined,
+    );
+
+    let normalizedUpdates = { ...clipUpdates };
+
+    if (hasFlatTransform || normalizedUpdates.transform) {
+      const currentTransform = clip.transform || {};
+      const transformUpdates: any = { ...currentTransform };
+
+      if (normalizedUpdates.transform) {
+        Object.assign(transformUpdates, normalizedUpdates.transform);
+      }
+
+      if ((clipUpdates as any).left !== undefined) transformUpdates.x = (clipUpdates as any).left;
+      if ((clipUpdates as any).top !== undefined) transformUpdates.y = (clipUpdates as any).top;
+      if ((clipUpdates as any).width !== undefined)
+        transformUpdates.width = (clipUpdates as any).width;
+      if ((clipUpdates as any).height !== undefined)
+        transformUpdates.height = (clipUpdates as any).height;
+      if ((clipUpdates as any).angle !== undefined)
+        transformUpdates.angle = (clipUpdates as any).angle;
+      if ((clipUpdates as any).zIndex !== undefined)
+        transformUpdates.zIndex = (clipUpdates as any).zIndex;
+      if ((clipUpdates as any).opacity !== undefined)
+        transformUpdates.opacity = (clipUpdates as any).opacity;
+      if ((clipUpdates as any).flip !== undefined)
+        transformUpdates.flip = (clipUpdates as any).flip;
+
+      normalizedUpdates.transform = transformUpdates;
+
+      // Clean up flat properties
+      flatTransformProps.forEach((prop) => {
+        delete (normalizedUpdates as any)[prop];
+      });
+    }
+
+    if (normalizedUpdates.style) {
+      normalizedUpdates.style = normalizeClipStyle(normalizedUpdates.style, clip.type);
+    }
+
     let updatedClip: any = { ...clip };
-    
+
     // Apply updates
-    for (const key in clipUpdates) {
-      if (key === 'style' || key === 'caption') {
-        updatedClip[key] = deepMerge(clip[key] || {}, (clipUpdates as any)[key]);
+    for (const key in normalizedUpdates) {
+      if (key === "style" || key === "caption" || key === "timing" || key === "transform") {
+        updatedClip[key] = deepMerge(clip[key] || {}, (normalizedUpdates as any)[key]);
       } else {
-        updatedClip[key] = (clipUpdates as any)[key];
+        updatedClip[key] = (normalizedUpdates as any)[key];
       }
     }
 
     // Special handling for Caption clips: when text is updated, redistribute words
-    if (updatedClip.type === 'Caption' && clipUpdates.text !== undefined && clipUpdates.words === undefined) {
+    if (
+      updatedClip.type === "Caption" &&
+      clipUpdates.text !== undefined &&
+      clipUpdates.words === undefined
+    ) {
       const currentWords = updatedClip.caption?.words || [];
-      const durationUs = updatedClip.duration || (updatedClip.display?.to - updatedClip.display?.from) || 0;
-      const redistributedWords = redistributeCaptionWords(clipUpdates.text, currentWords, durationUs);
-      
+      const durationUs =
+        updatedClip.timing?.duration ||
+        (updatedClip.timing?.display?.to || 0) - (updatedClip.timing?.display?.from || 0) ||
+        0;
+      const redistributedWords = redistributeCaptionWords(
+        clipUpdates.text,
+        currentWords,
+        durationUs,
+      );
+
       if (!updatedClip.caption) updatedClip.caption = {};
       updatedClip.caption.words = redistributedWords;
     }
 
-    if (clipUpdates.display) {
-      updatedClip.duration = clipUpdates.display.to - clipUpdates.display.from;
-    }
+    // Ensure we delete all legacy flat fields from the root and normalize the final state
+    updatedClip = normalizeClip(updatedClip);
 
     patches.push({
-      op: 'update',
+      op: "update",
       path: `/clips/${id}`,
       value: updatedClip,
       oldValue: clip,
@@ -105,10 +172,7 @@ export const updateClipHandler: CommandHandler<
   return patches;
 };
 
-export const duplicateClipsHandler: CommandHandler<{ ids: string[] }> = (
-  state,
-  command
-) => {
+export const duplicateClipsHandler: CommandHandler<{ ids: string[] }> = (state, command) => {
   const { ids } = command.payload;
   const patches: Patch[] = [];
   const nextTracks = [...state.tracks];
@@ -123,12 +187,12 @@ export const duplicateClipsHandler: CommandHandler<{ ids: string[] }> = (
     if (!clip) continue;
 
     const newId = generateId();
-    const newClip = { ...clip, id: newId };
+    const newClip = normalizeClip({ ...clip, id: newId });
     newIds.push(newId);
 
     // 1. Add the new clip to the clips record
     patches.push({
-      op: 'add',
+      op: "add",
       path: `/clips/${newId}`,
       value: newClip,
     });
@@ -160,16 +224,16 @@ export const duplicateClipsHandler: CommandHandler<{ ids: string[] }> = (
 
   // 3. Update the tracks array
   patches.push({
-    op: 'update',
-    path: '/tracks',
+    op: "update",
+    path: "/tracks",
     value: nextTracks,
     oldValue: state.tracks,
   });
 
   // 4. Update selection to the new duplicates
   patches.push({
-    op: 'update',
-    path: '/selectedIds',
+    op: "update",
+    path: "/selectedIds",
     value: newIds,
     oldValue: state.selectedIds,
   });
@@ -177,16 +241,13 @@ export const duplicateClipsHandler: CommandHandler<{ ids: string[] }> = (
   return patches;
 };
 
-export const removeClipsHandler: CommandHandler<{ ids: string[] }> = (
-  state,
-  command
-) => {
+export const removeClipsHandler: CommandHandler<{ ids: string[] }> = (state, command) => {
   const { ids } = command.payload;
   const patches: Patch[] = [];
 
   ids.forEach((id) => {
     patches.push({
-      op: 'remove',
+      op: "remove",
       path: `/clips/${id}`,
       oldValue: state.clips[id],
     });
@@ -199,12 +260,12 @@ export const removeClipsHandler: CommandHandler<{ ids: string[] }> = (
 
   // Auto-remove empty tracks unless they are static
   const nextTracks = tracksAfterClipRemoval.filter(
-    (track) => track.clipIds.length > 0 || track.static === true
+    (track) => track.clipIds.length > 0 || track.static === true,
   );
 
   patches.push({
-    op: 'update',
-    path: '/tracks',
+    op: "update",
+    path: "/tracks",
     value: nextTracks,
     oldValue: state.tracks,
   });
@@ -213,8 +274,8 @@ export const removeClipsHandler: CommandHandler<{ ids: string[] }> = (
   const nextSelectedIds = state.selectedIds.filter((id) => !ids.includes(id));
   if (nextSelectedIds.length !== state.selectedIds.length) {
     patches.push({
-      op: 'update',
-      path: '/selectedIds',
+      op: "update",
+      path: "/selectedIds",
       value: nextSelectedIds,
       oldValue: state.selectedIds,
     });
@@ -231,37 +292,55 @@ export const splitClipHandler: CommandHandler<{
   const clip = state.clips[id];
   if (!clip || clip.locked) return [];
 
-  if (
-    time <= clip.display.from ||
-    (clip.display.to > 0 && time >= clip.display.to)
-  ) {
+  const display = clip.timing?.display || clip.display;
+  if (!display) return [];
+
+  if (time <= display.from || (display.to > 0 && time >= display.to)) {
     return [];
   }
 
   const patches: Patch[] = [];
-  const splitOffset = time - clip.display.from;
-  const playbackRate = clip.playbackRate || 1;
+  const splitOffset = time - display.from;
+  const playbackRate = clip.timing?.playbackRate || clip.playbackRate || 1;
   const splitOffsetInSource = splitOffset * playbackRate;
+
+  // Ensure we have a valid timing block
+  const timing = clip.timing || {
+    display: { ...display },
+    trim: clip.trim || { from: 0, to: 0 },
+    duration: clip.duration || display.to - display.from,
+    playbackRate,
+  };
 
   // 1. Update original clip (Left Part)
   const leftClip = {
     ...clip,
-    duration: splitOffset,
-    display: {
-      ...clip.display,
-      to: time,
+    timing: {
+      ...timing,
+      duration: splitOffset,
+      display: {
+        ...timing.display,
+        to: time,
+      },
     },
   };
 
-  if (clip.trim) {
-    leftClip.trim = {
-      ...clip.trim,
-      to: clip.trim.from + splitOffsetInSource,
+  const trim = timing.trim;
+  if (trim) {
+    leftClip.timing.trim = {
+      ...trim,
+      to: trim.from + splitOffsetInSource,
     };
   }
 
+  // Ensure we delete all flat fields from the root
+  delete (leftClip as any).display;
+  delete (leftClip as any).trim;
+  delete (leftClip as any).duration;
+  delete (leftClip as any).playbackRate;
+
   patches.push({
-    op: 'update',
+    op: "update",
     path: `/clips/${id}`,
     value: leftClip,
     oldValue: clip,
@@ -272,14 +351,30 @@ export const splitClipHandler: CommandHandler<{
   const rightClip: AnyClip = {
     ...clip,
     id: newClipId,
-    display: {
-      ...clip.display,
-      from: time,
+    timing: {
+      ...timing,
+      display: {
+        ...timing.display,
+        from: time,
+      },
+      duration: timing.duration - splitOffset,
     },
-    duration: clip.duration - splitOffset,
   };
 
-  console.log('split', {
+  if (trim) {
+    rightClip.timing.trim = {
+      ...trim,
+      from: trim.from + splitOffsetInSource,
+    };
+  }
+
+  // Ensure we delete all flat fields from the root
+  delete (rightClip as any).display;
+  delete (rightClip as any).trim;
+  delete (rightClip as any).duration;
+  delete (rightClip as any).playbackRate;
+
+  console.log("split", {
     leftClip,
     rightClip,
     splitOffsetInSource,
@@ -289,15 +384,8 @@ export const splitClipHandler: CommandHandler<{
     clip,
   });
 
-  if (clip.trim) {
-    rightClip.trim = {
-      ...clip.trim,
-      from: clip.trim.from + splitOffsetInSource,
-    };
-  }
-
   patches.push({
-    op: 'add',
+    op: "add",
     path: `/clips/${newClipId}`,
     value: rightClip,
   });
@@ -310,12 +398,12 @@ export const splitClipHandler: CommandHandler<{
     nextClipIds.splice(index + 1, 0, newClipId);
 
     const nextTracks = state.tracks.map((t) =>
-      t.id === track.id ? { ...t, clipIds: nextClipIds } : t
+      t.id === track.id ? { ...t, clipIds: nextClipIds } : t,
     );
 
     patches.push({
-      op: 'update',
-      path: '/tracks',
+      op: "update",
+      path: "/tracks",
       value: nextTracks,
       oldValue: state.tracks,
     });
@@ -323,8 +411,8 @@ export const splitClipHandler: CommandHandler<{
 
   // 4. Update selection
   patches.push({
-    op: 'update',
-    path: '/selectedIds',
+    op: "update",
+    path: "/selectedIds",
     value: [newClipId],
     oldValue: state.selectedIds,
   });

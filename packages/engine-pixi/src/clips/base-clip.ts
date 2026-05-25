@@ -1,8 +1,8 @@
-import { Log } from '../utils/log';
-import { BaseSprite, BaseSpriteEvents } from '../sprite/base-sprite';
-import { changePCMPlaybackRate } from '../utils';
-import type { IClip, IClipMeta, ITransitionInfo } from './iclip';
-import type { ClipJSON } from '../json-serialization';
+import { Log } from "../utils/log";
+import { BaseSprite, BaseSpriteEvents } from "../sprite/base-sprite";
+import { changePCMPlaybackRate } from "../utils";
+import type { IClip, IClipMeta, ITransitionInfo } from "./iclip";
+import type { ClipJSON } from "../json-serialization";
 
 /**
  * Base class for all clips that extends BaseSprite
@@ -15,7 +15,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
 {
   abstract readonly type: string;
   // Keep last frame, if clip has no data at current frame, render last frame
-  // Store as ImageBitmap for reusability (VideoFrames can only be used once)
+  // Store as ImageBitmap for reusability (VideoFrames cannot be reused after close)
   private lastVf: ImageBitmap | null = null;
 
   protected destroyed = false;
@@ -24,7 +24,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * Source URL or identifier for this clip
    * Used for serialization and reloading from JSON
    */
-  src: string = '';
+  src: string = "";
 
   /**
    * User-defined metadata
@@ -39,7 +39,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   abstract tick(time: number): Promise<{
     video?: VideoFrame | ImageBitmap | null;
     audio?: Float32Array[];
-    state: 'done' | 'success';
+    state: "done" | "success";
   }>;
 
   // Override ready from BaseSprite to return IClipMeta instead of void
@@ -61,7 +61,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * @param time Specified time in microseconds
    */
   async getFrame(time: number): Promise<{
-    video: ImageBitmap | null;
+    video: VideoFrame | ImageBitmap | null;
     audio: Float32Array[];
     done: boolean;
   }> {
@@ -72,37 +72,36 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
 
     let outAudio = audio ?? [];
     if (audio != null && this.playbackRate !== 1) {
-      outAudio = audio.map((pcm) =>
-        changePCMPlaybackRate(pcm, this.playbackRate)
-      );
+      outAudio = audio.map((pcm) => changePCMPlaybackRate(pcm, this.playbackRate));
     }
 
-    // Convert VideoFrame to ImageBitmap for reusability
-    let imgSource: ImageBitmap | null = null;
+    // Pass VideoFrame directly to avoid expensive createImageBitmap copy.
+    // PixiSpriteRenderer handles VideoFrame → Texture upload natively.
+    // Only cache as ImageBitmap for last-frame reuse (VideoFrames are single-use).
+    let frameSource: VideoFrame | ImageBitmap | null = null;
     if (video != null) {
-      // Close old frame
-      this.lastVf?.close();
-
-      // Convert VideoFrame to ImageBitmap (can be reused)
       if (video instanceof VideoFrame) {
-        imgSource = await createImageBitmap(video);
-        video.close(); // Close the VideoFrame, we have ImageBitmap now
+        // Pass VideoFrame through directly — caller (PixiSpriteRenderer) will
+        // create a texture from it and close it after GPU upload.
+        // Cache an ImageBitmap copy for last-frame reuse only.
+        this.lastVf?.close();
+        this.lastVf = await createImageBitmap(video);
+        frameSource = video; // VideoFrame still open, caller must close
       } else {
-        // For ImageBitmap, create a new one from the source to ensure it's valid
-        // ImageBitmaps can be reused, so we can store the original
-        imgSource = video;
+        // ImageBitmap — store directly for reuse
+        this.lastVf?.close();
+        this.lastVf = video;
+        frameSource = video;
       }
-      this.lastVf = imgSource;
     } else if (this.lastVf != null) {
       // Reuse last frame if no new frame available
-      // For ImageBitmap, we can reuse it directly (ImageBitmaps can be used multiple times)
-      imgSource = this.lastVf;
+      frameSource = this.lastVf;
     }
 
     return {
-      video: imgSource,
+      video: frameSource,
       audio: outAudio,
-      done: state === 'done',
+      done: state === "done",
     };
   }
 
@@ -112,7 +111,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    */
   async offscreenRender(
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-    time: number
+    time: number,
   ): Promise<{
     audio: Float32Array[];
     done: boolean;
@@ -124,12 +123,10 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     const { video, audio, state } = await this.tick(timestamp);
     let outAudio = audio ?? [];
     if (audio != null && this.playbackRate !== 1) {
-      outAudio = audio.map((pcm) =>
-        changePCMPlaybackRate(pcm, this.playbackRate)
-      );
+      outAudio = audio.map((pcm) => changePCMPlaybackRate(pcm, this.playbackRate));
     }
 
-    if (state === 'done') {
+    if (state === "done") {
       return {
         audio: outAudio,
         done: true,
@@ -140,18 +137,19 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     const imgSource: VideoFrame | ImageBitmap | null = video ?? this.lastVf;
     if (imgSource != null) {
       const borderRadius = this.style.borderRadius || 0;
-      const shadow = this.style.dropShadow;
+      const shadow = this.style.shadow;
 
       ctx.save();
 
       // 1. Apply Drop Shadow (Canvas2D native)
-      if (shadow && (shadow.blur > 0 || shadow.distance > 0)) {
-        const distance = shadow.distance ?? 0;
-        const angle = shadow.angle ?? 0;
-        ctx.shadowColor = shadow.color || '#000000';
+      if (
+        shadow &&
+        (shadow.blur > 0 || shadow.offsetX !== undefined || shadow.offsetY !== undefined)
+      ) {
+        ctx.shadowColor = shadow.color || "#000000";
         ctx.shadowBlur = shadow.blur || 0;
-        ctx.shadowOffsetX = Math.cos(angle) * distance;
-        ctx.shadowOffsetY = Math.sin(angle) * distance;
+        ctx.shadowOffsetX = shadow.offsetX ?? 0;
+        ctx.shadowOffsetY = shadow.offsetY ?? 0;
       }
 
       // 2. Apply Border Radius (Clipping)
@@ -238,9 +236,46 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       width?: number;
       height?: number;
       duration?: number;
+      timing?: {
+        display?: {
+          from?: number;
+          to?: number;
+        };
+        trim?: {
+          from?: number;
+          to?: number;
+        };
+        duration?: number;
+        playbackRate?: number;
+      };
     },
-    _fps: number = 30
+    _fps: number = 30,
   ): this {
+    if (props.timing) {
+      if (props.timing.display) {
+        if (props.timing.display.from !== undefined) {
+          this.timing.display.from = props.timing.display.from;
+        }
+        if (props.timing.display.to !== undefined) {
+          this.timing.display.to = props.timing.display.to;
+        }
+      }
+      if (props.timing.trim) {
+        if (props.timing.trim.from !== undefined) {
+          this.timing.trim.from = props.timing.trim.from;
+        }
+        if (props.timing.trim.to !== undefined) {
+          this.timing.trim.to = props.timing.trim.to;
+        }
+      }
+      if (props.timing.duration !== undefined) {
+        this.timing.duration = props.timing.duration;
+      }
+      if (props.timing.playbackRate !== undefined) {
+        this.timing.playbackRate = props.timing.playbackRate;
+      }
+    }
+
     if (props.display) {
       if (props.display.from !== undefined) {
         this.display.from = props.display.from;
@@ -279,14 +314,14 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
               (acc: any, [progress, props]: [number, any]) => {
                 const key =
                   progress === 0
-                    ? 'from'
+                    ? "from"
                     : progress === 1
-                      ? 'to'
+                      ? "to"
                       : `${Math.round(progress * 100)}%`;
                 acc[key] = props;
                 return acc;
               },
-              {}
+              {},
             ),
             options: (this as any).animatOptions,
           }
@@ -294,7 +329,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
 
     // Extract new modular animations
     const animations = this.animations.map((a) => {
-      if ('toJSON' in a && typeof (a as any).toJSON === 'function') {
+      if ("toJSON" in a && typeof (a as any).toJSON === "function") {
         return (a as any).toJSON();
       }
       return {
@@ -304,30 +339,36 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       };
     });
 
+    const style = this.style ? JSON.parse(JSON.stringify(this.style)) : undefined;
+
     return {
-      type: this.constructor.name as ClipJSON['type'],
+      type: this.constructor.name as ClipJSON["type"],
       id: this.id,
       name: this.name,
       src: this.src,
-      display: {
-        from: this.display.from,
-        to: this.display.to,
+      timing: {
+        display: {
+          from: this.timing.display.from,
+          to: this.timing.display.to,
+        },
+        trim: {
+          from: this.timing.trim.from,
+          to: this.timing.trim.to,
+        },
+        duration: this.timing.duration,
+        playbackRate: this.timing.playbackRate,
       },
-      playbackRate: this.playbackRate,
-      duration: this.duration,
-      left: this.left,
-      top: this.top,
-      width: this.width,
-      height: this.height,
-      angle: this.angle,
-      zIndex: this.zIndex,
-      opacity: this.opacity,
-      flip: this.flip,
-      style: this.style,
-      trim: {
-        from: this.trim.from,
-        to: this.trim.to,
+      transform: {
+        x: this.left,
+        y: this.top,
+        width: this.width,
+        height: this.height,
+        angle: this.angle,
+        opacity: this.opacity,
+        zIndex: this.zIndex,
+        flip: this.flip,
       },
+      style,
       ...(animation && { animation }),
       ...(animations.length > 0 && { animations }),
       ...(main && { main: true }),
@@ -343,10 +384,8 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * Default implementation returns all handles
    * Override in subclasses to customize handle visibility (e.g., TextClip)
    */
-  getVisibleHandles(): Array<
-    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
-  > {
-    return ['tl', 'tr', 'bl', 'br', 'ml', 'mr', 'mt', 'mb', 'rot'];
+  getVisibleHandles(): Array<"tl" | "tr" | "bl" | "br" | "ml" | "mr" | "mt" | "mb" | "rot"> {
+    return ["tl", "tr", "bl", "br", "ml", "mr", "mt", "mb", "rot"];
   }
 
   /**
@@ -394,7 +433,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     if (this.destroyed) return;
     this.destroyed = true;
 
-    Log.info('BaseClip destroy');
+    Log.info("BaseClip destroy");
     super.destroy();
     this.lastVf?.close();
     this.lastVf = null;

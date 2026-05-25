@@ -1,12 +1,26 @@
-import { StoreApi } from 'zustand/vanilla';
-import { ProjectStore, createProjectStore } from './project';
-import { AddClipOptions } from './utils/manage-tracks';
-import { PlaybackController } from './playback';
-import { EventEmitter } from './events';
-import { IProject, AnyClip, ITrack, ICaptionStyle, ICaptionColors } from './types';
-import { Command, Patch } from './commands/types';
-import { loadClip } from './utils/load-item';
-import { nanoid } from 'nanoid';
+import { StoreApi } from "zustand/vanilla";
+import { ProjectStore, createProjectStore } from "./project";
+import { AddClipOptions } from "./utils/manage-tracks";
+import { PlaybackController } from "./playback";
+import { EventEmitter } from "./events";
+import {
+  IProject,
+  AnyClip,
+  ITrack,
+  ICaptionStyle,
+  ICaptionColors,
+  IClipTimingInput,
+} from "./types";
+import { Command, Patch } from "./commands/types";
+import { loadClip } from "./utils/load-item";
+import { normalizeClip } from "./utils/normalize";
+import { nanoid } from "nanoid";
+
+/** Payload type for clip.add / clip.prepare – timing may be partial; loadClip fills in defaults. */
+export type AddClipPayload = Omit<Partial<AnyClip>, "timing"> & {
+  type: string;
+  timing?: IClipTimingInput;
+};
 
 /**
  * Core - The central "Brain" of OpenVideo.
@@ -33,15 +47,15 @@ export class Core extends EventEmitter {
     const prevHistoryLength = prevState?.history?.length || 0;
 
     if (state.history.length > prevHistoryLength && latestHistory) {
-      this.emit('change', latestHistory.patches);
+      this.emit("change", latestHistory.patches);
     }
 
     // 2. Playback & Time events
     if (state.currentTime !== prevState.currentTime) {
-      this.emit('timeupdate', state.currentTime);
+      this.emit("timeupdate", state.currentTime);
     }
     if (state.isPlaying !== prevState.isPlaying) {
-      this.emit(state.isPlaying ? 'play' : 'pause');
+      this.emit(state.isPlaying ? "play" : "pause");
     }
   }
 
@@ -65,21 +79,18 @@ export class Core extends EventEmitter {
 
   public applyPatch(patches: Patch[]) {
     this.store.getState().applyPatch(patches);
-    this.emit('change', patches);
+    this.emit("change", patches);
   }
 
   public reset(project: IProject) {
     this.store.getState().reset(project);
-    this.emit('change', [{ op: 'update', path: '/', value: project }]);
+    this.emit("change", [{ op: "update", path: "/", value: project }]);
   }
 
   // --- DX LAYER (Convenience Methods) ---
 
   public clip = {
-    prepare: async (
-      payload: Partial<AnyClip> & { type: string },
-      options?: { objectFit?: 'contain' | 'cover' }
-    ) => {
+    prepare: async (payload: AddClipPayload, options?: { objectFit?: "contain" | "cover" }) => {
       const state = this.store.getState();
       return await loadClip(payload, {
         canvasSize: {
@@ -90,20 +101,19 @@ export class Core extends EventEmitter {
       });
     },
 
-    add: async (
-      payload: Partial<AnyClip> & { type: string },
-      options?: AddClipOptions | string
-    ) => {
+    add: async (payload: AddClipPayload, options?: AddClipOptions | string) => {
       const addOptions: AddClipOptions =
-        typeof options === 'string' ? { trackId: options } : options || {};
+        typeof options === "string" ? { trackId: options } : options || {};
+
+      console.log({ addOptions });
 
       const fullClip = await this.clip.prepare(payload, {
         objectFit: addOptions.objectFit,
       });
-      console.log('adding clip', fullClip, addOptions);
+      console.log("ADDING CLIP NOWWWWWWW", fullClip, addOptions);
       this.execute({
         id: nanoid(),
-        type: 'clip.add',
+        type: "clip.add",
         payload: { clip: fullClip, trackId: addOptions.trackId },
       });
 
@@ -112,14 +122,14 @@ export class Core extends EventEmitter {
     remove: (ids: string[]) => {
       this.execute({
         id: nanoid(),
-        type: 'clip.remove',
+        type: "clip.remove",
         payload: { ids },
       });
     },
     update: (id: string, updates: Partial<AnyClip>) => {
       this.execute({
         id: nanoid(),
-        type: 'clip.update',
+        type: "clip.update",
         payload: { id, updates },
       });
     },
@@ -132,14 +142,14 @@ export class Core extends EventEmitter {
 
       this.execute({
         id: nanoid(),
-        type: 'clip.split',
+        type: "clip.split",
         payload: { id: splitId, time: splitTime },
       });
     },
     duplicate: (ids: string[]) => {
       this.execute({
         id: nanoid(),
-        type: 'clip.duplicate',
+        type: "clip.duplicate",
         payload: { ids },
       });
     },
@@ -149,21 +159,21 @@ export class Core extends EventEmitter {
     add: (payload?: Partial<ITrack>) => {
       this.execute({
         id: nanoid(),
-        type: 'track.add',
+        type: "track.add",
         payload,
       });
     },
     remove: (id: string) => {
       this.execute({
         id: nanoid(),
-        type: 'track.remove',
+        type: "track.remove",
         payload: { id },
       });
     },
     move: (id: string, newIndex: number) => {
       this.execute({
         id: nanoid(),
-        type: 'track.move',
+        type: "track.move",
         payload: { id, newIndex },
       });
     },
@@ -172,7 +182,7 @@ export class Core extends EventEmitter {
   /** Helper to collect all caption clip IDs from the store. */
   private _allCaptionIds(): string[] {
     const clips = this.store.getState().clips;
-    return Object.keys(clips).filter((id) => clips[id].type === 'Caption');
+    return Object.keys(clips).filter((id) => clips[id].type === "Caption");
   }
 
   /**
@@ -188,7 +198,7 @@ export class Core extends EventEmitter {
     setStyle: (style: Partial<ICaptionStyle>, ids?: string[]) => {
       this.execute({
         id: nanoid(),
-        type: 'caption.setStyle',
+        type: "caption.setStyle",
         payload: { ids: ids ?? this._allCaptionIds(), style },
       });
     },
@@ -200,7 +210,7 @@ export class Core extends EventEmitter {
     setColors: (colors: Partial<ICaptionColors>, ids?: string[]) => {
       this.execute({
         id: nanoid(),
-        type: 'caption.setColors',
+        type: "caption.setColors",
         payload: { ids: ids ?? this._allCaptionIds(), colors },
       });
     },
@@ -210,14 +220,14 @@ export class Core extends EventEmitter {
      * Scopes to `ids` when provided, otherwise moves ALL captions.
      */
     setVerticalPosition: (
-      position: 'top' | 'center' | 'bottom',
+      position: "top" | "center" | "bottom",
       ids?: string[],
-      padding?: number
+      padding?: number,
     ) => {
       const videoHeight = this.store.getState().settings.height ?? 1080;
       this.execute({
         id: nanoid(),
-        type: 'caption.setVerticalPosition',
+        type: "caption.setVerticalPosition",
         payload: { ids: ids ?? this._allCaptionIds(), position, videoHeight, padding },
       });
     },
@@ -244,27 +254,23 @@ export class Core extends EventEmitter {
     import: (json: any) => {
       // Basic validation
       if (!json.clips && !json.tracks) {
-        throw new Error('Invalid project JSON: missing clips or tracks');
+        throw new Error("Invalid project JSON: missing clips or tracks");
       }
 
-      const clipsArr = Array.isArray(json.clips)
-        ? json.clips
-        : Object.values(json.clips || {});
+      const clipsArr = Array.isArray(json.clips) ? json.clips : Object.values(json.clips || {});
 
       // Filter out clips with empty sources (except Text, Caption, and Effect)
       const validClipsArr = clipsArr.filter((clipJSON: any) => {
-        if (
-          ['Text', 'Caption', 'Effect', 'Transition'].includes(clipJSON.type)
-        ) {
+        if (["Text", "Caption", "Effect", "Transition"].includes(clipJSON.type)) {
           return true;
         }
-        return clipJSON.src && clipJSON.src.trim() !== '';
+        return clipJSON.src && clipJSON.src.trim() !== "";
       });
 
       // Convert array back to record
       const clips: Record<string, AnyClip> = {};
       validClipsArr.forEach((c: any) => {
-        clips[c.id] = c;
+        clips[c.id] = normalizeClip(c);
       });
 
       const project: IProject = {
@@ -293,7 +299,6 @@ export class Core extends EventEmitter {
   public seek(time: number) {
     this.playback.seek(time);
   }
-
 }
 
 // Backward compatibility or singleton

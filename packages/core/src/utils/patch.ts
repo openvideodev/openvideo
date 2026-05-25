@@ -1,5 +1,5 @@
-import { Patch } from '../commands/types';
-import { set, unset } from 'lodash-es';
+import { Patch } from "../commands/types";
+import { set, unset } from "lodash-es";
 
 /**
  * Applies a list of patches to an object.
@@ -9,16 +9,14 @@ import { set, unset } from 'lodash-es';
 export const applyPatches = (state: any, patches: Patch[]) => {
   patches.forEach((patch) => {
     // Remove leading slash if present for lodash path compatibility
-    const path = patch.path.startsWith('/')
-      ? patch.path.slice(1).replace(/\//g, '.')
-      : patch.path;
+    const path = patch.path.startsWith("/") ? patch.path.slice(1).replace(/\//g, ".") : patch.path;
 
     switch (patch.op) {
-      case 'add':
-      case 'update':
+      case "add":
+      case "update":
         set(state, path, patch.value);
         break;
-      case 'remove':
+      case "remove":
         unset(state, path);
         break;
     }
@@ -31,17 +29,17 @@ export const applyPatches = (state: any, patches: Patch[]) => {
 export const invertPatches = (patches: Patch[]): Patch[] => {
   return [...patches].reverse().map((patch) => {
     switch (patch.op) {
-      case 'add':
-        return { op: 'remove', path: patch.path };
-      case 'update':
+      case "add":
+        return { op: "remove", path: patch.path };
+      case "update":
         return {
-          op: 'update',
+          op: "update",
           path: patch.path,
           value: patch.oldValue,
           oldValue: patch.value,
         };
-      case 'remove':
-        return { op: 'add', path: patch.path, value: patch.oldValue };
+      case "remove":
+        return { op: "add", path: patch.path, value: patch.oldValue };
       default:
         throw new Error(`Unknown patch operation: ${patch.op}`);
     }

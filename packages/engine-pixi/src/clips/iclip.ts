@@ -1,9 +1,6 @@
-import type { BaseSprite, BaseSpriteEvents } from '../sprite/base-sprite';
-import {
-  getDefaultAudioCodec,
-  getCachedAudioCodec,
-} from '../utils/audio-codec-detector';
-import { ColorAdjustment } from '../utils/color-adjustment';
+import type { BaseSprite, BaseSpriteEvents } from "../sprite/base-sprite";
+import { getDefaultAudioCodec, getCachedAudioCodec } from "../utils/audio-codec-detector";
+import { ColorAdjustment } from "../utils/color-adjustment";
 
 export interface IClipMeta {
   width: number;
@@ -38,8 +35,10 @@ export interface IChromaKeyOpts {
  * You only need to implement this interface to create custom clips, giving you maximum flexibility to generate video content such as animations and transition effects
  *
  */
-export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
-  extends Omit<BaseSprite<T>, 'destroy' | 'ready'> {
+export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents> extends Omit<
+  BaseSprite<T>,
+  "destroy" | "ready"
+> {
   // Override destroy to be public (BaseSprite has it as protected)
   // Override ready to return IClipMeta instead of Promise<void>
   destroy: () => void;
@@ -73,7 +72,7 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
   tick: (time: number) => Promise<{
     video?: VideoFrame | ImageBitmap | null;
     audio?: Float32Array[];
-    state: 'done' | 'success';
+    state: "done" | "success";
   }>;
 
   /**
@@ -81,7 +80,7 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * This method is provided by BaseClip and used by Compositor
    */
   getFrame(time: number): Promise<{
-    video: ImageBitmap | null;
+    video: VideoFrame | ImageBitmap | null;
     audio: Float32Array[];
     done: boolean;
   }>;
@@ -140,9 +139,7 @@ export interface IClip<T extends BaseSpriteEvents = BaseSpriteEvents>
    * Similar to Fabric.js v6 controls visibility pattern
    * @returns Array of handle kinds that should be visible
    */
-  getVisibleHandles?: () => Array<
-    'tl' | 'tr' | 'bl' | 'br' | 'ml' | 'mr' | 'mt' | 'mb' | 'rot'
-  >;
+  getVisibleHandles?: () => Array<"tl" | "tr" | "bl" | "br" | "ml" | "mr" | "mt" | "mb" | "rot">;
 
   /**
    * Scale clip to fit within the scene dimensions while maintaining aspect ratio
@@ -217,10 +214,7 @@ export interface IPlaybackCapable {
    * @param element The HTML media element
    * @param timeSeconds Time in seconds (relative to clip start)
    */
-  play(
-    element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
-  ): Promise<void>;
+  play(element: HTMLVideoElement | HTMLAudioElement, timeSeconds: number): Promise<void>;
 
   /**
    * Pause playback
@@ -233,10 +227,7 @@ export interface IPlaybackCapable {
    * @param element The HTML media element
    * @param timeSeconds Time in seconds (relative to clip start)
    */
-  seek(
-    element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
-  ): Promise<void>;
+  seek(element: HTMLVideoElement | HTMLAudioElement, timeSeconds: number): Promise<void>;
 
   /**
    * Sync playback state during preview
@@ -247,7 +238,7 @@ export interface IPlaybackCapable {
   syncPlayback(
     element: HTMLVideoElement | HTMLAudioElement,
     isPlaying: boolean,
-    timeSeconds: number
+    timeSeconds: number,
   ): void;
 
   /**
@@ -255,10 +246,7 @@ export interface IPlaybackCapable {
    * @param element The HTML media element
    * @param objectUrl Optional object URL to revoke
    */
-  cleanupPlayback(
-    element: HTMLVideoElement | HTMLAudioElement,
-    objectUrl?: string
-  ): void;
+  cleanupPlayback(element: HTMLVideoElement | HTMLAudioElement, objectUrl?: string): void;
 }
 
 /**
@@ -293,10 +281,10 @@ export async function getDefaultAudioConf() {
  */
 export const DEFAULT_AUDIO_CONF = {
   get codec() {
-    return getCachedAudioCodec()?.codec ?? 'mp4a.40.2';
+    return getCachedAudioCodec()?.codec ?? "mp4a.40.2";
   },
-  get codecType(): 'aac' | 'opus' {
-    return getCachedAudioCodec()?.codecType ?? 'aac';
+  get codecType(): "aac" | "opus" {
+    return getCachedAudioCodec()?.codecType ?? "aac";
   },
   get sampleRate() {
     return getCachedAudioCodec()?.sampleRate ?? 48000;

@@ -1,12 +1,12 @@
-import { ActiveSelection, FabricObject } from 'fabric';
-import Timeline from '../timeline';
-import { Transition, Track } from '../objects';
-import { unitsToTimeUs } from '../utils/timeline';
-import { IClip } from '../types';
-import { removeItemsFromTrack } from '../utils/item';
-import { timeUsToUnits } from '../utils';
-import { loadObject } from '../utils/load-object';
-import { isEqual } from 'lodash-es';
+import { ActiveSelection, FabricObject } from "fabric";
+import Timeline from "../timeline";
+import { Transition, Track } from "../objects";
+import { unitsToTimeUs } from "../utils/timeline";
+import { IClip } from "../types";
+import { removeItemsFromTrack } from "../utils/item";
+import { timeUsToUnits } from "../utils";
+import { loadObject } from "../utils/load-object";
+import { isEqual } from "lodash-es";
 
 class ItemManager {
   private timeline: Timeline;
@@ -16,7 +16,6 @@ class ItemManager {
   }
 
   public addTrackItem(trackItem: IClip) {
-
     const object = loadObject(trackItem, {
       tScale: this.timeline.tScale,
       sizesMap: this.timeline.sizesMap,
@@ -29,18 +28,16 @@ class ItemManager {
     this.timeline.pauseEventListeners();
 
     // Create a map of track IDs to track objects
-    const trackMap = new Map(
-      this.timeline.getObjects('Track').map((track) => [track.id, track])
-    );
+    const trackMap = new Map(this.timeline.getObjects("Track").map((track) => [track.id, track]));
 
     // Cache track items for later use
     const trackItems = this.getTrackItems();
-    const transitions = this.timeline.getObjects('Transition') as Transition[];
+    const transitions = this.timeline.getObjects("Transition") as Transition[];
 
     // Align track items to their respective tracks
     this.timeline.trackItemIds.forEach((id) => {
       const currentTrackData = this.timeline.tracks.find((track) =>
-        (track.clipIds ?? []).includes(id)
+        (track.clipIds ?? []).includes(id),
       );
       if (!currentTrackData) return; // Handle case where track data is not found
 
@@ -86,10 +83,7 @@ class ItemManager {
     const ids = trackItemIds || [];
     const currentActiveIds = this.timeline.getActiveObjects().map((o) => o.id);
     if (isEqual(currentActiveIds, ids)) return;
-    const objects = this.timeline.getObjects(
-      ...Timeline.objectTypes,
-      'Transition'
-    );
+    const objects = this.timeline.getObjects(...Timeline.objectTypes, "Transition");
 
     const activeObjects = objects.filter((o) => ids.includes(o.id));
 
@@ -133,6 +127,18 @@ class ItemManager {
       // Assign display back onto the canvas object so visual state stays in sync
       o.display = nextDisplay;
 
+      // Maintain timing object if it exists on the clip
+      if (currentTrackItem?.timing) {
+        nextTrackItem.timing = {
+          ...currentTrackItem.timing,
+          display: nextDisplay,
+          duration: nextDuration,
+        };
+        if (o.isTrimmable && o.trim) {
+          nextTrackItem.timing.trim = o.trim;
+        }
+      }
+
       nextTrackItemsMap[id] = {
         ...currentTrackItem,
         ...nextTrackItem,
@@ -149,9 +155,7 @@ class ItemManager {
 
   public deleteTrackItemById(ids: string[]) {
     const activeIds = ids;
-    const object = this.timeline
-      .getObjects()
-      .filter((o) => ids.includes(o.id)) as FabricObject[];
+    const object = this.timeline.getObjects().filter((o) => ids.includes(o.id)) as FabricObject[];
     const updatedTracks = removeItemsFromTrack(this.timeline.tracks, activeIds);
     const updatedtrackItems: Record<string, any> = {};
     Object.keys(this.timeline.trackItemsMap).forEach((id) => {
@@ -161,9 +165,7 @@ class ItemManager {
       updatedtrackItems[id] = this.timeline.trackItemsMap[id];
     });
 
-    const updatedTrackItemIds = this.timeline.trackItemIds.filter(
-      (id) => !activeIds.includes(id)
-    );
+    const updatedTrackItemIds = this.timeline.trackItemIds.filter((id) => !activeIds.includes(id));
 
     this.timeline.tracks = updatedTracks;
     this.timeline.trackItemsMap = updatedtrackItems;
@@ -189,9 +191,7 @@ class ItemManager {
       updatedtrackItems[id] = this.timeline.trackItemsMap[id];
     });
 
-    const updatedTrackItemIds = this.timeline.trackItemIds.filter(
-      (id) => !activeIds.includes(id)
-    );
+    const updatedTrackItemIds = this.timeline.trackItemIds.filter((id) => !activeIds.includes(id));
 
     this.timeline.tracks = updatedTracks;
     this.timeline.trackItemsMap = updatedtrackItems;
@@ -203,7 +203,7 @@ class ItemManager {
     this.timeline.tracksManager?.renderTracks();
     this.alignItemsToTrack();
     this.timeline.tracksManager?.adjustMagneticTrack();
-    this.timeline.updateState({ updateHistory: true, kind: 'remove' });
+    this.timeline.updateState({ updateHistory: true, kind: "remove" });
   }
 
   public updateTrackItemCoords(updateActiveObject?: boolean) {
@@ -214,20 +214,16 @@ class ItemManager {
     this.timeline.trackItemIds.forEach((id) => {
       if (activeObjectIds.includes(id)) return;
 
-      const trackItemObject = this.timeline
-        .getObjects()
-        .find((o) => o.id === id);
+      const trackItemObject = this.timeline.getObjects().find((o) => o.id === id);
       const item = this.timeline.trackItemsMap[id];
 
       // Guard: item may have been deleted from state before canvas is fully synced
-      if (!item || !item.display || !trackItemObject) return;
+      const display = item?.display || item?.timing?.display;
+      if (!item || !display || !trackItemObject) return;
 
-      const left = timeUsToUnits(item.display.from, this.timeline.tScale);
+      const left = timeUsToUnits(display.from, this.timeline.tScale);
 
-      const width = timeUsToUnits(
-        item.display.to - item.display.from,
-        this.timeline.tScale
-      );
+      const width = timeUsToUnits(display.to - display.from, this.timeline.tScale);
       trackItemObject.set({
         left: left,
         width: width,

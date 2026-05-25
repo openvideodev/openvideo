@@ -1,13 +1,13 @@
 // Common utility functions that can run in both worker and main threads
 
-import { Log } from './log';
-import { workerTimer } from './worker-timer';
+import { Log } from "./log";
+import { workerTimer } from "./worker-timer";
 
 if (import.meta.env?.DEV) {
   Log.setLogLevel(Log.debug);
 }
 
-if (import.meta.env?.MODE === 'test') {
+if (import.meta.env?.MODE === "test") {
   Log.setLogLevel(Log.warn);
 }
 

@@ -84,7 +84,7 @@ await studio.updateClip(clip.id, { left: 100, opacity: 0.5 });
 // Batch update multiple clips
 await studio.updateClips([
   { id: clip1.id, updates: { left: 100 } },
-  { id: clip2.id, updates: { angle: 45 } }
+  { id: clip2.id, updates: { angle: 45 } },
 ]);
 ```
 
@@ -117,7 +117,8 @@ Move all currently selected clips by a relative offset:
 // Move selected clips 10px right and 5px down
 await studio.selection.move(10, 5);
 ```
-```
+
+````
 
 ## Transformation
 
@@ -141,7 +142,7 @@ await studio.centerClipH(clip.id);
 
 // Center vertically only
 await studio.centerClipV(clip.id);
-```
+````
 
 ### Scaling Objects
 
@@ -159,12 +160,12 @@ await studio.scaleToCover(clip.id);
 
 When the studio is interactive and clips are selected, you can use the following keyboard shortcuts for precise positioning:
 
-| Action | Shortcut |
-| :--- | :--- |
-| Move selected clips 1px | `Arrow Keys` |
+| Action                  | Shortcut               |
+| :---------------------- | :--------------------- |
+| Move selected clips 1px | `Arrow Keys`           |
 | Move selected clips 5px | `Shift` + `Arrow Keys` |
-| Last frame | `⌘` + `←` |
-| Next frame | `⌘` + `→` |
+| Last frame              | `⌘` + `←`              |
+| Next frame              | `⌘` + `→`              |
 
 ## Playback Control
 
@@ -200,9 +201,9 @@ await studio.framePrev();
 
 Captures the scene at a specific time and returns it as a **base64-encoded PNG data-URL**. The output image is always `opts.width × opts.height` pixels, regardless of the current viewport zoom.
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `timeMs` | `number` | Time in **milliseconds** |
+| Parameter | Type     | Description              |
+| :-------- | :------- | :----------------------- |
+| `timeMs`  | `number` | Time in **milliseconds** |
 
 **Returns** `Promise<string>` — a `data:image/png;base64,...` string.
 
@@ -230,31 +231,33 @@ for (let t = 0; t <= durationMs; t += 2000) {
 }
 ```
 
-
 ## Studio Events
 
 The studio implements an event emitter that notifies you about changes in the workspace.
 
 ```ts
-studio.on('selection:created', ({ selected }) => {
-  console.log('Selection created', selected);
+studio.on("selection:created", ({ selected }) => {
+  console.log("Selection created", selected);
 });
 
-studio.on('clip:added', ({ clip, trackId }) => {
-  console.log('Clip added', clip.id);
+studio.on("clip:added", ({ clip, trackId }) => {
+  console.log("Clip added", clip.id);
 });
 
-studio.on('track:added', ({ track, index }) => {
+studio.on("track:added", ({ track, index }) => {
   console.log(`Track added at index ${index}:`, track.name);
 });
 
-studio.on('track:order-changed', ({ tracks }) => {
-  console.log('New track order:', tracks.map(t => t.id));
+studio.on("track:order-changed", ({ tracks }) => {
+  console.log(
+    "New track order:",
+    tracks.map((t) => t.id),
+  );
 });
 
-studio.on('currentTime', ({ currentTime }) => {
+studio.on("currentTime", ({ currentTime }) => {
   // currentTime is in microseconds
-  console.log('Current time:', currentTime);
+  console.log("Current time:", currentTime);
 });
 ```
 
@@ -419,7 +422,7 @@ studio.addClip(image);
 studio.addClip(text);
 
 // Listen for selection changes
-studio.on('selection:created', ({ selected }) => {
+studio.on("selection:created", ({ selected }) => {
   console.log(`${selected.length} clips selected`);
 });
 

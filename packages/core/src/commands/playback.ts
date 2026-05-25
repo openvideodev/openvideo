@@ -1,4 +1,4 @@
-import { CommandHandler } from './types';
+import { CommandHandler } from "./types";
 
 export const seekHandler: CommandHandler<number> = (state, command) => {
   const time = command.payload;
@@ -6,24 +6,21 @@ export const seekHandler: CommandHandler<number> = (state, command) => {
 
   return [
     {
-      op: 'update',
-      path: '/currentTime',
+      op: "update",
+      path: "/currentTime",
       value: limitedTime,
       oldValue: state.currentTime,
     },
   ];
 };
 
-export const setIsPlayingHandler: CommandHandler<boolean> = (
-  state,
-  command
-) => {
+export const setIsPlayingHandler: CommandHandler<boolean> = (state, command) => {
   const isPlaying = command.payload;
 
   return [
     {
-      op: 'update',
-      path: '/isPlaying',
+      op: "update",
+      path: "/isPlaying",
       value: isPlaying,
       oldValue: state.isPlaying,
     },

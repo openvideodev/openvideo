@@ -52,19 +52,19 @@ npm install openvideo
 ### Basic Composition
 
 ```typescript
-import { Studio, Video } from 'openvideo';
+import { Studio, Video } from "openvideo";
 
 // 1. Initialize the Studio (Project State & Preview)
 const studio = new Studio({
   width: 1920,
   height: 1080,
   fps: 30,
-  canvas: document.getElementById('preview-canvas') as HTMLCanvasElement,
-  spacing: 20
+  canvas: document.getElementById("preview-canvas") as HTMLCanvasElement,
+  spacing: 20,
 });
 
 // 2. Load and add a Video Clip
-const video = await Video.fromUrl('https://example.com/video.mp4');
+const video = await Video.fromUrl("https://example.com/video.mp4");
 await studio.addClip(video);
 
 // 3. Start Preview
@@ -83,7 +83,6 @@ studio.play();
 - **WebCodecs**: For ultra-fast, hardware-accelerated video processing.
 - **PixiJS**: For a robust and performant 2D/3D rendering engine.
 - **wrapbox**: Internal utility for low-level MP4 box manipulation and muxing.
-
 
 ## Contact
 

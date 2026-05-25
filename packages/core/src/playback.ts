@@ -1,11 +1,10 @@
-import { IRenderer } from './types';
+import { IRenderer } from "./types";
 
 export class PlaybackController {
   private rafId: any = null;
   private lastTimestamp: number = 0;
   private isBrowser =
-    typeof window !== 'undefined' &&
-    typeof window.requestAnimationFrame === 'function';
+    typeof window !== "undefined" && typeof window.requestAnimationFrame === "function";
   private renderers: Set<IRenderer> = new Set();
 
   constructor(private store: any) {}
@@ -58,10 +57,7 @@ export class PlaybackController {
     if (this.isBrowser) {
       this.rafId = window.requestAnimationFrame(this.tick);
     } else {
-      this.rafId = setInterval(
-        this.tick,
-        1000 / (this.store.getState().settings.fps || 30)
-      );
+      this.rafId = setInterval(this.tick, 1000 / (this.store.getState().settings.fps || 30));
     }
   }
 

@@ -1,11 +1,11 @@
-import { ITrack, AnyClip } from '../types';
-import { generateId } from './id';
+import { ITrack, AnyClip } from "../types";
+import { generateId } from "./id";
 
 export interface AddClipOptions {
   trackId?: string;
   trackIndex?: number;
   isNewTrack?: boolean;
-  objectFit?: 'contain' | 'cover';
+  objectFit?: "contain" | "cover";
 }
 
 export interface TrackManagementResult {
@@ -13,13 +13,13 @@ export interface TrackManagementResult {
 }
 
 const ACCEPTS_MAP: Record<string, string[]> = {
-  Text: ['text', 'caption'],
-  Image: ['image', 'video'],
-  Video: ['video', 'image'],
-  Audio: ['audio'],
-  Caption: ['caption', 'text'],
-  Effect: ['effect'],
-  Transition: ['transition'],
+  Text: ["text", "caption"],
+  Image: ["image", "video"],
+  Video: ["video", "image"],
+  Audio: ["audio"],
+  Caption: ["caption", "text"],
+  Effect: ["effect"],
+  Transition: ["transition"],
 };
 
 /**
@@ -31,52 +31,64 @@ export const manageTracks = (
   tracks: ITrack[],
   clip: AnyClip,
   allClips: Record<string, AnyClip>,
-  options?: AddClipOptions
+  options?: AddClipOptions,
 ): TrackManagementResult => {
   let nextTracks = [...tracks];
   const { trackId, trackIndex, isNewTrack } = options || {};
   let targetTrackId = trackId;
 
-  if (isNewTrack) {
-    const existingType = clip.type.toLowerCase();
-    const newTrack: ITrack = {
-      id: generateId(),
-      name: `${clip.type} Track`,
-      type: existingType,
-      clipIds: [clip.id],
-      accepts: ACCEPTS_MAP[clip.type] || [existingType],
-    };
-
-    if (typeof trackIndex === 'number') {
-      nextTracks.splice(trackIndex, 0, newTrack);
-    } else {
-      nextTracks.push(newTrack);
+  // Handle transition clips by placing them directly on their parent clip's track
+  if (clip.type === "Transition") {
+    const parentClipId = (clip as any).fromClipId || (clip as any).toClipId;
+    if (parentClipId) {
+      const parentTrack = nextTracks.find((t) => t.clipIds.includes(parentClipId));
+      if (parentTrack) {
+        targetTrackId = parentTrack.id;
+      }
     }
-    targetTrackId = newTrack.id;
-  } else if (typeof trackIndex === 'number' && nextTracks[trackIndex]) {
-    // Force specific track if compatible
-    const targetTrack = nextTracks[trackIndex];
-    const accepts = targetTrack.accepts || [targetTrack.type];
-    const clipTypeLower = clip.type.toLowerCase();
+  }
 
-    if (
-      accepts.includes(clipTypeLower) ||
-      (ACCEPTS_MAP[clip.type] &&
-        ACCEPTS_MAP[clip.type].some((a) => accepts.includes(a)))
-    ) {
-      targetTrackId = targetTrack.id;
+  if (!targetTrackId) {
+    if (isNewTrack) {
+      const existingType = clip.type.toLowerCase();
+      const newTrack: ITrack = {
+        id: generateId(),
+        name: `${clip.type} Track`,
+        type: existingType,
+        clipIds: [clip.id],
+        accepts: ACCEPTS_MAP[clip.type] || [existingType],
+      };
+
+      if (typeof trackIndex === "number") {
+        nextTracks.splice(trackIndex, 0, newTrack);
+      } else {
+        nextTracks.push(newTrack);
+      }
+      targetTrackId = newTrack.id;
+    } else if (typeof trackIndex === "number" && nextTracks[trackIndex]) {
+      // Force specific track if compatible
+      const targetTrack = nextTracks[trackIndex];
+      const accepts = targetTrack.accepts || [targetTrack.type];
+      const clipTypeLower = clip.type.toLowerCase();
+
+      if (
+        accepts.includes(clipTypeLower) ||
+        (ACCEPTS_MAP[clip.type] && ACCEPTS_MAP[clip.type].some((a) => accepts.includes(a)))
+      ) {
+        targetTrackId = targetTrack.id;
+      }
     }
   }
 
   if (!targetTrackId) {
     // For Effects, we always want a new track to avoid overlapping filters affecting the same range
-    if (clip.type === 'Effect') {
+    if (clip.type === "Effect") {
       const newTrack: ITrack = {
         id: generateId(),
-        name: `Effect Track ${tracks.filter((t) => t.type === 'effect').length + 1}`,
-        type: 'effect',
+        name: `Effect Track ${tracks.filter((t) => t.type === "effect").length + 1}`,
+        type: "effect",
         clipIds: [clip.id],
-        accepts: ['effect'],
+        accepts: ["effect"],
       };
       nextTracks.push(newTrack);
       targetTrackId = newTrack.id;
@@ -92,9 +104,12 @@ export const manageTracks = (
           const existingClip = allClips[id];
           if (!existingClip) return false;
 
+          const clipDisplay = clip.timing?.display || clip.display;
+          const existingDisplay = existingClip.timing?.display || existingClip.display;
+          if (!clipDisplay || !existingDisplay) return false;
+
           return !(
-            clip.display.to <= existingClip.display.from ||
-            clip.display.from >= existingClip.display.to
+            clipDisplay.to <= existingDisplay.from || clipDisplay.from >= existingDisplay.to
           );
         });
 
@@ -118,10 +133,21 @@ export const manageTracks = (
     }
   }
 
-  // Add clip ID to the target track if not already there (and not newly created)
+  // Add clip ID to the target track if not already there, and append 'transition' to accepts if applicable
   nextTracks = nextTracks.map((t) => {
-    if (t.id === targetTrackId && !t.clipIds.includes(clip.id)) {
-      return { ...t, clipIds: [...t.clipIds, clip.id] };
+    if (t.id === targetTrackId) {
+      const nextClipIds = t.clipIds.includes(clip.id) ? t.clipIds : [...t.clipIds, clip.id];
+      let nextAccepts = t.accepts || [t.type];
+
+      if (clip.type === "Transition" && !nextAccepts.includes("transition")) {
+        nextAccepts = [...nextAccepts, "transition"];
+      }
+
+      return {
+        ...t,
+        clipIds: nextClipIds,
+        accepts: nextAccepts,
+      };
     }
     return t;
   });

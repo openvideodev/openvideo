@@ -1,11 +1,11 @@
-import { getEasing } from './easings';
+import { getEasing } from "./easings";
 import {
   AnimationOptions,
   AnimationProps,
   AnimationTransform,
   IAnimation,
   KeyframeData,
-} from './types';
+} from "./types";
 
 export class KeyframeAnimation implements IAnimation {
   readonly id: string;
@@ -18,18 +18,14 @@ export class KeyframeAnimation implements IAnimation {
     easing?: string | ((t: number) => number);
   }>;
 
-  constructor(
-    data: KeyframeData | any[],
-    options: AnimationOptions,
-    type: string = 'keyframes'
-  ) {
+  constructor(data: KeyframeData | any[], options: AnimationOptions, type: string = "keyframes") {
     this.id = options.id || `keyframe_${Math.random().toString(36).substr(2, 9)}`;
     this.type = type;
     this.params = data;
     this.options = {
       duration: options.duration,
       delay: options.delay ?? 0,
-      easing: options.easing ?? 'linear',
+      easing: options.easing ?? "linear",
       iterCount: options.iterCount ?? 1,
       id: this.id,
       disableGlobalEasing: options.disableGlobalEasing ?? false,
@@ -46,13 +42,12 @@ export class KeyframeAnimation implements IAnimation {
       // Handle object format (percentage keys)
       this.frames = Object.entries(data)
         .filter(([k]) => {
-          if (k === 'from' || k === 'to') return true;
-          const num = Number(k.replace('%', ''));
+          if (k === "from" || k === "to") return true;
+          const num = Number(k.replace("%", ""));
           return !isNaN(num) && num >= 0 && num <= 100;
         })
         .map(([k, val]) => {
-          const progress =
-            { from: 0, to: 100 }[k] ?? Number(k.replace('%', ''));
+          const progress = { from: 0, to: 100 }[k] ?? Number(k.replace("%", ""));
 
           const { easing, ...props } = val;
           return {
@@ -68,17 +63,13 @@ export class KeyframeAnimation implements IAnimation {
     if (this.frames.length > 0 && this.frames[0].progress !== 0) {
       this.frames.unshift({ progress: 0, props: {} });
     }
-    if (
-      this.frames.length > 0 &&
-      this.frames[this.frames.length - 1].progress !== 1
-    ) {
+    if (this.frames.length > 0 && this.frames[this.frames.length - 1].progress !== 1) {
       this.frames.push({ progress: 1, props: {} });
     }
   }
 
   getTransform(time: number): AnimationTransform {
-    const { duration, delay, iterCount, easing, disableGlobalEasing } =
-      this.options;
+    const { duration, delay, iterCount, easing, disableGlobalEasing } = this.options;
     const offsetTime = time - delay;
 
     if (offsetTime < 0) return {};
@@ -92,11 +83,10 @@ export class KeyframeAnimation implements IAnimation {
       return transform;
     }
 
-    const cycleDuration =
-      iterCount === Infinity ? duration : duration / iterCount;
+    const cycleDuration = iterCount === Infinity ? duration : duration / iterCount;
     let progress = (offsetTime % cycleDuration) / cycleDuration;
 
-    if (!disableGlobalEasing && easing !== 'linear') {
+    if (!disableGlobalEasing && easing !== "linear") {
       const easingFn = getEasing(easing);
       progress = easingFn(progress);
     }
@@ -106,40 +96,31 @@ export class KeyframeAnimation implements IAnimation {
 
   private interpolateProps(progress: number): AnimationTransform {
     const idx = this.frames.findIndex((f) => f.progress >= progress);
-    if (idx === -1)
-      return this.frames[this.frames.length - 1].props as AnimationTransform;
+    if (idx === -1) return this.frames[this.frames.length - 1].props as AnimationTransform;
     if (idx === 0) return this.frames[0].props as AnimationTransform;
 
     const startFrame = this.frames[idx - 1];
     const endFrame = this.frames[idx];
 
     const segmentProgress =
-      (progress - startFrame.progress) /
-      (endFrame.progress - startFrame.progress);
+      (progress - startFrame.progress) / (endFrame.progress - startFrame.progress);
 
     // If global easing is used, the input progress is already eased.
     // In that case, we default to linear interpolation between keyframes
     // unless a specific per-segment easing is provided.
     const easingSource =
-      endFrame.easing ??
-      (this.options.disableGlobalEasing ? this.options.easing : 'linear');
+      endFrame.easing ?? (this.options.disableGlobalEasing ? this.options.easing : "linear");
 
     const easingFn = getEasing(easingSource);
 
     const easedProgress = easingFn(segmentProgress);
 
     const transform: AnimationTransform = {};
-    const props = new Set([
-      ...Object.keys(startFrame.props),
-      ...Object.keys(endFrame.props),
-    ]);
+    const props = new Set([...Object.keys(startFrame.props), ...Object.keys(endFrame.props)]);
 
     for (const prop of props) {
       const p = prop as keyof AnimationProps;
-      const def =
-        p === 'scale' || p === 'scaleX' || p === 'scaleY' || p === 'opacity'
-          ? 1
-          : 0;
+      const def = p === "scale" || p === "scaleX" || p === "scaleY" || p === "opacity" ? 1 : 0;
       const s = startFrame.props[p] ?? def;
       const e = endFrame.props[p] ?? def;
       (transform as any)[p] = s + (e - s) * easedProgress;

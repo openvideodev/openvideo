@@ -1,5 +1,5 @@
-import type { Studio } from '../studio';
-import type { IClip, IPlaybackCapable } from '../clips/iclip';
+import type { Studio } from "../studio";
+import type { IClip, IPlaybackCapable } from "../clips/iclip";
 
 export interface PlaybackElementInfo {
   element: HTMLVideoElement | HTMLAudioElement;
@@ -29,12 +29,8 @@ export class Transport {
    */
   async play(): Promise<void> {
     if (this.isPlaying || this.studio.destroyed) return;
-    if (
-      this.maxDuration <= 0 ||
-      this.maxDuration === Infinity ||
-      isNaN(this.maxDuration)
-    ) {
-      console.warn('Cannot play: invalid duration', this.maxDuration);
+    if (this.maxDuration <= 0 || this.maxDuration === Infinity || isNaN(this.maxDuration)) {
+      console.warn("Cannot play: invalid duration", this.maxDuration);
       return;
     }
 
@@ -66,7 +62,7 @@ export class Transport {
 
     // Start render loop
     this.renderLoop();
-    this.studio.emit('play', { isPlaying: true });
+    this.studio.emit("play", { isPlaying: true });
   }
 
   /**
@@ -85,7 +81,7 @@ export class Transport {
         clip.pause(element);
       }
     }
-    this.studio.emit('pause', { isPlaying: false });
+    this.studio.emit("pause", { isPlaying: false });
   }
 
   /**
@@ -134,7 +130,7 @@ export class Transport {
 
     // Update frame to render the sought position
     await this.studio.updateFrame(this.currentTime);
-    this.studio.emit('currentTime', { currentTime: this.currentTime });
+    this.studio.emit("currentTime", { currentTime: this.currentTime });
 
     // Restore play state if it was playing
     if (wasPlaying) {
@@ -163,10 +159,7 @@ export class Transport {
   async frameNext(): Promise<void> {
     const fps = this.studio.opts.fps || 30;
     const frameDuration = 1_000_000 / fps;
-    const nextTime = Math.min(
-      this.currentTime + frameDuration,
-      this.maxDuration
-    );
+    const nextTime = Math.min(this.currentTime + frameDuration, this.maxDuration);
     await this.seek(nextTime);
   }
 
@@ -181,24 +174,14 @@ export class Transport {
   }
 
   private async renderLoop(): Promise<void> {
-    if (!this.isPlaying || this.studio.destroyed || this.studio.pixiApp == null)
-      return;
-    if (
-      this.maxDuration <= 0 ||
-      this.maxDuration === Infinity ||
-      isNaN(this.maxDuration)
-    ) {
+    if (!this.isPlaying || this.studio.destroyed || this.studio.pixiApp == null) return;
+    if (this.maxDuration <= 0 || this.maxDuration === Infinity || isNaN(this.maxDuration)) {
       this.pause();
       return;
     }
 
     const render = async () => {
-      if (
-        !this.isPlaying ||
-        this.studio.destroyed ||
-        this.studio.pixiApp == null
-      )
-        return;
+      if (!this.isPlaying || this.studio.destroyed || this.studio.pixiApp == null) return;
       if (this.currentTime >= this.maxDuration) {
         this.currentTime = this.maxDuration;
         this.pause();
@@ -209,18 +192,15 @@ export class Transport {
       // This ensures playback speed matches the configured fps
       const elapsedMs = performance.now() - this.playStartTimestamp;
       const elapsedMicroseconds = elapsedMs * 1000;
-      this.currentTime = Math.min(
-        this.playStartTime + elapsedMicroseconds,
-        this.maxDuration
-      );
-      this.studio.emit('currentTime', { currentTime: this.currentTime });
+      this.currentTime = Math.min(this.playStartTime + elapsedMicroseconds, this.maxDuration);
+      this.studio.emit("currentTime", { currentTime: this.currentTime });
 
       // Await frame update to ensure it completes before moving to next frame
       // This prevents blinking caused by overlapping frame updates
       try {
         await this.studio.updateFrame(this.currentTime);
       } catch (err) {
-        console.warn('Error updating frame:', err);
+        console.warn("Error updating frame:", err);
       }
 
       // Continue with next frame using requestAnimationFrame
@@ -234,6 +214,6 @@ export class Transport {
   }
 
   public isPlaybackCapable(clip: any): clip is IPlaybackCapable {
-    return 'play' in clip && 'pause' in clip && 'seek' in clip;
+    return "play" in clip && "pause" in clip && "seek" in clip;
   }
 }

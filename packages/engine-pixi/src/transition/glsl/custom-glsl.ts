@@ -84,11 +84,11 @@ vec4 transition(vec2 p) {
 `;
 
 export const GRIDFLIP_UNIFORMS: Record<string, { value: any; type: string }> = {
-  gridSize: { value: [4, 4], type: 'vec2<f32>' },
-  pause: { value: 0.1, type: 'f32' },
-  dividerWidth: { value: 0.05, type: 'f32' },
-  bgColor: { value: [0, 0, 0, 1], type: 'vec4<f32>' },
-  randomness: { value: 0.1, type: 'f32' },
+  gridSize: { value: [4, 4], type: "vec2<f32>" },
+  pause: { value: 0.1, type: "f32" },
+  dividerWidth: { value: 0.05, type: "f32" },
+  bgColor: { value: [0, 0, 0, 1], type: "vec4<f32>" },
+  randomness: { value: 0.1, type: "f32" },
 };
 
 /**
@@ -131,11 +131,8 @@ vec4 transition(vec2 uv) {
 }
 `;
 
-export const DIRECTIONAL_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  direction: { value: [0.0, 1.0], type: 'vec2<f32>' },
+export const DIRECTIONAL_UNIFORMS: Record<string, { value: any; type: string }> = {
+  direction: { value: [0.0, 1.0], type: "vec2<f32>" },
 };
 
 /**
@@ -188,13 +185,10 @@ vec4 transition(vec2 p) {
 }
 `;
 
-export const UNDULATING_BURN_OUT_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  smoothness: { value: 0.1, type: 'f32' },
-  center: { value: [0.5, 0.5], type: 'vec2<f32>' },
-  color: { value: [1.0, 0.5, 0.0], type: 'vec3<f32>' },
+export const UNDULATING_BURN_OUT_UNIFORMS: Record<string, { value: any; type: string }> = {
+  smoothness: { value: 0.1, type: "f32" },
+  center: { value: [0.5, 0.5], type: "vec2<f32>" },
+  color: { value: [1.0, 0.5, 0.0], type: "vec3<f32>" },
 };
 
 /**
@@ -221,13 +215,10 @@ vec4 transition (vec2 p) {
 }
 `;
 
-export const SQUARESWIRE_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  squares: { value: [10, 10], type: 'vec2<i32>' },
-  direction: { value: [1.0, -0.5], type: 'vec2<f32>' },
-  smoothness: { value: 1.6, type: 'f32' },
+export const SQUARESWIRE_UNIFORMS: Record<string, { value: any; type: string }> = {
+  squares: { value: [10, 10], type: "vec2<i32>" },
+  direction: { value: [1.0, -0.5], type: "vec2<f32>" },
+  smoothness: { value: 1.6, type: "f32" },
 };
 
 /**
@@ -265,14 +256,11 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const ROTATE_SCALE_FADE_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  center: { value: [0.5, 0.5], type: 'vec2<f32>' },
-  rotations: { value: 1.0, type: 'f32' },
-  scale: { value: 8.0, type: 'f32' },
-  backColor: { value: [0.15, 0.15, 0.15, 1.0], type: 'vec4<f32>' },
+export const ROTATE_SCALE_FADE_UNIFORMS: Record<string, { value: any; type: string }> = {
+  center: { value: [0.5, 0.5], type: "vec2<f32>" },
+  rotations: { value: 1.0, type: "f32" },
+  scale: { value: 8.0, type: "f32" },
+  backColor: { value: [0.15, 0.15, 0.15, 1.0], type: "vec4<f32>" },
 };
 
 /**
@@ -295,12 +283,9 @@ vec4 transition(vec2 p) {
 }
 `;
 
-export const RANDOMSQUARES_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  size: { value: [10, 10], type: 'vec2<i32>' },
-  smoothness: { value: 0.5, type: 'f32' },
+export const RANDOMSQUARES_UNIFORMS: Record<string, { value: any; type: string }> = {
+  size: { value: [10, 10], type: "vec2<i32>" },
+  smoothness: { value: 0.5, type: "f32" },
 };
 
 /**
@@ -327,11 +312,8 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const POLAR_FUNCTION_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  segments: { value: 5, type: 'i32' },
+export const POLAR_FUNCTION_UNIFORMS: Record<string, { value: any; type: string }> = {
+  segments: { value: 5, type: "i32" },
 };
 
 /**
@@ -354,8 +336,8 @@ vec4 transition(vec2 uv) {
 `;
 
 export const PIXELIZE_UNIFORMS: Record<string, { value: any; type: string }> = {
-  squaresMin: { value: [20, 20], type: 'vec2<i32>' },
-  steps: { value: 50, type: 'i32' },
+  squaresMin: { value: [20, 20], type: "vec2<i32>" },
+  steps: { value: 50, type: "i32" },
 };
 
 /**
@@ -423,9 +405,9 @@ vec4 transition (vec2 uv) {
 `;
 
 export const PERLIN_UNIFORMS: Record<string, { value: any; type: string }> = {
-  scale: { value: 4.0, type: 'f32' },
-  smoothness: { value: 0.01, type: 'f32' },
-  seed: { value: 12.9898, type: 'f32' },
+  scale: { value: 4.0, type: "f32" },
+  smoothness: { value: 0.01, type: "f32" },
+  seed: { value: 12.9898, type: "f32" },
 };
 
 /**
@@ -469,8 +451,8 @@ vec4 transition(vec2 uv) {
 `;
 
 export const LUMA_UNIFORMS: Record<string, { value: any; type: string }> = {
-  spiralTurns: { value: 1.5, type: 'f32' },
-  spiralWidth: { value: 0.02, type: 'f32' },
+  spiralTurns: { value: 1.5, type: "f32" },
+  spiralWidth: { value: 0.02, type: "f32" },
 };
 
 /**
@@ -596,13 +578,10 @@ vec4 transition(vec2 uv) {
 }
 `;
 
-export const LUMINANCE_MELT_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  direction: { value: 1.0, type: 'f32' }, // 0.0 = up, 1.0 = down
-  l_threshold: { value: 0.8, type: 'f32' },
-  above: { value: 0.0, type: 'f32' }, // 0.0 = false (below threshold), 1.0 = true (above threshold)
+export const LUMINANCE_MELT_UNIFORMS: Record<string, { value: any; type: string }> = {
+  direction: { value: 1.0, type: "f32" }, // 0.0 = up, 1.0 = down
+  l_threshold: { value: 0.8, type: "f32" },
+  above: { value: 0.0, type: "f32" }, // 0.0 = false (below threshold), 1.0 = true (above threshold)
 };
 
 /**
@@ -678,12 +657,9 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const HEXAGONALIZE_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  steps: { value: 50, type: 'i32' },
-  horizontalHexagons: { value: 20.0, type: 'f32' },
+export const HEXAGONALIZE_UNIFORMS: Record<string, { value: any; type: string }> = {
+  steps: { value: 50, type: "i32" },
+  horizontalHexagons: { value: 20.0, type: "f32" },
 };
 
 /**
@@ -738,11 +714,8 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const DISPLACEMENT_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  strength: { value: 0.5, type: 'f32' },
+export const DISPLACEMENT_UNIFORMS: Record<string, { value: any; type: string }> = {
+  strength: { value: 0.5, type: "f32" },
 };
 
 /**
@@ -768,12 +741,9 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const DIRECTIONALWIPE_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  direction: { value: [1.0, -1.0], type: 'vec2<f32>' },
-  smoothness: { value: 0.5, type: 'f32' },
+export const DIRECTIONALWIPE_UNIFORMS: Record<string, { value: any; type: string }> = {
+  direction: { value: [1.0, -1.0], type: "vec2<f32>" },
+  smoothness: { value: 0.5, type: "f32" },
 };
 
 /**
@@ -797,11 +767,8 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const DIRECTIONALWARP_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  direction: { value: [-1.0, 1.0], type: 'vec2<f32>' },
+export const DIRECTIONALWARP_UNIFORMS: Record<string, { value: any; type: string }> = {
+  direction: { value: [-1.0, 1.0], type: "vec2<f32>" },
 };
 
 /**
@@ -827,11 +794,10 @@ vec4 transition(vec2 p) {
 }
 `;
 
-export const CROSSHATCH_UNIFORMS: Record<string, { value: any; type: string }> =
-  {
-    threshold: { value: 3.0, type: 'f32' },
-    fadeEdge: { value: 0.1, type: 'f32' },
-  };
+export const CROSSHATCH_UNIFORMS: Record<string, { value: any; type: string }> = {
+  threshold: { value: 3.0, type: "f32" },
+  fadeEdge: { value: 0.1, type: "f32" },
+};
 
 /**
  * CircleOpen transition configuration
@@ -853,11 +819,10 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const CIRCLEOPEN_UNIFORMS: Record<string, { value: any; type: string }> =
-  {
-    smoothness: { value: 0.3, type: 'f32' },
-    opening: { value: 1.0, type: 'f32' }, // 1.0 = true (opening), 0.0 = false (closing)
-  };
+export const CIRCLEOPEN_UNIFORMS: Record<string, { value: any; type: string }> = {
+  smoothness: { value: 0.3, type: "f32" },
+  opening: { value: 1.0, type: "f32" }, // 1.0 = true (opening), 0.0 = false (closing)
+};
 
 /**
  * CannabisLeaf transition configuration
@@ -879,10 +844,7 @@ vec4 transition (vec2 uv) {
 }
 `;
 
-export const CANNABISLEAF_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
+export const CANNABISLEAF_UNIFORMS: Record<string, { value: any; type: string }> = {
   // No custom uniforms needed
 };
 
@@ -1054,12 +1016,9 @@ vec4 transition(vec2 uv) {
 }
 `;
 
-export const STEREOVIEWER_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  zoom: { value: 0.88, type: 'f32' },
-  corner_radius: { value: 0.22, type: 'f32' },
+export const STEREOVIEWER_UNIFORMS: Record<string, { value: any; type: string }> = {
+  zoom: { value: 0.88, type: "f32" },
+  corner_radius: { value: 0.22, type: "f32" },
 };
 
 /**
@@ -1202,10 +1161,9 @@ vec4 transition(vec2 uv) {
 }
 `;
 
-export const CROSSZOOM_UNIFORMS: Record<string, { value: any; type: string }> =
-  {
-    strength: { value: 0.4, type: 'f32' },
-  };
+export const CROSSZOOM_UNIFORMS: Record<string, { value: any; type: string }> = {
+  strength: { value: 0.4, type: "f32" },
+};
 
 /**
  * CrazyParametricFun transition configuration
@@ -1229,14 +1187,11 @@ vec4 transition(vec2 uv) {
 }
 `;
 
-export const CRAZY_PARAMETRIC_FUN_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  a: { value: 4.0, type: 'f32' },
-  b: { value: 1.0, type: 'f32' },
-  amplitude: { value: 120.0, type: 'f32' },
-  smoothness: { value: 0.1, type: 'f32' },
+export const CRAZY_PARAMETRIC_FUN_UNIFORMS: Record<string, { value: any; type: string }> = {
+  a: { value: 4.0, type: "f32" },
+  b: { value: 1.0, type: "f32" },
+  amplitude: { value: 120.0, type: "f32" },
+  smoothness: { value: 0.1, type: "f32" },
 };
 
 /**
@@ -1259,11 +1214,8 @@ vec4 transition(vec2 p) {
 }
 `;
 
-export const COLOUR_DISTANCE_UNIFORMS: Record<
-  string,
-  { value: any; type: string }
-> = {
-  power: { value: 5.0, type: 'f32' },
+export const COLOUR_DISTANCE_UNIFORMS: Record<string, { value: any; type: string }> = {
+  power: { value: 5.0, type: "f32" },
 };
 
 export const BOW_TIE_HORIZONTAL_FRAGMENT = `

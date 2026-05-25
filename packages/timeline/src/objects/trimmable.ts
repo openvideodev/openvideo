@@ -1,18 +1,14 @@
-import { Control, Rect, RectProps, classRegistry } from 'fabric';
-import {
-  ACTIVE_SELECTION_COLOR,
-  ACTIVE_SELECTION_WIDTH,
-} from '../constants/objects';
-import { createMediaControls } from '../controls';
-import { IClip, ITrim } from '../types';
-import { timeUsToUnits } from '../utils';
+import { Control, Rect, RectProps, classRegistry } from "fabric";
+import { ACTIVE_SELECTION_COLOR, ACTIVE_SELECTION_WIDTH } from "../constants/objects";
+import { createMediaControls } from "../controls";
+import { IClip, ITrim } from "../types";
+import { timeUsToUnits } from "../utils";
 interface IDisplay {
   from: number;
   to: number;
 }
 
-export interface TrimmableBaseProps
-  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
+export interface TrimmableBaseProps extends Pick<RectProps, "width" | "height" | "top" | "left"> {
   id: string;
   tScale: number;
   display: IDisplay;
@@ -22,9 +18,9 @@ export interface TrimmableBaseProps
 export type TrimmableProps<T extends object = {}> = TrimmableBaseProps & T;
 
 class Trimmable extends Rect {
-  static type = 'Trimmable';
+  static type = "Trimmable";
   public id: string;
-  public resourceId: string = '';
+  public resourceId: string = "";
   public tScale: number;
   public isSelected = false;
   declare display: IDisplay;
@@ -40,12 +36,12 @@ class Trimmable extends Rect {
     rx: 6,
     ry: 6,
     objectCaching: false,
-    borderColor: 'transparent',
-    stroke: 'transparent',
+    borderColor: "transparent",
+    stroke: "transparent",
     strokeWidth: 0,
-    fill: '#27272a',
+    fill: "#27272a",
     borderOpacityWhenMoving: 1,
-    hoverCursor: 'default',
+    hoverCursor: "default",
   };
 
   constructor(options: TrimmableProps) {
@@ -60,13 +56,8 @@ class Trimmable extends Rect {
   }
 
   public sync(itemDetail: IClip, tScale: number) {
-    const newWidthInTime =
-      (itemDetail.trim?.to || 0) - (itemDetail.trim?.from || 0);
-    const newWidthInUnits = timeUsToUnits(
-      newWidthInTime,
-      tScale,
-      itemDetail.playbackRate
-    );
+    const newWidthInTime = (itemDetail.trim?.to || 0) - (itemDetail.trim?.from || 0);
+    const newWidthInUnits = timeUsToUnits(newWidthInTime, tScale, itemDetail.playbackRate);
     this.set({
       duration: itemDetail.duration,
       display: itemDetail.display,
@@ -91,13 +82,7 @@ class Trimmable extends Rect {
     if (this.isSelected) {
       ctx.save();
       ctx.beginPath();
-      ctx.roundRect(
-        -this.width / 2,
-        -this.height / 2,
-        this.width,
-        this.height,
-        this.rx
-      );
+      ctx.roundRect(-this.width / 2, -this.height / 2, this.width, this.height, this.rx);
       ctx.lineWidth = ACTIVE_SELECTION_WIDTH;
       ctx.strokeStyle = ACTIVE_SELECTION_COLOR;
       ctx.stroke();
@@ -112,6 +97,6 @@ class Trimmable extends Rect {
   }
 }
 
-classRegistry.setClass(Trimmable, 'Trimmable');
+classRegistry.setClass(Trimmable, "Trimmable");
 
 export default Trimmable;

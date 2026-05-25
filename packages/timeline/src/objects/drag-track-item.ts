@@ -1,7 +1,9 @@
-import { Rect, type RectProps, classRegistry } from 'fabric';
+import { Rect, type RectProps, classRegistry } from "fabric";
 
-export interface PreviewTrackItemProps
-  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
+export interface PreviewTrackItemProps extends Pick<
+  RectProps,
+  "width" | "height" | "top" | "left"
+> {
   id: string;
   type: string;
   duration: number;
@@ -13,14 +15,14 @@ function formatTime(milliseconds: number) {
   const seconds = totalSeconds % 60;
 
   // Formatear con ceros a la izquierda
-  const formattedMinutes = String(minutes).padStart(2, '0');
-  const formattedSeconds = String(seconds).padStart(2, '0');
+  const formattedMinutes = String(minutes).padStart(2, "0");
+  const formattedSeconds = String(seconds).padStart(2, "0");
 
   return `${formattedMinutes}:${formattedSeconds}`;
 }
 
 class PreviewTrackItem extends Rect {
-  static type = 'PreviewTrackItem';
+  static type = "PreviewTrackItem";
   public duration: number;
   public fromClipId: string;
   public toClipId: string;
@@ -37,11 +39,11 @@ class PreviewTrackItem extends Rect {
 
   static ownDefaults = {
     objectCaching: false,
-    borderColor: 'transparent',
-    stroke: 'transparent',
+    borderColor: "transparent",
+    stroke: "transparent",
     strokeWidth: 0,
     borderOpacityWhenMoving: 1,
-    hoverCursor: 'default',
+    hoverCursor: "default",
     rx: 0,
     ry: 0,
   };
@@ -50,7 +52,7 @@ class PreviewTrackItem extends Rect {
     super(props);
     Object.assign(this, PreviewTrackItem.ownDefaults);
     this.id = props.id;
-    this.fill = '#27272a';
+    this.fill = "#27272a";
     this.name = props.type.toUpperCase();
     this.durationString = formatTime(props.duration);
     this.itemType = props.type;
@@ -72,7 +74,7 @@ class PreviewTrackItem extends Rect {
   public drawTextIdentity(ctx: CanvasRenderingContext2D) {
     // Set font and text properties
     ctx.font = "600 12px 'Geist variable'";
-    ctx.textAlign = 'left';
+    ctx.textAlign = "left";
 
     // Measure text widths
     const nameWidth = ctx.measureText(this.name).width;
@@ -89,30 +91,16 @@ class PreviewTrackItem extends Rect {
     const nameRectX = 4 - this.width / 2; // Adjust for the new origin
     const nameRectWidth = nameWidth + padding * 2;
 
-    this.drawRoundedRect(
-      ctx,
-      nameRectX,
-      rectY,
-      nameRectWidth,
-      rectHeight,
-      radius
-    );
-    ctx.fillStyle = '#f4f4f5';
+    this.drawRoundedRect(ctx, nameRectX, rectY, nameRectWidth, rectHeight, radius);
+    ctx.fillStyle = "#f4f4f5";
     ctx.fillText(this.name, nameRectX + padding, rectY + 14);
 
     // Draw duration rectangle and text
     const durationRectX = nameRectX + nameRectWidth + spacing;
     const durationRectWidth = durationWidth + padding * 2;
 
-    this.drawRoundedRect(
-      ctx,
-      durationRectX,
-      rectY,
-      durationRectWidth,
-      rectHeight,
-      radius
-    );
-    ctx.fillStyle = '#f4f4f5';
+    this.drawRoundedRect(ctx, durationRectX, rectY, durationRectWidth, rectHeight, radius);
+    ctx.fillStyle = "#f4f4f5";
     ctx.fillText(this.durationString, durationRectX + padding, rectY + 14);
   }
 
@@ -122,9 +110,9 @@ class PreviewTrackItem extends Rect {
     y: number,
     width: number,
     height: number,
-    radius: number
+    radius: number,
   ) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
     if (ctx.roundRect) {
       ctx.beginPath();
       ctx.roundRect(x, y, width, height, radius);
@@ -136,5 +124,5 @@ class PreviewTrackItem extends Rect {
   }
 }
 
-classRegistry.setClass(PreviewTrackItem, 'PreviewTrackItem');
+classRegistry.setClass(PreviewTrackItem, "PreviewTrackItem");
 export default PreviewTrackItem;

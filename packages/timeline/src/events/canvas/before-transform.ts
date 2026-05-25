@@ -1,19 +1,13 @@
-import {
-  ActiveSelection,
-  FabricObject,
-  TEvent,
-  TPointerEvent,
-  Transform,
-} from 'fabric';
-import { Track, Placeholder, Transition } from '../../objects';
-import Timeline from '../../timeline';
-import { findRelativePosition } from '../../utils/array';
+import { ActiveSelection, FabricObject, TEvent, TPointerEvent, Transform } from "fabric";
+import { Track, Placeholder, Transition } from "../../objects";
+import Timeline from "../../timeline";
+import { findRelativePosition } from "../../utils/array";
 
 function onBeforeTransform(
   this: Timeline,
   e: TEvent<TPointerEvent> & {
     transform: Transform;
-  }
+  },
 ) {
   const state = this.dragStateManager.getState();
   const canvas = state.canvas!;
@@ -31,22 +25,20 @@ function onBeforeTransform(
     updateItemsInTrack: null,
   });
 
-  canvas.trackIdAfterTransform = '';
+  canvas.trackIdAfterTransform = "";
   canvas.positionAfterTransform = {};
 
   const activeSelection = canvas.getActiveObject();
 
   const activeObjects = (
-    activeSelection instanceof ActiveSelection
-      ? activeSelection.getObjects()
-      : [activeSelection]
+    activeSelection instanceof ActiveSelection ? activeSelection.getObjects() : [activeSelection]
   ) as FabricObject[];
 
   this.dragStateManager.setState({ activeObjects });
 
   const pointer = canvas.getScenePoint(e.e!);
 
-  const tracks = canvas.getObjects('Track') as Track[];
+  const tracks = canvas.getObjects("Track") as Track[];
 
   const activeObjectsIds = canvas.getActiveObjects().map((obj) => obj.id);
   const activeTracks = tracks.filter((track) => {
@@ -87,9 +79,7 @@ function onBeforeTransform(
   // populate activeTrackToItemsMap
   activeObjects.forEach((obj) => {
     // find track by objrct id
-    const track = tracks.find((track) =>
-      track.clipIds.includes(obj.id)
-    ) as Track;
+    const track = tracks.find((track) => track.clipIds.includes(obj.id)) as Track;
     if (!track) return;
     const trackId = track.id;
     if (state.activeTrackToItemsMap[trackId]) {
@@ -117,11 +107,7 @@ function onBeforeTransform(
     if (state.primaryTracks[trackId]) {
       state.primaryTracks[trackId].objects.push(obj);
     } else {
-      const index = findRelativePosition(
-        state.trackTops,
-        originTrack?.top,
-        objectTop
-      )!;
+      const index = findRelativePosition(state.trackTops, originTrack?.top, objectTop)!;
       state.primaryTracks[trackId] = {
         objects: [obj],
         index,
@@ -130,12 +116,10 @@ function onBeforeTransform(
   });
 
   // order primaryMovingObjects by left position
-  state.primaryMovingObjects = state.primaryMovingObjects.sort(
-    (a, b) => a.left - b.left
-  );
+  state.primaryMovingObjects = state.primaryMovingObjects.sort((a, b) => a.left - b.left);
 
   state.secondaryMovingObjects = activeObjects.filter(
-    (obj) => !state.primaryMovingObjects.includes(obj)
+    (obj) => !state.primaryMovingObjects.includes(obj),
   );
 
   state.secondaryMovingObjects.forEach((obj) => {
@@ -144,11 +128,7 @@ function onBeforeTransform(
     if (state.secondaryTracks[trackId]) {
       state.secondaryTracks[trackId].objects.push(obj);
     } else {
-      const index = findRelativePosition(
-        state.trackTops,
-        originTrack.top,
-        objectTop
-      )!;
+      const index = findRelativePosition(state.trackTops, originTrack.top, objectTop)!;
       state.secondaryTracks[trackId] = {
         objects: [obj],
         index,
@@ -166,7 +146,7 @@ function onBeforeTransform(
     };
   }
 
-  if (e.transform.action !== 'drag') return;
+  if (e.transform.action !== "drag") return;
 
   state.placeholderMovingObjects = state.primaryMovingObjects.map((target) => {
     const targetBounds = target.getBoundingRect();
@@ -190,9 +170,9 @@ function onBeforeTransform(
 }
 
 export function addBeforeTransformEvents(timeline: Timeline) {
-  timeline.on('before:transform', onBeforeTransform.bind(timeline));
+  timeline.on("before:transform", onBeforeTransform.bind(timeline));
 }
 
 export function removeBeforeTransformEvents(timeline: Timeline) {
-  timeline.off('before:transform', onBeforeTransform.bind(timeline));
+  timeline.off("before:transform", onBeforeTransform.bind(timeline));
 }

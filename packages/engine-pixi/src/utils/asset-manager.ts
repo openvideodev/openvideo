@@ -1,13 +1,13 @@
-import { file, write } from 'opfs-tools';
+import { file, write } from "opfs-tools";
 
 export class AssetManager {
   private static async getCacheKey(url: string): Promise<string> {
     // Basic hash for URL to use as filename
     const encoder = new TextEncoder();
     const data = encoder.encode(url);
-    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
   private static getPath(key: string): string {

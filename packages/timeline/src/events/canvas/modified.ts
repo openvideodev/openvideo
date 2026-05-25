@@ -1,15 +1,15 @@
-import { FabricObject, ModifiedEvent, TBBox, TPointerEvent } from 'fabric';
-import { Helper, Track } from '../../objects';
-import Timeline from '../../timeline';
-import { IDropInfo } from '../../interfaces/canvas';
-import { findRelativePosition } from '../../utils/array';
+import { FabricObject, ModifiedEvent, TBBox, TPointerEvent } from "fabric";
+import { Helper, Track } from "../../objects";
+import Timeline from "../../timeline";
+import { IDropInfo } from "../../interfaces/canvas";
+import { findRelativePosition } from "../../utils/array";
 
 const handleHelperDrop = (canvas: Timeline, dropInfo: IDropInfo) => {
-  canvas.fire('track:create', dropInfo);
+  canvas.fire("track:create", dropInfo);
 };
 
 const handleTrackDrop = (canvas: Timeline, dropInfo: IDropInfo) => {
-  canvas.fire('track-items:moved', dropInfo);
+  canvas.fire("track-items:moved", dropInfo);
 };
 
 function onObjectDropped(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
@@ -23,7 +23,7 @@ function onObjectDropped(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
 
   const pointer = canvas.getScenePoint(e.e!);
 
-  const droppables = canvas.getObjects('Track', 'Helper');
+  const droppables = canvas.getObjects("Track", "Helper");
 
   const droppedTarget = droppables.find((obj) => {
     const objRect = obj.getBoundingRect();
@@ -35,18 +35,15 @@ function onObjectDropped(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
     );
   });
 
-  if (e.action === 'resizing') {
+  if (e.action === "resizing") {
     const currentTrackObjects = (
       state.trackToItemsMap[state.originTrack?.id as string] || []
     ).filter((o) => o !== activeSelection);
 
     activeSelection.setCoords();
 
-    const isOverlapped = findOverlapObject(
-      currentTrackObjects,
-      activeSelection.getBoundingRect()
-    );
-    canvas.fire('track-items:resized', {
+    const isOverlapped = findOverlapObject(currentTrackObjects, activeSelection.getBoundingRect());
+    canvas.fire("track-items:resized", {
       trackId: state.originTrack?.id,
       trackItemIds: [activeSelection.id],
       isOverlapped: !!isOverlapped,
@@ -63,13 +60,13 @@ function onObjectDropped(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
   if (droppedTarget instanceof Helper) {
     let index;
     switch (droppedTarget.kind) {
-      case 'top':
+      case "top":
         index = 0;
         break;
-      case 'center':
+      case "center":
         index = droppedTarget.metadata.order || 0;
         break;
-      case 'bottom':
+      case "bottom":
         index = -1;
         break;
       default:
@@ -110,8 +107,7 @@ function findSecondaryTracks(canvas: Timeline) {
   const state = canvas.dragStateManager.getState();
   const [primaryMovingObject] = state.primaryMovingObjects;
   const primaryMovingObjectId = primaryMovingObject.id;
-  const primaryAferTransform =
-    canvas.positionAfterTransform[primaryMovingObjectId];
+  const primaryAferTransform = canvas.positionAfterTransform[primaryMovingObjectId];
   const primaryCurrentTop = primaryMovingObject.getBoundingRect().top;
   const offset = primaryAferTransform.top - primaryCurrentTop;
 
@@ -125,11 +121,7 @@ function findSecondaryTracks(canvas: Timeline) {
   state.secondaryMovingObjects.forEach((obj: any) => {
     const objectTop = obj.getBoundingRect().top + offset;
     const trackId = state.trackTopToIdMap[objectTop];
-    const index = findRelativePosition(
-      state.trackTops,
-      (state.originTrack as any).top,
-      objectTop
-    )!;
+    const index = findRelativePosition(state.trackTops, (state.originTrack as any).top, objectTop)!;
     if (secondaryTracks[trackId]) {
       secondaryTracks[trackId].objects.push(obj);
     } else {
@@ -156,10 +148,7 @@ function findSecondaryMovingOverlap(canvas: Timeline) {
     return currentItemsInTrack
       .filter((o: any) => !movingItemsInTrack.includes(o))
       .some((o: any) => {
-        const overlaped = findOverlapObject(
-          movingItemsInTrack,
-          o.getBoundingRect()
-        );
+        const overlaped = findOverlapObject(movingItemsInTrack, o.getBoundingRect());
         return overlaped;
       });
   });
@@ -179,9 +168,9 @@ function findOverlapObject(objects: FabricObject[], boundingBox: TBBox) {
 }
 
 export const addModifiedEvents = (timeline: Timeline) => {
-  timeline.on('object:modified', onObjectDropped.bind(timeline));
+  timeline.on("object:modified", onObjectDropped.bind(timeline));
 };
 
 export const removeModifiedEvents = (timeline: Timeline) => {
-  timeline.off('object:modified', onObjectDropped.bind(timeline));
+  timeline.off("object:modified", onObjectDropped.bind(timeline));
 };

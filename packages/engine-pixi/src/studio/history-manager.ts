@@ -1,5 +1,5 @@
-import diff, { Difference } from 'microdiff';
-import { ClipJSON, ProjectJSON, StudioTrackJSON } from '../json-serialization';
+import diff, { Difference } from "microdiff";
+import { ClipJSON, ProjectJSON, StudioTrackJSON } from "../json-serialization";
 
 export interface HistoryOptions {
   maxSize?: number;
@@ -23,9 +23,7 @@ export class HistoryManager {
 
   private projectToHistoryState(project: ProjectJSON): HistoryState {
     const clips: Record<string, ClipJSON> = {};
-    const tracks: StudioTrackJSON[] = JSON.parse(
-      JSON.stringify(project.tracks || [])
-    );
+    const tracks: StudioTrackJSON[] = JSON.parse(JSON.stringify(project.tracks || []));
 
     project.clips.forEach((clip) => {
       if (clip.id) clips[clip.id] = JSON.parse(JSON.stringify(clip));
@@ -42,9 +40,7 @@ export class HistoryManager {
    * Initialize history with the starting state
    */
   public init(state: ProjectJSON) {
-    this.lastState = this.projectToHistoryState(
-      JSON.parse(JSON.stringify(state))
-    );
+    this.lastState = this.projectToHistoryState(JSON.parse(JSON.stringify(state)));
     this.past = [];
     this.future = [];
   }
@@ -58,9 +54,7 @@ export class HistoryManager {
       return;
     }
 
-    const currentHistoryState = this.projectToHistoryState(
-      JSON.parse(JSON.stringify(newState))
-    );
+    const currentHistoryState = this.projectToHistoryState(JSON.parse(JSON.stringify(newState)));
     const patches = diff(this.lastState, currentHistoryState);
 
     if (patches.length === 0) return;
@@ -77,14 +71,12 @@ export class HistoryManager {
   /**
    * Undo the last action. Returns the patches and the new target state.
    */
-  public undo(
-    currentState: ProjectJSON
-  ): { patches: Difference[]; state: HistoryState } | null {
+  public undo(currentState: ProjectJSON): { patches: Difference[]; state: HistoryState } | null {
     const patches = this.past.pop();
     if (!patches) return null;
 
     const currentHistoryState = this.projectToHistoryState(
-      JSON.parse(JSON.stringify(currentState))
+      JSON.parse(JSON.stringify(currentState)),
     );
 
     // Calculate new state by reversing patches
@@ -99,14 +91,12 @@ export class HistoryManager {
   /**
    * Redo the next action. Returns the patches and the new target state.
    */
-  public redo(
-    currentState: ProjectJSON
-  ): { patches: Difference[]; state: HistoryState } | null {
+  public redo(currentState: ProjectJSON): { patches: Difference[]; state: HistoryState } | null {
     const patches = this.future.pop();
     if (!patches) return null;
 
     const currentHistoryState = this.projectToHistoryState(
-      JSON.parse(JSON.stringify(currentState))
+      JSON.parse(JSON.stringify(currentState)),
     );
 
     // Calculate new state by applying patches
@@ -148,46 +138,42 @@ export class HistoryManager {
 
       if (reverse) {
         switch (type) {
-          case 'CREATE':
+          case "CREATE":
             if (Array.isArray(target)) {
               target.splice(lastKey as number, 1);
             } else {
               delete target[lastKey];
             }
             break;
-          case 'REMOVE':
+          case "REMOVE":
             target[lastKey] =
-              oldValue && typeof oldValue === 'object'
+              oldValue && typeof oldValue === "object"
                 ? JSON.parse(JSON.stringify(oldValue))
                 : oldValue;
             break;
-          case 'CHANGE':
+          case "CHANGE":
             target[lastKey] =
-              oldValue && typeof oldValue === 'object'
+              oldValue && typeof oldValue === "object"
                 ? JSON.parse(JSON.stringify(oldValue))
                 : oldValue;
             break;
         }
       } else {
         switch (type) {
-          case 'CREATE':
+          case "CREATE":
             target[lastKey] =
-              value && typeof value === 'object'
-                ? JSON.parse(JSON.stringify(value))
-                : value;
+              value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : value;
             break;
-          case 'REMOVE':
+          case "REMOVE":
             if (Array.isArray(target)) {
               target.splice(lastKey as number, 1);
             } else {
               delete target[lastKey];
             }
             break;
-          case 'CHANGE':
+          case "CHANGE":
             target[lastKey] =
-              value && typeof value === 'object'
-                ? JSON.parse(JSON.stringify(value))
-                : value;
+              value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : value;
             break;
         }
       }

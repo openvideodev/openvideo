@@ -1,9 +1,9 @@
-import { ProjectStore } from '../project';
+import { ProjectStore } from "../project";
 
 export type CommandMeta = {
   userId?: string;
   timestamp?: number;
-  source?: 'user' | 'agent' | 'system';
+  source?: "user" | "agent" | "system";
 };
 
 export type Command<T = any> = {
@@ -13,7 +13,7 @@ export type Command<T = any> = {
   meta?: CommandMeta;
 };
 
-export type PatchOp = 'add' | 'update' | 'remove';
+export type PatchOp = "add" | "update" | "remove";
 
 export type Patch = {
   op: PatchOp;
@@ -22,10 +22,7 @@ export type Patch = {
   oldValue?: any; // Useful for inverse patches
 };
 
-export type CommandHandler<T = any> = (
-  state: ProjectStore,
-  command: Command<T>
-) => Patch[];
+export type CommandHandler<T = any> = (state: ProjectStore, command: Command<T>) => Patch[];
 
 export type HistoryEntry = {
   command: Command;

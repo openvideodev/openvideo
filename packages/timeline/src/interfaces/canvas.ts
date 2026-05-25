@@ -1,4 +1,4 @@
-import { FabricObject } from 'fabric';
+import { FabricObject } from "fabric";
 
 export interface IDropInfo {
   isSecondaryOverlapped: boolean;

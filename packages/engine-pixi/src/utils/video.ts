@@ -17,7 +17,7 @@
  */
 export async function decodeImg(
   stream: ReadableStream<Uint8Array>,
-  type: string
+  type: string,
 ): Promise<VideoFrame[]> {
   const init = {
     type,

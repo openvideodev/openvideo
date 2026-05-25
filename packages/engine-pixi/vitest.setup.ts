@@ -1,2 +1,2 @@
-import { vi } from 'vitest';
-import 'pixi.js';
+import { vi } from "vitest";
+import "pixi.js";

@@ -1,11 +1,9 @@
-
-import type { ICaptionWord } from '../types';
+import type { ICaptionWord } from "../types";
 export type { ICaptionWord };
-
 
 /**
  * Redistributes caption words to match a new text string while attempting to preserve existing timings.
- * 
+ *
  * @param text The new full text for the caption
  * @param currentWords The existing words array with timings
  * @param durationUs The total duration of the clip in microseconds
@@ -14,20 +12,23 @@ export type { ICaptionWord };
 export function redistributeCaptionWords(
   text: string,
   currentWords: ICaptionWord[],
-  durationUs: number
+  durationUs: number,
 ): ICaptionWord[] {
-  const normalizeWhitespace = (s: string) => s.replace(/\s+/g, ' ').trim();
-  const currentJoinedText = currentWords.map((w) => w.text).join(' ');
-  
+  const normalizeWhitespace = (s: string) => s.replace(/\s+/g, " ").trim();
+  const currentJoinedText = currentWords.map((w) => w.text).join(" ");
+
   if (normalizeWhitespace(text) === normalizeWhitespace(currentJoinedText)) {
     return currentWords;
   }
 
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   const newWordsInfo: Array<{ text: string; paragraphIndex: number }> = [];
 
   lines.forEach((line, lineIndex) => {
-    const wordsInLine = line.trim().split(/\s+/).filter((w) => w !== '');
+    const wordsInLine = line
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w !== "");
     wordsInLine.forEach((word) => {
       newWordsInfo.push({ text: word, paragraphIndex: lineIndex });
     });
@@ -50,7 +51,7 @@ export function redistributeCaptionWords(
   const totalDurationMs = durationUs / 1000;
   const wordDuration = totalDurationMs / newWordsInfo.length;
   return newWordsInfo.map((info, i) => ({
-    ... (currentWords[i] ? { ...currentWords[i], text: info.text } : { isKeyWord: false }),
+    ...(currentWords[i] ? { ...currentWords[i], text: info.text } : { isKeyWord: false }),
     text: info.text,
     from: i * wordDuration,
     to: (i + 1) * wordDuration,

@@ -1,5 +1,5 @@
-import type { Renderer, Texture } from 'pixi.js';
-import { TransitionKey } from './glsl/gl-transition';
+import type { Renderer, Texture } from "pixi.js";
+import { TransitionKey } from "./glsl/gl-transition";
 
 export interface TransitionOptions {
   name: TransitionKey;

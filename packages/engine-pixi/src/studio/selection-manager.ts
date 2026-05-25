@@ -5,13 +5,13 @@ import {
   Point,
   Rectangle,
   type FederatedPointerEvent,
-} from 'pixi.js';
-import type { IClip } from '../clips/iclip';
-import { Text } from '../clips/text-clip';
-import { Caption } from '../clips/caption-clip';
-import { Transformer } from '../transfomer/transformer';
-import type { Studio } from '../studio';
-import { nanoid } from 'nanoid';
+} from "pixi.js";
+import type { IClip } from "../clips/iclip";
+import { Text } from "../clips/text-clip";
+import { Caption } from "../clips/caption-clip";
+import { Transformer } from "../transfomer/transformer";
+import type { Studio } from "../studio";
+import { nanoid } from "nanoid";
 
 export class SelectionManager {
   public selectedClips: Set<IClip> = new Set();
@@ -48,13 +48,13 @@ export class SelectionManager {
     artboard.addChild(this.selectionGraphics);
 
     // Make stage interactive to handle clicks and drag selection
-    app.stage.eventMode = 'static';
+    app.stage.eventMode = "static";
     app.stage.hitArea = app.screen;
 
-    app.stage.on('pointerdown', (e) => this.onStagePointerDown(e));
-    app.stage.on('globalpointermove', (e) => this.onStagePointerMove(e));
-    app.stage.on('pointerup', () => this.onStagePointerUp());
-    app.stage.on('pointerupoutside', () => this.onStagePointerUp());
+    app.stage.on("pointerdown", (e) => this.onStagePointerDown(e));
+    app.stage.on("globalpointermove", (e) => this.onStagePointerMove(e));
+    app.stage.on("pointerup", () => this.onStagePointerUp());
+    app.stage.on("pointerupoutside", () => this.onStagePointerUp());
   }
 
   private onStagePointerDown(e: FederatedPointerEvent) {
@@ -69,11 +69,7 @@ export class SelectionManager {
       // Start drag selection
       this.isDragSelecting = true;
       // Convert global to artboard local space
-      this.studio.artboard?.toLocal(
-        e.global,
-        undefined,
-        this.dragSelectionStart
-      );
+      this.studio.artboard?.toLocal(e.global, undefined, this.dragSelectionStart);
 
       if (this.selectionGraphics) {
         this.selectionGraphics.clear();
@@ -83,11 +79,7 @@ export class SelectionManager {
   }
 
   private onStagePointerMove(e: FederatedPointerEvent) {
-    if (
-      this.isDragSelecting &&
-      this.selectionGraphics &&
-      this.studio.artboard
-    ) {
+    if (this.isDragSelecting && this.selectionGraphics && this.studio.artboard) {
       const currentPos = this.studio.artboard.toLocal(e.global);
 
       const x = Math.min(this.dragSelectionStart.x, currentPos.x);
@@ -97,22 +89,13 @@ export class SelectionManager {
 
       this.selectionGraphics.clear();
       // Semi-transparent blue fill
-      this.selectionGraphics
-        .rect(x, y, width, height)
-        .fill({ color: 0x0abde3, alpha: 0.3 });
+      this.selectionGraphics.rect(x, y, width, height).fill({ color: 0x0abde3, alpha: 0.3 });
       // Blue border
-      this.selectionGraphics
-        .rect(x, y, width, height)
-        .stroke({ width: 2, color: 0x0abde3 });
+      this.selectionGraphics.rect(x, y, width, height).stroke({ width: 2, color: 0x0abde3 });
 
       // Calculate current selection bounds for real-time preview
       const bounds = this.selectionGraphics.getBounds();
-      const selectionRect = new Rectangle(
-        bounds.x,
-        bounds.y,
-        bounds.width,
-        bounds.height
-      );
+      const selectionRect = new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
 
       if (selectionRect.width > 2 || selectionRect.height > 2) {
         const intersectingClips = this.getIntersectingClips(selectionRect);
@@ -130,19 +113,10 @@ export class SelectionManager {
   }
 
   private onStagePointerUp() {
-    if (
-      this.isDragSelecting &&
-      this.selectionGraphics &&
-      this.studio.artboard
-    ) {
+    if (this.isDragSelecting && this.selectionGraphics && this.studio.artboard) {
       // Finalize selection
       const bounds = this.selectionGraphics.getBounds();
-      const selectionRect = new Rectangle(
-        bounds.x,
-        bounds.y,
-        bounds.width,
-        bounds.height
-      );
+      const selectionRect = new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
 
       if (selectionRect.width > 2 || selectionRect.height > 2) {
         const intersectingClips = this.getIntersectingClips(selectionRect);
@@ -153,7 +127,7 @@ export class SelectionManager {
           }
           this.recreateTransformer();
 
-          this.studio.emit('selection:created', {
+          this.studio.emit("selection:created", {
             selected: Array.from(this.selectedClips),
           });
         } else if (this.selectedClips.size === 0) {
@@ -283,11 +257,11 @@ export class SelectionManager {
     if (root == null) return;
 
     // Make sprite interactive
-    root.eventMode = 'static';
-    root.cursor = 'pointer';
+    root.eventMode = "static";
+    root.cursor = "pointer";
 
     // Add click handler that selects the topmost clip at the click position
-    root.on('pointerdown', (e) => {
+    root.on("pointerdown", (e) => {
       const now = Date.now();
       const topmostClip = this.getTopmostClipAtPoint(e.global);
 
@@ -297,8 +271,8 @@ export class SelectionManager {
         topmostClip === this.lastPointerDownClip &&
         now - this.lastPointerDownTime < 350
       ) {
-        if (topmostClip.type === 'Text' || topmostClip.type === 'Caption') {
-          this.studio.emit('clip:dblclick', { clip: topmostClip });
+        if (topmostClip.type === "Text" || topmostClip.type === "Caption") {
+          this.studio.emit("clip:dblclick", { clip: topmostClip });
         }
       }
 
@@ -320,10 +294,7 @@ export class SelectionManager {
   /**
    * Find the topmost clip (highest zIndex) at a given point
    */
-  public getTopmostClipAtPoint(globalPoint: {
-    x: number;
-    y: number;
-  }): IClip | null {
+  public getTopmostClipAtPoint(globalPoint: { x: number; y: number }): IClip | null {
     if (!this.studio.pixiApp) return null;
 
     let topmostClip: IClip | null = null;
@@ -374,7 +345,7 @@ export class SelectionManager {
       this.selectedClips.delete(clip);
       this.recreateTransformer();
 
-      this.studio.emit('selection:updated', {
+      this.studio.emit("selection:updated", {
         selected: Array.from(this.selectedClips),
       });
       this.studio.pixiApp?.render();
@@ -386,11 +357,11 @@ export class SelectionManager {
     this.recreateTransformer();
 
     if (addToSelection) {
-      this.studio.emit('selection:updated', {
+      this.studio.emit("selection:updated", {
         selected: Array.from(this.selectedClips),
       });
     } else {
-      this.studio.emit('selection:created', {
+      this.studio.emit("selection:created", {
         selected: Array.from(this.selectedClips),
       });
     }
@@ -406,10 +377,7 @@ export class SelectionManager {
     if (this.studio.destroyed || this.studio.pixiApp == null) return;
 
     // Check if selection is effectively the same
-    if (
-      this.selectedClips.size === clips.length &&
-      clips.every((c) => this.selectedClips.has(c))
-    ) {
+    if (this.selectedClips.size === clips.length && clips.every((c) => this.selectedClips.has(c))) {
       return;
     }
 
@@ -429,11 +397,11 @@ export class SelectionManager {
     // Create new transformer
     if (this.selectedClips.size > 0) {
       this.createTransformer();
-      this.studio.emit('selection:updated', {
+      this.studio.emit("selection:updated", {
         selected: Array.from(this.selectedClips),
       });
     } else {
-      this.studio.emit('selection:cleared', { deselected: [] });
+      this.studio.emit("selection:cleared", { deselected: [] });
     }
     this.studio.pixiApp?.render();
   }
@@ -451,7 +419,7 @@ export class SelectionManager {
     this.selectedClips.clear();
 
     if (deselected.length > 0) {
-      this.studio.emit('selection:cleared', { deselected });
+      this.studio.emit("selection:cleared", { deselected });
     }
     this.studio.pixiApp?.render();
   }
@@ -501,11 +469,7 @@ export class SelectionManager {
   }
 
   private createTransformer(): void {
-    if (
-      this.studio.destroyed ||
-      this.studio.artboard == null ||
-      this.selectedClips.size === 0
-    )
+    if (this.studio.destroyed || this.studio.artboard == null || this.selectedClips.size === 0)
       return;
 
     // Collect sprites from all selected clips
@@ -526,7 +490,7 @@ export class SelectionManager {
     }
 
     if (sprites.length === 0) {
-      console.warn('Cannot create transformer: no sprites found');
+      console.warn("Cannot create transformer: no sprites found");
       return;
     }
 
@@ -542,7 +506,7 @@ export class SelectionManager {
 
     // Listen for events
     let rafId: number | null = null;
-    this.activeTransformer.on('transforming', () => {
+    this.activeTransformer.on("transforming", () => {
       if (rafId !== null) return;
       rafId = requestAnimationFrame(() => {
         rafId = null;
@@ -550,7 +514,7 @@ export class SelectionManager {
 
         // Emit for real-time sync to Core/UI
         for (const clip of this.selectedClips) {
-          this.studio.emit('clip:transforming', { clip });
+          this.studio.emit("clip:transforming", { clip });
         }
 
         // Force render for real-time visual feedback
@@ -558,14 +522,14 @@ export class SelectionManager {
       });
     });
 
-    this.activeTransformer.on('textClipResize', (data: any) => {
+    this.activeTransformer.on("textClipResize", (data: any) => {
       this.textClipResizedWidth = data.newWidth;
       this.textClipResizeHandle = data.handle;
       this.textClipResizedSx = data.sx;
       this.textClipResizedSy = data.sy;
     });
 
-    this.activeTransformer.on('transformEnd', async () => {
+    this.activeTransformer.on("transformEnd", async () => {
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
         rafId = null;
@@ -586,22 +550,20 @@ export class SelectionManager {
 
           const textureWidth = sprite.texture.width;
           const textureHeight = sprite.texture.height;
-          const newWidth =
-            Math.abs(root.scale.x * sprite.scale.x) * textureWidth;
-          const newHeight =
-            Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
+          const newWidth = Math.abs(root.scale.x * sprite.scale.x) * textureWidth;
+          const newHeight = Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
 
           const updates: any = {
             left: root.x - newWidth / 2,
             top: root.y - newHeight / 2,
             width: newWidth,
             height: newHeight,
-            angle: (clip.flip == null ? 1 : -1) * root.angle,
+            angle: (clip.flip?.x || clip.flip?.y ? -1 : 1) * root.angle,
           };
 
           // Special case for Text/Caption reflow
           if (
-            (clip.type === 'Text' || clip.type === 'Caption') &&
+            (clip.type === "Text" || clip.type === "Caption") &&
             this.textClipResizedWidth !== null
           ) {
             updates.width = this.textClipResizedWidth;
@@ -615,7 +577,7 @@ export class SelectionManager {
         if (updatesList.length > 0) {
           core.execute({
             id: nanoid(),
-            type: 'clip.update',
+            type: "clip.update",
             payload: updatesList.length === 1 ? updatesList[0] : updatesList, // Handle batch vs single update if handler supports it
           });
           // Actually, our handler currently handles { id, updates }.
@@ -627,16 +589,16 @@ export class SelectionManager {
       }
 
       for (const clip of this.selectedClips) {
-        this.studio.emit('clip:updated', { clip });
+        this.studio.emit("clip:updated", { clip });
       }
-      this.studio.emit('transform:end', {
+      this.studio.emit("transform:end", {
         transformer: this.activeTransformer!,
       });
     });
 
-    this.activeTransformer.on('pointerdown', (e: any) => {
+    this.activeTransformer.on("pointerdown", (e: any) => {
       if (e.button !== 0) return;
-      this.studio.emit('transform:start', {
+      this.studio.emit("transform:start", {
         transformer: this.activeTransformer!,
       });
       // If a handle is currently active (being clicked/dragged), do not select clips underneath
@@ -652,8 +614,8 @@ export class SelectionManager {
         topmostClip === this.lastPointerDownClip &&
         now - this.lastPointerDownTime < 350
       ) {
-        if (topmostClip.type === 'Text' || topmostClip.type === 'Caption') {
-          this.studio.emit('clip:dblclick', { clip: topmostClip });
+        if (topmostClip.type === "Text" || topmostClip.type === "Caption") {
+          this.studio.emit("clip:dblclick", { clip: topmostClip });
         }
       }
       this.lastPointerDownTime = now;
@@ -689,10 +651,8 @@ export class SelectionManager {
         // Sync clip position based on root position
         // Since root pivot is centered, clip.left = root.x - clip.width / 2
         // We use Math.abs because width/height might be negative if flipped (though usually handled via scale)
-        const logicalWidth =
-          Math.abs(root.scale.x * sprite.scale.x) * sprite.texture.width;
-        const logicalHeight =
-          Math.abs(root.scale.y * sprite.scale.y) * sprite.texture.height;
+        const logicalWidth = Math.abs(root.scale.x * sprite.scale.x) * sprite.texture.width;
+        const logicalHeight = Math.abs(root.scale.y * sprite.scale.y) * sprite.texture.height;
 
         clip.left = root.x - logicalWidth / 2;
         clip.top = root.y - logicalHeight / 2;
@@ -701,7 +661,7 @@ export class SelectionManager {
     }
 
     // Handle side-resize for Text/Caption
-    if (activeHandle === 'mr' || activeHandle === 'ml') {
+    if (activeHandle === "mr" || activeHandle === "ml") {
       if (this.isUpdatingTextRealtime) return;
       this.isUpdatingTextRealtime = true;
 
@@ -714,8 +674,7 @@ export class SelectionManager {
 
           const root = renderer.getRoot();
           const sprite = renderer.getSprite();
-          if (root == null || sprite == null || sprite.texture == null)
-            continue;
+          if (root == null || sprite == null || sprite.texture == null) continue;
 
           const currentScaleX = Math.abs(root.scale.x * sprite.scale.x);
           if (currentScaleX === 1.0) continue;
@@ -737,7 +696,7 @@ export class SelectionManager {
             sprite.scale.set(1, 1);
             root.scale.set(1, 1);
 
-            if (activeHandle === 'ml') {
+            if (activeHandle === "ml") {
               clip.left = preservedLeft + preservedWidth - clip.width;
             } else {
               clip.left = preservedLeft;
@@ -774,24 +733,21 @@ export class SelectionManager {
       const newHeight = Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
 
       const finalNewWidth =
-        (clip instanceof Text || clip instanceof Caption) &&
-        this.textClipResizedWidth !== null
+        (clip instanceof Text || clip instanceof Caption) && this.textClipResizedWidth !== null
           ? this.textClipResizedWidth
           : newWidth;
 
       const oldWidth = clip.width;
       const oldFontSize = (clip as any).style?.fontSize ?? 16;
       const newFontSize =
-        oldFontSize *
-        Math.max(this.textClipResizedSx || 1, this.textClipResizedSy || 1);
+        oldFontSize * Math.max(this.textClipResizedSx || 1, this.textClipResizedSy || 1);
 
       // position calculation
       // root is center.
       let newRootX = root.x;
 
       const isReflowableTextClip =
-        (clip instanceof Text || clip instanceof Caption) &&
-        this.textClipResizedWidth !== null;
+        (clip instanceof Text || clip instanceof Caption) && this.textClipResizedWidth !== null;
 
       if (isReflowableTextClip) {
         const styleUpdate: any = {
@@ -799,16 +755,16 @@ export class SelectionManager {
           wordWrapWidth: finalNewWidth,
         };
 
-        if (this.textClipResizeHandle === 'mr') {
+        if (this.textClipResizeHandle === "mr") {
           newRootX = clip.left + finalNewWidth / 2;
           root.x = newRootX;
-        } else if (this.textClipResizeHandle === 'ml') {
+        } else if (this.textClipResizeHandle === "ml") {
           newRootX = clip.left + finalNewWidth / 2 - (finalNewWidth - oldWidth);
           root.x = newRootX;
-        } else if (['br', 'tr'].includes(this.textClipResizeHandle!)) {
+        } else if (["br", "tr"].includes(this.textClipResizeHandle!)) {
           newRootX = clip.left + finalNewWidth / 2;
           styleUpdate.fontSize = newFontSize;
-        } else if (['bl', 'tl'].includes(this.textClipResizeHandle!)) {
+        } else if (["bl", "tl"].includes(this.textClipResizeHandle!)) {
           newRootX = clip.left + finalNewWidth / 2 - (finalNewWidth - oldWidth);
           styleUpdate.fontSize = newFontSize;
         }
@@ -837,7 +793,7 @@ export class SelectionManager {
         clip.width = logicalWidth;
         clip.height = logicalHeight;
 
-        const flipFactor = clip.flip == null ? 1 : -1;
+        const flipFactor = clip.flip?.x || clip.flip?.y ? -1 : 1;
         clip.angle = flipFactor * root.angle;
       }
     }
@@ -865,8 +821,7 @@ export class SelectionManager {
         const textureHeight = sprite.texture.height;
 
         const newWidth = Math.abs(root.scale.x * sprite.scale.x) * textureWidth;
-        const newHeight =
-          Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
+        const newHeight = Math.abs(root.scale.y * sprite.scale.y) * textureHeight;
 
         const logicalWidth = newWidth;
         const logicalHeight = newHeight;
@@ -879,11 +834,11 @@ export class SelectionManager {
         clip.width = logicalWidth;
         clip.height = logicalHeight;
 
-        const flipFactor = clip.flip == null ? 1 : -1;
+        const flipFactor = clip.flip?.x || clip.flip?.y ? -1 : 1;
         clip.angle = flipFactor * root.angle;
 
         renderer.updateTransforms();
-        this.studio.emit('clip:updated', { clip });
+        this.studio.emit("clip:updated", { clip });
       }
     }
   }

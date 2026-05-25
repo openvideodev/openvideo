@@ -7,11 +7,11 @@ import {
   Ticker,
   Graphics,
   Sprite,
-} from 'pixi.js';
+} from "pixi.js";
 
-import { Wireframe } from './parts/wireframe';
-import { type HandleKind, Handle } from './parts/handle';
-import { SnappingManager, type SnapGuide } from './parts/snapping';
+import { Wireframe } from "./parts/wireframe";
+import { type HandleKind, Handle } from "./parts/handle";
+import { SnappingManager, type SnapGuide } from "./parts/snapping";
 
 const TMP = {
   delta: new Matrix(),
@@ -66,11 +66,11 @@ export class Transformer extends Container {
     super();
     this.opts = opts;
     this.group = opts.group;
-    this.eventMode = 'static';
+    this.eventMode = "static";
 
     this.#snappingManager = new SnappingManager(
       opts.artboardWidth ?? 1920,
-      opts.artboardHeight ?? 1080
+      opts.artboardHeight ?? 1080,
     );
     this.addChild(this.#guidelines);
 
@@ -81,26 +81,22 @@ export class Transformer extends Container {
     };
 
     this.#handles = {
-      tl: new Handle('tl', 'nwse-resize', cb),
-      tr: new Handle('tr', 'nesw-resize', cb),
-      bl: new Handle('bl', 'nesw-resize', cb),
-      br: new Handle('br', 'nwse-resize', cb),
-      ml: new Handle('ml', 'ew-resize', cb),
-      mr: new Handle('mr', 'ew-resize', cb),
-      mt: new Handle('mt', 'ns-resize', cb),
-      mb: new Handle('mb', 'ns-resize', cb),
-      rot: new Handle('rot', 'crosshair', {
+      tl: new Handle("tl", "nwse-resize", cb),
+      tr: new Handle("tr", "nesw-resize", cb),
+      bl: new Handle("bl", "nesw-resize", cb),
+      br: new Handle("br", "nwse-resize", cb),
+      ml: new Handle("ml", "ew-resize", cb),
+      mr: new Handle("mr", "ew-resize", cb),
+      mt: new Handle("mt", "ns-resize", cb),
+      mb: new Handle("mb", "ns-resize", cb),
+      rot: new Handle("rot", "crosshair", {
         beginDrag: (_c, s) => this.#beginRotateDrag(s),
         updateDrag: (_c, p) => this.#rotate(p),
         endDrag: () => this.#endDrag(),
       }),
     };
 
-    this.addChild(
-      this.selectionOutlines,
-      this.wireframe,
-      ...Object.values(this.#handles)
-    );
+    this.addChild(this.selectionOutlines, this.wireframe, ...Object.values(this.#handles));
     this.#bindEvents();
 
     // Hide initially to prevent FOUC (Flash of Unpositioned Content)
@@ -124,10 +120,10 @@ export class Transformer extends Container {
   }
 
   #bindEvents() {
-    this.on('pointerdown', this.#onDown);
-    this.on('pointerup', this.#onUp);
-    this.on('pointerupoutside', this.#onUp);
-    this.on('globalpointermove', this.#onMove);
+    this.on("pointerdown", this.#onDown);
+    this.on("pointerup", this.#onUp);
+    this.on("pointerupoutside", this.#onUp);
+    this.on("globalpointermove", this.#onMove);
   }
 
   #initBounds() {
@@ -158,9 +154,7 @@ export class Transformer extends Container {
       this.#pivotWorld.set(globalPos.x, globalPos.y);
 
       // Set transformer's local bounds to be centered at origin
-      this.#localBounds.copyFrom(
-        new Rectangle(-width / 2, -height / 2, width, height)
-      );
+      this.#localBounds.copyFrom(new Rectangle(-width / 2, -height / 2, width, height));
     } else {
       // Multiple objects - use Local AABB relative to current transformer rotation
       // This preserves the tight bounding box even if the group is rotated
@@ -201,9 +195,7 @@ export class Transformer extends Container {
 
       // Update Pivot to match the new center (converted to World space)
       if (this.parent) {
-        const newGlobalPivot = this.toGlobal(
-          new Point(localCenterX, localCenterY)
-        );
+        const newGlobalPivot = this.toGlobal(new Point(localCenterX, localCenterY));
         this.#pivotWorld.set(newGlobalPivot.x, newGlobalPivot.y);
       }
     }
@@ -223,7 +215,7 @@ export class Transformer extends Container {
     let mainSprite: Sprite | null = null;
 
     const findMainSprite = (c: Container): Sprite | null => {
-      if (c.label === 'MainSprite' && c instanceof Sprite) return c;
+      if (c.label === "MainSprite" && c instanceof Sprite) return c;
       for (const child of c.children) {
         if (child instanceof Container) {
           const found = findMainSprite(child);
@@ -271,15 +263,13 @@ export class Transformer extends Container {
       maxY = -Infinity;
 
     const contentChildren = container.children.filter(
-      (child) =>
-        child.label !== 'ShadowContainer' &&
-        child.label !== 'AnimationContainer'
+      (child) => child.label !== "ShadowContainer" && child.label !== "AnimationContainer",
     );
 
     if (contentChildren.length === 0 && container.children.length > 0) {
       // If all filtered out, look inside AnimationContainer for raw bounds
       const animContainer = container.children.find(
-        (c) => c.label === 'AnimationContainer'
+        (c) => c.label === "AnimationContainer",
       ) as Container;
       if (animContainer) {
         const b = animContainer.getLocalBounds();
@@ -324,14 +314,14 @@ export class Transformer extends Container {
 
     this.isDragging = true;
     this.lastPointer.copyFrom(e.global);
-    this.cursor = 'grabbing';
+    this.cursor = "grabbing";
   };
 
   #onUp = () => {
     if (this.isDragging) {
       this.#endDrag();
     }
-    this.cursor = 'default';
+    this.cursor = "default";
   };
 
   #onMove = (e: FederatedPointerEvent) => {
@@ -348,7 +338,7 @@ export class Transformer extends Container {
     this.#pivotWorld.copyFrom(newPivotWorld);
     this.lastPointer.copyFrom(e.global);
     this.#refresh();
-    this.emit('transforming');
+    this.emit("transforming");
   };
 
   #calculateSnappedMove(e: FederatedPointerEvent) {
@@ -358,7 +348,7 @@ export class Transformer extends Container {
     this.#snappingManager.updateContext(
       this.opts.artboardWidth ?? 1920,
       this.opts.artboardHeight ?? 1080,
-      parentScale
+      parentScale,
     );
 
     // Calculate pure global mouse delta
@@ -377,15 +367,11 @@ export class Transformer extends Container {
       proposedParentPos.x + this.#localBounds.x,
       proposedParentPos.y + this.#localBounds.y,
       this.#localBounds.width,
-      this.#localBounds.height
+      this.#localBounds.height,
     );
 
     // Check for Snaps
-    const {
-      dx: snapDx,
-      dy: snapDy,
-      guides,
-    } = this.#snappingManager.snapMove(proposedBounds);
+    const { dx: snapDx, dy: snapDy, guides } = this.#snappingManager.snapMove(proposedBounds);
 
     this.#drawGuides(guides, parentScale);
 
@@ -399,9 +385,7 @@ export class Transformer extends Container {
     const moveDy = finalParentPosY - currentParentPos.y;
 
     // Calculate New Global Pivot
-    const newPivotWorld = this.parent!.toGlobal(
-      new Point(finalParentPosX, finalParentPosY)
-    );
+    const newPivotWorld = this.parent!.toGlobal(new Point(finalParentPosX, finalParentPosY));
 
     return { moveDx, moveDy, newPivotWorld };
   }
@@ -413,8 +397,7 @@ export class Transformer extends Container {
 
     this.#childStart.clear();
 
-    for (const c of this.group)
-      this.#childStart.set(c, c.localTransform.clone());
+    for (const c of this.group) this.#childStart.set(c, c.localTransform.clone());
 
     this.rotation = this.#angle;
     this.#opBounds.copyFrom(this.#localBounds);
@@ -427,17 +410,14 @@ export class Transformer extends Container {
   }
 
   async #scale(handle: HandleKind, global: Point) {
-    const { proposed, sx, sy, pivotWorld } = await this.#calculateSnappedScale(
-      handle,
-      global
-    );
+    const { proposed, sx, sy, pivotWorld } = await this.#calculateSnappedScale(handle, global);
 
     // Check if we're transforming a Text or Caption
-    const isTextClip = this.opts.clip && this.opts.clip.type === 'Text';
-    const isCaptionClip = this.opts.clip && this.opts.clip.type === 'Caption';
+    const isTextClip = this.opts.clip && this.opts.clip.type === "Text";
+    const isCaptionClip = this.opts.clip && this.opts.clip.type === "Caption";
 
     if (isTextClip || isCaptionClip) {
-      this.emit('textClipResize', {
+      this.emit("textClipResize", {
         handle,
         newWidth: proposed.width,
         newHeight: proposed.height,
@@ -452,24 +432,18 @@ export class Transformer extends Container {
 
     this.#localBounds.copyFrom(proposed);
     this.#refresh();
-    this.emit('transforming');
+    this.emit("transforming");
   }
 
   async #calculateSnappedScale(handle: HandleKind, global: Point) {
     const pivotLocal = this.#scalePivotLocal;
-    const proposed = this.#proposeScaledRect(
-      handle,
-      this.toLocal(global),
-      pivotLocal
-    );
+    const proposed = this.#proposeScaledRect(handle, this.toLocal(global), pivotLocal);
 
-    const parentScale = this.parent
-      ? Math.abs(this.parent.worldTransform.a)
-      : 1;
+    const parentScale = this.parent ? Math.abs(this.parent.worldTransform.a) : 1;
     this.#snappingManager.updateContext(
       this.opts.artboardWidth ?? 1920,
       this.opts.artboardHeight ?? 1080,
-      parentScale
+      parentScale,
     );
 
     // Snap the proposed rectangle
@@ -491,28 +465,21 @@ export class Transformer extends Container {
   #beginRotateDrag(start: Point) {
     this.#initBounds(); // Refresh pivot/bounds state
     this.isDragging = true;
-    this.activeHandle = 'rot';
+    this.activeHandle = "rot";
     this.#childStart.clear();
-    for (const c of this.group)
-      this.#childStart.set(c, c.localTransform.clone());
-    this.#startAngle = Math.atan2(
-      start.y - this.#pivotWorld.y,
-      start.x - this.#pivotWorld.x
-    );
+    for (const c of this.group) this.#childStart.set(c, c.localTransform.clone());
+    this.#startAngle = Math.atan2(start.y - this.#pivotWorld.y, start.x - this.#pivotWorld.x);
   }
 
   #rotate(global: Point) {
-    const now = Math.atan2(
-      global.y - this.#pivotWorld.y,
-      global.x - this.#pivotWorld.x
-    );
+    const now = Math.atan2(global.y - this.#pivotWorld.y, global.x - this.#pivotWorld.x);
     const da = now - this.#startAngle;
     const live = this.#angle + da;
 
     this.#applyWorldDelta(this.#deltaRotate(this.#pivotWorld, da));
     this.rotation = live;
     this.#refresh(live);
-    this.emit('transforming');
+    this.emit("transforming");
   }
 
   #endDrag() {
@@ -521,7 +488,7 @@ export class Transformer extends Container {
     this.activeHandle = null;
     this.#guidelines.clear();
     this.#refresh(this.#angle);
-    this.emit('transformEnd');
+    this.emit("transformEnd");
   }
 
   #drawGuides(guides: SnapGuide[], scale: number) {
@@ -534,7 +501,7 @@ export class Transformer extends Container {
       // Create points in Parent Space
       let p1: Point, p2: Point;
 
-      if (guide.type === 'vertical') {
+      if (guide.type === "vertical") {
         p1 = new Point(guide.position, guide.start);
         p2 = new Point(guide.position, guide.end);
       } else {
@@ -554,14 +521,11 @@ export class Transformer extends Container {
   }
 
   #refresh(angle: number = this.#angle) {
-    if (this.parent)
-      this.position.copyFrom(this.parent.toLocal(this.#pivotWorld));
+    if (this.parent) this.position.copyFrom(this.parent.toLocal(this.#pivotWorld));
     this.rotation = angle;
 
     // Calculate handle scale based on parent's world scale
-    const parentScale = this.parent
-      ? Math.abs(this.parent.worldTransform.a)
-      : 1;
+    const parentScale = this.parent ? Math.abs(this.parent.worldTransform.a) : 1;
     const handleScale = 1 / (parentScale || 1);
 
     const r = this.#localBounds;
@@ -576,15 +540,15 @@ export class Transformer extends Container {
     const visibleHandles = isLocked
       ? []
       : (this.opts.clip?.getVisibleHandles?.() ?? [
-          'tl',
-          'tr',
-          'bl',
-          'br',
-          'ml',
-          'mr',
-          'mt',
-          'mb',
-          'rot',
+          "tl",
+          "tr",
+          "bl",
+          "br",
+          "ml",
+          "mr",
+          "mt",
+          "mb",
+          "rot",
         ]);
 
     const handles = [
@@ -604,15 +568,15 @@ export class Transformer extends Container {
     }
 
     // Set visibility based on clip's visible handles
-    this.#handles.tl.visible = visibleHandles.includes('tl');
-    this.#handles.tr.visible = visibleHandles.includes('tr');
-    this.#handles.bl.visible = visibleHandles.includes('bl');
-    this.#handles.br.visible = visibleHandles.includes('br');
-    this.#handles.ml.visible = visibleHandles.includes('ml');
-    this.#handles.mr.visible = visibleHandles.includes('mr');
-    this.#handles.mt.visible = visibleHandles.includes('mt');
-    this.#handles.mb.visible = visibleHandles.includes('mb');
-    this.#handles.rot.visible = visibleHandles.includes('rot');
+    this.#handles.tl.visible = visibleHandles.includes("tl");
+    this.#handles.tr.visible = visibleHandles.includes("tr");
+    this.#handles.bl.visible = visibleHandles.includes("bl");
+    this.#handles.br.visible = visibleHandles.includes("br");
+    this.#handles.ml.visible = visibleHandles.includes("ml");
+    this.#handles.mr.visible = visibleHandles.includes("mr");
+    this.#handles.mt.visible = visibleHandles.includes("mt");
+    this.#handles.mb.visible = visibleHandles.includes("mb");
+    this.#handles.rot.visible = visibleHandles.includes("rot");
 
     this.#handles.tl.position.set(r.x, r.y);
     this.#handles.tr.position.set(r.x + r.width, r.y);
@@ -684,27 +648,20 @@ export class Transformer extends Container {
       return;
     }
     // For corners
-    if (handle === 'tl')
-      this.#scalePivotLocal.set(s.x + s.width, s.y + s.height);
-    else if (handle === 'tr') this.#scalePivotLocal.set(s.x, s.y + s.height);
-    else if (handle === 'bl') this.#scalePivotLocal.set(s.x + s.width, s.y);
-    else if (handle === 'br') this.#scalePivotLocal.set(s.x, s.y);
+    if (handle === "tl") this.#scalePivotLocal.set(s.x + s.width, s.y + s.height);
+    else if (handle === "tr") this.#scalePivotLocal.set(s.x, s.y + s.height);
+    else if (handle === "bl") this.#scalePivotLocal.set(s.x + s.width, s.y);
+    else if (handle === "br") this.#scalePivotLocal.set(s.x, s.y);
     // For mid-point handles
-    else if (handle === 'ml')
-      this.#scalePivotLocal.set(s.x + s.width, s.y + s.height / 2);
-    else if (handle === 'mr')
-      this.#scalePivotLocal.set(s.x, s.y + s.height / 2);
-    else if (handle === 'mt')
-      this.#scalePivotLocal.set(s.x + s.width / 2, s.y + s.height);
-    else if (handle === 'mb') this.#scalePivotLocal.set(s.x + s.width / 2, s.y);
+    else if (handle === "ml") this.#scalePivotLocal.set(s.x + s.width, s.y + s.height / 2);
+    else if (handle === "mr") this.#scalePivotLocal.set(s.x, s.y + s.height / 2);
+    else if (handle === "mt") this.#scalePivotLocal.set(s.x + s.width / 2, s.y + s.height);
+    else if (handle === "mb") this.#scalePivotLocal.set(s.x + s.width / 2, s.y);
   }
 
   #proposeScaledRect(handle: HandleKind, p: Point, pivot: Point) {
     let preserveRatio = false;
-    if (
-      this.opts.clip &&
-      (this.opts.clip.type === 'Image' || this.opts.clip.type === 'Video')
-    ) {
+    if (this.opts.clip && (this.opts.clip.type === "Image" || this.opts.clip.type === "Video")) {
       preserveRatio = true;
     }
 
@@ -727,7 +684,7 @@ export class Transformer extends Container {
     }
 
     // Corner handles - scale in both dimensions
-    if (['tl', 'tr', 'bl', 'br'].includes(handle)) {
+    if (["tl", "tr", "bl", "br"].includes(handle)) {
       let newW = Math.abs(p.x - pivot.x);
       let newH = Math.abs(p.y - pivot.y);
 
@@ -745,35 +702,35 @@ export class Transformer extends Container {
       newW = Math.max(this.#minW, newW);
       newH = Math.max(this.#minH, newH);
 
-      if (handle === 'tl') {
+      if (handle === "tl") {
         return new Rectangle(pivot.x - newW, pivot.y - newH, newW, newH);
       }
-      if (handle === 'tr') {
+      if (handle === "tr") {
         return new Rectangle(pivot.x, pivot.y - newH, newW, newH);
       }
-      if (handle === 'bl') {
+      if (handle === "bl") {
         return new Rectangle(pivot.x - newW, pivot.y, newW, newH);
       }
-      if (handle === 'br') {
+      if (handle === "br") {
         return new Rectangle(pivot.x, pivot.y, newW, newH);
       }
     }
 
     // Mid-point handles - scale in one dimension only
     const s = this.#opBounds;
-    if (handle === 'ml') {
+    if (handle === "ml") {
       const left = Math.min(p.x, pivot.x - this.#minW);
       return new Rectangle(left, s.y, pivot.x - left, s.height);
     }
-    if (handle === 'mr') {
+    if (handle === "mr") {
       const right = Math.max(p.x, pivot.x + this.#minW);
       return new Rectangle(pivot.x, s.y, right - pivot.x, s.height);
     }
-    if (handle === 'mt') {
+    if (handle === "mt") {
       const top = Math.min(p.y, pivot.y - this.#minH);
       return new Rectangle(s.x, top, s.width, pivot.y - top);
     }
-    if (handle === 'mb') {
+    if (handle === "mb") {
       const bottom = Math.max(p.y, pivot.y + this.#minH);
       return new Rectangle(s.x, pivot.y, s.width, bottom - pivot.y);
     }

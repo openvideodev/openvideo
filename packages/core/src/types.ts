@@ -13,55 +13,72 @@ export interface IFlip {
   y: boolean;
 }
 
-export type ClipType =
-  | 'Video'
-  | 'Audio'
-  | 'Image'
-  | 'Text'
-  | 'Transition'
-  | 'Caption'
-  | 'Effect';
+export type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption" | "Effect";
+
+export interface IClipTiming {
+  display: IDisplay;
+  trim: ITrim;
+  duration: number;
+  playbackRate: number;
+}
+
+/** Partial timing for use in add/prepare payloads. loadClip fills in defaults. */
+export type IClipTimingInput = Partial<{
+  display: Partial<IDisplay>;
+  trim: Partial<ITrim>;
+  duration: number;
+  playbackRate: number;
+}>;
+
+export interface IClipTransform {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  angle: number;
+  zIndex: number;
+  opacity: number;
+  flip?: IFlip | null;
+}
 
 export interface IBaseClip {
   id: string;
   type: ClipType;
   name: string;
-  display: IDisplay;
-  trim: ITrim;
-  duration: number;
-  playbackRate: number;
-  zIndex: number;
-  opacity: number;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  angle: number;
+  timing: IClipTiming;
+  transform: IClipTransform;
+  display?: IDisplay;
+  trim?: ITrim;
+  duration?: number;
+  playbackRate?: number;
   src?: string;
   text?: string;
-  flip?: IFlip | null;
   locked?: boolean;
-  textCase?: 'none' | 'uppercase' | 'lowercase';
-  verticalAlign?: 'top' | 'center' | 'bottom';
+  textCase?: "none" | "uppercase" | "lowercase";
+  verticalAlign?: "top" | "center" | "bottom";
   metadata?: Record<string, any>;
   [key: string]: any;
 }
 
 export interface IVideoClip extends IBaseClip {
-  type: 'Video';
+  type: "Video";
   src: string;
+  style?: IBaseClipStyle;
 }
 export interface IAudioClip extends IBaseClip {
-  type: 'Audio';
+  type: "Audio";
   src: string;
+  style?: IBaseClipStyle;
 }
 export interface IImageClip extends IBaseClip {
-  type: 'Image';
+  type: "Image";
   src: string;
+  style?: IBaseClipStyle;
 }
 export interface ITextClip extends IBaseClip {
-  type: 'Text';
+  type: "Text";
   text: string;
+  style?: ITextStyle;
 }
 
 export interface ICaptionWord {
@@ -80,44 +97,51 @@ export interface ICaptionColors {
   keyword?: string;
 }
 
-export interface ICaptionStyle {
-  fontSize?: number;
-  fontFamily?: string;
-  fontWeight?: string;
-  fontStyle?: string;
-  /** Text/fill color */
-  fill?: string;
-  color?: string;
-  align?: 'left' | 'center' | 'right';
-  textCase?: 'none' | 'uppercase' | 'lowercase';
-  fontUrl?: string;
-  wordWrapWidth?: number;
-  wordWrap?: boolean;
-  stroke?: {
-    color: string;
-    width: number;
-  };
-  shadow?: {
-    color: string;
-    alpha: number;
-    blur: number;
-    distance: number;
-    angle: number;
-  };
-  dropShadow?: {
-    color: string;
-    alpha: number;
-    blur: number;
-    distance: number;
-    angle: number;
-  };
+export interface IClipStroke {
+  color: string;
+  width: number;
+  join?: "miter" | "round" | "bevel";
+  cap?: "butt" | "round" | "square";
+  miterLimit?: number;
 }
 
+export interface IClipShadow {
+  color?: string;
+  alpha?: number;
+  blur?: number;
+  offsetX?: number;
+  offsetY?: number;
+}
+
+export interface IBaseClipStyle {
+  borderRadius?: number;
+  stroke?: IClipStroke;
+  shadow?: IClipShadow;
+}
+
+export interface ITextStyle extends IBaseClipStyle {
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+  fontStyle?: string;
+  color?: string;
+  align?: "left" | "center" | "right";
+  fontUrl?: string;
+  wordWrap?: boolean;
+  wordWrapWidth?: number;
+  lineHeight?: number;
+  letterSpacing?: number;
+  textCase?: "none" | "uppercase" | "lowercase" | "title";
+  verticalAlign?: "top" | "center" | "bottom";
+}
+
+export interface ICaptionStyle extends ITextStyle {}
+
 export interface ICaptionClip extends IBaseClip {
-  type: 'Caption';
+  type: "Caption";
   text: string;
   mediaId: string;
-  wordsPerLine: 'single' | 'multiple';
+  wordsPerLine: "single" | "multiple";
   caption: {
     words: ICaptionWord[];
     colors: ICaptionColors;
@@ -127,8 +151,8 @@ export interface ICaptionClip extends IBaseClip {
       videoHeight: number;
     };
     textBoxStyle?: {
-      style?: 'tiktok' | 'none';
-      textAlign?: 'left' | 'center' | 'right' | '';
+      style?: "tiktok" | "none";
+      textAlign?: "left" | "center" | "right" | "";
       maxLines?: number;
       borderRadius?: number;
       horizontalPadding?: number;
@@ -139,24 +163,16 @@ export interface ICaptionClip extends IBaseClip {
 }
 
 export interface ITransitionClip extends IBaseClip {
-  type: 'Transition';
-  transitionEffect?: {
-    id: string;
-    key: string;
-    name: string;
-  };
+  type: "Transition";
+  transitionKey: string;
   fromClipId?: string | null;
   toClipId?: string | null;
 }
 
 export interface IEffectClip extends IBaseClip {
-  type: 'Effect';
-  effect: {
-    id: string;
-    key: string;
-    name: string;
-    values?: Record<string, any>;
-  };
+  type: "Effect";
+  effectKey: string;
+  values?: Record<string, any>;
 }
 
 export type AnyClip =

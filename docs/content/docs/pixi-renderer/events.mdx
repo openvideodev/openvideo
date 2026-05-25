@@ -3,7 +3,6 @@ title: Events
 description: Listen to studio events and user interactions.
 ---
 
-
 The `openvideo` SDK provides a robust event system across the `Studio`, `Compositor`, and individual `Clip` instances. This allows you to build responsive UIs that react to playback, selection, and composition changes.
 
 ## Studio Events
@@ -13,6 +12,7 @@ The `Studio` class manages the main preview environment and emits events for hig
 ### Playback Events
 
 #### `currentTime`
+
 Emitted during playback or when seeking. The payload contains the current time in microseconds.
 
 ```ts
@@ -22,6 +22,7 @@ studio.on("currentTime", ({ currentTime }) => {
 ```
 
 #### `play` / `pause`
+
 Emitted when the playback state changes.
 
 ```ts
@@ -37,6 +38,7 @@ studio.on("pause", ({ isPlaying }) => {
 ### Selection Events
 
 #### `selection:created`
+
 Emitted when one or more clips are selected.
 
 ```ts
@@ -46,6 +48,7 @@ studio.on("selection:created", ({ selected }) => {
 ```
 
 #### `selection:updated`
+
 Emitted when the current selection changes.
 
 ```ts
@@ -55,6 +58,7 @@ studio.on("selection:updated", ({ selected }) => {
 ```
 
 #### `selection:cleared`
+
 Emitted when all clips are deselected.
 
 ```ts
@@ -66,6 +70,7 @@ studio.on("selection:cleared", ({ deselected }) => {
 ### Composition Events
 
 #### `clip:added` / `clip:removed`
+
 Emitted when clips are added to or removed from the studio.
 
 ```ts
@@ -79,6 +84,7 @@ studio.on("clip:removed", ({ clipId }) => {
 ```
 
 #### `clip:updated`
+
 Emitted when a clip's metadata or timeline position is updated via the studio.
 
 ```ts
@@ -88,6 +94,7 @@ studio.on("clip:updated", ({ clip }) => {
 ```
 
 #### `track:added`
+
 Emitted when a new track is created. The payload includes the track object and its initial index.
 
 ```ts
@@ -97,15 +104,20 @@ studio.on("track:added", ({ track, index }) => {
 ```
 
 #### `track:order-changed`
+
 Emitted whenever the track order is modified (via `moveTrack`, `setTrackOrder`, etc.).
 
 ```ts
 studio.on("track:order-changed", ({ tracks }) => {
-  console.log("New track order:", tracks.map(t => t.id));
+  console.log(
+    "New track order:",
+    tracks.map((t) => t.id),
+  );
 });
 ```
 
 #### `track:removed`
+
 Emitted when a track is removed.
 
 ```ts
@@ -115,6 +127,7 @@ studio.on("track:removed", ({ trackId }) => {
 ```
 
 #### `reset`
+
 Emitted when the studio state is completely reset.
 
 ## Clip Events
@@ -122,6 +135,7 @@ Emitted when the studio state is completely reset.
 Individual clips emit events for property changes. This is particularly useful for syncing properties panels.
 
 ### `propsChange`
+
 Emitted when any property of the clip (like `left`, `top`, `width`, `height`, `angle`, `opacity`, etc.) is changed.
 
 ```ts
@@ -135,6 +149,7 @@ clip.on("propsChange", (changes) => {
 The `Compositor` is used for high-performance rendering and exports.
 
 ### `OutputProgress`
+
 Emitted during the rendering/export process.
 
 ```ts
@@ -146,10 +161,13 @@ compositor.on("OutputProgress", (progress) => {
 ## Best Practices
 
 ### Cleanup
+
 Always remove event listeners when they are no longer needed (e.g., when a component unmounts).
 
 ```ts
-const handleTime = ({ currentTime }) => { /* ... */ };
+const handleTime = ({ currentTime }) => {
+  /* ... */
+};
 studio.on("currentTime", handleTime);
 
 // Later...

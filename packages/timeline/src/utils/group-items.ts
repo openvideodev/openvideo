@@ -1,7 +1,7 @@
-import { IClip, ITransitionClip } from '../types';
-import Timeline from '../timeline';
-import { Transition } from '../objects';
-import { OBJECT_TYPE_TRANSITION } from '../constants/objects';
+import { IClip, ITransitionClip } from "../types";
+import Timeline from "../timeline";
+import { Transition } from "../objects";
+import { OBJECT_TYPE_TRANSITION } from "../constants/objects";
 
 type GroupElement = IClip | ITransitionClip;
 
@@ -19,8 +19,8 @@ export const groupTrackItems = (data: {
   Object.values(transitionsMap).forEach((transition) => {
     const fromId = transition.fromClipId;
     const toId = transition.toClipId;
-    const key = transition.key || 'none';
-    if (key === 'none') return; // Skip transitions of key 'none'
+    const key = transition.key || "none";
+    if (key === "none") return; // Skip transitions of key 'none'
     if (!itemTransitionMap.has(fromId)) itemTransitionMap.set(fromId, []);
     if (!itemTransitionMap.has(toId)) itemTransitionMap.set(toId, []);
     itemTransitionMap.get(fromId)?.push(transition);
@@ -44,7 +44,7 @@ export const groupTrackItems = (data: {
 
       // Find transition from this item
       const transition = Object.values(transitionsMap).find(
-        (t) => t.fromClipId === currentId && t.key !== 'none' // Filter here
+        (t) => t.fromClipId === currentId && t.key !== "none", // Filter here
       );
       if (!transition) break;
 
@@ -54,9 +54,7 @@ export const groupTrackItems = (data: {
 
     return group;
   };
-  const transitionsWitouthNone = Object.values(transitionsMap).filter(
-    (t) => t.key !== 'none'
-  );
+  const transitionsWitouthNone = Object.values(transitionsMap).filter((t) => t.key !== "none");
 
   // Process all items
   for (const itemId of trackItemIds) {
@@ -77,7 +75,7 @@ export const groupTrackItems = (data: {
   // Sort items within each group by display.from
   groups.forEach((group) => {
     group.sort((a, b) => {
-      if ('display' in a && 'display' in b) {
+      if ("display" in a && "display" in b) {
         return a.display.from - b.display.from;
       }
       return 0;
@@ -97,9 +95,7 @@ export const getPrevTransitionDuration = (timeline: Timeline, id: string) => {
   const groupItem = groupedItems.find((g) => g.find((i) => i.id === object.id));
   const transObjectInGroup = groupItem
     ?.filter((g) => g.type === OBJECT_TYPE_TRANSITION)
-    .map((t) =>
-      timeline.getObjects().find((o) => o.id === t.id)
-    ) as Transition[];
+    .map((t) => timeline.getObjects().find((o) => o.id === t.id)) as Transition[];
   const transitions = transObjectInGroup
     .filter((t) => t?.top === object?.top)
     .filter((t) => t?.left + t?.width <= object?.left);

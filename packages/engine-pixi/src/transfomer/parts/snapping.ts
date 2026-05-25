@@ -1,7 +1,7 @@
-import type { Point, Rectangle } from 'pixi.js';
+import type { Point, Rectangle } from "pixi.js";
 
 export interface SnapGuide {
-  type: 'vertical' | 'horizontal';
+  type: "vertical" | "horizontal";
   position: number;
   // The line segment to draw to visualize the snap
   start: number;
@@ -20,7 +20,7 @@ export class SnappingManager {
   constructor(
     private artboardWidth: number,
     private artboardHeight: number,
-    private scale: number = 1
+    private scale: number = 1,
   ) {}
 
   updateContext(width: number, height: number, scale: number) {
@@ -34,7 +34,7 @@ export class SnappingManager {
    * returns delta (adjustment) needed for x and y
    */
   snapMove(
-    current: Rectangle
+    current: Rectangle,
     // Optional: future support for snapping to other objects could pass them here
   ): { dx: number; dy: number; guides: SnapGuide[] } {
     const guides: SnapGuide[] = [];
@@ -47,16 +47,16 @@ export class SnappingManager {
 
     // Targets: Center (W/2), Left (0), Right (W) - Center prioritized
     const targetsX = [
-      { value: this.artboardWidth / 2, label: 'center' },
-      { value: 0, label: 'start' },
-      { value: this.artboardWidth, label: 'end' },
+      { value: this.artboardWidth / 2, label: "center" },
+      { value: 0, label: "start" },
+      { value: this.artboardWidth, label: "end" },
     ];
 
     // Points on object: Left, Center, Right
     const objectPointsX = [
-      { value: current.x, type: 'start' },
-      { value: current.x + current.width / 2, type: 'center' },
-      { value: current.x + current.width, type: 'end' },
+      { value: current.x, type: "start" },
+      { value: current.x + current.width / 2, type: "center" },
+      { value: current.x + current.width, type: "end" },
     ];
 
     let snappedX = false;
@@ -71,7 +71,7 @@ export class SnappingManager {
           snappedX = true;
 
           guides.push({
-            type: 'vertical',
+            type: "vertical",
             position: target.value,
             // Guide length: encompass both object and artboard height usually,
             // or just min/max of the two
@@ -85,15 +85,15 @@ export class SnappingManager {
 
     // Y Axis Snapping
     const targetsY = [
-      { value: this.artboardHeight / 2, label: 'center' },
-      { value: 0, label: 'start' },
-      { value: this.artboardHeight, label: 'end' },
+      { value: this.artboardHeight / 2, label: "center" },
+      { value: 0, label: "start" },
+      { value: this.artboardHeight, label: "end" },
     ];
 
     const objectPointsY = [
-      { value: current.y, type: 'start' },
-      { value: current.y + current.height / 2, type: 'center' },
-      { value: current.y + current.height, type: 'end' },
+      { value: current.y, type: "start" },
+      { value: current.y + current.height / 2, type: "center" },
+      { value: current.y + current.height, type: "end" },
     ];
 
     let snappedY = false;
@@ -107,7 +107,7 @@ export class SnappingManager {
           snappedY = true;
 
           guides.push({
-            type: 'horizontal',
+            type: "horizontal",
             position: target.value,
             start: Math.min(0, current.x),
             end: Math.max(this.artboardWidth, current.x + current.width),
@@ -169,7 +169,7 @@ export class SnappingManager {
       if (Math.abs(tx - point.x) < threshold) {
         res.x = tx;
         guides.push({
-          type: 'vertical',
+          type: "vertical",
           position: tx,
           start: 0, // Simplified
           end: this.artboardHeight,
@@ -184,7 +184,7 @@ export class SnappingManager {
       if (Math.abs(ty - point.y) < threshold) {
         res.y = ty;
         guides.push({
-          type: 'horizontal',
+          type: "horizontal",
           position: ty,
           start: 0,
           end: this.artboardWidth,

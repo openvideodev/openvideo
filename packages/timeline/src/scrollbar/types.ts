@@ -23,6 +23,6 @@ export type ScrollbarProps = {
   right: number;
   bottom: number;
 };
-export type ScrollbarXProps = Pick<ScrollbarProps, 'left' | 'right'>;
+export type ScrollbarXProps = Pick<ScrollbarProps, "left" | "right">;
 
-export type ScrollbarYProps = Pick<ScrollbarProps, 'top' | 'bottom'>;
+export type ScrollbarYProps = Pick<ScrollbarProps, "top" | "bottom">;

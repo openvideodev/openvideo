@@ -1,8 +1,8 @@
-import { BaseClip } from './base-clip';
-import type { IClipMeta } from './iclip';
+import { BaseClip } from "./base-clip";
+import type { IClipMeta } from "./iclip";
 
 export class Placeholder extends BaseClip {
-  type: string = 'Placeholder';
+  type: string = "Placeholder";
 
   meta: IClipMeta = {
     width: 0,
@@ -10,11 +10,7 @@ export class Placeholder extends BaseClip {
     duration: 0,
   };
 
-  constructor(
-    src: string,
-    meta: Partial<IClipMeta> = {},
-    type: string = 'Placeholder'
-  ) {
+  constructor(src: string, meta: Partial<IClipMeta> = {}, type: string = "Placeholder") {
     super();
     this.type = type;
     this.src = src;
@@ -41,13 +37,13 @@ export class Placeholder extends BaseClip {
   async tick(_time: number): Promise<{
     video: ImageBitmap | VideoFrame | null;
     audio: Float32Array[];
-    state: 'done' | 'success';
+    state: "done" | "success";
   }> {
     if (!this.canvas) {
-      this.canvas = document.createElement('canvas');
+      this.canvas = document.createElement("canvas");
       this.canvas.width = this.meta.width;
       this.canvas.height = this.meta.height;
-      this.ctx = this.canvas.getContext('2d');
+      this.ctx = this.canvas.getContext("2d");
     }
 
     const { canvas, ctx } = this;
@@ -55,7 +51,7 @@ export class Placeholder extends BaseClip {
       const { width, height } = canvas;
       if (width > 0 && height > 0) {
         // 1. Clear and Draw Background
-        ctx.fillStyle = '#1e1e1e';
+        ctx.fillStyle = "#1e1e1e";
         ctx.fillRect(0, 0, width, height);
 
         // 2. Draw Spinner
@@ -72,15 +68,15 @@ export class Placeholder extends BaseClip {
 
         // Create a gradient for the spinner tail effect
         const gradient = ctx.createConicGradient(rotation, centerX, centerY);
-        gradient.addColorStop(0, '#ffffff'); // Head
-        gradient.addColorStop(0.2, '#ffffff');
-        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
-        gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.1)'); // Tail
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        gradient.addColorStop(0, "#ffffff"); // Head
+        gradient.addColorStop(0.2, "#ffffff");
+        gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.4)");
+        gradient.addColorStop(0.8, "rgba(255, 255, 255, 0.1)"); // Tail
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
 
         ctx.strokeStyle = gradient;
         ctx.lineWidth = thickness;
-        ctx.lineCap = 'round';
+        ctx.lineCap = "round";
 
         ctx.beginPath();
         // Draw 270 degrees of the ring starting from the current rotation
@@ -90,7 +86,7 @@ export class Placeholder extends BaseClip {
         ctx.restore();
 
         // 4. Add a subtle border
-        ctx.strokeStyle = '#333333';
+        ctx.strokeStyle = "#333333";
         ctx.lineWidth = 10;
         ctx.strokeRect(0, 0, width, height);
       }
@@ -108,21 +104,18 @@ export class Placeholder extends BaseClip {
         }
         if (!this.renderPending) {
           this.renderPending = true;
-          this.emit('request-render' as any);
+          this.emit("request-render" as any);
         }
         this.animationRafId = requestAnimationFrame(scheduleNext);
       };
       this.animationRafId = requestAnimationFrame(scheduleNext);
     }
 
-    const frame =
-      canvas.width > 0 && canvas.height > 0
-        ? await createImageBitmap(canvas)
-        : null;
+    const frame = canvas.width > 0 && canvas.height > 0 ? await createImageBitmap(canvas) : null;
 
     return {
       video: frame,
-      state: 'success',
+      state: "success",
       audio: [],
     };
   }
@@ -155,31 +148,42 @@ export class Placeholder extends BaseClip {
    * Create a Placeholder instance from a JSON object
    */
   static async fromObject(json: any): Promise<Placeholder> {
-    if (json.type !== 'Placeholder') {
+    if (json.type !== "Placeholder") {
       throw new Error(`Expected Placeholder, got ${json.type}`);
     }
 
+    const timing = json.timing || {
+      display: json.display || { from: 0, to: 0 },
+      trim: json.trim || { from: 0, to: 0 },
+      duration: json.duration ?? 0,
+      playbackRate: json.playbackRate ?? 1,
+    };
+
+    const width = json.transform?.width ?? json.width ?? 0;
+    const height = json.transform?.height ?? json.height ?? 0;
+
     const clip = new Placeholder(json.src, {
-      width: json.width,
-      height: json.height,
-      duration: json.duration,
+      width,
+      height,
+      duration: timing.duration,
     });
 
     // Apply base properties
-    clip.left = json.left;
-    clip.top = json.top;
-    clip.width = json.width;
-    clip.height = json.height;
-    clip.angle = json.angle;
+    if (json.transform) {
+      clip.left = json.transform.x;
+      clip.top = json.transform.y;
+      clip.width = json.transform.width;
+      clip.height = json.transform.height;
+      clip.angle = json.transform.angle;
+      clip.zIndex = json.transform.zIndex;
+      clip.opacity = json.transform.opacity;
+      clip.flip = json.transform.flip ?? null;
+    }
 
-    clip.display.from = json.display.from;
-    clip.display.to = json.display.to;
-    clip.duration = json.duration;
-    clip.playbackRate = json.playbackRate;
-
-    clip.zIndex = json.zIndex;
-    clip.opacity = json.opacity;
-    clip.flip = json.flip;
+    clip.display.from = timing.display.from;
+    clip.display.to = timing.display.to;
+    clip.duration = timing.duration;
+    clip.playbackRate = timing.playbackRate;
 
     // Restore id if present
     if (json.id) {

@@ -18,5 +18,5 @@ export const CoreConfig = {
   metadataProvider: null as IMediaMetadataProvider | null,
   setMetadataProvider(provider: IMediaMetadataProvider) {
     this.metadataProvider = provider;
-  }
+  },
 };

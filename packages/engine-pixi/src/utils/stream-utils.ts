@@ -1,11 +1,9 @@
 export function autoReadStream<ST extends ReadableStream>(
   stream: ST,
   cbs: {
-    onChunk: ST extends ReadableStream<infer DT>
-      ? (chunk: DT) => Promise<void>
-      : never;
+    onChunk: ST extends ReadableStream<infer DT> ? (chunk: DT) => Promise<void> : never;
     onDone: () => void;
-  }
+  },
 ) {
   let stoped = false;
   async function run() {

@@ -1,13 +1,11 @@
-import { IClip, ITransitionClip } from '../types';
-import { FabricObject, RectProps } from 'fabric';
-import Timeline from '../timeline';
+import { IClip, ITransitionClip } from "../types";
+import { FabricObject, RectProps } from "fabric";
+import Timeline from "../timeline";
+import { generateId } from "./id";
 
 export type GroupElement = IClip | ITransitionClip;
 
-export const compareTransitionGroups = (
-  a: GroupElement[],
-  b: GroupElement[]
-): boolean => {
+export const compareTransitionGroups = (a: GroupElement[], b: GroupElement[]): boolean => {
   if (a.length !== b.length) {
     return false;
   }
@@ -64,13 +62,11 @@ export const groupByTransition = (data: {
       group.push(currentItem);
 
       // Find transition from this item, excluding 'none' transitions
-      const transition = Object.values(transitionsMap).find(
-        (t) => t.fromClipId === currentId
-      );
+      const transition = Object.values(transitionsMap).find((t) => t.fromClipId === currentId);
       if (!transition) break;
 
       group.push(transition);
-      currentId = transition.toClipId || '';
+      currentId = transition.toClipId || "";
     }
 
     return group;
@@ -95,7 +91,7 @@ export const groupByTransition = (data: {
   // Sort items within each group by display.from
   groups.forEach((group) => {
     group.sort((a, b) => {
-      if ('display' in a && 'display' in b) {
+      if ("display" in a && "display" in b) {
         return a.display.from - b.display.from;
       }
       return 0;
@@ -109,8 +105,8 @@ export function getNextTransitionMappings(
   tracks: FabricObject[],
   trackItems: FabricObject[],
   currentTransitionsMap: Record<string, ITransitionClip>,
-  positionAfterTransform: Record<string, Pick<RectProps, 'left' | 'top'>>,
-  activeObjectIds: string[]
+  positionAfterTransform: Record<string, Pick<RectProps, "left" | "top">>,
+  activeObjectIds: string[],
 ): {
   newTransitionIds: string[];
   newTransitionsMap: Record<string, ITransitionClip>;
@@ -124,9 +120,7 @@ export function getNextTransitionMappings(
       .filter((trackItem) => track.clipIds.includes(trackItem.id))
       .map((item) => {
         if (activeObjectIds.includes(item.id)) {
-          const placeHolder = canvas
-            .getObjects()
-            .find((o) => o.id === `${item.id}-placeholder`);
+          const placeHolder = canvas.getObjects().find((o) => o.id === `${item.id}-placeholder`);
           if (placeHolder?.opacity === 1) {
             item.left = placeHolder?.left || item.left;
           }
@@ -142,34 +136,39 @@ export function getNextTransitionMappings(
       const item2 = items[i + 1];
       let leftPos2 = item2.left;
 
-      if (transformIds.includes(item1.id))
-        leftPos1 = positionAfterTransform[item1.id].left;
+      if (transformIds.includes(item1.id)) leftPos1 = positionAfterTransform[item1.id].left;
 
-      if (transformIds.includes(item2.id))
-        leftPos2 = positionAfterTransform[item2.id].left;
+      if (transformIds.includes(item2.id)) leftPos2 = positionAfterTransform[item2.id].left;
       if (Math.abs(leftPos1 + item1.width - leftPos2) <= 1) {
-        const transitionId = `${item1.id}-${item2.id}`;
-        const transitionExists =
-          currentTransitionsMap.hasOwnProperty(transitionId);
+        // Look up if we already have a transition for these two items by from/to.
+        const foundTransition = Object.values(currentTransitionsMap).find(
+          (t) => t.fromClipId === item1.id && t.toClipId === item2.id,
+        );
 
-        if (transitionExists) {
-          const transition = currentTransitionsMap[transitionId];
-          newTransitionsMap[transitionId] = transition;
+        if (foundTransition) {
+          newTransitionsMap[foundTransition.id] = foundTransition;
+          newTransitionIds.push(foundTransition.id);
         } else {
+          const newTransitionId = generateId();
           const transition: ITransitionClip = {
-            id: transitionId,
+            id: newTransitionId,
             duration: 1_500_000,
+            timing: {
+              duration: 1_500_000,
+              display: { from: 0, to: 0 },
+              trim: { from: 0, to: 0 },
+              playbackRate: 1,
+            },
             fromClipId: item1.id,
             toClipId: item2.id,
-            key: 'none',
+            key: "none",
             trackId: track.id,
-            type: 'Transition',
+            type: "Transition",
           } as any;
 
-          newTransitionsMap[transitionId] = transition;
+          newTransitionsMap[newTransitionId] = transition;
+          newTransitionIds.push(newTransitionId);
         }
-
-        newTransitionIds.push(transitionId);
       }
     }
   });
@@ -180,25 +179,17 @@ export function getNextTransitionMappings(
   };
 }
 
-export const getAdjustedTrackItemDimensions = (
-  id: string,
-  transitionGroup: GroupElement[]
-) => {
+export const getAdjustedTrackItemDimensions = (id: string, transitionGroup: GroupElement[]) => {
   const itemIndex = transitionGroup.findIndex((i) => i.id === id);
   const prevTransition = transitionGroup[itemIndex - 1];
   const nextTransition = transitionGroup[itemIndex + 1];
   const transitionsInGroup = transitionGroup.filter(
-    (t) => t.type === 'Transition'
+    (t) => t.type === "Transition",
   ) as ITransitionClip[];
 
   // get all transitioins before prevTransition
-  const prevTransitionIndex = transitionsInGroup.indexOf(
-    prevTransition as ITransitionClip
-  );
-  const transitionsBeforePrev = transitionsInGroup.slice(
-    0,
-    prevTransitionIndex
-  );
+  const prevTransitionIndex = transitionsInGroup.indexOf(prevTransition as ITransitionClip);
+  const transitionsBeforePrev = transitionsInGroup.slice(0, prevTransitionIndex);
 
   const offsetTransitions = transitionsBeforePrev.reduce((acc, t) => {
     return acc + (t.duration || 0);
@@ -211,8 +202,7 @@ export const getAdjustedTrackItemDimensions = (
   } else if (nextTransition && !prevTransition) {
     durationDiff = (nextTransition.duration || 0) / 2;
   } else if (prevTransition && nextTransition) {
-    durationDiff =
-      (nextTransition.duration || 0) / 2 + (prevTransition.duration || 0) / 2;
+    durationDiff = (nextTransition.duration || 0) / 2 + (prevTransition.duration || 0) / 2;
   }
 
   return {

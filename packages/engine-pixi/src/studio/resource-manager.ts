@@ -1,11 +1,11 @@
-import { file } from 'opfs-tools';
-import { AssetManager } from '../utils/asset-manager';
+import { file } from "opfs-tools";
+import { AssetManager } from "../utils/asset-manager";
 
 export enum ResourceStatus {
-  PENDING = 'pending',
-  LOADING = 'loading',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
+  PENDING = "pending",
+  LOADING = "loading",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
 export interface ResourceItem {
@@ -30,7 +30,7 @@ export class ResourceManager {
   async preload(urls: string[]): Promise<void> {
     const uniqueUrls = [...new Set(urls)].filter((url) => {
       // Skip data URLs and blob URLs
-      return url && !url.startsWith('data:') && !url.startsWith('blob:');
+      return url && !url.startsWith("data:") && !url.startsWith("blob:");
     });
 
     const promises = uniqueUrls.map((url) => this.loadResource(url));
@@ -41,9 +41,7 @@ export class ResourceManager {
    * Get a ReadableStream for the given URL, with transparent caching.
    * @param url URL to fetch
    */
-  static async getReadableStream(
-    url: string
-  ): Promise<ReadableStream<Uint8Array>> {
+  static async getReadableStream(url: string): Promise<ReadableStream<Uint8Array>> {
     const cachedFile = await AssetManager.get(url);
     if (cachedFile) {
       const originFile = await cachedFile.getOriginFile();
@@ -52,16 +50,14 @@ export class ResourceManager {
 
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
     }
 
     const stream = response.body;
-    if (!stream) throw new Error('Response body is null');
+    if (!stream) throw new Error("Response body is null");
 
     // Skip caching for data/blob URLs
-    if (url.startsWith('data:') || url.startsWith('blob:')) {
+    if (url.startsWith("data:") || url.startsWith("blob:")) {
       return stream;
     }
 
@@ -85,7 +81,7 @@ export class ResourceManager {
       if (originFile) return await createImageBitmap(originFile);
     }
 
-    if (url.startsWith('data:') || url.startsWith('blob:')) {
+    if (url.startsWith("data:") || url.startsWith("blob:")) {
       const response = await fetch(url);
       const blob = await response.blob();
       return await createImageBitmap(blob);
@@ -93,13 +89,11 @@ export class ResourceManager {
 
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
     }
 
     const stream = response.body;
-    if (!stream) throw new Error('Response body is null');
+    if (!stream) throw new Error("Response body is null");
 
     const [s1, s2] = stream.tee();
 
@@ -148,7 +142,7 @@ export class ResourceManager {
         if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
 
         const stream = response.body;
-        if (!stream) throw new Error('No body');
+        if (!stream) throw new Error("No body");
 
         // We can't easily tee here if we want to return a completed status immediately...
         // but loadResource is mostly for PRELOADING, so it's okay if it takes a bit.
@@ -176,7 +170,7 @@ export class ResourceManager {
    */
   async resolve(url: string): Promise<ReturnType<typeof file> | string> {
     // If it's not a remote URL, return as is
-    if (!url || url.startsWith('data:') || url.startsWith('blob:')) {
+    if (!url || url.startsWith("data:") || url.startsWith("blob:")) {
       return url;
     }
 

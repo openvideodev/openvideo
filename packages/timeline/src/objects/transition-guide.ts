@@ -1,22 +1,18 @@
-import { Control, Rect, RectProps } from 'fabric';
-import { timeUsToUnits } from '../utils/timeline';
-import {
-  ACTIVE_SELECTION_COLOR,
-  ACTIVE_SELECTION_WIDTH,
-} from '../constants/objects';
-import { createTransitionControls } from '../utils';
+import { Control, Rect, RectProps } from "fabric";
+import { timeUsToUnits } from "../utils/timeline";
+import { ACTIVE_SELECTION_COLOR, ACTIVE_SELECTION_WIDTH } from "../constants/objects";
+import { createTransitionControls } from "../utils";
 
-interface TransitionGuideProps
-  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
+interface TransitionGuideProps extends Pick<RectProps, "width" | "height" | "top" | "left"> {
   id: string;
 }
 
 class TransitionGuide extends Rect {
-  static type = 'TransitionGuide';
+  static type = "TransitionGuide";
   public duration: number;
   public fromClipId: string;
   public toClipId: string;
-  public itemType: string = 'none';
+  public itemType: string = "none";
   public isSelected = false;
   static createControls(): { controls: Record<string, Control> } {
     return { controls: createTransitionControls() };
@@ -31,12 +27,12 @@ class TransitionGuide extends Rect {
 
   static ownDefaults = {
     objectCaching: false,
-    borderColor: 'transparent',
-    stroke: 'transparent',
+    borderColor: "transparent",
+    stroke: "transparent",
     strokeWidth: 1.5,
-    fill: 'rgba(0,0,0, 0.85)',
+    fill: "rgba(0,0,0, 0.85)",
     borderOpacityWhenMoving: 1,
-    hoverCursor: 'default',
+    hoverCursor: "default",
     lockMovementX: true,
     lockMovementY: true,
     duration: 1_500_000,
@@ -53,9 +49,7 @@ class TransitionGuide extends Rect {
   public updateCoords() {
     const canvas = this.canvas;
     if (!canvas) return;
-    const fromObject = canvas
-      .getObjects()
-      .find((o) => o.id === this.fromClipId);
+    const fromObject = canvas.getObjects().find((o) => o.id === this.fromClipId);
     if (!fromObject) return;
     const size = timeUsToUnits(this.duration, this.tScale);
     const position = fromObject.left + fromObject.width - size / 2;
@@ -74,11 +68,11 @@ class TransitionGuide extends Rect {
 
   public drawTextIdentity(ctx: CanvasRenderingContext2D) {
     const path = new Path2D(
-      'M3 5.30359C3 3.93159 4.659 3.24359 5.629 4.21359L11.997 10.5826L10.583 11.9966L5 6.41359V17.5856L10.586 11.9996L10.583 11.9966L11.997 10.5826L12 10.5856L18.371 4.21459C19.341 3.24459 21 3.93159 21 5.30359V18.6956C21 20.0676 19.341 20.7556 18.371 19.7856L12 13.5L13.414 11.9996L19 17.5866V6.41359L13.414 11.9996L13.421 12.0056L12.006 13.4206L12 13.4136L5.629 19.7846C4.659 20.7546 3 20.0676 3 18.6956V5.30359Z'
+      "M3 5.30359C3 3.93159 4.659 3.24359 5.629 4.21359L11.997 10.5826L10.583 11.9966L5 6.41359V17.5856L10.586 11.9996L10.583 11.9966L11.997 10.5826L12 10.5856L18.371 4.21459C19.341 3.24459 21 3.93159 21 5.30359V18.6956C21 20.0676 19.341 20.7556 18.371 19.7856L12 13.5L13.414 11.9996L19 17.5866V6.41359L13.414 11.9996L13.421 12.0056L12.006 13.4206L12 13.4136L5.629 19.7846C4.659 20.7546 3 20.0676 3 18.6956V5.30359Z",
     );
     ctx.save();
     ctx.translate(-12, -12);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = "#ffffff";
     ctx.fill(path);
     ctx.restore();
   }
@@ -91,13 +85,7 @@ class TransitionGuide extends Rect {
     if (this.isSelected) {
       ctx.save();
       ctx.beginPath();
-      ctx.roundRect(
-        -this.width / 2,
-        -this.height / 2,
-        this.width,
-        this.height,
-        this.rx
-      );
+      ctx.roundRect(-this.width / 2, -this.height / 2, this.width, this.height, this.rx);
       ctx.lineWidth = ACTIVE_SELECTION_WIDTH;
       ctx.strokeStyle = ACTIVE_SELECTION_COLOR;
       ctx.stroke();

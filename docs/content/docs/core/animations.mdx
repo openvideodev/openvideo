@@ -21,9 +21,9 @@ core.clip.update(clipId, {
       id: "anim_1",
       type: "fadeIn",
       duration: 1_000_000, // 1 second
-      easing: "easeOutQuad"
-    }
-  ]
+      easing: "easeOutQuad",
+    },
+  ],
 });
 ```
 
@@ -41,10 +41,10 @@ core.clip.update(clipId, {
       keyframes: {
         "0%": { opacity: 0, scale: 0.5 },
         "50%": { opacity: 1, scale: 1.2 },
-        "100%": { scale: 1 }
-      }
-    }
-  ]
+        "100%": { scale: 1 },
+      },
+    },
+  ],
 });
 ```
 
@@ -57,9 +57,7 @@ Since animations are just an array in the clip data, you can replace or clear th
 ```ts
 // Replace all existing animations with a new one
 core.clip.update(clipId, {
-  animations: [
-    { type: "slideIn", direction: "left", duration: 1e6 }
-  ]
+  animations: [{ type: "slideIn", direction: "left", duration: 1e6 }],
 });
 ```
 
@@ -67,7 +65,7 @@ core.clip.update(clipId, {
 
 ```ts
 core.clip.update(clipId, {
-  animations: []
+  animations: [],
 });
 ```
 

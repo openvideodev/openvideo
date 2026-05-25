@@ -1,4 +1,4 @@
-import Timeline from '../../timeline';
+import Timeline from "../../timeline";
 
 import {
   BasicTransformEvent,
@@ -7,30 +7,23 @@ import {
   ObjectEvents,
   SerializedObjectProps,
   TPointerEvent,
-} from 'fabric';
-import { unitsToTimeUs } from '../../utils';
-import { Trimmable } from '../../objects';
+} from "fabric";
+import { unitsToTimeUs } from "../../utils";
+import { Trimmable } from "../../objects";
 
 export default function onObjectResizing(
   this: Timeline,
   e: BasicTransformEvent<TPointerEvent> & {
-    target: FabricObject<
-      Partial<FabricObjectProps>,
-      SerializedObjectProps,
-      ObjectEvents
-    >;
-  }
+    target: FabricObject<Partial<FabricObjectProps>, SerializedObjectProps, ObjectEvents>;
+  },
 ) {
   const canvas = this;
   const target = e.target;
   const transform = e.transform;
 
-  if (transform.action === 'resizing') {
+  if (transform.action === "resizing") {
     const otherObjects = canvas.getObjects().filter((obj) => {
-      return (
-        obj !== target &&
-        !['Track', 'Helper', 'Transition', 'Placeholder'].includes(obj.type)
-      );
+      return obj !== target && !["Track", "Helper", "Transition", "Placeholder"].includes(obj.type);
     });
 
     const SNAP_THRESHOLD = 10;
@@ -49,7 +42,7 @@ export default function onObjectResizing(
       const objLeft = objBounds.left;
       const objRight = objBounds.left + objBounds.width;
 
-      if (transform.corner === 'mr') {
+      if (transform.corner === "mr") {
         // When resizing from right, check both left and right edges
         const rightDiff = Math.abs(originalRight - objRight);
         const rightToLeftDiff = Math.abs(originalRight - objLeft);
@@ -58,11 +51,7 @@ export default function onObjectResizing(
           if (target instanceof Trimmable) {
             const newWidth = objRight - target.left;
             const diffSize = newWidth - originalWidth;
-            const diffTime = unitsToTimeUs(
-              diffSize,
-              target.tScale,
-              target.playbackRate
-            );
+            const diffTime = unitsToTimeUs(diffSize, target.tScale, target.playbackRate);
             const newTo = target.trim.to + diffTime;
             if (newWidth < minTimeToUnits) return;
 
@@ -91,11 +80,7 @@ export default function onObjectResizing(
           if (target instanceof Trimmable) {
             const newWidth = objLeft - target.left;
             const diffSize = newWidth - originalWidth;
-            const diffTime = unitsToTimeUs(
-              diffSize,
-              target.tScale,
-              target.playbackRate
-            );
+            const diffTime = unitsToTimeUs(diffSize, target.tScale, target.playbackRate);
             const newTo = target.trim.to + diffTime;
             if (newWidth < minTimeToUnits) return;
 
@@ -121,7 +106,7 @@ export default function onObjectResizing(
             snapped = true;
           }
         }
-      } else if (transform.corner === 'ml') {
+      } else if (transform.corner === "ml") {
         // When resizing from left, check both left and right edges
         const leftDiff = Math.abs(originalLeft - objLeft);
         const leftToRightDiff = Math.abs(originalLeft - objRight);
@@ -130,11 +115,7 @@ export default function onObjectResizing(
           if (target instanceof Trimmable) {
             const newWidth = originalRight - objLeft;
             const diffSize = newWidth - originalWidth;
-            const diffTime = unitsToTimeUs(
-              diffSize,
-              target.tScale,
-              target.playbackRate
-            );
+            const diffTime = unitsToTimeUs(diffSize, target.tScale, target.playbackRate);
             const newFrom = target.trim.from - diffTime;
 
             if (newFrom >= 0) {
@@ -160,11 +141,7 @@ export default function onObjectResizing(
           if (target instanceof Trimmable) {
             const newWidth = originalRight - objRight;
             const diffSize = newWidth - originalWidth;
-            const diffTime = unitsToTimeUs(
-              diffSize,
-              target.tScale,
-              target.playbackRate
-            );
+            const diffTime = unitsToTimeUs(diffSize, target.tScale, target.playbackRate);
             const newFrom = target.trim.from - diffTime;
 
             if (newFrom >= 0) {
@@ -198,9 +175,9 @@ export default function onObjectResizing(
 }
 
 export function addResizingEvents(timeline: Timeline) {
-  timeline.on('object:resizing', onObjectResizing.bind(timeline));
+  timeline.on("object:resizing", onObjectResizing.bind(timeline));
 }
 
 export function removeResizingEvents(timeline: Timeline) {
-  timeline.off('object:resizing', onObjectResizing.bind(timeline));
+  timeline.off("object:resizing", onObjectResizing.bind(timeline));
 }

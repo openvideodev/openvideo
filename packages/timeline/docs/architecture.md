@@ -5,19 +5,25 @@ The `@openvideo/timeline` engine is designed with a clear separation between sta
 ## Core Managers
 
 ### SyncManager
+
 The bridge between your application state and the Fabric.js canvas. It handles:
+
 - Declarative synchronization of clips and tracks.
 - Partial updates (timing only, properties only).
 - State extraction (`getUpdatedState`) to emit changes back to the app.
 
 ### ItemsManager
+
 Manages the lifecycle of individual clip objects:
+
 - Loading clips from data.
 - Alignment and positioning within tracks.
 - Selection and deletion logic.
 
 ### TracksManager
+
 Responsible for the horizontal track background and magnetic behavior:
+
 - Rendering track rectangles.
 - Magnetic gap calculation and adjustment.
 - Managing "Helper" tracks (the gaps between tracks used for creating new ones).

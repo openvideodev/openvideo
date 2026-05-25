@@ -1,10 +1,10 @@
-import { Graphics, type Rectangle } from 'pixi.js';
+import { Graphics, type Rectangle } from "pixi.js";
 
 export class Wireframe extends Graphics {
   constructor() {
     super();
-    this.eventMode = 'static';
-    this.cursor = 'move';
+    this.eventMode = "static";
+    this.cursor = "move";
   }
 
   draw(bounds: Rectangle, scale: number = 1) {

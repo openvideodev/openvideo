@@ -1,6 +1,7 @@
 //@ts-ignore
-import glTransitions from 'gl-transitions';
-import { RADIAL_SWIPE_FRAGMENT } from './custom-glsl';
+import glTransitions from "gl-transitions";
+import { getTransitionByKey } from "@openvideo/core";
+import { RADIAL_SWIPE_FRAGMENT } from "./custom-glsl";
 
 export interface GlTransition {
   label: string;
@@ -13,7 +14,7 @@ export interface GlTransition {
 // Custom transitions that override or extend the library
 const STATIC_CUSTOM_TRANSITIONS = {
   radialSwipe: {
-    label: 'Radial Swipe',
+    label: "Radial Swipe",
     fragment: RADIAL_SWIPE_FRAGMENT,
   },
 } as const satisfies Record<string, GlTransition>;
@@ -24,10 +25,7 @@ const REGISTERED_TRANSITIONS: Record<string, GlTransition> = {};
 /**
  * Register a custom transition at runtime
  */
-export function registerCustomTransition(
-  name: string,
-  transition: GlTransition
-) {
+export function registerCustomTransition(name: string, transition: GlTransition) {
   REGISTERED_TRANSITIONS[name] = transition;
 }
 
@@ -48,7 +46,7 @@ export function getAllTransitions(): Record<string, GlTransition> {
         label: t.name,
         fragment: t.glsl,
         uniforms: t.defaultParams,
-        previewDynamic: '',
+        previewDynamic: "",
       };
       return acc;
     }, {}),
@@ -64,17 +62,22 @@ export type TransitionKey = string;
 
 export function getTransitionOptions() {
   const registeredKeys = Object.keys(REGISTERED_TRANSITIONS);
-  return Object.entries(getAllTransitions()).map(([key, value]) => ({
-    key: key as TransitionKey,
-    label: value.label,
-    isCustom: registeredKeys.includes(key),
-    previewStatic:
-      value.previewStatic ||
-      `https://cdn.subgen.co/previews/static/transition_${key}_static.webp`,
-    previewDynamic:
-      value.previewDynamic ||
-      `https://cdn.subgen.co/previews/dynamic/transition_${key}_dynamic.webp`,
-  }));
+  return Object.entries(getAllTransitions()).map(([key, value]) => {
+    const catalogEntry = getTransitionByKey(key);
+    return {
+      key: key as TransitionKey,
+      label: catalogEntry?.name ?? value.label,
+      description: catalogEntry?.description,
+      category: catalogEntry?.category,
+      isCustom: registeredKeys.includes(key) || (catalogEntry?.isCustom ?? false),
+      previewStatic:
+        value.previewStatic ||
+        `https://cdn.subgen.co/previews/static/transition_${key}_static.webp`,
+      previewDynamic:
+        value.previewDynamic ||
+        `https://cdn.subgen.co/previews/dynamic/transition_${key}_dynamic.webp`,
+    };
+  });
 }
 
 // Keep GL_TRANSITION_OPTIONS for backward compatibility

@@ -1,9 +1,9 @@
-import { Canvas, FabricObject, TPointerEvent } from 'fabric';
-import { Helper } from '../objects';
-import { CanvasSpacing } from '../types';
+import { Canvas, FabricObject, TPointerEvent } from "fabric";
+import { Helper } from "../objects";
+import { CanvasSpacing } from "../types";
 export const clearPlaceholderObjects = (
   canvas: Canvas,
-  placeholderMovingObjects: FabricObject[]
+  placeholderMovingObjects: FabricObject[],
 ) => {
   canvas.remove(...placeholderMovingObjects);
   placeholderMovingObjects = [];
@@ -17,9 +17,7 @@ export const isHelperTrack = (obj: FabricObject | undefined) => {
   return obj instanceof Helper;
 };
 
-export const calcCanvasSpacing = (
-  payload?: Partial<CanvasSpacing>
-): CanvasSpacing => {
+export const calcCanvasSpacing = (payload?: Partial<CanvasSpacing>): CanvasSpacing => {
   const defaultSpacing = {
     left: 16,
     right: 80,
@@ -27,7 +25,6 @@ export const calcCanvasSpacing = (
   return Object.assign({}, defaultSpacing, payload);
 };
 
-const touchEvents = ['touchstart', 'touchmove', 'touchend'];
+const touchEvents = ["touchstart", "touchmove", "touchend"];
 export const isTouchEvent = (event: TPointerEvent) =>
-  touchEvents.includes(event.type) ||
-  (event as PointerEvent).pointerType === 'touch';
+  touchEvents.includes(event.type) || (event as PointerEvent).pointerType === "touch";

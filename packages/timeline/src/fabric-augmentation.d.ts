@@ -1,17 +1,14 @@
-import 'fabric';
-import { IDropInfo } from './interfaces/canvas';
+import "fabric";
+import { IDropInfo } from "./interfaces/canvas";
 
-declare module 'fabric' {
+declare module "fabric" {
   interface Canvas {
-    orientation: 'horizontal' | 'vertical';
+    orientation: "horizontal" | "vertical";
     positionBeforeTransform?: {
       top: number;
       left: number;
     };
-    positionAfterTransform: Record<
-      string,
-      Pick<import('fabric').RectProps, 'top' | 'left'>
-    >;
+    positionAfterTransform: Record<string, Pick<import("fabric").RectProps, "top" | "left">>;
     trackIdAfterTransform: string;
     trackOriginBeforeTransform?: string;
   }
@@ -93,13 +90,13 @@ declare module 'fabric' {
   }
 
   interface Control {
-    controlOrientation: 'left' | 'right';
+    controlOrientation: "left" | "right";
   }
 
   interface CanvasEvents {
-    'track:create': IDropInfo;
-    'track-items:moved': IDropInfo;
-    'track-items:resized': {
+    "track:create": IDropInfo;
+    "track-items:moved": IDropInfo;
+    "track-items:resized": {
       trackId: string;
       trackItemIds: string[];
       isOverlapped?: boolean;

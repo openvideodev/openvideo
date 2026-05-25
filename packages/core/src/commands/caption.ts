@@ -1,5 +1,6 @@
-import { CommandHandler, Patch } from './types';
-import { ICaptionColors, ICaptionStyle } from '../types';
+import { CommandHandler, Patch } from "./types";
+import { ICaptionColors, ICaptionStyle } from "../types";
+import { normalizeClipStyle } from "../utils/normalize";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -9,9 +10,9 @@ import { ICaptionColors, ICaptionStyle } from '../types';
  */
 function buildClipPatch(state: any, id: string, merge: (clip: any) => any): Patch | null {
   const clip = state.clips[id];
-  if (!clip || clip.type !== 'Caption') return null;
+  if (!clip || clip.type !== "Caption") return null;
   return {
-    op: 'update',
+    op: "update",
     path: `/clips/${id}`,
     value: merge(clip),
     oldValue: clip,
@@ -25,9 +26,9 @@ function merge<T extends object>(base: T, patch: Partial<T>): T {
     const v = patch[key as keyof T];
     if (
       v !== null &&
-      typeof v === 'object' &&
+      typeof v === "object" &&
       !Array.isArray(v) &&
-      typeof result[key] === 'object' &&
+      typeof result[key] === "object" &&
       result[key] !== null &&
       !Array.isArray(result[key])
     ) {
@@ -58,7 +59,7 @@ export const setCaptionStyleHandler: CommandHandler<{
   for (const id of ids) {
     const patch = buildClipPatch(state, id, (clip) => ({
       ...clip,
-      style: merge(clip.style ?? {}, style),
+      style: normalizeClipStyle(merge(clip.style ?? {}, style), "Caption"),
     }));
     if (patch) patches.push(patch);
   }
@@ -111,7 +112,7 @@ export const setCaptionColorsHandler: CommandHandler<{
  */
 export const setCaptionVerticalPositionHandler: CommandHandler<{
   ids: string[];
-  position: 'top' | 'center' | 'bottom';
+  position: "top" | "center" | "bottom";
   videoHeight: number;
   padding?: number;
 }> = (state, command) => {
@@ -120,23 +121,29 @@ export const setCaptionVerticalPositionHandler: CommandHandler<{
 
   for (const id of ids) {
     const clip = state.clips[id];
-    if (!clip || clip.type !== 'Caption') continue;
+    if (!clip || clip.type !== "Caption") continue;
 
-    const clipHeight = clip.height ?? 0;
-    let newTop: number;
+    const clipHeight = clip.transform?.height ?? 0;
+    let newY: number;
 
-    if (position === 'top') {
-      newTop = padding;
-    } else if (position === 'center') {
-      newTop = (videoHeight - clipHeight) / 2;
+    if (position === "top") {
+      newY = padding;
+    } else if (position === "center") {
+      newY = (videoHeight - clipHeight) / 2;
     } else {
-      newTop = videoHeight - clipHeight - padding;
+      newY = videoHeight - clipHeight - padding;
     }
 
     patches.push({
-      op: 'update',
+      op: "update",
       path: `/clips/${id}`,
-      value: { ...clip, top: newTop },
+      value: {
+        ...clip,
+        transform: {
+          ...(clip.transform ?? {}),
+          y: newY,
+        },
+      },
       oldValue: clip,
     });
   }

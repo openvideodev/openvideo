@@ -6,10 +6,10 @@ enum LogLevel {
 }
 
 const LEVEL_NAMES: Record<LogLevel, string> = {
-  [LogLevel.DEBUG]: 'debug',
-  [LogLevel.INFO]: 'info',
-  [LogLevel.WARN]: 'warn',
-  [LogLevel.ERROR]: 'error',
+  [LogLevel.DEBUG]: "debug",
+  [LogLevel.INFO]: "info",
+  [LogLevel.WARN]: "warn",
+  [LogLevel.ERROR]: "error",
 };
 
 interface HistoryEntry {
@@ -20,11 +20,9 @@ interface HistoryEntry {
 
 function any2Str(val: any): string {
   if (val instanceof Error) return String(val);
-  if (typeof val === 'object' && val !== null) {
+  if (typeof val === "object" && val !== null) {
     try {
-      return JSON.stringify(val, (_, v) =>
-        v instanceof Error ? String(v) : v
-      );
+      return JSON.stringify(val, (_, v) => (v instanceof Error ? String(v) : v));
     } catch {
       return String(val);
     }
@@ -34,8 +32,8 @@ function any2Str(val: any): string {
 
 function getTimeStr() {
   const d = new Date();
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  const ms = d.getMilliseconds().toString().padStart(3, '0');
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const ms = d.getMilliseconds().toString().padStart(3, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${ms}`;
 }
 
@@ -43,18 +41,12 @@ class InternalLogger {
   private threshold: LogLevel = LogLevel.INFO;
   private history: HistoryEntry[] = [];
 
-  public debug = (...args: any[]) =>
-    this.log(LogLevel.DEBUG, console.debug, args);
+  public debug = (...args: any[]) => this.log(LogLevel.DEBUG, console.debug, args);
   public info = (...args: any[]) => this.log(LogLevel.INFO, console.info, args);
   public warn = (...args: any[]) => this.log(LogLevel.WARN, console.warn, args);
-  public error = (...args: any[]) =>
-    this.log(LogLevel.ERROR, console.error, args);
+  public error = (...args: any[]) => this.log(LogLevel.ERROR, console.error, args);
 
-  private log(
-    level: LogLevel,
-    consoleMethod: (...args: any[]) => void,
-    args: any[]
-  ) {
+  private log(level: LogLevel, consoleMethod: (...args: any[]) => void, args: any[]) {
     if (level >= this.threshold) {
       consoleMethod(...args);
       this.history.push({
@@ -86,9 +78,9 @@ class InternalLogger {
     return this.history
       .map(
         ({ level, time, args }) =>
-          `[${level.toUpperCase()}][${time}] ${args.map(any2Str).join(' ')}`
+          `[${level.toUpperCase()}][${time}] ${args.map(any2Str).join(" ")}`,
       )
-      .join('\n');
+      .join("\n");
   }
 }
 
@@ -129,6 +121,6 @@ export const Log = {
 // Set initial log levels based on environment
 if (import.meta.env?.DEV) {
   Log.setLogLevel(Log.debug);
-} else if (import.meta.env?.MODE === 'test') {
+} else if (import.meta.env?.MODE === "test") {
   Log.setLogLevel(Log.warn);
 }

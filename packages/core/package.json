@@ -2,26 +2,22 @@
   "name": "@openvideo/core",
   "version": "1.0.0",
   "description": "Core state management and logic for OpenVideo",
-  "type": "module",
-  "publishConfig": {
-    "access": "public",
-    "tag": "latest"
-  },
+  "keywords": [
+    "mp4",
+    "rendering",
+    "video",
+    "webcodecs"
+  ],
+  "license": "MIT",
+  "author": "OpenVideoDev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/openvideodev/openvideo.git"
   },
-  "keywords": [
-    "video",
-    "rendering",
-    "webcodecs",
-    "mp4"
-  ],
-  "author": "OpenVideoDev",
-  "license": "SEE LICENSE IN LICENSE",
   "files": [
     "dist"
   ],
+  "type": "module",
   "main": "dist/index.umd.cjs",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -32,10 +28,19 @@
       "require": "./dist/index.umd.cjs"
     }
   },
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "vitest"
+  },
+  "dependencies": {
+    "lodash-es": "^4.17.21",
+    "nanoid": "^5.0.7",
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
@@ -43,10 +48,5 @@
     "vite": "^7.1.5",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "^4.0.18"
-  },
-  "dependencies": {
-    "lodash-es": "^4.17.21",
-    "nanoid": "^5.0.7",
-    "zustand": "^5.0.4"
   }
 }

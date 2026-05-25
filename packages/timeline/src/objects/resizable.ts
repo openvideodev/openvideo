@@ -1,13 +1,9 @@
-import { Control, Rect, RectProps, classRegistry } from 'fabric';
-import {
-  ACTIVE_SELECTION_COLOR,
-  ACTIVE_SELECTION_WIDTH,
-} from '../constants/objects';
-import { createResizeControls } from '../controls';
-import { IClip, IDisplay } from '../types';
+import { Control, Rect, RectProps, classRegistry } from "fabric";
+import { ACTIVE_SELECTION_COLOR, ACTIVE_SELECTION_WIDTH } from "../constants/objects";
+import { createResizeControls } from "../controls";
+import { IClip, IDisplay } from "../types";
 
-export interface ResizableBaseProps
-  extends Pick<RectProps, 'width' | 'height' | 'top' | 'left'> {
+export interface ResizableBaseProps extends Pick<RectProps, "width" | "height" | "top" | "left"> {
   id: string;
   tScale: number;
   display: IDisplay;
@@ -16,7 +12,7 @@ export interface ResizableBaseProps
 export type ResizableProps<T extends object = {}> = ResizableBaseProps & T;
 
 class Resizable extends Rect {
-  static type = 'Resizable';
+  static type = "Resizable";
   declare id: string;
   public isSelected = false;
   declare tScale: number;
@@ -36,12 +32,12 @@ class Resizable extends Rect {
     rx: 6,
     ry: 6,
     objectCaching: false,
-    borderColor: 'transparent',
-    stroke: 'transparent',
+    borderColor: "transparent",
+    stroke: "transparent",
     strokeWidth: 0,
-    fill: '#27272a',
+    fill: "#27272a",
     borderOpacityWhenMoving: 1,
-    hoverCursor: 'default',
+    hoverCursor: "default",
   };
 
   public isResizable = true;
@@ -74,13 +70,7 @@ class Resizable extends Rect {
     if (this.isSelected) {
       ctx.save();
       ctx.beginPath();
-      ctx.roundRect(
-        -this.width / 2,
-        -this.height / 2,
-        this.width,
-        this.height,
-        6
-      );
+      ctx.roundRect(-this.width / 2, -this.height / 2, this.width, this.height, 6);
       ctx.lineWidth = ACTIVE_SELECTION_WIDTH;
       ctx.strokeStyle = ACTIVE_SELECTION_COLOR;
       ctx.stroke();
@@ -88,6 +78,6 @@ class Resizable extends Rect {
     }
   }
 }
-classRegistry.setClass(Resizable, 'Resizable');
+classRegistry.setClass(Resizable, "Resizable");
 
 export default Resizable;

@@ -10,41 +10,32 @@ import {
   Graphics,
   BlurFilter,
   ColorMatrixFilter,
-} from 'pixi.js';
-import { makeEffect } from './effect/effect';
-import {
-  DEFAULT_AUDIO_CONF,
-  getDefaultAudioConf,
-  type IClip,
-  Effect,
-  Transition,
-} from './clips';
-import { recodemux } from 'wrapbox';
-import { Log } from './utils/log';
-import EventEmitter from './event-emitter';
-import { PixiSpriteRenderer } from './sprite/pixi-sprite-renderer';
-import { parseColor, hexToRgb } from './utils/color';
-import { vertex } from './effect/vertex';
-import {
-  CHROMA_KEY_FRAGMENT,
-  SELECTIVE_HSL_FRAGMENT,
-} from './effect/glsl/custom-glsl';
-import { sleep } from './utils';
+} from "pixi.js";
+import { makeEffect } from "./effect/effect";
+import { DEFAULT_AUDIO_CONF, getDefaultAudioConf, type IClip, Effect, Transition } from "./clips";
+import { recodemux } from "wrapbox";
+import { Log } from "./utils/log";
+import EventEmitter from "./event-emitter";
+import { PixiSpriteRenderer } from "./sprite/pixi-sprite-renderer";
+import { parseColor, hexToRgb } from "./utils/color";
+import { vertex } from "./effect/vertex";
+import { CHROMA_KEY_FRAGMENT, SELECTIVE_HSL_FRAGMENT } from "./effect/glsl/custom-glsl";
+import { sleep } from "./utils";
 import {
   clipToJSON,
   jsonToClip,
   type ClipJSON,
   type ProjectJSON,
   type GlobalTransitionJSON as TransitionJSON,
-} from './json-serialization';
-import { Video } from './clips/video-clip';
-import { Image } from './clips/image-clip';
-import { makeTransition } from './transition/transition';
+} from "./json-serialization";
+import { Video } from "./clips/video-clip";
+import { Image } from "./clips/image-clip";
+import { makeTransition } from "./transition/transition";
 import {
   applyColorAdjustmentToMatrix,
   getAllSelectiveHsl,
   hasColorAdjustment,
-} from './utils/color-adjustment';
+} from "./utils/color-adjustment";
 
 export interface ICompositorOpts {
   width?: number;
@@ -73,12 +64,12 @@ export interface ICompositorOpts {
 let COM_ID = 0;
 
 /**
- * Prevent VideoEncoder queue from accumulating too many VideoFrames and causing memory issues
+ * Prevent VideoEncoder queue from accumulating too many VideoFrames and causing memory issues.
+ * Uses iterative polling instead of recursion to avoid stack buildup.
  */
 async function waitEncoderQueue(getQSize: () => number) {
-  if (getQSize() > 50) {
+  while (getQSize() > 20) {
     await sleep(15);
-    await waitEncoderQueue(getQSize);
   }
 }
 
@@ -116,7 +107,7 @@ export class Compositor extends EventEmitter<{
       width?: number;
       height?: number;
       bitrate?: number;
-    } = {}
+    } = {},
   ): Promise<boolean> {
     return (
       (self.OffscreenCanvas != null &&
@@ -128,7 +119,7 @@ export class Compositor extends EventEmitter<{
         self.AudioData != null &&
         ((
           await self.VideoEncoder.isConfigSupported({
-            codec: args.videoCodec ?? 'avc1.42E032',
+            codec: args.videoCodec ?? "avc1.42E032",
             width: args.width ?? 1920,
             height: args.height ?? 1080,
             bitrate: args.bitrate ?? 7e6,
@@ -170,34 +161,32 @@ export class Compositor extends EventEmitter<{
   constructor(opts: ICompositorOpts = {}) {
     super();
 
-    console.log('Compositor constructor', opts);
     const { width = 0, height = 0 } = opts;
     this.canvas = new OffscreenCanvas(width, height);
     // this.canvas = document.querySelector('#canvas') as HTMLCanvasElement
 
     this.opts = Object.assign(
       {
-        bgColor: '#000',
+        bgColor: "#000",
         width: 0,
         height: 0,
-        format: 'mp4',
-        videoCodec: 'avc1.42E032',
+        format: "mp4",
+        videoCodec: "avc1.42E032",
         audio: true,
-        audioCodec: 'aac',
+        audioCodec: "aac",
         audioSampleRate: 48000,
         bitrate: 5e6,
         fps: 30,
         metaDataTags: null,
       },
-      opts
+      opts,
     );
 
-    console.log('Compositor opts', this.opts);
     this.hasVideoTrack = width * height > 0;
 
     // Initialize codec detection early
     getDefaultAudioConf().catch((err) => {
-      this.logger.warn('Failed to detect audio codec:', err);
+      this.logger.warn("Failed to detect audio codec:", err);
     });
   }
 
@@ -212,19 +201,19 @@ export class Compositor extends EventEmitter<{
       antialias: false,
       autoDensity: false,
       resolution: 1,
-      preference: 'webgl', // Force WebGL to avoid WebGPU overhead/failures in Docker
+      preference: "webgl", // Force WebGL to avoid WebGPU overhead/failures in Docker
     });
 
     // Verify that the app is fully initialized
     if (this.pixiApp.renderer == null || this.pixiApp.stage == null) {
-      throw new Error('Pixi.js Application failed to initialize properly');
+      throw new Error("Pixi.js Application failed to initialize properly");
     }
 
     // Stop the ticker - we manually call render() in the compositor
     // This prevents the ticker from trying to render after cleanup
     try {
       const anyApp = this.pixiApp as any;
-      if (anyApp.ticker && typeof anyApp.ticker.stop === 'function') {
+      if (anyApp.ticker && typeof anyApp.ticker.stop === "function") {
         anyApp.ticker.stop();
       }
     } catch (e) {
@@ -252,7 +241,7 @@ export class Compositor extends EventEmitter<{
       playbackRate: clip.playbackRate,
       zIndex: clip.zIndex,
     };
-    this.logger.info('Compositor add clip', logAttrs);
+    this.logger.info("Compositor add clip", logAttrs);
 
     const cloned = await clip.clone();
 
@@ -260,17 +249,17 @@ export class Compositor extends EventEmitter<{
     if (
       this.pixiApp != null &&
       this.pixiApp.renderer != null &&
-      typeof cloned.setRenderer === 'function'
+      typeof cloned.setRenderer === "function"
     ) {
       cloned.setRenderer(this.pixiApp.renderer);
     }
 
-    this.logger.info('Compositor add clip ready');
+    this.logger.info("Compositor add clip ready");
     this.sprites.push(
       Object.assign(cloned, {
         main: opts.main ?? false,
         expired: false,
-      })
+      }),
     );
     this.sprites.sort((a, b) => a.zIndex - b.zIndex);
   }
@@ -291,15 +280,13 @@ export class Compositor extends EventEmitter<{
 
     // Check if any sprites actually have video capabilities (width > 0 && height > 0)
     // This handles cases where width/height are set but all sprites are audio-only
-    const hasVideoSprites = this.sprites.some(
-      (sprite) => sprite.width > 0 && sprite.height > 0
-    );
+    const hasVideoSprites = this.sprites.some((sprite) => sprite.width > 0 && sprite.height > 0);
 
     // Only create video track if we have video track configured AND we have video sprites
     const shouldCreateVideoTrack = this.hasVideoTrack && hasVideoSprites;
 
     const muxer = recodemux({
-      format: format || 'mp4',
+      format: format || "mp4",
       video: shouldCreateVideoTrack
         ? {
             width,
@@ -307,8 +294,7 @@ export class Compositor extends EventEmitter<{
             expectFPS: fps,
             codec: videoCodec,
             bitrate,
-            __unsafe_hardwareAcceleration__:
-              this.opts.__unsafe_hardwareAcceleration__,
+            __unsafe_hardwareAcceleration__: this.opts.__unsafe_hardwareAcceleration__,
           }
         : null,
       audio:
@@ -330,54 +316,52 @@ export class Compositor extends EventEmitter<{
    * @param opts.maxTime Maximum duration allowed for output video, content exceeding this will be ignored
    */
   output(opts: { maxTime?: number } = {}): ReadableStream<Uint8Array> {
-    console.log('Compositor output', opts);
-    if (this.sprites.length === 0) throw Error('No sprite added');
+    if (this.sprites.length === 0) throw Error("No sprite added");
 
     const mainSprite = this.sprites.find((it) => it.main);
     // Max time: prefer main sprite, otherwise use maximum value
     // Filter out Infinity durations to avoid issues
-    const durations = this.sprites.map((it) => it.display.from + it.duration);
+    const durations = this.sprites.map((it) =>
+      it.display.to > 0 ? it.display.to : it.display.from + it.duration,
+    );
     const finiteDurations = durations.filter((d) => d !== Infinity);
 
     const maxTime =
       opts.maxTime ??
       (mainSprite != null
-        ? mainSprite.display.from + mainSprite.duration
+        ? mainSprite.display.to > 0
+          ? mainSprite.display.to
+          : mainSprite.display.from + mainSprite.duration
         : finiteDurations.length > 0
           ? Math.max(...finiteDurations)
           : 0);
 
     if (maxTime === Infinity || maxTime <= 0) {
       throw Error(
-        'Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio'
+        "Unable to determine the end time, please specify a main sprite, or limit the duration of Image, Audio",
       );
     }
     // Main video's (main) videoTrack duration value is 0
     if (maxTime === -1) {
-      this.logger.warn(
-        "Unable to determine the end time, process value don't update"
-      );
+      this.logger.warn("Unable to determine the end time, process value don't update");
     }
 
     this.logger.info(`start combinate video, maxTime:${maxTime}`);
     const muxer = this.initMuxer(maxTime);
-    let startTime = performance.now();
+    const startTime = performance.now();
     const stopMuxer = this.runEncoding(muxer, maxTime, {
       onProgress: (prog) => {
-        this.logger.debug('OutputProgress:', prog);
-        this.emit('OutputProgress', prog);
+        this.logger.debug("OutputProgress:", prog);
+        this.emit("OutputProgress", prog);
       },
       onEnded: async () => {
         await muxer.flush();
-        this.logger.info(
-          '===== output ended =====, cost:',
-          performance.now() - startTime
-        );
-        this.emit('OutputProgress', 1);
+        this.logger.info("===== output ended =====, cost:", performance.now() - startTime);
+        this.emit("OutputProgress", 1);
         this.destroy();
       },
       onError: (err) => {
-        this.emit('error', err);
+        this.emit("error", err);
         muxer.close();
         this.destroy();
       },
@@ -399,8 +383,8 @@ export class Compositor extends EventEmitter<{
     this.destroyed = true;
 
     this.stopOutput?.();
-    this.off('OutputProgress');
-    this.off('error');
+    this.off("OutputProgress");
+    this.off("error");
 
     // Clean up Pixi.js resources
     if (this.pixiApp != null) {
@@ -412,7 +396,7 @@ export class Compositor extends EventEmitter<{
           return;
         }
         // Stop ticker if present
-        if (anyApp.ticker && typeof anyApp.ticker.stop === 'function') {
+        if (anyApp.ticker && typeof anyApp.ticker.stop === "function") {
           try {
             anyApp.ticker.stop();
           } catch (e) {
@@ -433,7 +417,7 @@ export class Compositor extends EventEmitter<{
       } catch (err) {
         // Swallow errors during destroy - context may be lost or already destroyed
         // eslint-disable-next-line no-console
-        console.warn('Error while destroying Pixi application:', err);
+        console.warn("Error while destroying Pixi application:", err);
       } finally {
         this.pixiApp = null;
       }
@@ -451,7 +435,7 @@ export class Compositor extends EventEmitter<{
       onProgress: (prog: number) => void;
       onEnded: () => Promise<void>;
       onError: (err: Error) => void;
-    }
+    },
   ): () => void {
     let progress = 0;
     const aborter = { aborted: false };
@@ -463,9 +447,7 @@ export class Compositor extends EventEmitter<{
       const timeSlice = Math.round(1e6 / fps);
 
       // Check if any sprites actually have video capabilities
-      const hasVideoSprites = this.sprites.some(
-        (sprite) => sprite.width > 0 && sprite.height > 0
-      );
+      const hasVideoSprites = this.sprites.some((sprite) => sprite.width > 0 && sprite.height > 0);
 
       renderSprites = createSpritesRender({
         pixiApp: this.pixiApp,
@@ -505,14 +487,14 @@ export class Compositor extends EventEmitter<{
 
         if (aborter.aborted) return;
 
-        // Ensure canvas rendering is complete before creating VideoFrame
-        // Use background-resilient sleep(0) which utilizes workerTimer
-        // to ensure rendering loop continues even when tab is inactive.
+        // Yield to allow GPU to finish rendering before creating VideoFrame.
+        // A microtask yield is sufficient and avoids the ~16.6ms workerTimer
+        // overhead that sleep(0) would incur.
         if (this.hasVideoTrack) {
-          await sleep(0);
+          await Promise.resolve();
         }
 
-        encodeFrame(timestamp, audios, true);
+        await encodeFrame(timestamp, audios, true);
 
         timestamp += timeSlice;
 
@@ -567,7 +549,7 @@ export class Compositor extends EventEmitter<{
               c.id !== clip.id &&
               c.zIndex === clip.zIndex &&
               c.display.from < clip.display.from &&
-              (c instanceof Video || c instanceof Image)
+              (c instanceof Video || c instanceof Image),
           )
           .sort((a, b) => b.display.to - a.display.to)[0];
 
@@ -612,35 +594,92 @@ export class Compositor extends EventEmitter<{
 
     // Update settings if provided
     if (json.settings) {
-      if (json.settings.width !== undefined)
-        this.opts.width = json.settings.width;
-      if (json.settings.height !== undefined)
-        this.opts.height = json.settings.height;
+      if (json.settings.width !== undefined) this.opts.width = json.settings.width;
+      if (json.settings.height !== undefined) this.opts.height = json.settings.height;
       if (json.settings.fps !== undefined) this.opts.fps = json.settings.fps;
-      if (json.settings.bgColor !== undefined)
-        this.opts.bgColor = json.settings.bgColor;
-      if (json.settings.format !== undefined)
-        this.opts.format = json.settings.format;
-      if (json.settings.videoCodec !== undefined)
-        this.opts.videoCodec = json.settings.videoCodec;
-      if (json.settings.bitrate !== undefined)
-        this.opts.bitrate = json.settings.bitrate;
+      if (json.settings.bgColor !== undefined) this.opts.bgColor = json.settings.bgColor;
+      if (json.settings.format !== undefined) this.opts.format = json.settings.format;
+      if (json.settings.videoCodec !== undefined) this.opts.videoCodec = json.settings.videoCodec;
+      if (json.settings.bitrate !== undefined) this.opts.bitrate = json.settings.bitrate;
       if (json.settings.audio !== undefined) {
-        this.opts.audio =
-          json.settings.audio === false ? false : (undefined as any);
+        this.opts.audio = json.settings.audio === false ? false : (undefined as any);
       }
-      if (json.settings.audioCodec !== undefined)
-        this.opts.audioCodec = json.settings.audioCodec;
+      if (json.settings.audioCodec !== undefined) this.opts.audioCodec = json.settings.audioCodec;
       if (json.settings.audioSampleRate !== undefined)
         this.opts.audioSampleRate = json.settings.audioSampleRate;
       if (json.settings.metaDataTags !== undefined)
         this.opts.metaDataTags = json.settings.metaDataTags;
     }
 
-    // Load all clips
-    for (const clipJSON of json.clips) {
+    // Build map of clipId -> zIndex based on tracks
+    const clipZIndices = new Map<string, number>();
+    if (json.tracks) {
+      const totalTracks = json.tracks.length;
+      json.tracks.forEach((track, trackIndex) => {
+        if (track.clipIds) {
+          for (const cid of track.clipIds) {
+            // Track 0 -> Highest Z-index
+            clipZIndices.set(cid, (totalTracks - trackIndex) * 10);
+          }
+        }
+      });
+    }
+
+    // Load all clips (normalize object/array)
+    const clipsArray = (
+      Array.isArray(json.clips) ? json.clips : json.clips ? Object.values(json.clips) : []
+    ) as ClipJSON[];
+
+    for (const clipJSON of clipsArray) {
       const clip = await jsonToClip(clipJSON);
+
+      // Apply zIndex from track order if available
+      if (clipZIndices.has(clip.id)) {
+        clip.zIndex = clipZIndices.get(clip.id)!;
+      }
+
       await this.addSprite(clip, { main: clipJSON.main || false });
+    }
+
+    // Restore transition links on target clips and recalculate timing
+    for (const clip of this.sprites) {
+      if (clip instanceof Transition) {
+        const fromClip = clip.fromClipId
+          ? this.sprites.find((s) => s.id === clip.fromClipId)
+          : null;
+        const toClip = clip.toClipId ? this.sprites.find((s) => s.id === clip.toClipId) : null;
+
+        // Recalculate transition timing based on actual clip positions
+        // Transition should be centered at the junction between fromClip ending and toClip starting
+        if (fromClip && toClip) {
+          const toStart = toClip.display.from;
+
+          // Transition is centered at the junction (overlap between fromClip ending and toClip starting)
+          const transitionStart = Math.max(0, toStart - clip.duration / 2);
+          const transitionEnd = transitionStart + clip.duration;
+          // Update transition clip timing
+          clip.display.from = transitionStart;
+          clip.display.to = transitionEnd;
+        }
+
+        const transitionMeta = {
+          name: clip.transitionKey,
+          key: clip.transitionKey,
+          duration: clip.duration,
+          fromClipId: clip.fromClipId,
+          toClipId: clip.toClipId,
+          start: clip.display.from,
+          end: clip.display.to,
+        };
+
+        if (fromClip) {
+          (fromClip as any).transition = { ...transitionMeta };
+        }
+
+        if (toClip) {
+          (toClip as any).transition = { ...transitionMeta };
+        }
+      }
     }
   }
 
@@ -662,7 +701,7 @@ export class Compositor extends EventEmitter<{
    */
   public async renderFrame(timeMs: number): Promise<string> {
     if (this.destroyed) {
-      throw new Error('Compositor has been destroyed.');
+      throw new Error("Compositor has been destroyed.");
     }
 
     // Lazily initialise Pixi so callers don't have to call initPixiApp() first
@@ -672,8 +711,8 @@ export class Compositor extends EventEmitter<{
 
     if (this.pixiApp == null) {
       throw new Error(
-        'Compositor Pixi application could not be initialised. ' +
-          'Ensure width and height are greater than 0.'
+        "Compositor Pixi application could not be initialised. " +
+          "Ensure width and height are greater than 0.",
       );
     }
 
@@ -699,8 +738,8 @@ export class Compositor extends EventEmitter<{
     // Extract the rendered frame from the Pixi stage as a base64 PNG
     const base64 = await (this.pixiApp.renderer.extract as any).base64(
       this.pixiApp.stage,
-      'image/png',
-      1
+      "image/png",
+      1,
     );
 
     return base64;
@@ -734,10 +773,7 @@ function createSpritesRender(opts: {
   >();
 
   // Transition state
-  const transitionRenderers = new Map<
-    string,
-    ReturnType<typeof makeTransition>
-  >();
+  const transitionRenderers = new Map<string, ReturnType<typeof makeTransition>>();
   const transitionSprites = new Map<string, Sprite>();
   const transFromTexture = RenderTexture.create({
     width: pixiApp?.renderer.width || 0,
@@ -752,19 +788,22 @@ function createSpritesRender(opts: {
     .fill({ color: 0x000000 });
 
   // Create filters cache - cache both the filter and the render function
-  const effectCache = new Map<
-    string,
-    { filter: Filter; render: (opts: any) => Texture }
-  >();
+  const effectCache = new Map<string, { filter: Filter; render: (opts: any) => Texture }>();
+
+  // Pre-allocate a reusable RenderTexture for the effects pipeline
+  // instead of creating/destroying one per effect per frame
+  const effectInputTexture = hasVideoTrack
+    ? RenderTexture.create({
+        width: pixiApp?.renderer.width || 0,
+        height: pixiApp?.renderer.height || 0,
+      })
+    : null;
   const getClipFrameAtTimestamp = async (
     clip: IClip,
     timestamp: number,
-    getFrameCached: (clip: IClip, timestamp: number) => Promise<any>
+    getFrameCached: (clip: IClip, timestamp: number) => Promise<any>,
   ) => {
-    const relTime = Math.max(
-      0,
-      Math.min(timestamp - clip.display.from, clip.duration)
-    );
+    const relTime = Math.max(0, Math.min(timestamp - clip.display.from, clip.duration));
     // Ensure animation state is updated for the sampled timestamp
     // This is critical for modular animations during transitions
     clip.animate(relTime * clip.playbackRate);
@@ -773,10 +812,44 @@ function createSpritesRender(opts: {
     return video;
   };
 
+  // Pooled scene objects for renderClipToTransitionTexture, keyed by clip ID.
+  // Avoids creating+destroying Container/Sprite/Graphics on every frame during transitions.
+  const transClipPool = new Map<
+    string,
+    {
+      root: Container;
+      mainSprite: Sprite;
+      mirrors: Sprite[];
+      maskGfx: Graphics | null;
+      strokeGfx: Graphics | null;
+      shadowGfx: Graphics | null;
+    }
+  >();
+
+  const getTransClipObjects = (clipId: string) => {
+    let entry = transClipPool.get(clipId);
+    if (entry == null) {
+      const root = new Container();
+      const mainSprite = new Sprite();
+      mainSprite.anchor.set(0.5, 0.5);
+      root.addChild(mainSprite);
+      entry = {
+        root,
+        mainSprite,
+        mirrors: [],
+        maskGfx: null,
+        strokeGfx: null,
+        shadowGfx: null,
+      };
+      transClipPool.set(clipId, entry);
+    }
+    return entry;
+  };
+
   const renderClipToTransitionTexture = (
     clip: IClip,
-    frame: ImageBitmap | Texture,
-    target: RenderTexture
+    frame: VideoFrame | ImageBitmap | Texture,
+    target: RenderTexture,
   ) => {
     if (!pixiApp) return;
 
@@ -784,7 +857,8 @@ function createSpritesRender(opts: {
     const { renderTransform } = clip;
     const isMirrored = (renderTransform?.mirror ?? 0) > 0.5;
 
-    const tex = frame instanceof Texture ? frame : Texture.from(frame);
+    const isFrameTexture = frame instanceof Texture;
+    const tex = isFrameTexture ? frame : Texture.from(frame as any);
 
     const xOffset = renderTransform?.x ?? 0;
     const yOffset = renderTransform?.y ?? 0;
@@ -799,86 +873,81 @@ function createSpritesRender(opts: {
     const textureWidth = tex.width || 1;
     const textureHeight = tex.height || 1;
 
-    const isCaption = (clip as any).type === 'Caption';
+    const isCaption = (clip as any).type === "Caption";
 
     const baseScaleX =
-      !isCaption && clip.width && clip.width !== 0
-        ? Math.abs(clip.width) / textureWidth
-        : 1;
+      !isCaption && clip.width && clip.width !== 0 ? Math.abs(clip.width) / textureWidth : 1;
     const baseScaleY =
-      !isCaption && clip.height && clip.height !== 0
-        ? Math.abs(clip.height) / textureHeight
-        : 1;
+      !isCaption && clip.height && clip.height !== 0 ? Math.abs(clip.height) / textureHeight : 1;
 
     const combinedScaleX = baseScaleX * scaleMultiplier * scaleXMultiplier;
     const combinedScaleY = baseScaleY * scaleMultiplier * scaleYMultiplier;
 
-    // Create a root container that holds everything
-    const rootContainer = new Container();
+    // Reuse pooled objects
+    const pooled = getTransClipObjects(clip.id);
+    const { root: rootContainer, mainSprite: tempSprite } = pooled;
+
     rootContainer.x = clip.center.x + xOffset;
     rootContainer.y = clip.center.y + yOffset;
     rootContainer.rotation =
-      ((clip.flip == null ? 1 : -1) * ((clip.angle + angleOffset) * Math.PI)) /
-      180;
+      ((clip.flip == null ? 1 : -1) * ((clip.angle + angleOffset) * Math.PI)) / 180;
     rootContainer.alpha = clip.opacity * opacityMultiplier;
 
-    // Create the main sprite
-    const tempSprite = new Sprite(tex);
-    tempSprite.anchor.set(0.5, 0.5);
-
-    let mirrorSprites: Sprite[] = [];
+    tempSprite.texture = tex;
 
     if (isMirrored) {
-      // True reflection: original at normal position, mirrors on all sides
       const sX = combinedScaleX;
       const sY = combinedScaleY;
       const scaledW = textureWidth * sX;
       const scaledH = textureHeight * sY;
 
-      // Original sprite at normal position
       tempSprite.position.set(0, 0);
       tempSprite.scale.set(sX, sY);
 
-      // Mirror layout: [dx, dy, scaleX, scaleY]
-      const mirrors: [number, number, number, number][] = [
-        [scaledW, 0, -sX, sY], // right
-        [-scaledW, 0, -sX, sY], // left
-        [0, scaledH, sX, -sY], // bottom
-        [0, -scaledH, sX, -sY], // top
-        [scaledW, scaledH, -sX, -sY], // bottom-right
-        [-scaledW, scaledH, -sX, -sY], // bottom-left
-        [scaledW, -scaledH, -sX, -sY], // top-right
-        [-scaledW, -scaledH, -sX, -sY], // top-left
+      const mirrorLayout: [number, number, number, number][] = [
+        [scaledW, 0, -sX, sY],
+        [-scaledW, 0, -sX, sY],
+        [0, scaledH, sX, -sY],
+        [0, -scaledH, sX, -sY],
+        [scaledW, scaledH, -sX, -sY],
+        [-scaledW, scaledH, -sX, -sY],
+        [scaledW, -scaledH, -sX, -sY],
+        [-scaledW, -scaledH, -sX, -sY],
       ];
 
-      for (const [dx, dy, sx, sy] of mirrors) {
-        const ms = new Sprite(tex);
+      // Ensure we have 8 mirror sprites (create on first use, reuse after)
+      while (pooled.mirrors.length < 8) {
+        const ms = new Sprite();
         ms.anchor.set(0.5, 0.5);
-        ms.position.set(dx, dy);
-        ms.scale.set(sx, sy);
-        mirrorSprites.push(ms);
+        rootContainer.addChild(ms);
+        pooled.mirrors.push(ms);
       }
 
-      // Apply flip
+      for (let i = 0; i < 8; i++) {
+        const [dx, dy, sx, sy] = mirrorLayout[i];
+        const ms = pooled.mirrors[i];
+        ms.texture = tex;
+        ms.visible = true;
+        ms.position.set(dx, dy);
+        ms.scale.set(sx, sy);
+      }
+
       if (clip.flip?.x) {
         tempSprite.scale.x = -sX;
         for (let i = 0; i < 8; i++) {
-          mirrorSprites[i].scale.x = -mirrors[i][2];
+          pooled.mirrors[i].scale.x = -mirrorLayout[i][2];
         }
-      } 
+      }
       if (clip.flip?.y) {
         tempSprite.scale.y = -sY;
         for (let i = 0; i < 8; i++) {
-          mirrorSprites[i].scale.y = -mirrors[i][3];
+          pooled.mirrors[i].scale.y = -mirrorLayout[i][3];
         }
       }
-
-      rootContainer.addChild(tempSprite);
-      for (const ms of mirrorSprites) {
-        rootContainer.addChild(ms);
-      }
     } else {
-      // Standard single sprite
+      // Hide mirror sprites if they exist
+      for (const ms of pooled.mirrors) ms.visible = false;
+
       if (clip.flip?.x) {
         tempSprite.scale.x = -combinedScaleX;
         tempSprite.scale.y = combinedScaleY;
@@ -889,7 +958,6 @@ function createSpritesRender(opts: {
         tempSprite.scale.x = combinedScaleX;
         tempSprite.scale.y = combinedScaleY;
       }
-      rootContainer.addChild(tempSprite);
     }
 
     // Apply Filters
@@ -902,31 +970,27 @@ function createSpritesRender(opts: {
       filters.push(blurFilter);
     }
 
-    const hasClipColorAdjustment = hasColorAdjustment(
-      (clip as any).colorAdjustment
-    );
+    const hasClipColorAdjustment = hasColorAdjustment((clip as any).colorAdjustment);
     if (brightnessMultiplier !== 1 || hasClipColorAdjustment) {
       const brightnessFilter = new ColorMatrixFilter();
       applyColorAdjustmentToMatrix(
         brightnessFilter,
         (clip as any).colorAdjustment,
-        brightnessMultiplier
+        brightnessMultiplier,
       );
       filters.push(brightnessFilter);
     }
 
-    const activeSelectiveHslList = getAllSelectiveHsl(
-      (clip as any).colorAdjustment
-    );
+    const activeSelectiveHslList = getAllSelectiveHsl((clip as any).colorAdjustment);
     for (let i = 0; i < activeSelectiveHslList.length; i++) {
       const activeSelectiveHsl = activeSelectiveHslList[i];
       const hslUniforms = new UniformGroup({
-        uTargetColor: { value: [1, 1, 0], type: 'vec3<f32>' },
-        uHueShift: { value: activeSelectiveHsl.hue, type: 'f32' },
-        uSatShift: { value: activeSelectiveHsl.saturation / 100, type: 'f32' },
-        uLightShift: { value: activeSelectiveHsl.lightness / 100, type: 'f32' },
-        uTolerance: { value: 0.22, type: 'f32' },
-        uSoftness: { value: 0.12, type: 'f32' },
+        uTargetColor: { value: [1, 1, 0], type: "vec3<f32>" },
+        uHueShift: { value: activeSelectiveHsl.hue, type: "f32" },
+        uSatShift: { value: activeSelectiveHsl.saturation / 100, type: "f32" },
+        uLightShift: { value: activeSelectiveHsl.lightness / 100, type: "f32" },
+        uTolerance: { value: 0.22, type: "f32" },
+        uSoftness: { value: 0.12, type: "f32" },
       });
       const rgb = hexToRgb(activeSelectiveHsl.targetColor);
       if (rgb) {
@@ -947,9 +1011,9 @@ function createSpritesRender(opts: {
 
     if (clip.chromaKey && clip.chromaKey.enabled) {
       const chromaUniforms = new UniformGroup({
-        uKeyColor: { value: [0, 1, 0], type: 'vec3<f32>' },
-        uSimilarity: { value: 0.1, type: 'f32' },
-        uSpill: { value: 0.0, type: 'f32' },
+        uKeyColor: { value: [0, 1, 0], type: "vec3<f32>" },
+        uSimilarity: { value: 0.1, type: "f32" },
+        uSpill: { value: 0.0, type: "f32" },
       });
 
       const rgb = hexToRgb(clip.chromaKey.color);
@@ -965,7 +1029,7 @@ function createSpritesRender(opts: {
         glProgram: new GlProgram({
           vertex,
           fragment: CHROMA_KEY_FRAGMENT,
-          name: 'ChromaKeyShader',
+          name: "ChromaKeyShader",
         }),
         resources: {
           chromaUniforms,
@@ -978,84 +1042,102 @@ function createSpritesRender(opts: {
 
     // Apply Styles (Border Radius, Stroke, Shadow)
     const borderRadius = style.borderRadius || 0;
-    let maskGraphics: Graphics | null = null;
     if (borderRadius > 0) {
-      maskGraphics = new Graphics();
-      maskGraphics.roundRect(
+      if (pooled.maskGfx == null) {
+        pooled.maskGfx = new Graphics();
+        tempSprite.addChild(pooled.maskGfx);
+      }
+      pooled.maskGfx.clear();
+      pooled.maskGfx.roundRect(
         -textureWidth / 2,
         -textureHeight / 2,
         textureWidth,
         textureHeight,
-        Math.min(borderRadius, textureWidth / 2, textureHeight / 2)
+        Math.min(borderRadius, textureWidth / 2, textureHeight / 2),
       );
-      maskGraphics.fill({ color: 0xffffff, alpha: 1 });
-      tempSprite.addChild(maskGraphics);
-      tempSprite.mask = maskGraphics;
+      pooled.maskGfx.fill({ color: 0xffffff, alpha: 1 });
+      tempSprite.mask = pooled.maskGfx;
+    } else if (pooled.maskGfx != null) {
+      tempSprite.mask = null;
     }
 
     const stroke = style.stroke;
-    let strokeGraphics: Graphics | null = null;
     if (stroke && stroke.width > 0) {
-      strokeGraphics = new Graphics();
+      if (pooled.strokeGfx == null) {
+        pooled.strokeGfx = new Graphics();
+        tempSprite.addChild(pooled.strokeGfx);
+      }
+      pooled.strokeGfx.clear();
       const color = parseColor(stroke.color) ?? 0xffffff;
-      strokeGraphics.setStrokeStyle({
+      let alignment = 1;
+      if (stroke.alignment !== undefined) {
+        if (typeof stroke.alignment === "number") {
+          alignment = stroke.alignment;
+        } else if (stroke.alignment === "center" || stroke.alignment === "middle") {
+          alignment = 0.5;
+        } else if (stroke.alignment === "inside") {
+          alignment = 0;
+        } else if (stroke.alignment === "outside") {
+          alignment = 1;
+        }
+      }
+      pooled.strokeGfx.setStrokeStyle({
         width: stroke.width,
         color: color,
-        alignment: 1,
+        alignment: alignment,
       });
 
       if (borderRadius > 0) {
         const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
-        strokeGraphics.roundRect(
+        pooled.strokeGfx.roundRect(
           -textureWidth / 2,
           -textureHeight / 2,
           textureWidth,
           textureHeight,
-          r
+          r,
         );
       } else {
-        strokeGraphics.rect(
-          -textureWidth / 2,
-          -textureHeight / 2,
-          textureWidth,
-          textureHeight
-        );
+        pooled.strokeGfx.rect(-textureWidth / 2, -textureHeight / 2, textureWidth, textureHeight);
       }
-      strokeGraphics.stroke();
-      tempSprite.addChild(strokeGraphics);
+      pooled.strokeGfx.stroke();
+      pooled.strokeGfx.visible = true;
+    } else if (pooled.strokeGfx != null) {
+      pooled.strokeGfx.visible = false;
     }
 
-    const shadow = style.dropShadow;
-    let shadowGraphics: Graphics | null = null;
-    if (shadow && (shadow.blur > 0 || shadow.distance > 0)) {
-      shadowGraphics = new Graphics();
+    const shadow = style.shadow;
+    if (shadow && (shadow.blur > 0 || (shadow.offsetX ?? 0) !== 0 || (shadow.offsetY ?? 0) !== 0)) {
+      if (pooled.shadowGfx == null) {
+        pooled.shadowGfx = new Graphics();
+        rootContainer.addChildAt(pooled.shadowGfx, 0);
+      }
+      pooled.shadowGfx.clear();
       const color = parseColor(shadow.color) ?? 0x000000;
       const alpha = shadow.alpha ?? 0.5;
-      const distance = shadow.distance ?? 0;
-      const angle = shadow.angle ?? 0;
-
-      const dx = Math.cos(angle) * distance;
-      const dy = Math.sin(angle) * distance;
+      const dx = shadow.offsetX ?? 0;
+      const dy = shadow.offsetY ?? 0;
 
       if (borderRadius > 0) {
         const r = Math.min(borderRadius, textureWidth / 2, textureHeight / 2);
-        shadowGraphics.roundRect(
+        pooled.shadowGfx.roundRect(
           -textureWidth / 2 + dx,
           -textureHeight / 2 + dy,
           textureWidth,
           textureHeight,
-          r
+          r,
         );
       } else {
-        shadowGraphics.rect(
+        pooled.shadowGfx.rect(
           -textureWidth / 2 + dx,
           -textureHeight / 2 + dy,
           textureWidth,
-          textureHeight
+          textureHeight,
         );
       }
-      shadowGraphics.fill({ color, alpha });
-      rootContainer.addChildAt(shadowGraphics, 0);
+      pooled.shadowGfx.fill({ color, alpha });
+      pooled.shadowGfx.visible = true;
+    } else if (pooled.shadowGfx != null) {
+      pooled.shadowGfx.visible = false;
     }
 
     pixiApp.renderer.render({
@@ -1064,15 +1146,10 @@ function createSpritesRender(opts: {
       clear: true,
     });
 
-    if (!(frame instanceof Texture)) {
-      tempSprite.texture.destroy(true);
+    // Destroy temporary texture created from non-Texture frames
+    if (!isFrameTexture) {
+      tex.destroy(true);
     }
-    if (strokeGraphics) strokeGraphics.destroy();
-    if (maskGraphics) maskGraphics.destroy();
-    if (shadowGraphics) shadowGraphics.destroy();
-    for (const ms of mirrorSprites) ms.destroy();
-    tempSprite.destroy();
-    rootContainer.destroy();
   };
 
   // Containers for global effect rendering and transitions
@@ -1097,6 +1174,15 @@ function createSpritesRender(opts: {
   // Pre-sort sprites once as they don't change during encoding
   const sortedSprites = [...sprites].sort((a, b) => a.zIndex - b.zIndex);
 
+  // Pre-build ID→sprite lookup map to avoid O(n) .find() scans per frame
+  const spriteById = new Map<string, (typeof sprites)[number]>();
+  // Pre-build index map for track-order comparisons in effects pipeline
+  const spriteIndexById = new Map<string, number>();
+  for (let i = 0; i < sprites.length; i++) {
+    spriteById.set(sprites[i].id, sprites[i]);
+    spriteIndexById.set(sprites[i].id, i);
+  }
+
   const render = async (timestamp: number) => {
     const audios: Float32Array[][] = [];
     let mainSprDone = false;
@@ -1105,10 +1191,7 @@ function createSpritesRender(opts: {
     // Cache to store getFrame results for each clip at the current timestamp
     // This prevents redundant getFrame calls (e.g., during transitions)
     // which can cause audio choppiness if the underlying source advances on each call.
-    const frameCache = new Map<
-      IClip,
-      { video: any; audio: Float32Array[]; done: boolean }
-    >();
+    const frameCache = new Map<IClip, { video: any; audio: Float32Array[]; done: boolean }>();
 
     const getFrameCached = async (sprite: IClip, relTime: number) => {
       if (frameCache.has(sprite)) return frameCache.get(sprite)!;
@@ -1122,6 +1205,10 @@ function createSpritesRender(opts: {
       sprite.visible = false;
     }
 
+    // Track clip IDs claimed by active transitions this frame
+    // These clips should NOT render normally (the transition sprite handles them)
+    const clipsClaimedByTransition = new Set<string>();
+
     if (hasVideoTrack && pixiApp != null) {
       // Make sure we clear stage (or the containers) if needed
       // Actually we just reuse them and update children
@@ -1129,6 +1216,12 @@ function createSpritesRender(opts: {
 
     for (const sprite of sortedSprites) {
       if (aborter.aborted) break;
+
+      const exceededDisplayTo = sprite.display.to > 0 && timestamp >= sprite.display.to;
+      if (exceededDisplayTo) {
+        sprite.expired = true;
+      }
+
       if (timestamp < sprite.display.from || sprite.expired) {
         // Even if expired, we might need to hide renderer
         if (hasVideoTrack && pixiApp != null) {
@@ -1153,11 +1246,20 @@ function createSpritesRender(opts: {
       // Process audio
       audios.push(audio);
 
+      const isTransitionable = sprite.type === "Video" || sprite.type === "Image";
+      const transitionStartTime = sprite.transition ? sprite.transition.start! : 0;
+      const transitionEndTime = sprite.transition ? sprite.transition.end! : 0;
+      const inTransition =
+        isTransitionable &&
+        sprite.transition &&
+        timestamp >= transitionStartTime &&
+        timestamp < transitionEndTime;
+
       // Handle video rendering if we have a Pixi app
       if (hasVideoTrack && pixiApp != null && clipsNormalContainer != null) {
         if (sprite instanceof Transition) {
-          const fromClip = sprites.find((s) => s.id === sprite.fromClipId);
-          const toClip = sprites.find((s) => s.id === sprite.toClipId);
+          const fromClip = spriteById.get(sprite.fromClipId ?? "");
+          const toClip = spriteById.get(sprite.toClipId ?? "");
 
           if (fromClip && toClip) {
             const relativeTime = timestamp - sprite.display.from;
@@ -1170,34 +1272,19 @@ function createSpritesRender(opts: {
                 transSprite.visible = false;
               }
             } else {
-              const fromFrame = await getClipFrameAtTimestamp(
-                fromClip,
-                timestamp,
-                getFrameCached
-              );
-              const toFrame = await getClipFrameAtTimestamp(
-                toClip,
-                timestamp,
-                getFrameCached
-              );
+              const fromFrame = await getClipFrameAtTimestamp(fromClip, timestamp, getFrameCached);
+              const toFrame = await getClipFrameAtTimestamp(toClip, timestamp, getFrameCached);
 
               if (fromFrame && toFrame) {
-                const progress = Math.min(
-                  Math.max(relativeTime / sprite.duration, 0),
-                  1
-                );
+                const progress = Math.min(Math.max(relativeTime / sprite.duration, 0), 1);
 
-                renderClipToTransitionTexture(
-                  fromClip,
-                  fromFrame,
-                  transFromTexture
-                );
+                renderClipToTransitionTexture(fromClip, fromFrame, transFromTexture);
                 renderClipToTransitionTexture(toClip, toFrame, transToTexture);
 
                 let transRenderer = transitionRenderers.get(sprite.id);
                 if (!transRenderer) {
                   transRenderer = makeTransition({
-                    name: sprite.transitionEffect.key,
+                    name: sprite.transitionKey,
                     renderer: pixiApp.renderer,
                   });
                   transitionRenderers.set(sprite.id, transRenderer);
@@ -1241,6 +1328,10 @@ function createSpritesRender(opts: {
                   const root = toRenderer.getRoot();
                   if (root) root.visible = false;
                 }
+
+                // Mark from/to clips so they don't render normally later in the loop
+                if (fromClip) clipsClaimedByTransition.add(fromClip.id);
+                if (toClip) clipsClaimedByTransition.add(toClip.id);
                 continue;
               }
             }
@@ -1249,17 +1340,14 @@ function createSpritesRender(opts: {
 
         let renderer = spriteRenderers.get(sprite);
         if (renderer == null && video != null) {
-          renderer = new PixiSpriteRenderer(
-            pixiApp,
-            sprite,
-            clipsNormalContainer
-          );
+          renderer = new PixiSpriteRenderer(pixiApp, sprite, clipsNormalContainer);
           spriteRenderers.set(sprite, renderer);
         }
 
         if (renderer != null) {
           const root = renderer.getRoot();
-          if (video != null) {
+          const claimedByTransition = clipsClaimedByTransition.has(sprite.id);
+          if (video != null && !inTransition && !claimedByTransition) {
             hasVideo = true;
             if (root) root.visible = true;
             await renderer.updateFrame(video);
@@ -1274,7 +1362,9 @@ function createSpritesRender(opts: {
 
       // Check if sprite is done or expired
 
-      if ((sprite.duration > 0 && relativeTime > sprite.duration) || done) {
+      const exceededDuration = sprite.duration > 0 && relativeTime > sprite.duration;
+      const exceededDisplayToAfter = sprite.display.to > 0 && timestamp >= sprite.display.to;
+      if (exceededDuration || exceededDisplayToAfter || done) {
         if (sprite.main) mainSprDone = true;
 
         // Mark as expired but DON'T destroy yet
@@ -1288,13 +1378,9 @@ function createSpritesRender(opts: {
             if (root) root.visible = false;
           }
         }
-      } else if (hasVideoTrack) {
-        // Update transforms in case sprite properties changed
-        const renderer = spriteRenderers.get(sprite);
-        if (renderer != null) {
-          renderer.updateTransforms();
-        }
       }
+      // Note: updateTransforms() is already called at line ~1388 above
+      // so no additional call is needed here.
     }
 
     // Handle Global Effects rendering
@@ -1323,11 +1409,11 @@ function createSpritesRender(opts: {
           ) {
             activeGlobalEffects.push({
               id: sprite.id,
-              key: (sprite as Effect).effect.key,
+              key: (sprite as Effect).effectKey,
               startTime: sprite.display.from,
               duration: sprite.duration,
               zIndex: sprite.zIndex,
-              values: (sprite as Effect).effect.values,
+              values: (sprite as Effect).values,
             });
           }
         }
@@ -1335,10 +1421,7 @@ function createSpritesRender(opts: {
         // Check for attached effects (legacy)
         if (sprite.effects && sprite.effects.length > 0) {
           for (const effect of sprite.effects) {
-            if (
-              timestamp >= effect.startTime &&
-              timestamp < effect.startTime + effect.duration
-            ) {
+            if (timestamp >= effect.startTime && timestamp < effect.startTime + effect.duration) {
               // Attached effects use the clip's zIndex for sorting
               activeGlobalEffects.push({
                 ...effect,
@@ -1370,18 +1453,15 @@ function createSpritesRender(opts: {
 
         let lastResultTexture: Texture | null = null;
         const processedClips = new Set<string>();
-        const intermediateTextures: RenderTexture[] = [];
 
         for (const effect of activeGlobalEffects) {
           const { key, startTime, duration, id, zIndex } = effect;
           const elapsed = timestamp - startTime;
-          const progress =
-            duration > 0 ? Math.min(Math.max(elapsed / duration, 0), 1) : 0;
+          const progress = duration > 0 ? Math.min(Math.max(elapsed / duration, 0), 1) : 0;
 
           // Check if this is an Adjustment Layer Effect
-          const isAdjustmentLayer = sprites.some(
-            (s) => s.id === id && s instanceof Effect
-          );
+          const adjSprite = spriteById.get(id);
+          const isAdjustmentLayer = adjSprite != null && adjSprite instanceof Effect;
 
           clipsEffectContainer.removeChildren();
 
@@ -1394,17 +1474,23 @@ function createSpritesRender(opts: {
           }
 
           // Move affected clips that are BELOW this effect layer
+          // "Below" means: lower zIndex, or same zIndex but appears later in
+          // the sprites array (tracks are ordered top-to-bottom, so higher
+          // array index = visually below).
+          const effectIdx = spriteIndexById.get(id) ?? -1;
+
           for (const sprite of sprites) {
             if (processedClips.has(sprite.id)) continue;
 
             let shouldApply = false;
             if (isAdjustmentLayer) {
-              // Apply to clips below this effect's zIndex
-              shouldApply = sprite.id !== id && sprite.zIndex < zIndex;
+              if (sprite.id === id) continue;
+              const sprIdx = spriteIndexById.get(sprite.id) ?? -1;
+              shouldApply =
+                sprite.zIndex < zIndex || (sprite.zIndex === zIndex && sprIdx > effectIdx);
             } else {
               // Legacy attached effect
-              shouldApply =
-                !!sprite.effects && sprite.effects.some((e) => e.id === id);
+              shouldApply = !!sprite.effects && sprite.effects.some((e) => e.id === id);
             }
 
             if (shouldApply) {
@@ -1421,8 +1507,7 @@ function createSpritesRender(opts: {
               // Also check for Transition Sprite
               const transSprite = transitionSprites.get(sprite.id);
               if (transSprite) {
-                if (transSprite.parent)
-                  (transSprite.parent as Container).removeChild(transSprite);
+                if (transSprite.parent) (transSprite.parent as Container).removeChild(transSprite);
                 clipsEffectContainer.addChild(transSprite);
                 processedClips.add(sprite.id);
               }
@@ -1443,7 +1528,7 @@ function createSpritesRender(opts: {
                   effectCache.set(id, effectCached);
                 }
               } catch (e) {
-                console.warn('Failed to create effect', key, e);
+                console.warn("Failed to create effect", key, e);
               }
             }
 
@@ -1453,20 +1538,17 @@ function createSpritesRender(opts: {
                 filter.resources.effectUniforms.uniforms.uTime = progress;
               }
 
-              const inputTexture = RenderTexture.create({ width, height });
-              intermediateTextures.push(inputTexture);
-
               clipsEffectContainer.visible = true;
               pixiApp.renderer.render({
                 container: clipsEffectContainer,
-                target: inputTexture,
+                target: effectInputTexture!,
                 clear: true,
               });
               clipsEffectContainer.visible = false;
 
               if (render) {
                 const resultTexture = render({
-                  canvasTexture: inputTexture,
+                  canvasTexture: effectInputTexture!,
                   progress,
                   width,
                   height,
@@ -1482,12 +1564,26 @@ function createSpritesRender(opts: {
           resultSprite.width = width;
           resultSprite.height = height;
           postProcessContainer.addChild(resultSprite);
+
+          // Move clips that are ABOVE all effects into postProcessContainer
+          // so they render on top of the effect result (which is full-screen opaque).
+          for (const sprite of sprites) {
+            if (processedClips.has(sprite.id)) continue;
+            if (sprite instanceof Effect) continue;
+            if (sprite.expired) continue;
+
+            const renderer = spriteRenderers.get(sprite);
+            if (renderer) {
+              const root = renderer.getRoot();
+              if (root && root.visible) {
+                if (root.parent) (root.parent as Container).removeChild(root);
+                postProcessContainer.addChild(root);
+              }
+            }
+          }
         }
 
-        // Cleanup intermediate textures to avoid memory leaks
-        for (const tex of intermediateTextures) {
-          tex.destroy(true);
-        }
+        // effectInputTexture is reused across frames, no per-frame cleanup needed
       }
     }
 
@@ -1508,11 +1604,18 @@ function createSpritesRender(opts: {
     if (transFromTexture) transFromTexture.destroy(true);
     if (transToTexture) transToTexture.destroy(true);
     if (transBgGraphics) transBgGraphics.destroy(true);
+    if (effectInputTexture) effectInputTexture.destroy(true);
     for (const sprite of transitionSprites.values()) {
       sprite.destroy();
     }
     transitionSprites.clear();
     transitionRenderers.clear();
+
+    // Clean up transition clip object pool
+    for (const entry of transClipPool.values()) {
+      entry.root.destroy({ children: true });
+    }
+    transClipPool.clear();
 
     // Clean up containers
     if (clipsEffectContainer) clipsEffectContainer.destroy({ children: true });
@@ -1544,10 +1647,9 @@ function createAVEncoder(opts: {
 
   const audioTrackBuf = createAudioTrackBuf(1024);
 
-  return (timestamp: number, audios: Float32Array[][], hasVideo: boolean) => {
+  return async (timestamp: number, audios: Float32Array[][], hasVideo: boolean) => {
     if (outputAudio !== false) {
-      for (const audioData of audioTrackBuf(timestamp, audios))
-        muxer.encodeAudio(audioData);
+      for (const audioData of audioTrackBuf(timestamp, audios)) await muxer.encodeAudio(audioData);
     }
 
     // Only encode video if we have video track AND we actually have video frames
@@ -1560,7 +1662,7 @@ function createAVEncoder(opts: {
           timestamp: timestamp,
         });
 
-        muxer.encodeVideo(frame, {
+        await muxer.encodeVideo(frame, {
           keyFrame: frameCnt % gopSize === 0,
         });
 
@@ -1568,10 +1670,7 @@ function createAVEncoder(opts: {
       } catch (err) {
         // If canvas is not ready, skip this frame
         // This can happen if the canvas hasn't been rendered to yet
-        console.warn(
-          'Failed to create VideoFrame from canvas, skipping frame:',
-          err
-        );
+        console.warn("Failed to create VideoFrame from canvas, skipping frame:", err);
       }
     }
   };
@@ -1605,9 +1704,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
           numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
           numberOfFrames: framesPerChunk,
           sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-          format: 'f32',
+          format: "f32",
           data: channelBuf.subarray(readPos, readPos + dataSize),
-        })
+        }),
       );
       readPos += dataSize;
       audioTimestamp += chunkDuration;
@@ -1623,9 +1722,9 @@ export function createAudioTrackBuf(framesPerChunk: number) {
           numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
           numberOfFrames: framesPerChunk,
           sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
-          format: 'f32',
+          format: "f32",
           data: placeholderData,
-        })
+        }),
       );
       audioTimestamp += chunkDuration;
     }

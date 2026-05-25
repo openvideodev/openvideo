@@ -1,14 +1,14 @@
-import { BaseClip } from './base-clip';
-import { type IClip } from './iclip';
-import { type EffectKey } from '../effect/glsl/gl-effect';
-import { camelToWords } from '../utils/effect';
+import { BaseClip } from "./base-clip";
+import { type IClip } from "./iclip";
+import { type EffectKey } from "../effect/glsl/gl-effect";
+import { camelToWords } from "../utils/effect";
 
 // Since Effect is an adjustment layer, it doesn't render visual content directly.
 // We can use a minimal dummy implementation for BaseClip abstract methods.
 
 export class Effect extends BaseClip {
-  readonly type = 'Effect';
-  ready: IClip['ready'];
+  readonly type = "Effect";
+  ready: IClip["ready"];
 
   private _meta = {
     duration: 5e6, // Default 5 seconds
@@ -26,22 +26,18 @@ export class Effect extends BaseClip {
   id: string = `clip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   /**
-   * The effect configuration
+   * The effect key
    */
-  effect: {
-    id: string;
-    key: EffectKey;
-    name: string;
-    values?: Record<string, any>;
-  };
+  effectKey: EffectKey;
+
+  /**
+   * Effect parameters / values
+   */
+  values: Record<string, any> = {};
 
   constructor(effectKey: EffectKey) {
     super();
-    this.effect = {
-      id: `eff_${Date.now()}`,
-      key: effectKey,
-      name: effectKey,
-    };
+    this.effectKey = effectKey;
     this.name = camelToWords(effectKey);
 
     // Ready immediately
@@ -50,32 +46,20 @@ export class Effect extends BaseClip {
   }
 
   async clone() {
-    const newClip = new Effect(this.effect.key);
+    const newClip = new Effect(this.effectKey);
     this.copyStateTo(newClip);
-    newClip.effect = { ...this.effect };
-    newClip.id = this.id; // Or generate new ID? Usually clone gets new ID if fully new instance, but `copyStateTo` copies props.
-    // But in Studio `studio.addClip` ensures unique ID if needed.
-    // Let's generate new ID for the clone naturally in constructor, and override if needed by caller.
-    // Wait, TextClip copies ID? `newClip.id = this.id`
-    // If we clone for "Split", we probably want new IDs?
-    // BaseClip.copyStateTo copies time/dimensions etc.
-    // TextClip seems to preserve ID which might be wrong for deep cloning unless it's for internal use.
-    // I'll follow TextClip pattern but be aware.
-    // Actually, distinct clips in timeline should have distinct IDs.
-    // If TextClip copies ID, it might be for some specific internal reason or a bug.
-    // I'll let the constructor generate a new ID, and NOT copy it, ensuring uniqueness.
-
+    newClip.values = { ...this.values };
     return newClip as this;
   }
 
   // Effect is invisible, so it returns empty/dummy data
   async tick(_time: number): Promise<{
     video: ImageBitmap | undefined;
-    state: 'success';
+    state: "success";
   }> {
     return {
       video: undefined,
-      state: 'success',
+      state: "success",
     };
   }
 
@@ -85,14 +69,25 @@ export class Effect extends BaseClip {
     return [clone1, clone2];
   }
 
-  toJSON(main: boolean = false): any {
-    const base = super.toJSON(main);
+  toJSON(_main: boolean = false): any {
     return {
-      ...base,
-      type: 'Effect',
-      effect: this.effect,
       id: this.id,
-      effects: this.effects,
+      type: "Effect",
+      name: this.name,
+      timing: {
+        display: {
+          from: this.timing.display.from,
+          to: this.timing.display.to,
+        },
+        trim: {
+          from: this.timing.trim.from,
+          to: this.timing.trim.to,
+        },
+        duration: this.timing.duration,
+        playbackRate: this.timing.playbackRate,
+      },
+      effectKey: this.effectKey,
+      values: this.values,
     };
   }
 
@@ -100,35 +95,29 @@ export class Effect extends BaseClip {
    * Create an Effect instance from a JSON object
    */
   static async fromObject(json: any): Promise<Effect> {
-    if (json.type !== 'Effect') {
+    if (json.type !== "Effect") {
       throw new Error(`Expected Effect, got ${json.type}`);
     }
 
-    const clip = new Effect(json.effect.key);
-    clip.effect = json.effect;
-
-    // Apply base properties
-    clip.left = json.left;
-    clip.top = json.top;
-    clip.width = json.width;
-    clip.height = json.height;
-    clip.angle = json.angle;
-
-    clip.display.from = json.display.from;
-    clip.display.to = json.display.to;
-    clip.duration = json.duration;
-    clip.playbackRate = json.playbackRate;
-
-    clip.zIndex = json.zIndex;
-    clip.opacity = json.opacity;
-    clip.flip = json.flip;
-
-    // Apply animation if present
-    if (json.animation) {
-      clip.setAnimation(json.animation.keyFrames, json.animation.opts);
+    const key = json.effectKey;
+    if (!key) {
+      throw new Error(`Missing effectKey in Effect JSON`);
     }
 
-    // Restore id if present
+    const clip = new Effect(key);
+    clip.values = json.values || {};
+
+    const timing = json.timing || {
+      display: json.display || { from: 0, to: 0 },
+      trim: json.trim || { from: 0, to: 0 },
+      duration: json.duration ?? 0,
+      playbackRate: json.playbackRate ?? 1,
+    };
+
+    clip.display.from = timing.display.from;
+    clip.display.to = timing.display.to;
+    clip.duration = timing.duration;
+
     if (json.id) {
       clip.id = json.id;
     }

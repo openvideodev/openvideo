@@ -6,7 +6,7 @@ import {
   ObjectEvents,
   SerializedObjectProps,
   TPointerEvent,
-} from 'fabric';
+} from "fabric";
 
 import {
   clearAuxiliaryObjects,
@@ -14,22 +14,19 @@ import {
   getGuides,
   getLineGuideStops,
   getObjectSnappingEdges,
-} from '../../utils/guideline';
-import { clearTrackHelperGuides, isHelperTrack } from '../../utils/canvas';
-import Timeline from '../../timeline';
-import { Track, Helper } from '../../objects';
+} from "../../utils/guideline";
+import { clearTrackHelperGuides, isHelperTrack } from "../../utils/canvas";
+import Timeline from "../../timeline";
+import { Track, Helper } from "../../objects";
 
-export function onObjectMoving(
-  this: Timeline,
-  e: ModifiedEvent<TPointerEvent>
-) {
+export function onObjectMoving(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
   const canvas = this;
   if (!canvas) return;
   const state = this.dragStateManager.getState();
   const enableGuideRedraw = state.enableGuideRedraw;
   const pointer = canvas.getScenePoint(e.e!);
 
-  const overTracks = canvas.getObjects('Helper', 'Track');
+  const overTracks = canvas.getObjects("Helper", "Track");
 
   const draggingOverTrack = overTracks.find((obj) => {
     const objRect = obj.getBoundingRect();
@@ -70,7 +67,7 @@ export function onObjectMoving(
   const skipObjects = [
     target,
     ...canvas.getActiveObjects(),
-    ...canvas.getObjects('Track', 'Helper', 'Transition', 'Placeholder'),
+    ...canvas.getObjects("Track", "Helper", "Transition", "Placeholder"),
   ];
 
   // find possible snapping lines
@@ -89,14 +86,11 @@ export function onObjectMoving(
     }
     // enableGuideRedraw = false;
     this.dragStateManager.setState({ enableGuideRedraw: false });
-    setTimeout(
-      () => this.dragStateManager.setState({ enableGuideRedraw: true }),
-      50
-    );
+    setTimeout(() => this.dragStateManager.setState({ enableGuideRedraw: true }), 50);
   }
   // now force object position
   guides.forEach((lineGuide) => {
-    if (lineGuide.orientation === 'V') {
+    if (lineGuide.orientation === "V") {
       target.left = lineGuide.lineGuide + lineGuide.offset;
     } else {
       target.top = lineGuide.lineGuide + lineGuide.offset;
@@ -108,7 +102,7 @@ function onObjectModified(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
   const canvas = e.target.canvas;
   if (!canvas) return;
   clearAuxiliaryObjects(canvas, canvas.getObjects());
-  clearTrackHelperGuides(canvas.getObjects('Helper'));
+  clearTrackHelperGuides(canvas.getObjects("Helper"));
 
   this.dragStateManager.setState({
     draggingOverTrack: null,
@@ -119,12 +113,8 @@ function onObjectModified(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
 function onObjectResizing(
   this: Timeline,
   e: BasicTransformEvent<TPointerEvent> & {
-    target: FabricObject<
-      Partial<FabricObjectProps>,
-      SerializedObjectProps,
-      ObjectEvents
-    >;
-  }
+    target: FabricObject<Partial<FabricObjectProps>, SerializedObjectProps, ObjectEvents>;
+  },
 ) {
   const canvas = this;
   const allObjects = canvas.getObjects();
@@ -133,26 +123,24 @@ function onObjectResizing(
   const corner = canvas._currentTransform?.corner;
   const targetRect = target.getBoundingRect();
 
-  if (transform.action === 'resizing') {
+  if (transform.action === "resizing") {
     // Skip active objects and selection
     const skipObjects = [
       target,
       ...canvas.getActiveObjects(),
-      ...canvas.getObjects('Track', 'Helper', 'Transition', 'Placeholder'),
+      ...canvas.getObjects("Track", "Helper", "Transition", "Placeholder"),
     ];
 
     // find possible snapping lines
     const lineGuideStops = getLineGuideStops(skipObjects, canvas);
-    const validatelineGuideStopsVertical = lineGuideStops.vertical.filter(
-      (dataV) => {
-        const val = dataV.val;
-        if (corner === 'ml') {
-          return val <= targetRect.left;
-        } else if (corner === 'mr') {
-          return val >= targetRect.left + targetRect.width;
-        }
+    const validatelineGuideStopsVertical = lineGuideStops.vertical.filter((dataV) => {
+      const val = dataV.val;
+      if (corner === "ml") {
+        return val <= targetRect.left;
+      } else if (corner === "mr") {
+        return val >= targetRect.left + targetRect.width;
       }
-    );
+    });
     lineGuideStops.vertical = validatelineGuideStopsVertical;
     const itemBounds = getObjectSnappingEdges(target);
     const guides = getGuides(lineGuideStops, itemBounds);
@@ -164,13 +152,13 @@ function onObjectResizing(
 }
 
 export function addGuidelineEvents(timeline: Timeline) {
-  timeline.on('object:moving', onObjectMoving.bind(timeline));
-  timeline.on('object:modified', onObjectModified.bind(timeline));
-  timeline.on('object:resizing', onObjectResizing.bind(timeline));
+  timeline.on("object:moving", onObjectMoving.bind(timeline));
+  timeline.on("object:modified", onObjectModified.bind(timeline));
+  timeline.on("object:resizing", onObjectResizing.bind(timeline));
 }
 
 export function removeGuidelineEvents(timeline: Timeline) {
-  timeline.off('object:moving', onObjectMoving.bind(timeline));
-  timeline.off('object:modified', onObjectModified.bind(timeline));
-  timeline.off('object:resizing', onObjectResizing.bind(timeline));
+  timeline.off("object:moving", onObjectMoving.bind(timeline));
+  timeline.off("object:modified", onObjectModified.bind(timeline));
+  timeline.off("object:resizing", onObjectResizing.bind(timeline));
 }

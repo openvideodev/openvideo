@@ -1,13 +1,9 @@
-import { Log } from '../utils/log';
-import {
-  concatPCMFragments,
-  extractPCM4AudioBuffer,
-  ringSliceFloat32Array,
-} from '../utils';
-import { BaseClip } from './base-clip';
-import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from './iclip';
-import type { AudioJSON } from '../json-serialization';
-import { ResourceManager } from '../studio/resource-manager';
+import { Log } from "../utils/log";
+import { extractPCM4AudioBuffer, ringSliceFloat32Array } from "../utils";
+import { BaseClip } from "./base-clip";
+import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from "./iclip";
+import type { AudioJSON } from "../json-serialization";
+import { ResourceManager } from "../studio/resource-manager";
 
 interface IAudioOpts {
   loop?: boolean;
@@ -30,10 +26,10 @@ interface IAudioOpts {
  * }),
  */
 export class Audio extends BaseClip implements IPlaybackCapable {
-  readonly type = 'Audio';
+  readonly type = "Audio";
   static ctx: AudioContext | null = null;
 
-  ready: IClip['ready'];
+  ready: IClip["ready"];
 
   private _meta = {
     // microseconds
@@ -97,11 +93,11 @@ export class Audio extends BaseClip implements IPlaybackCapable {
    * @returns Promise that resolves to an Audio instance
    */
   static async fromObject(json: AudioJSON): Promise<Audio> {
-    if (json.type !== 'Audio') {
+    if (json.type !== "Audio") {
       throw new Error(`Expected Audio, got ${json.type}`);
     }
-    if (!json.src || json.src.trim() === '') {
-      throw new Error('Audio requires a valid source URL');
+    if (!json.src || json.src.trim() === "") {
+      throw new Error("Audio requires a valid source URL");
     }
 
     // Support both new flat structure and old options structure
@@ -112,19 +108,27 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     // clip.ready is not awaited here for performance
 
     // Apply properties
-    clip.left = json.left;
-    clip.top = json.top;
-    clip.width = json.width;
-    clip.height = json.height;
-    clip.angle = json.angle;
+    if (json.transform) {
+      clip.left = json.transform.x;
+      clip.top = json.transform.y;
+      clip.width = json.transform.width;
+      clip.height = json.transform.height;
+      clip.angle = json.transform.angle;
+      clip.zIndex = json.transform.zIndex;
+      clip.opacity = json.transform.opacity;
+    }
 
-    clip.display.from = json.display.from;
-    clip.display.to = json.display.to;
-    clip.duration = json.duration;
-    clip.playbackRate = json.playbackRate;
+    const timing = json.timing || {
+      display: json.display || { from: 0, to: 0 },
+      trim: json.trim || { from: 0, to: 0 },
+      duration: json.duration ?? 0,
+      playbackRate: json.playbackRate ?? 1,
+    };
 
-    clip.zIndex = json.zIndex;
-    clip.opacity = json.opacity;
+    clip.display.from = timing.display.from;
+    clip.display.to = timing.display.to;
+    clip.duration = timing.duration;
+    clip.playbackRate = timing.playbackRate;
 
     // Apply animation if present
     if (json.animation) {
@@ -132,9 +136,10 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     }
 
     // Apply trim if present
-    if (json.trim) {
-      clip.trim.from = json.trim.from;
-      clip.trim.to = json.trim.to;
+    const trim = json.trim || timing.trim;
+    if (trim) {
+      clip.trim.from = trim.from;
+      clip.trim.to = trim.to;
     }
 
     return clip;
@@ -148,11 +153,11 @@ export class Audio extends BaseClip implements IPlaybackCapable {
   constructor(
     dataSource: ReadableStream<Uint8Array> | Float32Array[],
     opts: IAudioOpts = {},
-    src?: string
+    src?: string,
   ) {
     super();
     // Always set src, defaulting to empty string if not provided
-    this.src = src !== undefined ? src : '';
+    this.src = src !== undefined ? src : "";
     this.opts = {
       loop: false,
       volume: 1,
@@ -179,9 +184,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     });
   }
 
-  private async init(
-    dataSource: ReadableStream<Uint8Array> | Float32Array[]
-  ): Promise<void> {
+  private async init(dataSource: ReadableStream<Uint8Array> | Float32Array[]): Promise<void> {
     if (Audio.ctx == null) {
       Audio.ctx = new AudioContext({
         sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
@@ -194,7 +197,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
         ? await parseStream2PCM(dataSource, Audio.ctx)
         : dataSource;
 
-    Log.info('Audio clip decoded complete:', performance.now() - tStart);
+    Log.info("Audio clip decoded complete:", performance.now() - tStart);
 
     this._meta.duration = (pcm[0].length / DEFAULT_AUDIO_CONF.sampleRate) * 1e6;
 
@@ -202,10 +205,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     // Mono to stereo conversion
     this.chan1Buf = pcm[1] ?? this.chan0Buf;
 
-    Log.info(
-      'Audio clip convert to AudioData, time:',
-      performance.now() - tStart
-    );
+    Log.info("Audio clip convert to AudioData, time:", performance.now() - tStart);
   }
 
   /**
@@ -214,9 +214,9 @@ export class Audio extends BaseClip implements IPlaybackCapable {
    * @param tickRet Data returned by tick
    *
    */
-  tickInterceptor: <T extends Awaited<ReturnType<Audio['tick']>>>(
+  tickInterceptor: <T extends Awaited<ReturnType<Audio["tick"]>>>(
     time: number,
-    tickRet: T
+    tickRet: T,
   ) => Promise<T> = async (_, tickRet) => tickRet;
 
   // microseconds
@@ -233,7 +233,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
    */
   async tick(time: number): Promise<{
     audio: Float32Array[];
-    state: 'success' | 'done';
+    state: "success" | "done";
   }> {
     const trimmedTime = time + this.trim.from;
     const deltaTime = trimmedTime - this.timestamp;
@@ -241,19 +241,15 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     // reset
     if (trimmedTime < this.timestamp || deltaTime > 3e6) {
       this.timestamp = trimmedTime;
-      this.frameOffset = Math.ceil(
-        (this.timestamp / 1e6) * DEFAULT_AUDIO_CONF.sampleRate
-      );
+      this.frameOffset = Math.ceil((this.timestamp / 1e6) * DEFAULT_AUDIO_CONF.sampleRate);
       return await this.tickInterceptor(time, {
         audio: [new Float32Array(0), new Float32Array(0)],
-        state: 'success',
+        state: "success",
       });
     }
 
     this.timestamp = trimmedTime;
-    const frameCnt = Math.ceil(
-      (deltaTime / 1e6) * DEFAULT_AUDIO_CONF.sampleRate
-    );
+    const frameCnt = Math.ceil((deltaTime / 1e6) * DEFAULT_AUDIO_CONF.sampleRate);
     const endIdx = this.frameOffset + frameCnt;
     const audio = this.opts.loop
       ? [
@@ -275,27 +271,14 @@ export class Audio extends BaseClip implements IPlaybackCapable {
 
     this.frameOffset = endIdx;
 
-    return await this.tickInterceptor(time, { audio, state: 'success' });
+    return await this.tickInterceptor(time, { audio, state: "success" });
   }
 
   /**
-   * Split at specified time, return two audio clips before and after
-   * @param time Time in microseconds
+   * Split is handled by core state, not implemented here
    */
-  async split(time: number) {
-    await this.ready;
-    const frameCnt = Math.ceil((time / 1e6) * DEFAULT_AUDIO_CONF.sampleRate);
-    const preSlice = new Audio(
-      this.getPCMData().map((chan) => chan.slice(0, frameCnt)),
-      this.opts,
-      this.src
-    );
-    const postSlice = new Audio(
-      this.getPCMData().map((chan) => chan.slice(frameCnt)),
-      this.opts,
-      this.src
-    );
-    return [preSlice, postSlice] as [this, this];
+  async split(_time: number): Promise<[this, this]> {
+    throw new Error("Audio.split is not implemented - use core state instead");
   }
 
   async clone() {
@@ -313,22 +296,34 @@ export class Audio extends BaseClip implements IPlaybackCapable {
   destroy(): void {
     this.chan0Buf = new Float32Array(0);
     this.chan1Buf = new Float32Array(0);
-    Log.info('---- audioclip destroy ----');
+    Log.info("---- audioclip destroy ----");
     super.destroy();
   }
 
-  toJSON(main: boolean = false): AudioJSON {
-    const base = super.toJSON(main);
+  toJSON(_main: boolean = false): AudioJSON {
     return {
-      ...base,
-      type: 'Audio',
-      loop: this.loop,
       id: this.id,
+      type: "Audio",
+      name: this.name,
+      src: this.src,
+      timing: {
+        display: {
+          from: this.timing.display.from,
+          to: this.timing.display.to,
+        },
+        trim: {
+          from: this.timing.trim.from,
+          to: this.timing.trim.to,
+        },
+        duration: this.timing.duration,
+        playbackRate: this.timing.playbackRate,
+      },
+      loop: this.loop,
       volume: this.volume,
+      locked: this.locked,
+      metadata: this.metadata,
     } as AudioJSON;
   }
-
-  static concatAudio = concatAudioClip;
 
   /**
    * Create HTMLAudioElement for playback
@@ -339,46 +334,43 @@ export class Audio extends BaseClip implements IPlaybackCapable {
   }> {
     await this.ready;
 
-    if (!this.src || this.src.trim() === '') {
-      throw new Error('Audio requires a source URL for playback');
+    if (!this.src || this.src.trim() === "") {
+      throw new Error("Audio requires a source URL for playback");
     }
 
     // For AudioClip, src is already a URL (from fromUrl or JSON)
-    const objectUrl = this.src.startsWith('blob:') ? this.src : undefined;
-    const audio = document.createElement('audio');
+    const objectUrl = this.src.startsWith("blob:") ? this.src : undefined;
+    const audio = document.createElement("audio");
 
-    audio.crossOrigin = 'anonymous';
+    audio.crossOrigin = "anonymous";
     audio.autoplay = false;
-    audio.preload = 'auto';
+    audio.preload = "auto";
     audio.loop = this.opts.loop || false;
     audio.src = this.src;
 
     // Wait for audio to be ready
     await new Promise<void>((resolve, reject) => {
       const onLoadedData = () => {
-        audio.removeEventListener('loadeddata', onLoadedData);
-        audio.removeEventListener('error', onError);
+        audio.removeEventListener("loadeddata", onLoadedData);
+        audio.removeEventListener("error", onError);
         audio.pause();
         audio.currentTime = 0;
         resolve();
       };
       const onError = () => {
-        audio.removeEventListener('loadeddata', onLoadedData);
-        audio.removeEventListener('error', onError);
-        reject(new Error('Failed to load audio'));
+        audio.removeEventListener("loadeddata", onLoadedData);
+        audio.removeEventListener("error", onError);
+        reject(new Error("Failed to load audio"));
       };
-      audio.addEventListener('loadeddata', onLoadedData, { once: true });
-      audio.addEventListener('error', onError, { once: true });
+      audio.addEventListener("loadeddata", onLoadedData, { once: true });
+      audio.addEventListener("error", onError, { once: true });
       audio.load();
     });
 
     return { element: audio, objectUrl };
   }
 
-  async play(
-    element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
-  ): Promise<void> {
+  async play(element: HTMLVideoElement | HTMLAudioElement, timeSeconds: number): Promise<void> {
     const audio = element as HTMLAudioElement;
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
     // Set time if needed
@@ -394,7 +386,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
         try {
           await audio.play();
         } catch (retryErr) {
-          console.warn('Failed to play audio:', retryErr);
+          console.warn("Failed to play audio:", retryErr);
         }
       }
     }
@@ -405,10 +397,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     audio.pause();
   }
 
-  async seek(
-    element: HTMLVideoElement | HTMLAudioElement,
-    timeSeconds: number
-  ): Promise<void> {
+  async seek(element: HTMLVideoElement | HTMLAudioElement, timeSeconds: number): Promise<void> {
     const audio = element as HTMLAudioElement;
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
     audio.pause();
@@ -422,15 +411,15 @@ export class Audio extends BaseClip implements IPlaybackCapable {
       }
 
       const onSeeked = () => {
-        audio.removeEventListener('seeked', onSeeked);
+        audio.removeEventListener("seeked", onSeeked);
         resolve();
       };
 
-      audio.addEventListener('seeked', onSeeked, { once: true });
+      audio.addEventListener("seeked", onSeeked, { once: true });
 
       // Timeout after 500ms
       setTimeout(() => {
-        audio.removeEventListener('seeked', onSeeked);
+        audio.removeEventListener("seeked", onSeeked);
         resolve();
       }, 500);
     });
@@ -439,7 +428,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
   syncPlayback(
     element: HTMLVideoElement | HTMLAudioElement,
     isPlaying: boolean,
-    timeSeconds: number
+    timeSeconds: number,
   ): void {
     const audio = element as HTMLAudioElement;
     const clipDuration = (this.trim.to - this.trim.from) / 1e6;
@@ -467,36 +456,21 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     }
   }
 
-  cleanupPlayback(
-    element: HTMLVideoElement | HTMLAudioElement,
-    objectUrl?: string
-  ): void {
+  cleanupPlayback(element: HTMLVideoElement | HTMLAudioElement, objectUrl?: string): void {
     const audio = element as HTMLAudioElement;
     audio.pause();
-    audio.removeAttribute('src');
+    audio.removeAttribute("src");
     audio.load();
 
-    if (objectUrl && objectUrl.startsWith('blob:')) {
+    if (objectUrl && objectUrl.startsWith("blob:")) {
       URL.revokeObjectURL(objectUrl);
     }
   }
 }
 
-/**
- * Concatenate multiple AudioClips
- */
-export async function concatAudioClip(clips: Audio[], opts?: IAudioOpts) {
-  const bufs: Float32Array[][] = [];
-  for (const clip of clips) {
-    await clip.ready;
-    bufs.push(clip.getPCMData());
-  }
-  return new Audio(concatPCMFragments(bufs), opts);
-}
-
 async function parseStream2PCM(
   stream: ReadableStream<Uint8Array>,
-  ctx: AudioContext | OfflineAudioContext
+  ctx: AudioContext | OfflineAudioContext,
 ): Promise<Float32Array[]> {
   const buf = await new Response(stream).arrayBuffer();
   return extractPCM4AudioBuffer(await ctx.decodeAudioData(buf));

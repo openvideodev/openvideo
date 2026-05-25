@@ -8,17 +8,17 @@ import {
   SerializedObjectProps,
   TBBox,
   TPointerEvent,
-} from 'fabric';
-import { Helper, Placeholder, PreviewTrackItem, Track } from '../../objects';
-import Timeline from '../../timeline';
-import { clearPlaceholderObjects } from '../../utils/canvas';
-import { IClip, ITransitionClip } from '../../types';
+} from "fabric";
+import { Helper, Placeholder, PreviewTrackItem, Track } from "../../objects";
+import Timeline from "../../timeline";
+import { clearPlaceholderObjects } from "../../utils/canvas";
+import { IClip, ITransitionClip } from "../../types";
 
-import { cloneDeep, throttle } from 'lodash-es';
-import TransitionGuide from '../../objects/transition-guide';
-import { groupTrackItems } from '../../utils/group-items';
-import { timeUsToUnits } from '../../utils';
-import { MovingState } from '../../managers/drag-state-manager';
+import { cloneDeep, throttle } from "lodash-es";
+import TransitionGuide from "../../objects/transition-guide";
+import { groupTrackItems } from "../../utils/group-items";
+import { timeUsToUnits } from "../../utils";
+import { MovingState } from "../../managers/drag-state-manager";
 
 // Removed hardcoded availableItemTypes
 
@@ -60,10 +60,7 @@ function findOverlapObject(objects: FabricObject[], boundingBox: TBBox) {
   return overlapObject;
 }
 
-function getOverlappedPosition(
-  movingObject: FabricObject,
-  overTarget: FabricObject
-): number {
+function getOverlappedPosition(movingObject: FabricObject, overTarget: FabricObject): number {
   const canvas = movingObject.canvas! as Timeline;
   const activeObj = canvas.getActiveObject()!;
   const movingObjectCenterX = activeObj.left + activeObj.width / 2;
@@ -84,7 +81,7 @@ function getOverlappedPosition(
 const checkCanBeDroppedOverlaped = (
   objects: FabricObject[],
   target: FabricObject,
-  nextLeft: number
+  nextLeft: number,
 ) => {
   if (nextLeft < 0) return false;
   const overlapObject = findOverlapObject(objects, {
@@ -100,9 +97,7 @@ const checkCanBeDroppedOverlaped = (
 const isObjectAcceptedByTrack = (canvas: Timeline, object: FabricObject) => {
   const state = canvas.dragStateManager.getState();
   const draggingOverTrack = state.draggingOverTrack;
-  const validateAccepts = draggingOverTrack?.accepts.map((accept) =>
-    accept.toLowerCase()
-  );
+  const validateAccepts = draggingOverTrack?.accepts.map((accept) => accept.toLowerCase());
 
   const validateObjType = object.type.toLowerCase();
 
@@ -155,24 +150,24 @@ function getOverlapPlaceholderPosition(
   draggedObject: FabricObject,
   overlapObject: FabricObject,
   currentTrackObjects: FabricObject[],
-  pointer: Point
+  pointer: Point,
 ) {
   const activeIds = canvas.getActiveObjects().map((obj) => obj.id);
   const position = getOverlappedPosition(draggedObject!, overlapObject);
   const filterCurrentTrackObjects = currentTrackObjects.filter(
-    (obj) => !activeIds.includes(obj.id)
+    (obj) => !activeIds.includes(obj.id),
   );
   const canBeDropped = checkCanBeDroppedOverlaped(
     filterCurrentTrackObjects,
     draggedObject!,
-    position
+    position,
   );
   const state = canvas.dragStateManager.getState();
   state.orderNormalTrack = true;
   if (!canBeDropped || pointer.x - 20 < 0) {
     const track = state.draggingOverTrack!;
     const nearPoint = state.initialTrackPoints.reduce((a, b) =>
-      Math.abs(b - pointer.x) < Math.abs(a - pointer.x) ? b : a
+      Math.abs(b - pointer.x) < Math.abs(a - pointer.x) ? b : a,
     );
     return {
       left: nearPoint,
@@ -194,12 +189,8 @@ const orderItemsByPoints = (objects: FabricObject[], points: number[]) => {
 const onObjectMovingForPlaceholder = throttle(
   (
     e: BasicTransformEvent<TPointerEvent> & {
-      target: FabricObject<
-        Partial<FabricObjectProps>,
-        SerializedObjectProps,
-        ObjectEvents
-      >;
-    }
+      target: FabricObject<Partial<FabricObjectProps>, SerializedObjectProps, ObjectEvents>;
+    },
   ) => {
     const canvas = e.target.canvas! as Timeline;
 
@@ -213,9 +204,7 @@ const onObjectMovingForPlaceholder = throttle(
     if (!draggingOverTrack) {
       // handle when there is no track
       if (state.updateItemsInTrack) {
-        const track = canvas
-          .getObjects()
-          .find((o) => o.id === state.updateItemsInTrack)!;
+        const track = canvas.getObjects().find((o) => o.id === state.updateItemsInTrack)!;
         if (track?.magnetic) {
           orderMagTeckWhenIsNotOver(canvas, state);
         }
@@ -229,10 +218,7 @@ const onObjectMovingForPlaceholder = throttle(
       return;
     } else {
       const firstObject = state.primaryMovingObjects[0];
-      if (
-        firstObject &&
-        canvas.itemTypes.includes(firstObject.type.toLowerCase())
-      ) {
+      if (firstObject && canvas.itemTypes.includes(firstObject.type.toLowerCase())) {
         state.placeholderMovingObjects.forEach((placeholderObject) => {
           placeholderObject.visible = true;
         });
@@ -240,17 +226,14 @@ const onObjectMovingForPlaceholder = throttle(
     }
 
     const draggedObjects = state.placeholderMovingObjects.map(
-      (placeholderObject) => placeholderObject.draggedObject
+      (placeholderObject) => placeholderObject.draggedObject,
     );
 
-    const currentTrackObjects = (
-      state.trackToItemsMap[draggingOverTrack.id] || []
-    ).filter((o) => !draggedObjects.includes(o));
-
-    const isAccepted = isObjectAcceptedByTrack(
-      canvas,
-      state.primaryMovingObjects[0]
+    const currentTrackObjects = (state.trackToItemsMap[draggingOverTrack.id] || []).filter(
+      (o) => !draggedObjects.includes(o),
     );
+
+    const isAccepted = isObjectAcceptedByTrack(canvas, state.primaryMovingObjects[0]);
 
     if (draggingOverTrack.magnetic && isAccepted) {
       if (!state.updateItemsInTrack) {
@@ -265,7 +248,7 @@ const onObjectMovingForPlaceholder = throttle(
         state.initialTrackPoints = getInitialPointAndSetPosObjs(
           canvas,
           state,
-          draggingOverTrack as Track
+          draggingOverTrack as Track,
         );
       }
 
@@ -279,16 +262,10 @@ const onObjectMovingForPlaceholder = throttle(
         const diffPrevPoint = currentPoint - prevPoint;
         if (!nextPoint) {
           intialPlaceholderPoint = currentPoint;
-        } else if (
-          currentPoint <= e.pointer.x &&
-          currentPoint + diffNextPoint / 2 >= e.pointer.x
-        ) {
+        } else if (currentPoint <= e.pointer.x && currentPoint + diffNextPoint / 2 >= e.pointer.x) {
           intialPlaceholderPoint = currentPoint;
           break;
-        } else if (
-          currentPoint - diffPrevPoint / 2 <= e.pointer.x &&
-          e.pointer.x <= currentPoint
-        ) {
+        } else if (currentPoint - diffPrevPoint / 2 <= e.pointer.x && e.pointer.x <= currentPoint) {
           intialPlaceholderPoint = currentPoint;
           break;
         }
@@ -307,17 +284,11 @@ const onObjectMovingForPlaceholder = throttle(
           left: placeholderObject.left,
         };
       });
-      canvas.trackIdAfterTransform =
-        state.trackTopToIdMap[draggingOverTrack.top];
+      canvas.trackIdAfterTransform = state.trackTopToIdMap[draggingOverTrack.top];
     } else {
       state.orderNormalTrack = false;
-      if (
-        state.updateItemsInTrack &&
-        state.updateItemsInTrack !== draggingOverTrack.id
-      ) {
-        const track = canvas
-          .getObjects()
-          .find((o) => o.id === state.updateItemsInTrack)!;
+      if (state.updateItemsInTrack && state.updateItemsInTrack !== draggingOverTrack.id) {
+        const track = canvas.getObjects().find((o) => o.id === state.updateItemsInTrack)!;
         if (track?.magnetic) {
           orderMagTeckWhenIsNotOver(canvas, state);
         } else {
@@ -326,22 +297,12 @@ const onObjectMovingForPlaceholder = throttle(
         state.updateItemsInTrack = null;
         state.initialTrackPoints = [];
       }
-      if (
-        state.initialTrackPoints.length === 0 &&
-        draggingOverTrack instanceof Track
-      ) {
+      if (state.initialTrackPoints.length === 0 && draggingOverTrack instanceof Track) {
         state.updateItemsInTrack = draggingOverTrack.id;
-        state.initialTrackPoints = getInitialPointAndSetPosObjs(
-          canvas,
-          state,
-          draggingOverTrack
-        );
+        state.initialTrackPoints = getInitialPointAndSetPosObjs(canvas, state, draggingOverTrack);
       }
       const overlapObject = currentTrackObjects.find((draggedObject) => {
-        return findOverlapObject(
-          draggedObjects,
-          draggedObject!.getBoundingRect()
-        );
+        return findOverlapObject(draggedObjects, draggedObject!.getBoundingRect());
       });
 
       const diffBetweenObjs: number[] = [];
@@ -368,7 +329,7 @@ const onObjectMovingForPlaceholder = throttle(
           draggedObject,
           currentTrackObjects,
           e.pointer,
-          overlapObject
+          overlapObject,
         );
 
         if (state.draggingOverTrack instanceof Helper) {
@@ -388,18 +349,15 @@ const onObjectMovingForPlaceholder = throttle(
           const pointY = point.y - vt[5];
           selectClosestHelper(canvas, pointY);
         } else if (state.primaryMovingObjects.length > 1) {
-          canvas.trackIdAfterTransform =
-            state.trackTopToIdMap[placeholderPosition.top];
+          canvas.trackIdAfterTransform = state.trackTopToIdMap[placeholderPosition.top];
           canvas.positionAfterTransform[draggedObject.id] = {
             top: placeholderPosition.top,
             left: placeholderPosition.left + (diffBetweenObjs[index - 1] || 0),
           };
-          placeholderObject.left =
-            placeholderPosition.left + (diffBetweenObjs[index - 1] || 0);
+          placeholderObject.left = placeholderPosition.left + (diffBetweenObjs[index - 1] || 0);
           placeholderObject.top = placeholderPosition.top;
         } else {
-          canvas.trackIdAfterTransform =
-            state.trackTopToIdMap[placeholderPosition.top];
+          canvas.trackIdAfterTransform = state.trackTopToIdMap[placeholderPosition.top];
           canvas.positionAfterTransform[draggedObject.id] = {
             top: placeholderPosition.top,
             left: placeholderPosition.left,
@@ -409,13 +367,13 @@ const onObjectMovingForPlaceholder = throttle(
         }
       });
     }
-  }
+  },
 );
 
 const getInitialPointAndSetPosObjs = (
   canvas: Timeline,
   state: MovingState,
-  draggingOverTrack: Track
+  draggingOverTrack: Track,
 ) => {
   const objectsInTrack: FabricObject[] = [];
   draggingOverTrack.clipIds.forEach((item) => {
@@ -424,23 +382,14 @@ const getInitialPointAndSetPosObjs = (
     objectsInTrack.push(itemObject);
   });
   const activeIds = state.activeObjects.map((obj) => obj.id);
-  const objectsInTrackNotActive = objectsInTrack.filter(
-    (obj) => !activeIds.includes(obj.id)
-  );
-  const sortedObjectByLeft = objectsInTrackNotActive.sort(
-    (a, b) => a.left - b.left
-  );
+  const objectsInTrackNotActive = objectsInTrack.filter((obj) => !activeIds.includes(obj.id));
+  const sortedObjectByLeft = objectsInTrackNotActive.sort((a, b) => a.left - b.left);
   let initialPost = 0;
   const initialTrackPoints: number[] = [];
   // If the track is magnetic, calculate the initial position of the objects
   if (draggingOverTrack.magnetic) {
     // Sort objects by left position
-    setPositionMagneticObj(
-      canvas,
-      sortedObjectByLeft,
-      initialPost,
-      initialTrackPoints
-    );
+    setPositionMagneticObj(canvas, sortedObjectByLeft, initialPost, initialTrackPoints);
   } else {
     setPositionRegularObj(draggingOverTrack, initialTrackPoints, canvas);
   }
@@ -450,9 +399,9 @@ const getInitialPointAndSetPosObjs = (
 
 function orderMagTeckWhenIsNotOver(canvas: Timeline, state: MovingState) {
   const objectsInTrack: FabricObject[] = [];
-  const magneticTrack = canvas
-    .getObjects()
-    .find((o) => o.id === state.updateItemsInTrack) as Track | undefined;
+  const magneticTrack = canvas.getObjects().find((o) => o.id === state.updateItemsInTrack) as
+    | Track
+    | undefined;
   if (!magneticTrack) return;
   magneticTrack.clipIds.forEach((item: string) => {
     const itemObject = canvas.getObjects().find((o) => o.id === item);
@@ -460,12 +409,8 @@ function orderMagTeckWhenIsNotOver(canvas: Timeline, state: MovingState) {
     objectsInTrack.push(itemObject);
   });
   const activeIds = state.activeObjects.map((obj) => obj.id);
-  const objectsInTrackNotActive = objectsInTrack.filter(
-    (obj) => !activeIds.includes(obj.id)
-  );
-  const sortedObjectByLeft = objectsInTrackNotActive.sort(
-    (a, b) => a.left - b.left
-  );
+  const objectsInTrackNotActive = objectsInTrack.filter((obj) => !activeIds.includes(obj.id));
+  const sortedObjectByLeft = objectsInTrackNotActive.sort((a, b) => a.left - b.left);
   state.initialTrackPoints.length > sortedObjectByLeft.length &&
     orderItemsByPoints(sortedObjectByLeft, state.initialTrackPoints);
 }
@@ -474,20 +419,20 @@ function setPositionMagneticObj(
   canvas: Timeline,
   sortedObjectByLeft: FabricObject[],
   initialPost: number,
-  initialTrackPoints: number[]
+  initialTrackPoints: number[],
 ) {
   const state = canvas.dragStateManager.getState();
   const overTrack = state.draggingOverTrack;
   const primaryObjIds = state.primaryMovingObjects.map((obj) => obj.id);
   if (!canvas) return;
   const transitionIds = canvas.transitionIds.filter(
-    (id) => (canvas.transitionsMap[id] as ITransitionClip).key !== 'none'
+    (id) => (canvas.transitionsMap[id] as ITransitionClip).key !== "none",
   );
   sortedObjectByLeft.forEach((obj) => {
     obj.set({ left: initialPost });
     initialPost += obj.width;
     const transitionTo = transitionIds.find(
-      (id) => (canvas.transitionsMap[id] as ITransitionClip).toClipId === obj.id
+      (id) => (canvas.transitionsMap[id] as ITransitionClip).toClipId === obj.id,
     );
     if (!transitionTo) {
       initialTrackPoints.push(obj.left);
@@ -501,11 +446,7 @@ function setPositionMagneticObj(
     if (primaryObj) {
       const index = clonedArray.findIndex((n) => n > primaryObj?.left);
       if (index !== -1)
-        initialTrackPoints.splice(
-          index,
-          0,
-          timeUsToUnits(primaryObj.display.from, canvas.tScale)
-        );
+        initialTrackPoints.splice(index, 0, timeUsToUnits(primaryObj.display.from, canvas.tScale));
     }
   }
 }
@@ -513,7 +454,7 @@ function setPositionMagneticObj(
 function setPositionRegularObj(
   draggingOverTrack: Track,
   initialTrackPoints: number[],
-  canvas: Timeline
+  canvas: Timeline,
 ) {
   const itemIds = draggingOverTrack.clipIds;
   const itemInTrack: Record<string, IClip> = {};
@@ -523,7 +464,7 @@ function setPositionRegularObj(
     if (itemIds.includes(o.id)) itemInTrack[o.id] = o;
   });
   const transitionInTrackIds = canvas
-    .getObjects('Transition')
+    .getObjects("Transition")
     .filter((o) => o.top === draggingOverTrack.top)
     .map((o) => o.id);
   Object.values(canvas.transitionsMap).forEach((o) => {
@@ -554,10 +495,9 @@ function setPositionRegularObj(
 }
 
 function selectClosestHelper(canvas: Canvas, pointY: number): void {
-  const overTracks = canvas.getObjects('Helper');
-  const closestHelp = overTracks.reduce(
-    (prev: FabricObject, curr: FabricObject) =>
-      Math.abs(curr.top - pointY) < Math.abs(prev.top - pointY) ? curr : prev
+  const overTracks = canvas.getObjects("Helper");
+  const closestHelp = overTracks.reduce((prev: FabricObject, curr: FabricObject) =>
+    Math.abs(curr.top - pointY) < Math.abs(prev.top - pointY) ? curr : prev,
   ) as Helper;
   closestHelp.setSelected(true);
 }
@@ -567,7 +507,7 @@ const getPlaceholderPosition = (
   draggedObject: FabricObject,
   trackObjects: FabricObject[],
   pointer: Point,
-  overObject?: FabricObject
+  overObject?: FabricObject,
 ): { top: number; left: number; isInvalidDrop?: boolean } => {
   const isObjectAccepted = isObjectAcceptedByTrack(canvas, draggedObject);
   if (!isObjectAccepted && draggedObject instanceof PreviewTrackItem) {
@@ -590,24 +530,18 @@ const getPlaceholderPosition = (
         isInvalidDrop: true,
       };
     }
-    return getOverlapPlaceholderPosition(
-      canvas,
-      draggedObject,
-      overObject,
-      trackObjects,
-      pointer
-    );
+    return getOverlapPlaceholderPosition(canvas, draggedObject, overObject, trackObjects, pointer);
   }
 
   return getDefaultPlaceholderPosition(canvas, draggedObject);
 };
 
 export function addPlaceholderEvents(timeline: Timeline) {
-  timeline.on('mouse:up', onMouseUp.bind(timeline));
-  timeline.on('object:moving', onObjectMovingForPlaceholder);
+  timeline.on("mouse:up", onMouseUp.bind(timeline));
+  timeline.on("object:moving", onObjectMovingForPlaceholder);
 }
 
 export function removePlaceholderEvents(timeline: Timeline) {
-  timeline.off('mouse:up', onMouseUp.bind(timeline));
-  timeline.off('object:moving', onObjectMovingForPlaceholder);
+  timeline.off("mouse:up", onMouseUp.bind(timeline));
+  timeline.off("object:moving", onObjectMovingForPlaceholder);
 }

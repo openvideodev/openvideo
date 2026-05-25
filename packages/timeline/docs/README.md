@@ -36,18 +36,18 @@ const timeline = new Timeline({
   itemTypes: ["video", "image", "text"],
   acceptsMap: {
     video: ["video", "image"],
-    text: ["text"]
+    text: ["text"],
   },
   sizesMap: {
     video: 60,
-    text: 40
-  }
+    text: 40,
+  },
 });
 
 // Sync state from your application
 timeline.syncTracksAndClips({
   tracks: myTracks,
   clips: myClips,
-  duration: totalDuration
+  duration: totalDuration,
 });
 ```

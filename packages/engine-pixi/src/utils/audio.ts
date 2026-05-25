@@ -1,14 +1,12 @@
 // Audio utility functions that can run in both worker and main threads
 
-import * as waveResampler from 'wave-resampler';
+import * as waveResampler from "wave-resampler";
 
 /**
  * Concatenate multiple Float32Arrays, commonly used for merging PCM data
  */
 export function concatFloat32Array(buffers: Float32Array[]): Float32Array {
-  const result = new Float32Array(
-    buffers.map((buf) => buf.length).reduce((a, b) => a + b)
-  );
+  const result = new Float32Array(buffers.map((buf) => buf.length).reduce((a, b) => a + b));
 
   let offset = 0;
   for (const buf of buffers) {
@@ -23,9 +21,7 @@ export function concatFloat32Array(buffers: Float32Array[]): Float32Array {
  * Merge small PCM fragments into a large fragment
  * @param fragments Small PCM fragments, where each element is raw PCM data from different channels
  */
-export function concatPCMFragments(
-  fragments: Float32Array[][]
-): Float32Array[] {
+export function concatPCMFragments(fragments: Float32Array[][]): Float32Array[] {
   // fragments: [[chan0, chan1], [chan0, chan1]...]
   // chanListPCM: [[chan0, chan0...], [chan1, chan1...]]
   const chanListPCM: Float32Array[][] = [];
@@ -43,7 +39,7 @@ export function concatPCMFragments(
  * Utility function to extract PCM data from AudioData
  */
 export function extractPCM4AudioData(audioData: AudioData): Float32Array[] {
-  if (audioData.format === 'f32-planar') {
+  if (audioData.format === "f32-planar") {
     const result = [];
     for (let idx = 0; idx < audioData.numberOfChannels; idx += 1) {
       const chanBufSize = audioData.allocationSize({ planeIndex: idx });
@@ -52,22 +48,16 @@ export function extractPCM4AudioData(audioData: AudioData): Float32Array[] {
       result.push(new Float32Array(chanBuf));
     }
     return result;
-  } else if (audioData.format === 'f32') {
+  } else if (audioData.format === "f32") {
     const buf = new ArrayBuffer(audioData.allocationSize({ planeIndex: 0 }));
     audioData.copyTo(buf, { planeIndex: 0 });
-    return convertF32ToPlanar(
-      new Float32Array(buf),
-      audioData.numberOfChannels
-    );
-  } else if (audioData.format === 's16') {
+    return convertF32ToPlanar(new Float32Array(buf), audioData.numberOfChannels);
+  } else if (audioData.format === "s16") {
     const buf = new ArrayBuffer(audioData.allocationSize({ planeIndex: 0 }));
     audioData.copyTo(buf, { planeIndex: 0 });
-    return convertS16ToF32Planar(
-      new Int16Array(buf),
-      audioData.numberOfChannels
-    );
+    return convertS16ToF32Planar(new Int16Array(buf), audioData.numberOfChannels);
   }
-  throw Error('Unsupported audio data format');
+  throw Error("Unsupported audio data format");
 }
 
 /**
@@ -78,10 +68,7 @@ export function extractPCM4AudioData(audioData: AudioData): Float32Array[] {
  */
 function convertS16ToF32Planar(pcmS16Data: Int16Array, numChannels: number) {
   const numSamples = pcmS16Data.length / numChannels;
-  const planarData = Array.from(
-    { length: numChannels },
-    () => new Float32Array(numSamples)
-  );
+  const planarData = Array.from({ length: numChannels }, () => new Float32Array(numSamples));
 
   for (let i = 0; i < numSamples; i++) {
     for (let channel = 0; channel < numChannels; channel++) {
@@ -95,10 +82,7 @@ function convertS16ToF32Planar(pcmS16Data: Int16Array, numChannels: number) {
 
 function convertF32ToPlanar(pcmF32Data: Float32Array, numChannels: number) {
   const numSamples = pcmF32Data.length / numChannels;
-  const planarData = Array.from(
-    { length: numChannels },
-    () => new Float32Array(numSamples)
-  );
+  const planarData = Array.from({ length: numChannels }, () => new Float32Array(numSamples));
 
   for (let i = 0; i < numSamples; i++) {
     for (let channel = 0; channel < numChannels; channel++) {
@@ -112,36 +96,12 @@ function convertF32ToPlanar(pcmF32Data: Float32Array, numChannels: number) {
 /**
  * Extract PCM from AudioBuffer
  */
-export function extractPCM4AudioBuffer(
-  audioBuffer: AudioBuffer
-): Float32Array[] {
+export function extractPCM4AudioBuffer(audioBuffer: AudioBuffer): Float32Array[] {
   return Array(audioBuffer.numberOfChannels)
     .fill(0)
     .map((_, idx) => {
       return audioBuffer.getChannelData(idx);
     });
-}
-
-/**
- * Adjust audio data volume
- * @param audioData - Audio object to adjust
- * @param volume - Volume adjustment coefficient (0.0 - 1.0)
- * @returns New audio data with adjusted volume
- */
-export function adjustAudioDataVolume(audioData: AudioData, volume: number) {
-  const data = new Float32Array(
-    concatFloat32Array(extractPCM4AudioData(audioData))
-  ).map((v) => v * volume);
-  const newAudioData = new AudioData({
-    sampleRate: audioData.sampleRate,
-    numberOfChannels: audioData.numberOfChannels,
-    timestamp: audioData.timestamp,
-    format: audioData.format!,
-    numberOfFrames: audioData.numberOfFrames,
-    data,
-  });
-  audioData.close();
-  return newAudioData;
 }
 
 /**
@@ -205,7 +165,7 @@ export async function audioResample(
   target: {
     rate: number;
     chanCount: number;
-  }
+  },
 ): Promise<Float32Array[]> {
   const chanCount = pcmData.length;
   const emptyPCM = Array(target.chanCount)
@@ -222,17 +182,17 @@ export async function audioResample(
       (p) =>
         new Float32Array(
           waveResampler.resample(p, curRate, target.rate, {
-            method: 'sinc',
+            method: "sinc",
             LPF: false,
-          })
-        )
+          }),
+        ),
     );
   }
 
   const ctx = new globalThis.OfflineAudioContext(
     target.chanCount,
     (len * target.rate) / curRate,
-    target.rate
+    target.rate,
   );
   const abSource = ctx.createBufferSource();
   const ab = ctx.createBuffer(chanCount, len, curRate);
@@ -263,7 +223,7 @@ export async function audioResample(
 export function ringSliceFloat32Array(
   data: Float32Array,
   start: number,
-  end: number
+  end: number,
 ): Float32Array {
   const count = end - start;
   const result = new Float32Array(count);
@@ -278,10 +238,7 @@ export function ringSliceFloat32Array(
 /**
  * Change PCM data playback rate, where 1 means normal playback, 0.5 means half speed, and 2 means double speed
  */
-export function changePCMPlaybackRate(
-  pcmData: Float32Array,
-  playbackRate: number
-) {
+export function changePCMPlaybackRate(pcmData: Float32Array, playbackRate: number) {
   // Calculate new length
   const newLength = Math.floor(pcmData.length / playbackRate);
   const newPcmData = new Float32Array(newLength);
@@ -295,8 +252,7 @@ export function changePCMPlaybackRate(
 
     // Boundary check
     if (intIndex + 1 < pcmData.length) {
-      newPcmData[i] =
-        pcmData[intIndex] * (1 - frac) + pcmData[intIndex + 1] * frac;
+      newPcmData[i] = pcmData[intIndex] * (1 - frac) + pcmData[intIndex + 1] * frac;
     } else {
       newPcmData[i] = pcmData[intIndex]; // Last sample
     }

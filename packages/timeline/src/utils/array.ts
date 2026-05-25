@@ -1,9 +1,9 @@
-import { ITrack } from '../types';
+import { ITrack } from "../types";
 
 export function findRelativePosition(
   arr: number[],
   referenceValue: number,
-  targetValue: number
+  targetValue: number,
 ): number | null {
   const referenceIndex = arr.indexOf(referenceValue);
   const targetIndex = arr.indexOf(targetValue);
@@ -20,7 +20,7 @@ export function findRelativePosition(
 // Function to create a new array based on refTrack and newTracks
 export function createCombinedTracksArray(
   refTrack: ITrack,
-  newTracks: (ITrack & { tempIndex: number })[]
+  newTracks: (ITrack & { tempIndex: number })[],
 ): ITrack[] {
   // Sort newTracks based on tempIndex
   const sortedNewTracks = newTracks.sort((a, b) => a.tempIndex - b.tempIndex);

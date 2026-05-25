@@ -1,4 +1,4 @@
-import { EasingFunction } from './types';
+import { EasingFunction } from "./types";
 
 export const easings: Record<string, EasingFunction> = {
   linear: (t) => t,
@@ -9,8 +9,7 @@ export const easings: Record<string, EasingFunction> = {
 
   easeInCubic: (t) => t * t * t,
   easeOutCubic: (t) => --t * t * t + 1,
-  easeInOutCubic: (t) =>
-    t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+  easeInOutCubic: (t) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1),
 
   easeInSine: (t) => 1 - Math.cos((t * Math.PI) / 2),
   easeOutSine: (t) => Math.sin((t * Math.PI) / 2),
@@ -38,7 +37,7 @@ export const easings: Record<string, EasingFunction> = {
 export function createSlowMo(
   linearRatio: number = 0.7,
   power: number = 0.7,
-  yoyoMode: boolean = false
+  yoyoMode: boolean = false,
 ): EasingFunction {
   const lr = Math.min(1, linearRatio);
   const pow = lr < 1 ? power : 0;
@@ -53,20 +52,14 @@ export function createSlowMo(
     }
     if (t > t3) {
       const tMod = (t - t3) / t1;
-      return yoyoMode
-        ? t === 1
-          ? 0
-          : 1 - tMod * tMod
-        : r + (t - r) * tMod * tMod * tMod;
+      return yoyoMode ? (t === 1 ? 0 : 1 - tMod * tMod) : r + (t - r) * tMod * tMod * tMod;
     }
     return yoyoMode ? 1 : r;
   };
 }
 
-export function getEasing(
-  easing: string | EasingFunction | undefined
-): EasingFunction {
-  if (typeof easing === 'function') return easing;
-  if (typeof easing === 'string' && easings[easing]) return easings[easing];
+export function getEasing(easing: string | EasingFunction | undefined): EasingFunction {
+  if (typeof easing === "function") return easing;
+  if (typeof easing === "string" && easings[easing]) return easings[easing];
   return easings.linear;
 }

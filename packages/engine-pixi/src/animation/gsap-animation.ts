@@ -1,7 +1,7 @@
-import gsap from 'gsap';
-import { PixiPlugin } from 'gsap/PixiPlugin';
-import * as PIXI from 'pixi.js';
-import { AnimationOptions, AnimationTransform, IAnimation } from './types';
+import gsap from "gsap";
+import { PixiPlugin } from "gsap/PixiPlugin";
+import * as PIXI from "pixi.js";
+import { AnimationOptions, AnimationTransform, IAnimation } from "./types";
 
 // Register PixiPlugin to support skewX, skewY, and other PixiJS properties
 gsap.registerPlugin(PixiPlugin);
@@ -11,7 +11,7 @@ export interface GsapAnimationParams {
   /**
    * Animation presets or custom GSAP vars
    */
-  type: 'character' | 'word' | 'line';
+  type: "character" | "word" | "line";
   from: gsap.TweenVars;
   to: gsap.TweenVars;
   stagger?: number | gsap.StaggerVars;
@@ -26,18 +26,14 @@ export class GsapAnimation implements IAnimation {
   private timeline: gsap.core.Timeline | null = null;
   private lastTarget: any = null;
 
-  constructor(
-    params: GsapAnimationParams,
-    options: AnimationOptions,
-    type: string = 'gsap'
-  ) {
+  constructor(params: GsapAnimationParams, options: AnimationOptions, type: string = "gsap") {
     this.id = options.id || `gsap_${Math.random().toString(36).substr(2, 9)}`;
     this.type = type;
     this.params = params;
     this.options = {
       duration: options.duration,
       delay: options.delay ?? 0,
-      easing: options.easing ?? 'none',
+      easing: options.easing ?? "none",
       iterCount: options.iterCount ?? 1,
       id: this.id,
       disableGlobalEasing: options.disableGlobalEasing ?? false,
@@ -53,7 +49,7 @@ export class GsapAnimation implements IAnimation {
   private getTargetCount(target: any): number {
     if (!target) return 0;
     const { type } = this.params;
-    if (type === 'character') {
+    if (type === "character") {
       const countLeafNodes = (node: any, isRoot: boolean = false): number => {
         if (!node.children || node.children.length === 0) {
           return isRoot ? 0 : 1;
@@ -65,7 +61,7 @@ export class GsapAnimation implements IAnimation {
         return count;
       };
       return countLeafNodes(target, true);
-    } else if (type === 'word') {
+    } else if (type === "word") {
       return target.children ? target.children.length : 0;
     }
     return 1;
@@ -94,24 +90,15 @@ export class GsapAnimation implements IAnimation {
       } else {
         // Check if existing targets are destroyed or removed
         const tween = tweens[0] as any;
-        const gsapTargets =
-          typeof tween.targets === 'function' ? tween.targets() : [];
+        const gsapTargets = typeof tween.targets === "function" ? tween.targets() : [];
 
         // Check if the number of targets has changed (e.g. word -> characters)
         const currentCount = this.getTargetCount(target);
         if (gsapTargets.length !== currentCount) {
           needsReinit = true;
-        } else if (
-          gsapTargets &&
-          gsapTargets.length > 0 &&
-          currentActualTargets.length > 0
-        ) {
+        } else if (gsapTargets && gsapTargets.length > 0 && currentActualTargets.length > 0) {
           // If the target is the container itself, but we expected children, re-init
-          if (
-            gsapTargets[0] === target &&
-            target.children &&
-            target.children.length > 0
-          ) {
+          if (gsapTargets[0] === target && target.children && target.children.length > 0) {
             needsReinit = true;
           } else {
             // Check if ANY of the old targets is destroyed or if the actual targets have changed
@@ -123,10 +110,7 @@ export class GsapAnimation implements IAnimation {
                 break;
               }
               // Also check if the target reference has changed (new objects created)
-              if (
-                i < currentActualTargets.length &&
-                oldTarget !== currentActualTargets[i]
-              ) {
+              if (i < currentActualTargets.length && oldTarget !== currentActualTargets[i]) {
                 needsReinit = true;
                 break;
               }
@@ -156,9 +140,7 @@ export class GsapAnimation implements IAnimation {
 
     // Handle iteration and clamping
     const cycleDuration =
-      this.options.iterCount === Infinity
-        ? duration
-        : duration / this.options.iterCount;
+      this.options.iterCount === Infinity ? duration : duration / this.options.iterCount;
 
     if (this.options.iterCount !== Infinity && offsetTime >= duration) {
       this.timeline.progress(1);
@@ -179,7 +161,7 @@ export class GsapAnimation implements IAnimation {
     }
 
     const { type } = this.params;
-    if (type === 'character') {
+    if (type === "character") {
       // Find all characters (leaf nodes) recursively
       const findCharacters = (node: any, isRoot: boolean = false): any[] => {
         if (!node.children || node.children.length === 0) {
@@ -192,7 +174,7 @@ export class GsapAnimation implements IAnimation {
         return results;
       };
       return findCharacters(target, true);
-    } else if (type === 'word') {
+    } else if (type === "word") {
       return [...(target.children || [])];
     }
     return [target];
@@ -208,7 +190,7 @@ export class GsapAnimation implements IAnimation {
     // PixiJS SplitBitmapText structure:
     // Container -> Words -> Characters
     if (target && target.children) {
-      if (type === 'character') {
+      if (type === "character") {
         // Find all characters (recursive)
         const findCharacters = (node: any, isRoot: boolean = false): any[] => {
           if (!node.children || node.children.length === 0) {
@@ -221,7 +203,7 @@ export class GsapAnimation implements IAnimation {
           return results;
         };
         animTargets = findCharacters(target, true);
-      } else if (type === 'word') {
+      } else if (type === "word") {
         animTargets = target.children || [];
       } else {
         animTargets = [target];
@@ -232,7 +214,7 @@ export class GsapAnimation implements IAnimation {
 
     // CRITICAL: Don't create the timeline if we have no targets but expected them.
     // By keeping this.timeline as null, the apply method will keep retrying every frame.
-    if ((type === 'character' || type === 'word') && animTargets.length === 0) {
+    if ((type === "character" || type === "word") && animTargets.length === 0) {
       if (this.timeline) {
         this.timeline.kill();
         this.timeline = null;
@@ -272,28 +254,28 @@ export class GsapAnimation implements IAnimation {
 
     // List of properties that should be handled by PixiPlugin
     const pixiProps = [
-      'scale',
-      'scaleX',
-      'scaleY',
-      'rotation',
-      'skewX',
-      'skewY',
-      'skew',
-      'pivotX',
-      'pivotY',
-      'pivot',
-      'anchorX',
-      'anchorY',
-      'anchor',
-      'blur',
-      'brightness',
-      'contrast',
-      'grayscale',
-      'hueRotate',
-      'invert',
-      'saturate',
-      'threshold',
-      'matrix',
+      "scale",
+      "scaleX",
+      "scaleY",
+      "rotation",
+      "skewX",
+      "skewY",
+      "skew",
+      "pivotX",
+      "pivotY",
+      "pivot",
+      "anchorX",
+      "anchorY",
+      "anchor",
+      "blur",
+      "brightness",
+      "contrast",
+      "grayscale",
+      "hueRotate",
+      "invert",
+      "saturate",
+      "threshold",
+      "matrix",
     ];
 
     const hasPixiProp = (obj: any) =>

@@ -1,40 +1,41 @@
 {
   "name": "@openvideo/timeline",
   "version": "1.0.0",
-  "publishConfig": {
-    "access": "public",
-    "tag": "latest"
-  },
+  "keywords": [
+    "mp4",
+    "rendering",
+    "video",
+    "webcodecs"
+  ],
+  "license": "MIT",
+  "author": "OpenVideoDev",
   "repository": {
     "type": "git",
     "url": "https://github.com/openvideodev/openvideo.git"
   },
-    "keywords": [
-    "video",
-    "rendering",
-    "webcodecs",
-    "mp4"
-  ],
-  "author": "OpenVideoDev",
-  "license": "SEE LICENSE IN LICENSE",
   "files": [
     "dist"
   ],
-  "main": "dist/index.umd.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.umd.js"
-    }
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@openvideo/core": "workspace:*",
+    "fabric": "^6.3.0",
+    "immer": "^10.1.1",
+    "lodash-es": "^4.17.21",
+    "microdiff": "^1.4.0",
+    "nanoid": "^5.0.7"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
@@ -44,14 +45,6 @@
     "typescript": "~5.9.2",
     "vite": "^7.1.5",
     "vite-plugin-dts": "^4.5.4"
-  },
-  "dependencies": {
-    "fabric": "^6.3.0",
-    "immer": "^10.1.1",
-    "lodash-es": "^4.17.21",
-    "@openvideo/core": "workspace:*",
-    "microdiff": "^1.4.0",
-    "nanoid": "^5.0.7"
   },
   "peerDependencies": {
     "@types/lodash-es": "^4.17.12"

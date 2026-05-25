@@ -1,5 +1,5 @@
-import { type Core, type Patch, nanoid } from '@openvideo/core';
-import type Timeline from './timeline';
+import { type Core, type Patch, nanoid } from "@openvideo/core";
+import type Timeline from "./timeline";
 
 /**
  * TimelineBridge - Synchronizes Core state to the Timeline Canvas.
@@ -18,15 +18,13 @@ export class TimelineBridge {
 
   private init() {
     // 1. Core -> Timeline
-    this.core.on('change', (patches: Patch[]) => {
+    this.core.on("change", (patches: Patch[]) => {
       if (this.isSyncing) return;
       this.handlePatches(patches);
     });
 
     // 2. Timeline -> Core
-    this.timeline.emitter.on('STATE_CHANGED', (data: any) =>
-      this.handleTimelineStateChanged(data)
-    );
+    this.timeline.emitter.on("STATE_CHANGED", (data: any) => this.handleTimelineStateChanged(data));
 
     // 3. Initial Sync
     this.syncInitialState();
@@ -38,10 +36,10 @@ export class TimelineBridge {
     let selectionChanged = false;
 
     patches.forEach((patch) => {
-      const parts = patch.path.split('/').filter(Boolean);
-      if (parts[0] === 'tracks') tracksChanged = true;
-      if (parts[0] === 'clips') clipsChanged = true;
-      if (parts[0] === 'selectedIds') selectionChanged = true;
+      const parts = patch.path.split("/").filter(Boolean);
+      if (parts[0] === "tracks") tracksChanged = true;
+      if (parts[0] === "clips") clipsChanged = true;
+      if (parts[0] === "selectedIds") selectionChanged = true;
     });
 
     const state = this.core.store.getState();
@@ -57,15 +55,10 @@ export class TimelineBridge {
 
   private isDeepEqual(a: any, b: any): boolean {
     if (a === b) return true;
-    if (typeof a === 'number' && typeof b === 'number') {
+    if (typeof a === "number" && typeof b === "number") {
       return Math.abs(a - b) <= 0.01;
     }
-    if (
-      typeof a !== 'object' ||
-      typeof b !== 'object' ||
-      a === null ||
-      b === null
-    ) {
+    if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) {
       return false;
     }
     const keysA = Object.keys(a);
@@ -80,34 +73,55 @@ export class TimelineBridge {
   private isClipEqual(coreClip: any, timelineClip: any): boolean {
     if (!coreClip || !timelineClip) return false;
 
-    // 1. Basic properties
+    // 1. Basic properties (excluding playbackRate and duration which are timing-dependent)
     const basicProps = [
-      'left',
-      'top',
-      'width',
-      'height',
-      'angle',
-      'zIndex',
-      'opacity',
-      'volume',
-      'playbackRate',
-      'duration',
-      'locked',
+      "left",
+      "top",
+      "width",
+      "height",
+      "angle",
+      "zIndex",
+      "opacity",
+      "volume",
+      "locked",
     ];
 
     for (const prop of basicProps) {
       const val1 = coreClip[prop];
       const val2 = timelineClip[prop];
       if (val1 === val2) continue;
-      if (typeof val1 === 'number' && typeof val2 === 'number') {
+      if (typeof val1 === "number" && typeof val2 === "number") {
         if (Math.abs(val1 - val2) <= 0.01) continue;
       }
       return false;
     }
 
-    // 2. Complex properties
-    if (!this.isDeepEqual(coreClip.display, timelineClip.display)) return false;
-    if (!this.isDeepEqual(coreClip.trim, timelineClip.trim)) return false;
+    // 2. Timing-dependent properties (display, trim, duration, playbackRate)
+    const coreDisplay = coreClip.timing?.display || coreClip.display;
+    const timelineDisplay = timelineClip.timing?.display || timelineClip.display;
+    if (!this.isDeepEqual(coreDisplay, timelineDisplay)) return false;
+
+    const coreTrim = coreClip.timing?.trim || coreClip.trim;
+    const timelineTrim = timelineClip.timing?.trim || timelineClip.trim;
+    if (!this.isDeepEqual(coreTrim, timelineTrim)) return false;
+
+    const coreDuration = coreClip.timing?.duration ?? coreClip.duration;
+    const timelineDuration = timelineClip.timing?.duration ?? timelineClip.duration;
+    if (typeof coreDuration === "number" && typeof timelineDuration === "number") {
+      if (Math.abs(coreDuration - timelineDuration) > 0.01) return false;
+    } else if (coreDuration !== timelineDuration) {
+      return false;
+    }
+
+    const corePlaybackRate = coreClip.timing?.playbackRate ?? coreClip.playbackRate;
+    const timelinePlaybackRate = timelineClip.timing?.playbackRate ?? timelineClip.playbackRate;
+    if (typeof corePlaybackRate === "number" && typeof timelinePlaybackRate === "number") {
+      if (Math.abs(corePlaybackRate - timelinePlaybackRate) > 0.01) return false;
+    } else if (corePlaybackRate !== timelinePlaybackRate) {
+      return false;
+    }
+
+    // 3. Style / complex properties
     if (!this.isDeepEqual(coreClip.style, timelineClip.style)) return false;
 
     return true;
@@ -117,7 +131,7 @@ export class TimelineBridge {
     if (this.isSyncing) return;
 
     // 1. Selection Sync
-    if (options?.kind === 'layer:selection') {
+    if (options?.kind === "layer:selection") {
       if (payload.activeIds) {
         const storeIds = this.core.store.getState().selectedIds;
         if (JSON.stringify(storeIds) !== JSON.stringify(payload.activeIds)) {
@@ -141,7 +155,7 @@ export class TimelineBridge {
           if (coreClip && !this.isClipEqual(coreClip, clip)) {
             this.core.execute({
               id: nanoid(),
-              type: 'clip.update',
+              type: "clip.update",
               payload: { id: clip.id, updates: clip },
             });
           }
@@ -149,13 +163,11 @@ export class TimelineBridge {
       }
 
       if (payload.tracks) {
-        const storeTracksStr = JSON.stringify(
-          this.core.store.getState().tracks
-        );
+        const storeTracksStr = JSON.stringify(this.core.store.getState().tracks);
         if (storeTracksStr !== JSON.stringify(payload.tracks)) {
           this.core.execute({
             id: nanoid(),
-            type: 'track.set',
+            type: "track.set",
             payload: payload.tracks,
           });
         }

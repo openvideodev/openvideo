@@ -9,8 +9,32 @@ import {
   Placeholder,
   type IClip,
   type ITransitionInfo,
-} from './clips';
-import type { ColorAdjustment } from './utils/color-adjustment';
+} from "./clips";
+import type { ColorAdjustment } from "./utils/color-adjustment";
+export interface ClipTimingJSON {
+  display: {
+    from: number;
+    to: number;
+  };
+  trim?: {
+    from: number;
+    to: number;
+  };
+  duration: number;
+  playbackRate: number;
+}
+
+export interface ClipTransformJSON {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  angle: number;
+  opacity: number;
+  zIndex: number;
+  flip?: { x: boolean; y: boolean } | null;
+}
+
 // Base interface for all clips
 interface BaseClipJSON {
   id?: string;
@@ -24,20 +48,20 @@ interface BaseClipJSON {
     targets?: number[];
   }>;
   src?: string;
-  display: {
+
+  // New nested timing schema
+  timing?: ClipTimingJSON;
+
+  // New nested transform schema
+  transform?: ClipTransformJSON;
+
+  // Legacy fields made optional for backward compatibility during deserialization
+  display?: {
     from: number;
     to: number;
   };
-  playbackRate: number;
-  duration: number;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  angle: number;
-  zIndex: number;
-  opacity: number;
-  flip?: { x: boolean; y: boolean } | null;
+  playbackRate?: number;
+  duration?: number;
   trim?: {
     from: number;
     to: number;
@@ -73,23 +97,39 @@ interface BaseClipJSON {
   main?: boolean; // For Compositor only
 }
 
+// Visual style (Image, Video, Audio)
+export interface ClipVisualStyleJSON {
+  borderRadius?: number;
+  stroke?: { color: string; width: number };
+  shadow?: {
+    color?: string;
+    alpha?: number;
+    blur?: number;
+    offsetX?: number;
+    offsetY?: number;
+  };
+}
+
 // Video clip specific
 export interface VideoJSON extends BaseClipJSON {
-  type: 'Video';
+  type: "Video";
   audio?: boolean;
   volume?: number;
+  style?: ClipVisualStyleJSON;
 }
 
 // Audio clip specific
 export interface AudioJSON extends BaseClipJSON {
-  type: 'Audio';
+  type: "Audio";
   loop?: boolean;
   volume?: number;
+  style?: ClipVisualStyleJSON;
 }
 
 // Image clip specific
 export interface ImageJSON extends BaseClipJSON {
-  type: 'Image';
+  type: "Image";
+  style?: ClipVisualStyleJSON;
 }
 
 // Text style interface
@@ -102,36 +142,36 @@ export interface TextStyleJSON {
     | string
     | number
     | {
-        type: 'gradient';
+        type: "gradient";
         x0: number;
         y0: number;
         x1: number;
         y1: number;
         colors: Array<{ ratio: number; color: string | number }>;
       };
-  align?: 'left' | 'center' | 'right';
+  align?: "left" | "center" | "right";
   fontUrl?: string; // Font URL for custom fonts
   stroke?: {
     color: string | number;
     width: number;
-    join?: 'miter' | 'round' | 'bevel';
-    cap?: 'butt' | 'round' | 'square';
+    join?: "miter" | "round" | "bevel";
+    cap?: "butt" | "round" | "square";
     miterLimit?: number;
   };
   shadow?: {
-    color: string | number;
-    alpha: number;
-    blur: number;
-    distance: number;
-    angle: number;
+    color?: string | number;
+    alpha?: number;
+    blur?: number;
+    offsetX?: number;
+    offsetY?: number;
   };
   wordWrap?: boolean;
   wordWrapWidth?: number;
   lineHeight?: number;
   letterSpacing?: number;
-  textCase?: 'none' | 'uppercase' | 'lowercase' | 'title';
-  wordsPerLine?: 'single' | 'multiple';
-  verticalAlign?: 'top' | 'center' | 'bottom';
+  textCase?: "none" | "uppercase" | "lowercase" | "title";
+  wordsPerLine?: "single" | "multiple";
+  verticalAlign?: "top" | "center" | "bottom";
   wordAnimation?: ICaptionWordAnimation;
   textBoxStyle?: TextBoxStyleJSON;
   appeared?: string;
@@ -142,15 +182,15 @@ export interface TextStyleJSON {
 }
 
 export interface ICaptionWordAnimation {
-  type: 'scale' | 'opacity';
-  application: 'active' | 'keyword' | 'none';
+  type: "scale" | "opacity";
+  application: "active" | "keyword" | "none";
   value: number;
-  mode?: 'static' | 'dynamic';
+  mode?: "static" | "dynamic";
 }
 
 export interface TextBoxStyleJSON {
-  style?: 'tiktok' | 'none';
-  textAlign?: 'left' | 'center' | 'right' | '';
+  style?: "tiktok" | "none";
+  textAlign?: "left" | "center" | "right" | "";
   maxLines?: number;
   borderRadius?: number;
   horizontalPadding?: number;
@@ -159,7 +199,7 @@ export interface TextBoxStyleJSON {
 
 // Text clip specific
 export interface TextJSON extends BaseClipJSON {
-  type: 'Text';
+  type: "Text";
   text: string;
   style?: TextStyleJSON;
 }
@@ -198,7 +238,7 @@ export interface CaptionDataJSON {
 
 // Caption clip specific
 export interface CaptionJSON extends BaseClipJSON {
-  type: 'Caption';
+  type: "Caption";
   text: string;
   style?: TextStyleJSON;
   // New nested structure
@@ -206,36 +246,28 @@ export interface CaptionJSON extends BaseClipJSON {
 
   fontUrl?: string;
   mediaId?: string;
-  wordsPerLine?: 'single' | 'multiple';
+  wordsPerLine?: "single" | "multiple";
   textBoxStyle?: TextBoxStyleJSON;
 }
 
 // Effect clip specific
 export interface EffectJSON extends BaseClipJSON {
-  type: 'Effect';
-  effect: {
-    id: string;
-    key: string;
-    name: string;
-    values?: Record<string, any>;
-  };
+  type: "Effect";
+  effectKey: string;
+  values?: Record<string, any>;
 }
 
 // Transition clip specific
 export interface TransitionJSON extends BaseClipJSON {
-  type: 'Transition';
-  transitionEffect?: {
-    id: string;
-    key: string;
-    name: string;
-  };
+  type: "Transition";
+  transitionKey: string;
   fromClipId?: string | null;
   toClipId?: string | null;
 }
 
 // Placeholder clip specific
 export interface PlaceholderJSON extends BaseClipJSON {
-  type: 'Placeholder';
+  type: "Placeholder";
 }
 
 // Global Transition interface (applied between clips)
@@ -291,6 +323,96 @@ export interface ProjectJSON {
 }
 
 /**
+ * Normalize a clip's JSON structure to ensure compatibility and migrate old property structures
+ */
+export function normalizeClipJSON(json: ClipJSON): ClipJSON {
+  const normalized = { ...json } as any;
+
+  if (!normalized.timing) {
+    normalized.timing = {
+      display: json.display || { from: 0, to: 0 },
+      trim: json.trim || { from: 0, to: 0 },
+      duration: json.duration ?? 0,
+      playbackRate: json.playbackRate ?? 1,
+    };
+  } else {
+    normalized.timing = {
+      display: normalized.timing.display || { from: 0, to: 0 },
+      trim: normalized.timing.trim || { from: 0, to: 0 },
+      duration: normalized.timing.duration ?? 0,
+      playbackRate: normalized.timing.playbackRate ?? 1,
+    };
+  }
+
+  if (!normalized.transform) {
+    const raw = json as any;
+    normalized.transform = {
+      x: raw.left ?? 0,
+      y: raw.top ?? 0,
+      width: raw.width ?? 0,
+      height: raw.height ?? 0,
+      angle: raw.angle ?? 0,
+      opacity: raw.opacity ?? 1,
+      zIndex: raw.zIndex ?? 0,
+      flip: raw.flip || null,
+    };
+  } else {
+    normalized.transform = {
+      x: normalized.transform.x ?? 0,
+      y: normalized.transform.y ?? 0,
+      width: normalized.transform.width ?? 0,
+      height: normalized.transform.height ?? 0,
+      angle: normalized.transform.angle ?? 0,
+      opacity: normalized.transform.opacity ?? 1,
+      zIndex: normalized.transform.zIndex ?? 0,
+      flip: normalized.transform.flip || null,
+    };
+  }
+
+  if (normalized.style) {
+    normalized.style = normalizeClipStyleJSON(normalized.style, json.type);
+  }
+
+  return normalized as ClipJSON;
+}
+
+export function normalizeClipStyleJSON(style: any, type: string): any {
+  if (!style) return style;
+  const normalized = { ...style };
+
+  // Unify dropShadow into shadow
+  if (normalized.dropShadow) {
+    normalized.shadow = normalized.dropShadow;
+    delete normalized.dropShadow;
+  }
+
+  if (normalized.shadow) {
+    const shadow = { ...normalized.shadow };
+    const hasOffset = shadow.offsetX !== undefined || shadow.offsetY !== undefined;
+    const hasLegacy = shadow.distance !== undefined || shadow.angle !== undefined;
+
+    if (hasLegacy && !hasOffset) {
+      const d = shadow.distance ?? 0;
+      const a = shadow.angle ?? 0;
+      shadow.offsetX = Math.cos(a) * d;
+      shadow.offsetY = Math.sin(a) * d;
+    }
+    delete shadow.distance;
+    delete shadow.angle;
+    normalized.shadow = shadow;
+  }
+
+  if (type === "Text" || type === "Caption") {
+    if (normalized.fill !== undefined) {
+      normalized.color = normalized.fill;
+      delete normalized.fill;
+    }
+  }
+
+  return normalized;
+}
+
+/**
  * Serialize a clip to JSON format
  * @param clip The clip to serialize
  * @param main Whether this is the main clip (for Compositor)
@@ -306,58 +428,57 @@ export function clipToJSON(clip: IClip, main: boolean = false): ClipJSON {
  * Uses fromObject static method if available (fabric.js pattern), otherwise falls back to manual construction
  */
 export async function jsonToClip(json: ClipJSON): Promise<IClip> {
+  const normalizedJson = normalizeClipJSON(json);
   let clip: IClip;
 
   // Try to use fromObject static method if available (fabric.js pattern)
   let ClipClass: any = null;
-  switch (json.type) {
-    case 'Video':
+  switch (normalizedJson.type) {
+    case "Video":
       ClipClass = Video;
       break;
-    case 'Audio':
+    case "Audio":
       ClipClass = Audio;
       break;
-    case 'Image':
+    case "Image":
       ClipClass = Image;
       break;
-    case 'Text':
+    case "Text":
       ClipClass = Text;
       break;
-    case 'Caption':
+    case "Caption":
       ClipClass = Caption;
       break;
-    case 'Effect':
+    case "Effect":
       ClipClass = Effect;
       break;
-    case 'Transition':
+    case "Transition":
       ClipClass = Transition;
       break;
-    case 'Placeholder':
+    case "Placeholder":
       ClipClass = Placeholder;
       break;
   }
 
-  if (ClipClass && typeof ClipClass.fromObject === 'function') {
-    clip = await ClipClass.fromObject(json);
+  if (ClipClass && typeof ClipClass.fromObject === "function") {
+    clip = await ClipClass.fromObject(normalizedJson);
   } else {
-    throw new Error(
-      `Unsupported clip type or missing fromObject: ${json.type}`
-    );
+    throw new Error(`Unsupported clip type or missing fromObject: ${normalizedJson.type}`);
   }
 
   // Final pass for modular animations to ensure they are always applied
   // (some fromObject implementations might only handle legacy animation)
-  if (json.animations && Array.isArray(json.animations)) {
+  if (normalizedJson.animations && Array.isArray(normalizedJson.animations)) {
     clip.clearAnimations();
-    for (const anim of json.animations) {
+    for (const anim of normalizedJson.animations) {
       clip.addAnimation(anim.type, anim.options, anim.params);
     }
   }
 
   // Ensure id and name are correct
-  if (json.id) clip.id = json.id;
-  if (json.name) clip.name = json.name;
-  if (json.metadata) clip.metadata = json.metadata;
+  if (normalizedJson.id) clip.id = normalizedJson.id;
+  if (normalizedJson.name) clip.name = normalizedJson.name;
+  if (normalizedJson.metadata) clip.metadata = normalizedJson.metadata;
 
   return clip;
 }

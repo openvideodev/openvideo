@@ -52,7 +52,8 @@ document.body.appendChild(img);
 ```
 
 <Callout type="info">
-  The parameter is in **milliseconds**. Internally, the Studio timeline uses microseconds, so the conversion is handled automatically.
+  The parameter is in **milliseconds**. Internally, the Studio timeline uses microseconds, so the
+  conversion is handled automatically.
 </Callout>
 
 ### Compositor — `renderFrame()`
@@ -75,7 +76,9 @@ console.log(frame); // "data:image/png;base64,..."
 ```
 
 <Callout type="info">
-  `renderFrame` does **not** affect the compositor's export state — clips are not marked as expired and the encoding pipeline is untouched. You can call `output()` normally after calling `renderFrame`.
+  `renderFrame` does **not** affect the compositor's export state — clips are not marked as expired
+  and the encoding pipeline is untouched. You can call `output()` normally after calling
+  `renderFrame`.
 </Callout>
 
 ### Generating Multiple Thumbnails

@@ -22,13 +22,13 @@ const videoClip = await Video.fromUrl("video.mp4");
 ### Video Properties
 
 ```ts
-videoClip.left = 100;     // X position
-videoClip.top = 200;      // Y position
+videoClip.left = 100; // X position
+videoClip.top = 200; // Y position
 videoClip.width = 800;
 videoClip.height = 600;
-videoClip.angle = 45;     // Rotation in degrees
+videoClip.angle = 45; // Rotation in degrees
 videoClip.opacity = 0.8;
-videoClip.volume = 0.5;   // 0.0 to 1.0
+videoClip.volume = 0.5; // 0.0 to 1.0
 ```
 
 ### Video Methods
@@ -58,7 +58,7 @@ imageClip.set({
   left: 0,
   top: 0,
   width: 1920,
-  height: 1080
+  height: 1080,
 });
 ```
 
@@ -74,7 +74,7 @@ const textClip = new Text("Hello OpenVideo", {
   fontFamily: "Inter",
   fill: "#ffffff",
   fontWeight: "bold",
-  textAlign: "center"
+  textAlign: "center",
 });
 ```
 
@@ -89,6 +89,7 @@ textClip.style.fontSize = 96;
 ### Text Styling
 
 OpenVideo supports standard PixiJS text styling options, including:
+
 - `fontFamily`, `fontSize`, `fontWeight`
 - `fill` (color)
 - `stroke`, `strokeThickness`
@@ -137,7 +138,7 @@ Like all clips, you can trim audio using the `trim` property:
 ```ts
 audioTrack.trim = {
   from: 5e6, // start 5 seconds in
-  to: 15e6,  // end at 15 seconds
+  to: 15e6, // end at 15 seconds
 };
 ```
 
@@ -160,7 +161,7 @@ const placeholder = new Placeholder(
     height: 1080,
     duration: 10 * 1e6,
   },
-  'Video'
+  "Video",
 );
 
 await studio.addClip(placeholder);
@@ -171,7 +172,7 @@ Video.fromUrl(src).then(async (videoClip) => {
   await studio.timeline.replaceClipsBySource(src, async (oldClip) => {
     const clone = await videoClip.clone();
     // Copy state from placeholder (user might have moved/resized/split it)
-    clone.id = oldClip.id; 
+    clone.id = oldClip.id;
     clone.left = oldClip.left;
     clone.top = oldClip.top;
     clone.width = oldClip.width;
@@ -292,5 +293,5 @@ import { CustomSpriteClip } from "openvideo";
 ## Best Practices
 
 1. **Wait for ready**: Always `await clip.ready` or the static `fromUrl` method to ensure media metadata is loaded before adding to the studio.
-2. **Microseconds**: Remember all time values (`display`, `trim`) must be in microseconds (seconds * 1,000,000).
+2. **Microseconds**: Remember all time values (`display`, `trim`) must be in microseconds (seconds \* 1,000,000).
 3. **Cleanup**: Clips are automatically cleaned up when the Studio is destroyed, but you can manually call `clip.destroy()` if needed.

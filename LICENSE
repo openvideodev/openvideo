@@ -1,26 +1,21 @@
-# License
+MIT License
 
-This project is licensed under a **dual license**:
+Copyright (c) 2026 OpenVideoDev
 
-## Open Source License: GNU AGPL v3
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Unless you have a separate commercial license from the copyright holder, the **GNU Affero General Public License v3 (AGPL-3.0)** applies by default.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-**Key Points:**
-- You are free to use, modify, and distribute this software
-- Network use (SaaS) triggers the obligation to provide the corresponding source code to users interacting with the software over a network
-- Any modifications must also be licensed under AGPL v3
-- See the full license text in [LICENSE-AGPL3.md](LICENSE-AGPL3.md)
-
-## Commercial License
-
-For closed-source or commercial use without AGPL obligations, you must obtain a commercial license from the copyright holder.
-
-**Contact:**
-- hello@openvideo.dev
-
----
-
-**Copyright (c) 2026 OpenVideoDev**
-
-For the complete terms and conditions of the GNU AGPL v3 license, please refer to [LICENSE-AGPL3.md](LICENSE-AGPL3.md) or visit <https://www.gnu.org/licenses/agpl-3.0.html>.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

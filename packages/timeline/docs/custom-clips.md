@@ -11,7 +11,7 @@ import { Rect, classRegistry } from "fabric";
 
 class MyCustomClip extends Rect {
   static type = "MyCustomClip";
-  
+
   // Capability Flags
   public isTrimmable = true;
   public isResizable = false;
@@ -25,9 +25,9 @@ class MyCustomClip extends Rect {
   public sync(itemDetail, tScale) {
     // Update visual properties based on state data
     this.set({
-      fill: itemDetail.details.color || "blue"
+      fill: itemDetail.details.color || "blue",
     });
-    
+
     // Always call setCoords to update interaction hit areas
     this.setCoords();
   }
@@ -54,11 +54,11 @@ const timeline = new Timeline({
   canvas: canvas,
   itemTypes: ["video", "text", "myCustomClip"], // Add here
   acceptsMap: {
-    main: ["video", "myCustomClip"] // Define where it can be dropped
+    main: ["video", "myCustomClip"], // Define where it can be dropped
   },
   sizesMap: {
-    myCustomClip: 50 // Define its track height
-  }
+    myCustomClip: 50, // Define its track height
+  },
 });
 ```
 

@@ -1,1 +1,1 @@
-declare module 'gl-transitions';
+declare module "gl-transitions";

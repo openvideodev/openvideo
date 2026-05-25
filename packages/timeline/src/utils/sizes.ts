@@ -1,10 +1,10 @@
 export const getHelperHeight = (type: string) => {
   switch (type) {
-    case 'top':
+    case "top":
       return 1000;
-    case 'bottom':
+    case "bottom":
       return 1000;
-    case 'center':
+    case "center":
       return 8;
     default:
       return 1000;

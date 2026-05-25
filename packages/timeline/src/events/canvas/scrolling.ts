@@ -1,5 +1,5 @@
-import { ModifiedEvent, TPointerEvent } from 'fabric';
-import Timeline from '../../timeline';
+import { ModifiedEvent, TPointerEvent } from "fabric";
+import Timeline from "../../timeline";
 
 const SHOULD_SCROLL_RANGE_X = 100;
 const SHOULD_SCROLL_RANGE_Y = 0;
@@ -17,8 +17,7 @@ const state: ScrollState = {
 
 function calculateScrollSpeed(distance: number): number {
   const speedRange = MAX_SCROLL_SPEED - MIN_SCROLL_SPEED;
-  const speedFactor =
-    (SHOULD_SCROLL_RANGE_X - distance) / SHOULD_SCROLL_RANGE_X;
+  const speedFactor = (SHOULD_SCROLL_RANGE_X - distance) / SHOULD_SCROLL_RANGE_X;
   return MIN_SCROLL_SPEED + speedRange * speedFactor;
 }
 
@@ -41,7 +40,7 @@ function startAutoScroll(timeline: Timeline, e: ModifiedEvent<TPointerEvent>) {
       target.left + targetBounds.width < timeline.bounding.width
     ) {
       const scrollSpeed = calculateScrollSpeed(timeline.width - pointer.x);
-      target.set('left', target.left + scrollSpeed);
+      target.set("left", target.left + scrollSpeed);
       timeline.setViewportPos(vt[4] - scrollSpeed, vt[5]);
     }
 
@@ -54,7 +53,7 @@ function startAutoScroll(timeline: Timeline, e: ModifiedEvent<TPointerEvent>) {
     ) {
       const scrollSpeed = calculateScrollSpeed(pointer.x);
 
-      target.set('left', target.left - scrollSpeed);
+      target.set("left", target.left - scrollSpeed);
       timeline.setViewportPos(vt[4] + scrollSpeed, vt[5]);
     }
 
@@ -63,17 +62,13 @@ function startAutoScroll(timeline: Timeline, e: ModifiedEvent<TPointerEvent>) {
       pointer.y > timeline.height - SHOULD_SCROLL_RANGE_Y &&
       target.top + targetBounds.height < timeline.bounding.height + 80
     ) {
-      target.set('top', target.top + SCROLL_SPEED);
+      target.set("top", target.top + SCROLL_SPEED);
       timeline.setViewportPos(vt[4], vt[5] - SCROLL_SPEED);
     }
 
     // Handle scroll up
-    if (
-      pointer.y < SHOULD_SCROLL_RANGE_Y &&
-      target.top > -80 &&
-      -vt[5] > SHOULD_SCROLL_RANGE_Y
-    ) {
-      target.set('top', target.top - SCROLL_SPEED);
+    if (pointer.y < SHOULD_SCROLL_RANGE_Y && target.top > -80 && -vt[5] > SHOULD_SCROLL_RANGE_Y) {
+      target.set("top", target.top - SCROLL_SPEED);
       timeline.setViewportPos(vt[4], vt[5] + SCROLL_SPEED);
     }
 
@@ -93,19 +88,16 @@ export function onMouseUpForScroll() {
   stopAutoScroll();
 }
 
-export function scrollOnMovingForScroll(
-  this: Timeline,
-  e: ModifiedEvent<TPointerEvent>
-) {
+export function scrollOnMovingForScroll(this: Timeline, e: ModifiedEvent<TPointerEvent>) {
   startAutoScroll(this, e);
 }
 
 export function addScrollEvents(timeline: Timeline) {
-  timeline.on('mouse:up', onMouseUpForScroll);
-  timeline.on('object:moving', scrollOnMovingForScroll.bind(timeline));
+  timeline.on("mouse:up", onMouseUpForScroll);
+  timeline.on("object:moving", scrollOnMovingForScroll.bind(timeline));
 }
 
 export function removeScrollEvents(timeline: Timeline) {
-  timeline.off('mouse:up', onMouseUpForScroll);
-  timeline.off('object:moving', scrollOnMovingForScroll.bind(timeline));
+  timeline.off("mouse:up", onMouseUpForScroll);
+  timeline.off("object:moving", scrollOnMovingForScroll.bind(timeline));
 }

@@ -21,17 +21,15 @@ core.execute({
       id: nanoid(),
       type: "Transition",
       name: "Fade Transition",
-      transitionEffect: {
-        key: "fade", // The effect identifier
-      },
+      transitionKey: "fade", // The transition key/identifier
       display: {
         from: 4_500_000, // Starts 0.5s before the junction
-        to: 5_500_000,   // Ends 0.5s after the junction
+        to: 5_500_000, // Ends 0.5s after the junction
       },
       fromClipId: "video_1",
       toClipId: "video_2",
-    }
-  }
+    },
+  },
 });
 ```
 
@@ -39,14 +37,14 @@ core.execute({
 
 OpenVideo supports a wide range of GL-based transitions. Common keys include:
 
-| Key | Effect |
-| :--- | :--- |
-| `fade` | Standard cross-fade |
-| `cube` | 3D cube rotation |
-| `wipeLeft` / `wipeRight` | Linear directional wipes |
-| `zoomInCircles` | Concentric circles reveal |
-| `glitchMemories` | Digital glitch transition |
-| `dreamy` | Soft blur transition |
+| Key                      | Effect                    |
+| :----------------------- | :------------------------ |
+| `fade`                   | Standard cross-fade       |
+| `cube`                   | 3D cube rotation          |
+| `wipeLeft` / `wipeRight` | Linear directional wipes  |
+| `zoomInCircles`          | Concentric circles reveal |
+| `glitchMemories`         | Digital glitch transition |
+| `dreamy`                 | Soft blur transition      |
 
 ## Custom Transitions
 
@@ -74,7 +72,7 @@ Since transitions are clips, you can update them (e.g., change duration or effec
 ```ts
 // Update transition duration
 core.clip.update(transitionId, {
-  display: { from: 4_000_000, to: 6_000_000 }
+  display: { from: 4_000_000, to: 6_000_000 },
 });
 
 // Remove transition

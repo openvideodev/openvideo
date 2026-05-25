@@ -21,7 +21,7 @@ import { core, nanoid } from "@openvideo/core";
 core.execute({
   id: nanoid(),
   type: "playback.seek",
-  payload: { time: 5000000 }
+  payload: { time: 5000000 },
 });
 ```
 
@@ -49,15 +49,19 @@ studio.play();
 ## Core Concepts
 
 ### Commands
+
 The primary way to interact with the engine. Descriptive intents that mutate state.
 
 ### Clips
+
 The building blocks - video, image, text, and audio elements positioned on the timeline.
 
 ### Timeline
+
 A precise, microsecond-based timeline (1 second = 1,000,000 µs) ensuring frame-accurate synchronization.
 
 ### Rendering
+
 Export your video using the high-performance WebCodecs-based compositor or extract frames directly from the canvas.
 
 ## Browser Support
@@ -69,7 +73,6 @@ Built on **PixiJS (WebGL)** for rendering and **WebCodecs** for video export.
 | Chrome  | 94+     | ✅    | ✅        | Full support   |
 | Edge    | 94+     | ✅    | ✅        | Full support   |
 | Safari  | 16.4+   | ✅    | ✅        | Full support   |
-| Firefox | 100+    | ✅    | ⚠️        | Preview only* |
+| Firefox | 100+    | ✅    | ⚠️        | Preview only\* |
 
 \*Firefox has limited WebCodecs support. Preview works via WebGL, but video export may be limited.
-

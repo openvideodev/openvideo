@@ -1,9 +1,9 @@
-import { createStore } from 'zustand/vanilla';
-import { IProject, AnyClip, IScaleState } from './types';
-import { nanoid } from 'nanoid';
-import { Command, HistoryEntry, Patch } from './commands/types';
-import { commandRegistry } from './commands/registry';
-import { applyPatches, invertPatches } from './utils/patch';
+import { createStore } from "zustand/vanilla";
+import { IProject, AnyClip, IScaleState } from "./types";
+import { nanoid } from "nanoid";
+import { Command, HistoryEntry, Patch } from "./commands/types";
+import { commandRegistry } from "./commands/registry";
+import { applyPatches, invertPatches } from "./utils/patch";
 
 export interface ProjectState extends IProject {
   selectedIds: string[];
@@ -32,12 +32,10 @@ export interface ProjectActions {
   setSpeed: (speed: number) => void;
 
   // Scale
-  setScale: (
-    scale: Partial<IScaleState> | ((prev: IScaleState) => Partial<IScaleState>)
-  ) => void;
+  setScale: (scale: Partial<IScaleState> | ((prev: IScaleState) => Partial<IScaleState>)) => void;
 
   // Project
-  updateSettings: (settings: Partial<IProject['settings']>) => void;
+  updateSettings: (settings: Partial<IProject["settings"]>) => void;
   reset: (project: IProject) => void;
   recalculateDuration: () => void;
 
@@ -152,7 +150,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
             {
               command: {
                 id: nanoid(),
-                type: 'batch',
+                type: "batch",
                 payload: commandLogs,
               },
               patches: allPatches,
@@ -228,9 +226,10 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       return {
         settings: { ...settings },
         tracks: tracks.map((t) => ({ ...t, clipIds: [...t.clipIds] })),
-        clips: Object.fromEntries(
-          Object.entries(clips).map(([k, v]) => [k, { ...v }])
-        ) as Record<string, AnyClip>,
+        clips: Object.fromEntries(Object.entries(clips).map(([k, v]) => [k, { ...v }])) as Record<
+          string,
+          AnyClip
+        >,
       };
     },
 
@@ -239,7 +238,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       const idArray = Array.isArray(ids) ? ids : [ids];
       get().execute({
         id: nanoid(),
-        type: 'project.select',
+        type: "project.select",
         payload: { ids: idArray, multi },
       });
     },
@@ -248,7 +247,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       const idArray = ids ? (Array.isArray(ids) ? ids : [ids]) : undefined;
       get().execute({
         id: nanoid(),
-        type: 'project.deselect',
+        type: "project.deselect",
         payload: idArray,
       });
     },
@@ -270,10 +269,9 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       set((state) => ({
         scale: {
           ...state.scale,
-          ...(typeof scale === 'function' ? scale(state.scale) : scale),
+          ...(typeof scale === "function" ? scale(state.scale) : scale),
         },
       })),
-
 
     // Actions: Project
     updateSettings: (settings) => {
@@ -281,11 +279,11 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         settings: { ...state.settings, ...settings },
       }));
     },
-    
+
     reset: (project) => {
       get().execute({
         id: nanoid(),
-        type: 'project.reset',
+        type: "project.reset",
         payload: project,
       });
     },
@@ -294,10 +292,10 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
       const { clips } = get();
       let maxUs = 0;
       Object.values(clips).forEach((clip) => {
-        const endUs =
-          clip.display.to > 0
-            ? clip.display.to
-            : clip.display.from + clip.duration;
+        const display = clip.timing?.display || clip.display;
+        const duration = clip.timing?.duration ?? clip.duration ?? 0;
+        if (!display) return;
+        const endUs = display.to > 0 ? display.to : display.from + duration;
         if (endUs > maxUs) maxUs = endUs;
       });
       const finalDuration = maxUs;

@@ -20,8 +20,8 @@ core.clip.update(clipId, {
       key: "sepia",
       startTime: 0,
       duration: 5_000_000, // 5 seconds
-    }
-  ]
+    },
+  ],
 });
 ```
 
@@ -40,10 +40,10 @@ core.clip.update(clipId, {
       values: {
         distance: 20,
         outerStrength: 3,
-        color: "#ff0000"
-      }
-    }
-  ]
+        color: "#ff0000",
+      },
+    },
+  ],
 });
 ```
 
@@ -56,9 +56,7 @@ Since `effects` is an array, you can add, remove, or replace effects by updating
 ```ts
 // Replace all effects with a new grayscale filter
 core.clip.update(clipId, {
-  effects: [
-    { id: "bw_1", key: "grayscale", startTime: 0, duration: 10e6 }
-  ]
+  effects: [{ id: "bw_1", key: "grayscale", startTime: 0, duration: 10e6 }],
 });
 ```
 
@@ -66,7 +64,7 @@ core.clip.update(clipId, {
 
 ```ts
 core.clip.update(clipId, {
-  effects: []
+  effects: [],
 });
 ```
 

@@ -8,9 +8,9 @@ import {
   MP4Sample,
   TrakBoxParser,
   VideoTrackOpts,
-} from 'wrapbox';
-import { file } from 'opfs-tools';
-import { DEFAULT_AUDIO_CONF } from '../clips';
+} from "wrapbox";
+import { file } from "opfs-tools";
+import { DEFAULT_AUDIO_CONF } from "../clips";
 
 interface ExtractedConfig {
   videoTrackConf?: VideoTrackOpts;
@@ -22,10 +22,7 @@ interface ExtractedConfig {
 /**
  * Extracts video and audio configurations from an MP4 file.
  */
-export function extractFileConfig(
-  file: MP4File,
-  info: MP4Info
-): ExtractedConfig {
+export function extractFileConfig(file: MP4File, info: MP4Info): ExtractedConfig {
   const result: ExtractedConfig = {};
 
   const vTrack = info.videoTracks[0];
@@ -62,15 +59,14 @@ export function extractFileConfig(
       timescale: aTrack.timescale,
       samplerate: audioInfo.sampleRate ?? aTrack.audio.sample_rate,
       channel_count: audioInfo.numberOfChannels ?? aTrack.audio.channel_count,
-      hdlr: 'soun',
-      type: aTrack.codec.startsWith('mp4a') ? 'mp4a' : aTrack.codec,
+      hdlr: "soun",
+      type: aTrack.codec.startsWith("mp4a") ? "mp4a" : aTrack.codec,
       description: esdsBox,
     };
 
     result.audioDecoderConf = {
       codec: audioInfo.codec ?? DEFAULT_AUDIO_CONF.codec,
-      numberOfChannels:
-        audioInfo.numberOfChannels ?? aTrack.audio.channel_count,
+      numberOfChannels: audioInfo.numberOfChannels ?? aTrack.audio.channel_count,
       sampleRate: audioInfo.sampleRate ?? aTrack.audio.sample_rate,
     };
   }
@@ -79,10 +75,8 @@ export function extractFileConfig(
 }
 
 function getCodecInfo(codec: string): { descKey: string; type: string } | null {
-  if (codec.startsWith('avc1'))
-    return { descKey: 'avcDecoderConfigRecord', type: 'avc1' };
-  if (codec.startsWith('hvc1'))
-    return { descKey: 'hevcDecoderConfigRecord', type: 'hvc1' };
+  if (codec.startsWith("avc1")) return { descKey: "avcDecoderConfigRecord", type: "avc1" };
+  if (codec.startsWith("hvc1")) return { descKey: "hevcDecoderConfigRecord", type: "hvc1" };
   return null;
 }
 
@@ -101,10 +95,7 @@ function parseVideoCodecDesc(track: TrakBoxParser): Uint8Array | undefined {
   return undefined;
 }
 
-function getESDSBoxFromMP4File(
-  file: MP4File,
-  codec = 'mp4a'
-): ESDSBoxParser | undefined {
+function getESDSBoxFromMP4File(file: MP4File, codec = "mp4a"): ESDSBoxParser | undefined {
   return file.moov?.traks
     .flatMap((t: any) => t.mdia.minf.stbl.stsd.entries)
     .find((entry: any) => entry.type === codec) as ESDSBoxParser | undefined;
@@ -126,7 +117,7 @@ function parseAudioInfoFromESDSBox(esds: ESDSBoxParser): {
   const decSpecInfo = decConfDesc.descs?.[0];
 
   if (!decSpecInfo) {
-    if (codec.endsWith('.40')) codec += '.2';
+    if (codec.endsWith(".40")) codec += ".2";
     return { codec };
   }
 
@@ -140,8 +131,7 @@ function parseAudioInfoFromESDSBox(esds: ESDSBoxParser): {
   const numberOfChannels = (data[1] & 0x78) >> 3;
 
   const SAMPLE_RATES = [
-    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025,
-    8000, 7350,
+    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350,
   ] as const;
 
   return {
@@ -155,13 +145,9 @@ function parseAudioInfoFromESDSBox(esds: ESDSBoxParser): {
  * Quick parse mp4 file, prioritizing header parsing to save memory.
  */
 export async function quickParseMP4File(
-  reader: Awaited<ReturnType<ReturnType<typeof file>['createReader']>>,
+  reader: Awaited<ReturnType<ReturnType<typeof file>["createReader"]>>,
   onReady: (data: { mp4boxFile: MP4File; info: MP4Info }) => void,
-  onSamples: (
-    id: number,
-    sampleType: 'video' | 'audio',
-    samples: MP4Sample[]
-  ) => void
+  onSamples: (id: number, sampleType: "video" | "audio", samples: MP4Sample[]) => void,
 ) {
   const mp4boxFile = mp4box.createFile(false) as unknown as MP4File;
 
@@ -170,7 +156,7 @@ export async function quickParseMP4File(
 
     [info.videoTracks[0], info.audioTracks[0]].forEach((track) => {
       if (track) {
-        const type = (track as any).video ? 'video' : 'audio';
+        const type = (track as any).video ? "video" : "audio";
         mp4boxFile.setExtractionOptions(track.id, type, { nbSamples: 100 });
       }
     });
@@ -229,11 +215,7 @@ export function parseMatrix(matrix?: Int32Array) {
 /**
  * Creates a function to rotate VideoFrames using Canvas.
  */
-export function createVFRotater(
-  width: number,
-  height: number,
-  rotationDeg: number
-) {
+export function createVFRotater(width: number, height: number, rotationDeg: number) {
   const normRotation = (Math.round(rotationDeg / 90) * 90 + 360) % 360;
   if (normRotation === 0) return (vf: VideoFrame | null) => vf;
 
@@ -242,7 +224,7 @@ export function createVFRotater(
   const rotatedHeight = isPortrait ? width : height;
 
   const canvas = new OffscreenCanvas(rotatedWidth, rotatedHeight);
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
 
   ctx.translate(rotatedWidth / 2, rotatedHeight / 2);
   ctx.rotate((-normRotation * Math.PI) / 180);
