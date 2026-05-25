@@ -1,7 +1,16 @@
-@import "tailwindcss";
-@import "fumadocs-ui/css/neutral.css";
-@import "fumadocs-ui/css/preset.css";
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/black.css';
+@import 'fumadocs-ui/css/preset.css';
 
-@utility -inset-s-4 {
-  inset-inline-start: calc(var(--spacing-4, 1rem) * -1);
+:root {
+  --fd-layout-width: 100%;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html>body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
 }

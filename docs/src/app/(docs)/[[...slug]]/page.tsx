@@ -1,33 +1,37 @@
-import { getPageImage, source } from "@/lib/source";
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
-import { notFound } from "next/navigation";
-import { getMDXComponents } from "@/mdx-components";
+import { getPageImage, getPageMarkdownUrl, source } from "@/lib/source";
+import {
+  DocsBody,
+  DocsDescription,
+  DocsPage,
+  DocsTitle,
+  MarkdownCopyButton,
+  ViewOptionsPopover,
+} from "fumadocs-ui/layouts/docs/page";
+import { notFound, redirect } from "next/navigation";
+import { getMDXComponents } from "@/components/mdx";
 import type { Metadata } from "next";
 import { createRelativeLink } from "fumadocs-ui/mdx";
-import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
+import { gitConfig } from "@/lib/shared";
 
 export default async function Page(props: PageProps<"/[[...slug]]">) {
   const params = await props.params;
+  if (!params.slug || params.slug.length === 0) {
+    redirect("/core");
+  }
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
   const MDX = page.data.body;
-  const gitConfig = {
-    user: "openvideodev",
-    repo: "openvideo",
-    branch: "main",
-  };
-
+  const markdownUrl = getPageMarkdownUrl(page).url;
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pb-6">
-        <LLMCopyButton markdownUrl={`/llms.mdx/docs${page.url}`} />
-        <ViewOptions
-          markdownUrl={`/llms.mdx/docs${page.url}`}
-          // update it to match your repo
-          githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/docs/content/docs/${page.path}`}
+        <MarkdownCopyButton markdownUrl={markdownUrl} />
+        <ViewOptionsPopover
+          markdownUrl={markdownUrl}
+          githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/docs/${page.path}`}
         />
       </div>
       <DocsBody>
@@ -48,6 +52,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(props: PageProps<"/[[...slug]]">): Promise<Metadata> {
   const params = await props.params;
+  if (!params.slug || params.slug.length === 0) {
+    return {};
+  }
   const page = source.getPage(params.slug);
   if (!page) notFound();
 

@@ -1,6 +1,6 @@
 {
+  "title": "Engine Pixi",
   "root": true,
-  "title": "Pixi Renderer (Studio)",
   "pages": [
     "index",
     "---Getting Started---",

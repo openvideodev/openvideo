@@ -1,6 +1,6 @@
 {
+  "title": "Core",
   "root": true,
-  "title": "Core (Headless)",
   "pages": [
     "index",
     "commands",
