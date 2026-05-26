@@ -75,6 +75,7 @@ export class PixiSpriteRenderer {
   private animationContainer: Container | null = null;
   private resolution = 1;
   private destroyed = false;
+  private lastFrame: any = null;
 
   constructor(
     _pixiApp: Application | null,
@@ -112,6 +113,15 @@ export class PixiSpriteRenderer {
    */
   async updateFrame(frame: VideoFrame | ImageBitmap | Texture | null): Promise<void> {
     if (this.destroyed) return;
+
+    if (frame === this.lastFrame) {
+      if (this.root != null) {
+        this.root.visible = frame != null;
+        this.applySpriteTransforms();
+      }
+      return;
+    }
+    this.lastFrame = frame;
 
     if (frame == null) {
       // Hide sprite if no frame, but still apply transforms in case animation is running

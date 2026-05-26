@@ -4,6 +4,31 @@ import { changePCMPlaybackRate } from "../utils";
 import type { IClip, IClipMeta, ITransitionInfo } from "./iclip";
 import type { ClipJSON } from "../json-serialization";
 
+/** Convert a VideoFrame to ImageBitmap and release the frame. */
+async function videoFrameToImageBitmap(video: VideoFrame): Promise<ImageBitmap> {
+  try {
+    const bitmap = await createImageBitmap(video);
+    video.close();
+    return bitmap;
+  } catch {
+    const w = video.displayWidth;
+    const h = video.displayHeight;
+    if (w <= 0 || h <= 0) {
+      video.close();
+      throw new Error("VideoFrame has invalid dimensions");
+    }
+    const canvas = new OffscreenCanvas(w, h);
+    const ctx = canvas.getContext("2d");
+    if (ctx == null) {
+      video.close();
+      throw new Error("Failed to get 2d context for VideoFrame conversion");
+    }
+    ctx.drawImage(video, 0, 0, w, h);
+    video.close();
+    return createImageBitmap(canvas);
+  }
+}
+
 /**
  * Base class for all clips that extends BaseSprite
  * Provides common functionality for sprite operations (position, animation, timing)
@@ -75,18 +100,16 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       outAudio = audio.map((pcm) => changePCMPlaybackRate(pcm, this.playbackRate));
     }
 
-    // Pass VideoFrame directly to avoid expensive createImageBitmap copy.
-    // PixiSpriteRenderer handles VideoFrame → Texture upload natively.
-    // Only cache as ImageBitmap for last-frame reuse (VideoFrames are single-use).
+    // Always hand ImageBitmap to renderers. VideoFrames are single-use and
+    // Texture.from() may upload asynchronously; closing the VideoFrame early
+    // (before upload completes) produces a black first frame during export.
     let frameSource: VideoFrame | ImageBitmap | null = null;
     if (video != null) {
       if (video instanceof VideoFrame) {
-        // Pass VideoFrame through directly — caller (PixiSpriteRenderer) will
-        // create a texture from it and close it after GPU upload.
-        // Cache an ImageBitmap copy for last-frame reuse only.
         this.lastVf?.close();
-        this.lastVf = await createImageBitmap(video);
-        frameSource = video; // VideoFrame still open, caller must close
+        const bitmap = await videoFrameToImageBitmap(video);
+        this.lastVf = bitmap;
+        frameSource = bitmap;
       } else {
         // ImageBitmap — store directly for reuse
         this.lastVf?.close();

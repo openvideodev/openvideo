@@ -929,7 +929,7 @@ class VideoFrameFinder {
     if (
       this.decoder == null ||
       this.decoder.state === "closed" ||
-      time <= this.timestamp ||
+      time < this.timestamp ||
       time - this.timestamp > 3e6
     ) {
       this.reset(time);
@@ -963,7 +963,14 @@ class VideoFrameFinder {
 
     if (this.videoFrames.length > 0) {
       const vf = this.videoFrames[0];
-      if (time < vf.timestamp) return null;
+      if (time < vf.timestamp) {
+        // At clip start, hold the first decoded frame until its PTS is reached.
+        // Return a copy so callers can close/consume it without invalidating the queue.
+        if (time <= 0) {
+          return new VideoFrame(vf);
+        }
+        return null;
+      }
       // Pop first frame
       this.videoFrames.shift();
       // First frame expired, find next frame
@@ -1578,7 +1585,7 @@ function fixFirstBlackFrame(samples: ExtMP4Sample[]) {
     if (s.is_sync) iframeCnt += 1;
     if (iframeCnt >= 2) break;
 
-    if (minCtsSample == null || s.cts < minCtsSample.cts) {
+    if (s.is_sync && (minCtsSample == null || s.cts < minCtsSample.cts)) {
       minCtsSample = s;
     }
   }
