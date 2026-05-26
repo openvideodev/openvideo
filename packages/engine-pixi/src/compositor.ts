@@ -20,7 +20,7 @@ import { PixiSpriteRenderer } from "./sprite/pixi-sprite-renderer";
 import { parseColor, hexToRgb } from "./utils/color";
 import { vertex } from "./effect/vertex";
 import { CHROMA_KEY_FRAGMENT, SELECTIVE_HSL_FRAGMENT } from "./effect/glsl/custom-glsl";
-import { sleep } from "./utils";
+
 import {
   clipToJSON,
   jsonToClip,
@@ -64,12 +64,33 @@ export interface ICompositorOpts {
 let COM_ID = 0;
 
 /**
+ * A MessageChannel-based yield that schedules a macrotask in the browser's
+ * message queue. Unlike `await Promise.resolve()` (microtask) or
+ * `setTimeout` (vsync-coupled), MessageChannel tasks are dispatched at
+ * scheduler speed and are NOT throttled by the page's vsync/paint cycle.
+ *
+ * This is the key fix for the active-tab export slowdown: when a tab is
+ * active, `rAF` and paint callbacks saturate the event loop at ~60 fps.
+ * `await Promise.resolve()` yields within the same task, so the JS engine
+ * never actually gives the browser a chance to paint between *encoding*
+ * frames — but every await still competes with vsync bookkeeping.
+ * MessageChannel bypasses all of that and lets the encoder run at full CPU
+ * throughput regardless of whether the tab is visible.
+ */
+const { port1: _mcPort1, port2: _mcPort2 } = new MessageChannel();
+const yieldToScheduler = (): Promise<void> =>
+  new Promise<void>((resolve) => {
+    _mcPort1.onmessage = resolve;
+    _mcPort2.postMessage(null);
+  });
+
+/**
  * Prevent VideoEncoder queue from accumulating too many VideoFrames and causing memory issues.
- * Uses iterative polling instead of recursion to avoid stack buildup.
+ * Uses yieldToScheduler instead of sleep() to avoid the 16.6 ms workerTimer overhead.
  */
 async function waitEncoderQueue(getQSize: () => number) {
   while (getQSize() > 20) {
-    await sleep(15);
+    await yieldToScheduler();
   }
 }
 
@@ -465,6 +486,14 @@ export class Compositor extends EventEmitter<{
       });
 
       let timestamp = 0;
+      // Batch multiple frames between yields to reduce browser rendering
+      // pipeline overhead. On an active tab each yield costs the browser
+      // ~16.6 ms of compositor/paint work. By batching we amortise that
+      // cost across multiple frames, closing the gap with background-tab
+      // speed (where the browser skips painting entirely).
+      const FRAMES_PER_YIELD = 4;
+      let framesSinceYield = 0;
+
       while (true) {
         if (err != null) return;
         if (
@@ -487,16 +516,22 @@ export class Compositor extends EventEmitter<{
 
         if (aborter.aborted) return;
 
-        // Yield to allow GPU to finish rendering before creating VideoFrame.
-        // A microtask yield is sufficient and avoids the ~16.6ms workerTimer
-        // overhead that sleep(0) would incur.
-        if (this.hasVideoTrack) {
+        // Yield to the scheduler periodically so the page stays responsive
+        // and the GPU can flush. We batch several frames between yields to
+        // minimise the time the browser's rendering pipeline steals from us
+        // on the active tab.
+        if (this.hasVideoTrack && hasVideo) {
           if (timestamp === 0) {
-            // For the first frame, we need a full macrotask yield to ensure the GPU
-            // has compiled shaders and completed the first draw call.
+            // For the very first frame use a real setTimeout so the GPU has
+            // time to finish shader compilation before we capture the canvas.
             await new Promise((resolve) => setTimeout(resolve, 50));
+            framesSinceYield = 0;
           } else {
-            await Promise.resolve();
+            framesSinceYield++;
+            if (framesSinceYield >= FRAMES_PER_YIELD) {
+              await yieldToScheduler();
+              framesSinceYield = 0;
+            }
           }
         }
 
@@ -1638,6 +1673,25 @@ function createSpritesRender(opts: {
   return { render, cleanup };
 }
 
+/**
+ * Resolve the WebGL/WebGL2 context already held by an OffscreenCanvas.
+ * Returns null if no WebGL context is attached (e.g. canvas not yet used).
+ */
+function getCanvasGl(
+  canvas: OffscreenCanvas,
+): WebGLRenderingContext | WebGL2RenderingContext | null {
+  try {
+    // getContext() returns the *existing* context if one was already created,
+    // so this never creates a new one — it just retrieves Pixi's context.
+    return (
+      (canvas.getContext("webgl2") as WebGL2RenderingContext | null) ??
+      (canvas.getContext("webgl") as WebGLRenderingContext | null)
+    );
+  } catch {
+    return null;
+  }
+}
+
 function createAVEncoder(opts: {
   muxer: ReturnType<typeof recodemux>;
   canvas: OffscreenCanvas;
@@ -1651,6 +1705,9 @@ function createAVEncoder(opts: {
   // GOP size: 3 seconds
   const gopSize = Math.floor(3 * opts.fps);
 
+  // Resolve the WebGL context once — reused every frame.
+  const gl = hasVideoTrack ? getCanvasGl(canvas) : null;
+
   const audioTrackBuf = createAudioTrackBuf(1024);
 
   return async (timestamp: number, audios: Float32Array[][], hasVideo: boolean) => {
@@ -1663,6 +1720,16 @@ function createAVEncoder(opts: {
       // Ensure canvas is in a valid state before creating VideoFrame
       // The canvas must have been rendered to at least once
       try {
+        // gl.finish() flushes all pending GPU commands and blocks until the GPU
+        // has completed them. Without this, on an *active* browser tab the WebGL
+        // driver defers GPU completion to the next vsync cycle (~16.6 ms), making
+        // VideoFrame creation implicitly wait for vsync. gl.finish() removes that
+        // dependency so every frame is captured at full GPU speed — the same
+        // behaviour you get naturally when the tab is backgrounded (vsync stops).
+        if (gl != null && !gl.isContextLost()) {
+          gl.finish();
+        }
+
         const frame = new VideoFrame(canvas, {
           duration: timeSlice,
           timestamp: timestamp,
