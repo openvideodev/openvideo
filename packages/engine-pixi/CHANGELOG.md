@@ -1,5 +1,21 @@
 # @openvideo/engine-pixi
 
+## 1.0.6
+
+### Patch Changes
+
+- fix: export aspect ratio, timeline scroll, and drag improvements
+  - Preserve aspect ratio when exporting with presets (portrait/landscape detection)
+  - Add container-level scale transform in compositor for dimension mapping
+  - Store original JSON dimensions for proper clip scaling during render
+  - Scale transition clip positions to export dimensions
+  - Timeline scroll direction locking for trackpad gestures (single-axis scrolling)
+  - Fix drag data parsing for uploads and media panels
+  - Remove debug console.log statements from core and audio-clip
+
+- Updated dependencies
+  - @openvideo/core@1.0.6
+
 ## 1.0.4
 
 ### Patch Changes
