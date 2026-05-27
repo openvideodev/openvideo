@@ -1,5 +1,11 @@
 # @openvideo/core
 
+## 1.0.4
+
+### Patch Changes
+
+- Fix package.json entry points to correctly reference dist/ files instead of src/index.ts.
+
 ## 1.0.3
 
 ### Patch Changes
