@@ -1,46 +1,344 @@
 ---
 title: Animations
-description: Create dynamic motion in Core using the Command API.
+description: Create dynamic motion with presets, keyframes, and batch operations using the Command API.
 ---
 
-Animations in OpenVideo Core are data-driven. Instead of calling methods on a clip object, you define the animation state within the clip's data and update it via commands.
+Animations bring life to your video compositions by changing clip properties over time. In OpenVideo Core, animations are data-driven — you define animation states as part of your clip data and update them via commands.
 
-## Adding Animations
+## Overview
 
-To add an animation, use `core.clip.update` to modify the `animations` property of a clip.
+Animations in OpenVideo are:
+- **Stackable**: Multiple animations can run on a single clip
+- **Precise**: Timing in microseconds for smooth playback
+- **Reversible**: All changes are undoable via the command system
+- **AI-friendly**: Easy to generate programmatically
 
-### Using Presets
+## Animation Structure
+
+Each animation has the following structure:
+
+```ts
+interface Animation {
+  id: string;           // Unique identifier
+  type: string;         // Animation type (preset or "keyframes")
+  duration: number;     // Duration in microseconds
+  delay?: number;       // Delay before start (microseconds)
+  easing?: string;      // Easing function name
+  iterCount?: number;   // Iterations (default: 1, use Infinity for loop)
+  params?: object;      // Type-specific parameters
+  keyframes?: object;   // For custom keyframe animations
+}
+```
+
+## Animation Presets
+
+OpenVideo provides built-in animation presets for common transitions. These presets automatically calculate keyframes based on the clip's current state.
+
+### Entry Animations (In)
 
 ```ts
 import { core } from "@openvideo/core";
 
-// Apply a fadeIn animation
+// Fade in from transparent
 core.clip.update(clipId, {
   animations: [
     {
-      id: "anim_1",
+      id: "fade-in-anim",
       type: "fadeIn",
-      duration: 1_000_000, // 1 second
+      duration: 1_000_000,
       easing: "easeOutQuad",
+    },
+  ],
+});
+
+// Slide in from a direction
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "slide-in-anim",
+      type: "slideIn",
+      duration: 800_000,
+      easing: "easeOutBack",
+      params: {
+        direction: "left",    // "left", "right", "top", "bottom"
+        distance: 500,        // Pixels to travel
+      },
+    },
+  ],
+});
+
+// Zoom in from smaller size
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "zoom-in-anim",
+      type: "zoomIn",
+      duration: 600_000,
+      easing: "easeOutCubic",
     },
   ],
 });
 ```
 
-### Custom Keyframes
+### Exit Animations (Out)
 
-You can define complex motion by specifying property values at different percentages of the animation duration.
+```ts
+// Fade out to transparent
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "fade-out-anim",
+      type: "fadeOut",
+      duration: 800_000,
+      easing: "easeInQuad",
+      delay: 4_000_000, // Start at 4 seconds into clip
+    },
+  ],
+});
+
+// Slide out to a direction
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "slide-out-anim",
+      type: "slideOut",
+      duration: 600_000,
+      easing: "easeInBack",
+      params: {
+        direction: "right",
+        distance: 300,
+      },
+    },
+  ],
+});
+
+// Zoom out to smaller size
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "zoom-out-anim",
+      type: "zoomOut",
+      duration: 500_000,
+      easing: "easeInExpo",
+    },
+  ],
+});
+```
+
+### Available Presets
+
+| Preset | Description | Parameters |
+|--------|-------------|------------|
+| `fadeIn` | Opacity 0 → 1 | — |
+| `fadeOut` | Opacity 1 → 0 | — |
+| `zoomIn` | Scale 0 → 1 | — |
+| `zoomOut` | Scale 1 → 0 | — |
+| `slideIn` | Enter from edge | `direction`, `distance` |
+| `slideOut` | Exit to edge | `direction`, `distance` |
+| `stagger` | Character-by-character text animation | GSAP-based |
+
+## Custom Keyframe Animations
+
+For full control, define keyframes at specific percentage points:
+
+```ts
+// Complex multi-step animation
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "complex-anim",
+      type: "keyframes",
+      duration: 3_000_000,
+      easing: "easeInOutQuad",
+      keyframes: {
+        "0%": {               // Start state
+          opacity: 0,
+          scale: 0.5,
+          x: 0,
+          y: 0,
+        },
+        "30%": {              // At 30% through animation
+          opacity: 1,
+          scale: 1.2,
+          x: 100,
+        },
+        "60%": {              // At 60% through
+          scale: 1,
+          x: 200,
+          y: 50,
+        },
+        "100%": {             // End state
+          x: 300,
+          y: 100,
+          angle: 45,
+        },
+      },
+    },
+  ],
+});
+```
+
+### Keyframe Shorthand
+
+Use `from` and `to` for simple start/end animations:
 
 ```ts
 core.clip.update(clipId, {
   animations: [
     {
-      id: "motion_1",
+      id: "simple-move",
       type: "keyframes",
       duration: 2_000_000,
       keyframes: {
-        "0%": { opacity: 0, scale: 0.5 },
-        "50%": { opacity: 1, scale: 1.2 },
+        from: { x: 0, opacity: 0 },
+        to: { x: 500, opacity: 1 },
+      },
+    },
+  ],
+});
+```
+
+## Easing Functions
+
+Control the acceleration and deceleration of animations:
+
+| Easing | Description |
+|--------|-------------|
+| `linear` | Constant speed |
+| `easeInQuad` | Accelerate from zero |
+| `easeOutQuad` | Decelerate to zero |
+| `easeInOutQuad` | Accelerate then decelerate |
+| `easeInCubic` | Strong acceleration |
+| `easeOutCubic` | Strong deceleration |
+| `easeInOutCubic` | Strong accel/decel |
+| `easeInSine` | Sine curve acceleration |
+| `easeOutSine` | Sine curve deceleration |
+| `easeInExpo` | Exponential acceleration |
+| `easeOutExpo` | Exponential deceleration |
+| `easeInCirc` | Circular acceleration |
+| `easeOutCirc` | Circular deceleration |
+| `slow` | SlowMo with configurable linear ratio |
+
+### Per-Keyframe Easing
+
+Override the global easing for specific keyframe segments:
+
+```ts
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "multi-ease",
+      type: "keyframes",
+      duration: 2_000_000,
+      easing: "easeInOutQuad",      // Global easing
+      disableGlobalEasing: true,     // Allow per-keyframe easing
+      keyframes: {
+        "0%": { x: 0 },
+        "50%": {                     // Easing from 0% to 50%
+          x: 100,
+          easing: "easeOutBack",
+        },
+        "100%": { x: 200 },          // Uses global easing from 50% to 100%
+      },
+    },
+  ],
+});
+```
+
+## Animatable Properties
+
+The following properties can be animated across all clip types:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `x` | number | Horizontal position offset (pixels) |
+| `y` | number | Vertical position offset (pixels) |
+| `width` | number | Width offset (pixels) |
+| `height` | number | Height offset (pixels) |
+| `scale` | number | Uniform scale multiplier (1.0 = normal) |
+| `scaleX` | number | Horizontal scale multiplier |
+| `scaleY` | number | Vertical scale multiplier |
+| `opacity` | number | Opacity multiplier (0.0 - 1.0) |
+| `angle` | number | Rotation in degrees |
+| `blur` | number | Blur amount |
+| `brightness` | number | Brightness multiplier |
+| `mirror` | number | Mirror effect (0 or 1) |
+| `motionBlur` | number | Motion blur amount |
+
+## Managing Animations
+
+### Adding Multiple Animations
+
+Stack animations for complex effects:
+
+```ts
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "entry",
+      type: "slideIn",
+      duration: 600_000,
+      params: { direction: "left", distance: 200 },
+    },
+    {
+      id: "fade",
+      type: "fadeIn",
+      duration: 400_000,
+    },
+    {
+      id: "exit",
+      type: "slideOut",
+      duration: 500_000,
+      delay: 4_000_000, // Start 4 seconds in
+      params: { direction: "right", distance: 200 },
+    },
+  ],
+});
+```
+
+### Updating an Animation
+
+Replace a specific animation by ID:
+
+```ts
+// Keep existing animations, replace one
+core.clip.update(clipId, {
+  animations: existingAnimations.map(anim =>
+    anim.id === "entry"
+      ? { ...anim, duration: 1_000_000 } // Update duration
+      : anim
+  ),
+});
+```
+
+### Removing Animations
+
+```ts
+// Remove all animations
+core.clip.update(clipId, { animations: [] });
+
+// Remove specific animation by ID
+const currentAnims = core.store.getState().clips[clipId].animations || [];
+core.clip.update(clipId, {
+  animations: currentAnims.filter(a => a.id !== "entry"),
+});
+```
+
+## Looping Animations
+
+Create infinitely looping animations:
+
+```ts
+core.clip.update(clipId, {
+  animations: [
+    {
+      id: "pulse",
+      type: "keyframes",
+      duration: 1_000_000,
+      iterCount: Infinity,
+      keyframes: {
+        "0%": { scale: 1 },
+        "50%": { scale: 1.1 },
         "100%": { scale: 1 },
       },
     },
@@ -48,47 +346,67 @@ core.clip.update(clipId, {
 });
 ```
 
-## Managing Animations
+## Batch Animation Operations
 
-Since animations are just an array in the clip data, you can replace or clear them easily.
-
-### Replacing Animations
+Apply animations to multiple clips at once:
 
 ```ts
-// Replace all existing animations with a new one
-core.clip.update(clipId, {
-  animations: [{ type: "slideIn", direction: "left", duration: 1e6 }],
+import { nanoid } from "@openvideo/core";
+
+// Fade in all selected clips
+const state = core.store.getState();
+const selectedIds = state.selectedIds;
+
+core.execute({
+  id: nanoid(),
+  type: "clip.update",
+  payload: selectedIds.map(id => ({
+    id,
+    updates: {
+      animations: [
+        {
+          id: nanoid(),
+          type: "fadeIn",
+          duration: 500_000,
+        },
+      ],
+    },
+  })),
 });
 ```
 
-### Removing All Animations
+## Text-Specific Animations (GSAP Stagger)
+
+For text clips, use the `stagger` animation for character-by-character effects:
 
 ```ts
-core.clip.update(clipId, {
-  animations: [],
+core.clip.update(textClipId, {
+  animations: [
+    {
+      id: "text-reveal",
+      type: "stagger",
+      duration: 2_000_000,
+      easing: "easeOutBack",
+      params: {
+        from: "start",      // "start", "center", "edges", "random"
+        amount: 0.5,        // Total stagger time as fraction of duration
+        y: 50,              // Characters start 50px below
+        opacity: 0,         // Characters start invisible
+      },
+    },
+  ],
 });
 ```
 
-## Supported Easing Functions
+## Best Practices
 
-All standard easing functions are supported when defining animations:
-
-- `linear`
-- `easeInQuad`, `easeOutQuad`, `easeInOutQuad`
-- `easeInCubic`, `easeOutCubic`, `easeInOutCubic`
-- `easeInExpo`, `easeOutExpo`, `easeInOutExpo`
-- `easeInBack`, `easeOutBack`, `easeInOutBack`
-
-## Animatable Properties
-
-The following properties can be included in your keyframes:
-
-- `left`, `top` (Position)
-- `width`, `height` (Dimensions)
-- `opacity` (Transparency 0-1)
-- `angle` (Rotation in degrees)
-- `scale` (Size multiplier)
+1. **Always use microseconds**: `duration`, `delay` in μs (seconds × 1,000,000)
+2. **Give animations unique IDs**: Required for updating/removing specific animations
+3. **Use presets when possible**: Presets are optimized and consistent
+4. **Stack simple animations**: Combine fade + slide for polished effects
+5. **Time exit animations**: Use `delay` to make exit animations happen at clip end
+6. **Batch related changes**: Group animation updates with other clip changes
 
 ---
 
-Next, learn about [Transitions](./transitions) between clips or how to listen for [Events](./events).
+Next, learn about visual [Effects](./effects) or apply [Transitions](./transitions) between clips.

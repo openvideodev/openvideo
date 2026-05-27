@@ -1,13 +1,22 @@
 ---
 title: Rendering and Export
-description: Control playback and export video in Core.
+description: Export video, extract frames, and control playback in Core.
 ---
 
-OpenVideo Core provides a headless rendering pipeline. You can control the timeline playback via the `playback` controller or use the `Compositor` for high-performance video export.
+OpenVideo Core provides a complete rendering pipeline for exporting your video compositions. You can control playback, extract individual frames, and export to various video formats.
+
+## Overview
+
+The rendering system in OpenVideo includes:
+- **Playback Control**: Start, pause, and seek through your composition
+- **Frame Extraction**: Capture individual frames as images
+- **Video Export**: Render complete videos to MP4, WebM, or GIF
+- **Progress Tracking**: Monitor export progress in real-time
+- **Headless Operation**: Export without a visible canvas
 
 ## Playback Control
 
-In Core, playback is managed by the `core.playback` controller. It emits timing events and handles the synchronization of clips.
+Control the timeline playback state and position:
 
 ```ts
 import { core } from "@openvideo/core";
@@ -21,15 +30,39 @@ core.pause();
 // Seek to a specific time (microseconds)
 core.seek(1_500_000); // 1.5 seconds
 
-// Check playback state
-console.log(core.store.getState().isPlaying);
+// Get current playback state
+const state = core.store.getState();
+console.log("Playing:", state.isPlaying);
+console.log("Current time:", state.currentTime);
+console.log("Duration:", state.settings.duration);
+
+// Listen for playback events
+core.on("play", () => console.log("Started playing"));
+core.on("pause", () => console.log("Paused"));
+core.on("timeupdate", (time) => console.log("Time:", time));
 ```
 
-## The Compositor
+### Playback Settings
 
-The `Compositor` is the primary engine for exporting video. It is a headless, WebGL-accelerated renderer that produces a video stream.
+```ts
+// Set playback speed (0.5x, 1x, 2x, etc.)
+const state = core.store.getState();
+state.setSpeed(1.5);
 
-### Basic Export
+// Mute/unmute
+state.setMuted(true);
+
+// Set volume (0.0 to 1.0)
+state.setVolume(0.8);
+```
+
+## Frame Extraction
+
+Extract individual frames from your composition without starting a full export.
+
+### Using the Compositor
+
+The `Compositor` class is the primary engine for frame extraction and video export.
 
 ```ts
 import { Compositor } from "@openvideo/core";
@@ -41,43 +74,286 @@ const compositor = new Compositor(projectData.settings);
 // Load the project data
 compositor.import(projectData);
 
-// Generate a ReadableStream of the encoded video
-const stream = await compositor.output();
-```
+// Wait for compositor to be ready
+await compositor.ready;
 
-### Frame Extraction
-
-You can extract individual frames from the `Compositor` without starting a full export. This is useful for thumbnails or AI processing.
-
-```ts
-// Capture the frame at t = 2s (2000 ms)
+// Capture a frame at 2 seconds (2000 ms)
 const frameDataUrl = await compositor.renderFrame(2000);
 
-// "data:image/png;base64,..."
+// Result: "data:image/png;base64,iVBORw0KGgo..."
 console.log(frameDataUrl);
 ```
 
 > [!NOTE]
 > `renderFrame` accepts time in **milliseconds**, whereas the core timeline uses **microseconds**.
 
+### Generating Thumbnails
+
+Create a series of thumbnail images:
+
+```ts
+async function generateThumbnails(compositor: Compositor, intervalMs = 1000) {
+  const thumbnails = [];
+  const durationMs = compositor.settings.duration / 1000;
+
+  for (let t = 0; t <= durationMs; t += intervalMs) {
+    const frame = await compositor.renderFrame(t);
+    thumbnails.push({
+      time: t,
+      dataUrl: frame,
+    });
+  }
+
+  return thumbnails;
+}
+
+// Generate thumbnails every second
+const thumbs = await generateThumbnails(compositor, 1000);
+```
+
+### Frame Extraction for AI Processing
+
+Extract frames for feeding into AI pipelines:
+
+```ts
+// Extract frames at specific timestamps for analysis
+const analysisFrames = await Promise.all([
+  compositor.renderFrame(0),      // Start
+  compositor.renderFrame(5000),   // 5 seconds
+  compositor.renderFrame(10000),  // 10 seconds
+  compositor.renderFrame(15000),  // 15 seconds
+]);
+
+// Send to AI service
+const results = await aiService.analyzeFrames(analysisFrames);
+```
+
+## Video Export
+
+### Basic Export
+
+Export your composition to a video file:
+
+```ts
+import { Compositor } from "@openvideo/core";
+
+// Initialize with project settings
+const projectData = core.project.export();
+const compositor = new Compositor(projectData.settings);
+
+// Load project
+compositor.import(projectData);
+await compositor.ready;
+
+// Generate video stream
+const stream = await compositor.output();
+
+// Stream to file (browser)
+const response = new Response(stream);
+const blob = await response.blob();
+const url = URL.createObjectURL(blob);
+
+// Create download link
+const a = document.createElement("a");
+a.href = url;
+a.download = "output.mp4";
+a.click();
+```
+
+### Server-Side Export (Node.js)
+
+```ts
+import { Compositor } from "@openvideo/core";
+import { writeFile } from "fs/promises";
+import { Readable } from "stream";
+
+// Create compositor
+const compositor = new Compositor({
+  width: 1920,
+  height: 1080,
+  fps: 30,
+});
+
+// Load project
+compositor.import(projectData);
+await compositor.ready;
+
+// Export
+const stream = await compositor.output();
+
+// Convert Web Stream to Node Stream and save
+const nodeStream = Readable.fromWeb(stream as any);
+const chunks: Buffer[] = [];
+
+for await (const chunk of nodeStream) {
+  chunks.push(Buffer.from(chunk));
+}
+
+await writeFile("output.mp4", Buffer.concat(chunks));
+```
+
 ## Export Formats
 
-The `Compositor` supports multiple output formats depending on the environment:
+The `Compositor` supports multiple output formats:
 
-- **MP4**: H.264 / AAC encoding.
-- **WebM**: VP9 / Opus encoding.
-- **GIF**: For short animations.
+| Format | Codec | Best For |
+|--------|-------|----------|
+| **MP4** | H.264 / AAC | General purpose, compatibility |
+| **WebM** | VP9 / Opus | Web streaming, smaller files |
+| **GIF** | N/A | Short animations, memes |
+
+### Format Selection
+
+```ts
+// The format is determined by the output extension
+// or can be specified in options
+const stream = await compositor.output({
+  format: "mp4",  // "mp4" | "webm" | "gif"
+  quality: "high", // "low" | "medium" | "high"
+});
+```
 
 ## Progress Tracking
 
-Monitor the export progress by listening to the `OutputProgress` event.
+Monitor export progress in real-time:
 
 ```ts
-compositor.on("OutputProgress", (progress) => {
-  console.log(`Exporting: ${Math.round(progress * 100)}%`);
+// Track export progress
+compositor.on("OutputProgress", (progress: number) => {
+  const percentage = Math.round(progress * 100);
+  console.log(`Exporting: ${percentage}%`);
+  updateProgressBar(percentage);
 });
+
+// Track specific stages
+compositor.on("frame", (frameNumber: number, totalFrames: number) => {
+  console.log(`Rendering frame ${frameNumber}/${totalFrames}`);
+});
+
+// Handle completion
+compositor.on("complete", () => {
+  console.log("Export complete!");
+});
+
+// Handle errors
+compositor.on("error", (error: Error) => {
+  console.error("Export failed:", error);
+});
+```
+
+## Export Settings
+
+### Video Settings
+
+```ts
+const compositor = new Compositor({
+  width: 1920,        // Output width
+  height: 1080,       // Output height
+  fps: 30,            // Frame rate
+  bitrate: 8000000,   // Video bitrate (bps)
+});
+```
+
+### Audio Settings
+
+```ts
+const compositor = new Compositor({
+  // Video settings...
+  audioBitrate: 128000,  // Audio bitrate (bps)
+  sampleRate: 48000,      // Audio sample rate
+  channels: 2,            // Stereo (1 for mono)
+});
+```
+
+### Export Options
+
+```ts
+const stream = await compositor.output({
+  // Time range (export portion of timeline)
+  startTime: 0,           // Start at beginning (microseconds)
+  endTime: 30_000_000,    // End at 30 seconds
+
+  // Quality
+  videoBitrate: 5000000,  // 5 Mbps
+  audioBitrate: 128000, // 128 kbps
+
+  // Format-specific
+  mp4: {
+    fastStart: true,      // Enable streaming optimization
+  },
+  webm: {
+    quality: 50,          // 0-100, higher is better
+  },
+  gif: {
+    width: 480,           // GIF width (height auto)
+    fps: 15,              // GIF frame rate
+    colors: 128,          // Color palette size
+  },
+});
+```
+
+## Batch Export
+
+Export multiple versions of the same project:
+
+```ts
+async function exportMultipleVersions(projectData: IProject) {
+  const formats = [
+    { name: "1080p", width: 1920, height: 1080, fps: 30 },
+    { name: "720p", width: 1280, height: 720, fps: 30 },
+    { name: "mobile", width: 1080, height: 1920, fps: 30 },
+  ];
+
+  for (const format of formats) {
+    const compositor = new Compositor({
+      width: format.width,
+      height: format.height,
+      fps: format.fps,
+    });
+
+    compositor.import(projectData);
+    await compositor.ready;
+
+    const stream = await compositor.output();
+    await saveStream(stream, `output-${format.name}.mp4`);
+
+    console.log(`Exported ${format.name}`);
+  }
+}
+```
+
+## Headless Export
+
+For server-side or background processing:
+
+```ts
+// No canvas required - renders offscreen
+const compositor = new Compositor({
+  width: 1920,
+  height: 1080,
+  fps: 30,
+  headless: true,  // No DOM required
+});
+
+// Load and export
+compositor.import(projectData);
+const stream = await compositor.output();
+```
+
+## Best Practices
+
+1. **Always await `ready`**: Wait for the compositor to initialize before rendering
+2. **Use appropriate bitrates**: Balance quality and file size
+3. **Export in chunks**: For long videos, consider exporting segments
+4. **Monitor memory**: Frame extraction can use significant memory — dispose when done
+5. **Handle errors**: Always wrap exports in try-catch blocks
+6. **Clean up**: Dispose compositor when finished to free resources
+
+```ts
+// Clean up
+compositor.dispose();
 ```
 
 ---
 
-Next, learn how to manage [Serialization](./serialization) or explore the [API Reference](./api-reference).
+Next, learn about [Serialization](./serialization) or explore the [API Reference](./api-reference).

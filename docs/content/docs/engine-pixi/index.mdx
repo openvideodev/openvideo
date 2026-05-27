@@ -430,9 +430,39 @@ studio.on("selection:created", ({ selected }) => {
 // studio.destroy();
 ```
 
+## Studio and Core Integration
+
+The Studio (Pixi Engine) provides the interactive workspace, while **OpenVideo Core** provides the command-driven state management. The Studio automatically syncs with the Core project state:
+
+```ts
+import { Studio, core } from "openvideo";
+
+// Create studio (visual workspace)
+const studio = new Studio({ width: 1920, height: 1080, canvas });
+
+// Core commands automatically update the Studio
+await core.clip.add({ type: "Video", src: "video.mp4" });
+// The Studio will automatically show the new clip
+```
+
+For programmatic/AI-driven editing, use Core commands. For user-interactive editing, use the Studio API. Both systems work together seamlessly.
+
+## AI-Driven Editing
+
+For AI agents and automated workflows, refer to the comprehensive [AI Skills](../core/ai-skills) guide. It covers:
+
+- Automated clip manipulation
+- Batch operations
+- Timeline organization
+- Animation and effect automation
+- Export workflows
+- Advanced AI workflows (auto-edit, social media optimization, highlight reels)
+
 ## Next Steps
 
-- [Working with Clips](../core/clips) - Load and configure media
+- [Working with Clips](../core/clips) - Complete CRUD operations for clips
+- [AI Skills for Video Editing](../core/ai-skills) - Automated editing workflows
 - [Animations](./animations) - Add motion to your videos
+- [Effects](./effects) - Visual filters and effects
 - [Transitions](./transitions) - Create smooth transitions
 - [Rendering and Export](../core/rendering) - Export video and extract frames

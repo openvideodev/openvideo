@@ -1,22 +1,45 @@
 ---
 title: Effects
-description: Apply visual filters in Core using the Command API.
+description: Apply visual filters, overlays, and post-processing effects using the Command API.
 ---
 
-In OpenVideo Core, effects are part of the clip's state. To apply an effect, you update the `effects` array of a clip via commands.
+Effects add visual flair to your video compositions. In OpenVideo Core, effects are stored as part of a clip's data and applied via commands. They use GLSL shaders for real-time, GPU-accelerated visual transformations.
+
+## Overview
+
+Effects in OpenVideo are:
+- **GLSL-based**: Run on the GPU for smooth performance
+- **Time-aware**: Can be applied to specific time ranges within a clip
+- **Parameterized**: Many effects accept custom values for fine-tuning
+- **Stackable**: Multiple effects can be applied to a single clip
+- **Reversible**: All effect changes are undoable via the command system
+
+## Effect Structure
+
+Each effect follows this structure:
+
+```ts
+interface Effect {
+  id: string;           // Unique identifier
+  key: string;          // Effect type identifier
+  startTime: number;    // When effect starts (microseconds from clip start)
+  duration: number;       // How long effect lasts (microseconds)
+  values?: object;      // Effect-specific parameters (optional)
+}
+```
 
 ## Applying Effects
 
-Use `core.clip.update` to add effects to a clip's `effects` property.
+### Basic Effect Application
 
 ```ts
-import { core } from "@openvideo/core";
+import { core, nanoid } from "@openvideo/core";
 
 // Apply a sepia filter to a clip
 core.clip.update(clipId, {
   effects: [
     {
-      id: "effect_1",
+      id: nanoid(),
       key: "sepia",
       startTime: 0,
       duration: 5_000_000, // 5 seconds
@@ -25,78 +48,394 @@ core.clip.update(clipId, {
 });
 ```
 
-## Using Effect Values
+### Time-Scoped Effects
 
-Many effects accept custom values to tune their appearance.
+Apply effects to specific portions of a clip:
+
+```ts
+// Grayscale only at the beginning, then fade to color
+core.clip.update(clipId, {
+  effects: [
+    {
+      id: "intro-gray",
+      key: "grayscale",
+      startTime: 0,
+      duration: 2_000_000, // First 2 seconds
+    },
+  ],
+});
+```
+
+### Stacking Multiple Effects
 
 ```ts
 core.clip.update(clipId, {
   effects: [
     {
-      id: "glow_1",
+      id: "vintage",
+      key: "sepia",
+      startTime: 0,
+      duration: 10_000_000,
+    },
+    {
+      id: "vignette",
+      key: "vignette",
+      startTime: 0,
+      duration: 10_000_000,
+    },
+    {
+      id: "film-look",
+      key: "filmStripPro",
+      startTime: 1_000_000,
+      duration: 8_000_000,
+    },
+  ],
+});
+```
+
+## Effect Values and Parameters
+
+Many effects accept custom values to control their appearance:
+
+```ts
+core.clip.update(clipId, {
+  effects: [
+    {
+      id: "custom-glow",
       key: "glowFilter",
       startTime: 0,
       duration: 5_000_000,
       values: {
-        distance: 20,
-        outerStrength: 3,
-        color: "#ff0000",
+        distance: 20,           // Glow distance
+        outerStrength: 3,       // Outer glow intensity
+        innerStrength: 1,       // Inner glow intensity
+        color: "#ff0000",       // Glow color
+      },
+    },
+    {
+      id: "pixelated",
+      key: "pixelate",
+      startTime: 2_000_000,
+      duration: 3_000_000,
+      values: {
+        pixelSize: 20,          // Pixel block size
       },
     },
   ],
 });
 ```
 
+## Built-in GLSL Effects
+
+### Color Effects
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `grayscale` | Black and white conversion | — |
+| `sepia` | Warm vintage brown tint | — |
+| `invert` | Color inversion | — |
+| `duotone` | Two-color palette mapping | `color1`, `color2` |
+| `tritone` | Three-tone color grading | `shadows`, `mids`, `highlights` |
+| `hueShift` | Continuous hue rotation | — |
+| `neonFlash` | Neon-colored flashes | — |
+
+### Blur and Focus
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `curtainBlur` | Curtain-like blur transition | — |
+| `focusTransition` | Focus pull effect | — |
+| `scaleMoveBlur` | Motion blur with scaling | — |
+| `motionBlur` | Directional motion blur | — |
+
+### Distortion and Warping
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `distort` | General wave/swirl distortion | — |
+| `distortGrid` | Grid-based distortion | — |
+| `distortSpin` | Spinning distortion | — |
+| `distortRip` | Horizontal ripping | — |
+| `wave` / `waveDistort` | Fluid wave animation | — |
+| `sinewave` | Sine wave distortion | — |
+| `swirlMovement` | Swirling motion | — |
+
+### Glitch and Digital
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `glitch` | Digital glitch effect | — |
+| `rgbGlitch` | RGB channel splitting glitch | — |
+| `rgbShift` | RGB channel separation | — |
+| `pixelate` | Blocky pixelation | `pixelSize` |
+| `pixelError` | Compression error simulation | — |
+| `darkError` | Intense error aesthetic | — |
+
+### Light and Atmosphere
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `vignette` | Edge darkening | — |
+| `shine` | Moving light gleam | — |
+| `laser` | Glowing laser beams | — |
+| `lightning` / `lightningVeins` | Electric discharge | — |
+| `sparks` | Particle sparks | — |
+| `brightPulse` | Periodic bright flashes | — |
+| `flashLoop` | Looping flash | — |
+| `blackFlash` | Black flash transitions | — |
+
+### Stylized Looks
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `halftone` | CMYK dot pattern | — |
+| `filmStripPro` | Film strip overlay | — |
+| `tvScanlines` | CRT scanlines | — |
+| `retro70s` | 70s vintage look | — |
+| `hologramScan` | Sci-fi hologram | — |
+| `graffiti` | Graffiti overlay | — |
+| `solution` | Chemical fluid effect | — |
+
+### Transitions (Within Clips)
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `curtainOpen` | Curtain opening | — |
+| `paperBreakReveal` | Tearing paper reveal | — |
+| `warpTransition` | Spiraling warp | — |
+| `pixelateTransition` | Pixel dissolve | — |
+| `focusTransition` | Blur transition | — |
+| `inverseAperture` | Aperture close | — |
+
+### Camera Movement
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `cameraMove` | Handheld camera shake | — |
+| `fastZoom` | Rapid zoom effect | — |
+| `rotationMovement` | Continuous rotation | — |
+| `perspectiveSingle` | 3D perspective shift | — |
+
+### Special Overlays
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `bubbleSparkles` | Rising bubbles | — |
+| `butterflySparkles` | Butterfly particles | — |
+| `heartSparkles` | Heart-shaped sparkles | — |
+| `chromatic` | Chromatic aberration | — |
+
+## Pixi Filter Effects
+
+OpenVideo also supports PixiJS filters (via pixi-filters):
+
+### Color and Tone
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `adjustmentFilter` | Gamma, saturation, contrast, brightness | `gamma`, `saturation`, `contrast`, `brightness` |
+| `hslAdjustmentFilter` | Hue, saturation, lightness | `hue`, `saturation`, `lightness` |
+| `colorReplaceFilter` | Replace specific colors | `originalColor`, `targetColor` |
+| `colorOverlayFilter` | Solid color tint | `color` |
+| `grayscaleFilter` | Simple grayscale | — |
+
+### Blur Filters
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `kawaseBlurFilter` | High-performance blur | `blur`, `quality` |
+| `motionBlurFilter` | Directional blur | `velocity`, `kernelSize` |
+| `radialBlurFilter` | Radial zoom blur | `radius`, `angle` |
+| `zoomBlurFilter` | Zoom blur | `center`, `strength` |
+| `tiltShiftFilter` | Partial blur | `blur`, `gradientBlur` |
+| `backdropBlurFilter` | Blur background | `blur` |
+
+### Glow and Bloom
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `bloomFilter` | Standard bloom | `blur`, `quality` |
+| `advancedBloomFilter` | High-quality glow | `threshold`, `bloomScale` |
+| `godrayFilter` | Volumetric light rays | `gain`, `lacunarity` |
+| `glowFilter` | Configurable glow | `distance`, `outerStrength`, `color` |
+
+### Edge and Outline
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `outlineFilter` | Solid outline | `thickness`, `color` |
+| `embossFilter` | 3D embossed effect | `strength` |
+| `bevelFilter` | Beveled edges | `rotation`, `thickness` |
+| `crossHatchFilter` | Cross-hatch drawing | `blur`, `thickness` |
+
+### Distortion
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `bulgePinchFilter` | Bulge/pinch distortion | `center`, `radius`, `strength` |
+| `twistFilter` | Twist around center | `radius`, `angle` |
+| `shockwaveFilter` | Expanding shockwave | `center`, `time`, `amplitude` |
+| `reflectionFilter` | Water reflection | `mirror`, `boundary`, `amplitude` |
+
+### Vintage and Glitch
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `crtFilter` | CRT monitor simulation | `curvature`, `lineWidth`, `noise` |
+| `oldFilmFilter` | Vintage film look | `sepia`, `noise`, `vignette` |
+| `glitchFilter` | Digital glitching | `slices`, `offset`, `direction` |
+| `rgbSplitFilter` | RGB channel split | `red`, `green`, `blue` |
+| `dotFilter` | Halftone dots | `scale`, `angle`, `grayscale` |
+| `asciiFilter` | ASCII art conversion | `size` |
+
+### Special Effects
+
+| Effect Key | Description | Common Values |
+|------------|-------------|---------------|
+| `dropShadowFilter` | Drop shadow | `blur`, `distance`, `color` |
+| `convolutionFilter` | Convolution matrix | `matrix` |
+| `simplexNoiseFilter` | Simplex noise | `strength`, `noiseScale` |
+| `simpleLightmapFilter` | Lightmap lighting | `lightMap`, `ambient` |
+| `colorMapFilter` | Color lookup table | `colorMap`, `mix` |
+| `colorGradientFilter` | Multi-stop gradients | `type`, `stops`, `alpha` |
+| `multiColorReplaceFilter` | Batch color replace | `replacements` |
+
 ## Managing Effects
 
-Since `effects` is an array, you can add, remove, or replace effects by updating the entire array.
-
-### Replacing Effects
+### Adding Effects
 
 ```ts
-// Replace all effects with a new grayscale filter
+// Add to existing effects
+const currentEffects = core.store.getState().clips[clipId].effects || [];
 core.clip.update(clipId, {
-  effects: [{ id: "bw_1", key: "grayscale", startTime: 0, duration: 10e6 }],
+  effects: [
+    ...currentEffects,
+    {
+      id: nanoid(),
+      key: "vignette",
+      startTime: 0,
+      duration: 10_000_000,
+    },
+  ],
+});
+```
+
+### Updating Effect Values
+
+```ts
+// Update specific effect values
+const currentEffects = core.store.getState().clips[clipId].effects;
+core.clip.update(clipId, {
+  effects: currentEffects.map(effect =>
+    effect.id === "custom-glow"
+      ? { ...effect, values: { ...effect.values, color: "#00ff00" } }
+      : effect
+  ),
 });
 ```
 
 ### Removing Effects
 
 ```ts
+// Remove all effects
+core.clip.update(clipId, { effects: [] });
+
+// Remove specific effect by ID
+const currentEffects = core.store.getState().clips[clipId].effects || [];
 core.clip.update(clipId, {
-  effects: [],
+  effects: currentEffects.filter(e => e.id !== "vintage"),
 });
 ```
 
-## Supported Effect Keys
+## Batch Effect Operations
 
-OpenVideo Core supports a wide range of shaders. Some popular ones include:
+Apply effects to multiple clips at once:
 
-- `grayscale`: Classic black and white.
-- `sepia`: Warm vintage brown tint.
-- `invert`: Inverts image colors.
-- `pixelate`: Customizable blocky pixelation.
-- `vignette`: Darkens the edges of the clip.
-- `glitch`: Standard digital glitch effect.
+```ts
+// Apply grayscale to all selected clips
+const state = core.store.getState();
+const selectedIds = state.selectedIds;
+
+core.execute({
+  id: nanoid(),
+  type: "clip.update",
+  payload: selectedIds.map(id => ({
+    id,
+    updates: {
+      effects: [
+        ...(state.clips[id].effects || []),
+        {
+          id: nanoid(),
+          key: "grayscale",
+          startTime: 0,
+          duration: state.clips[id].timing?.duration || 5_000_000,
+        },
+      ],
+    },
+  })),
+});
+```
 
 ## Custom Effects
 
-You can register custom GLSL shaders with the engine and then use their keys in the `effects` array.
+Register your own GLSL shaders for use in the effects system:
 
 ```ts
 import { registerCustomEffect } from "@openvideo/core";
 
-registerCustomEffect("myCustomEffect", {
+registerCustomEffect("channelSwap", {
   label: "Channel Swap",
   fragment: `
     vec4 mainImage(vec2 p) {
       vec4 color = getTextureColor(p);
+      // Swap red and green channels
       return vec4(color.g, color.r, color.b, color.a);
     }
   `,
+  uniforms: {
+    intensity: { value: 1.0, type: "f32" },
+  },
+});
+
+// Use the custom effect
+core.clip.update(clipId, {
+  effects: [
+    {
+      id: nanoid(),
+      key: "channelSwap",
+      startTime: 0,
+      duration: 5_000_000,
+      values: { intensity: 0.8 },
+    },
+  ],
 });
 ```
 
+### GlEffect Interface
+
+```ts
+interface GlEffect {
+  label: string;                    // Display name
+  fragment: string;                 // GLSL fragment shader
+  uniforms?: Record<string, {       // Default uniform values
+    value: number;
+    type: "f32" | "i32";
+  }>;
+  previewStatic?: string;           // Static preview image URL
+  previewDynamic?: string;          // Animated preview URL
+}
+```
+
+## Best Practices
+
+1. **Use effect IDs**: Always provide unique IDs for managing individual effects
+2. **Time in microseconds**: `startTime` and `duration` are in μs
+3. **Stack purposefully**: Order matters — effects are applied sequentially
+4. **Reuse values**: Define common value sets as constants for consistency
+5. **Consider performance**: Many heavy effects on multiple clips can impact playback
+6. **Preview before export**: Effects render in real-time — preview to ensure they look right
+7. **Combine with animations**: Use effects alongside animations for rich visuals
+
 ---
 
-Next, learn how to create [Animations](./animations) or manage [Transitions](./transitions).
+Next, learn about [Transitions](./transitions) between clips or create [Animations](./animations).

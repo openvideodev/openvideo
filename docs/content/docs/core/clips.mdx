@@ -1,135 +1,421 @@
 ---
 title: Clips
-description: Building blocks of video compositions in Core.
+description: Complete CRUD operations for video clips using the Command API.
 ---
 
-Clips are the building blocks of your video composition. In OpenVideo Core, clips are data-driven entities. You don't interact with them by setting properties directly; instead, you dispatch **commands** to the engine.
+Clips are the fundamental building blocks of video compositions in OpenVideo. In the Core engine, all clip operations are performed through **commands** — deterministic, undoable operations that can be batched, synced, and logged.
 
-## Adding Clips
+## Overview
 
-The recommended way to add clips is using the `core.clip.add` helper, which handles asset preparation (loading metadata, calculating dimensions) and then dispatches a `clip.add` command.
+Clips in OpenVideo Core are data-driven entities stored in the project state. Instead of directly mutating objects, you dispatch commands that generate patches. This architecture enables:
 
-### Video Clips
+- **AI-friendly editing**: JSON commands are easy for agents to generate
+- **Real-time collaboration**: Patches can be synced across users
+- **Robust undo/redo**: Every change is reversible
+- **Time-travel debugging**: Full history of edits
+
+## Clip Types
+
+| Type | Description | Key Properties |
+|------|-------------|----------------|
+| `Video` | Video file with audio | `src`, `timing` |
+| `Image` | Static image | `src`, `transform` |
+| `Text` | Text overlay | `text`, `style` |
+| `Caption` | Subtitles/captions | `text`, `caption.words` |
+| `Audio` | Audio-only track | `src`, `timing` |
+| `Effect` | Visual effect overlay | `effectKey`, `values` |
+| `Transition` | Clip-to-clip transition | `transitionKey`, `fromClipId`, `toClipId` |
+
+## Creating Clips (Create)
+
+### Using the DX Layer (Recommended)
+
+The `core.clip.add()` helper handles asset loading, metadata extraction, and track placement:
 
 ```ts
 import { core } from "@openvideo/core";
 
-// Add a video clip to the default track
-const clip = await core.clip.add({
+// Video clip with automatic sizing
+const video = await core.clip.add({
   type: "Video",
-  src: "video.mp4",
-  display: { from: 0, to: 5_000_000 }, // 5 seconds
+  src: "https://example.com/video.mp4",
+  timing: {
+    display: { from: 0, to: 10_000_000 }, // 10 seconds
+    trim: { from: 0, to: 0 }, // No trimming
+  },
 });
-```
 
-### Image Clips
-
-```ts
-const clip = await core.clip.add({
+// Image clip with positioning
+const image = await core.clip.add({
   type: "Image",
   src: "photo.jpg",
-  left: 100,
-  top: 100,
+  transform: { x: 100, y: 100, width: 800, height: 600 },
 });
-```
 
-### Text Clips
-
-```ts
-const clip = await core.clip.add({
+// Text clip with styling
+const text = await core.clip.add({
   type: "Text",
   text: "Hello World",
   style: {
     fontSize: 72,
     fill: "#ffffff",
+    fontFamily: "Inter",
+  },
+});
+
+// Audio clip for background music
+const audio = await core.clip.add({
+  type: "Audio",
+  src: "music.mp3",
+  timing: {
+    display: { from: 0, to: 30_000_000 },
+    trim: { from: 5_000_000, to: 15_000_000 }, // Use middle 10s
   },
 });
 ```
 
-## Updating Clips
-
-To change properties (position, size, text, etc.), use the `core.clip.update` method. This creates an undoable command.
+### Specifying a Target Track
 
 ```ts
-// Update a single property
-core.clip.update(clipId, { left: 500 });
+// Add to a specific track
+await core.clip.add(
+  { type: "Video", src: "video.mp4" },
+  { trackId: "main-video-track" }
+);
 
-// Batch updates to multiple properties
-core.clip.update(clipId, {
-  top: 300,
-  opacity: 0.5,
-  scale: 1.2,
+// Or use the string shorthand for trackId
+await core.clip.add({ type: "Video", src: "video.mp4" }, "main-video-track");
+```
+
+### Using Object Fit
+
+Automatically scale clips to fit the canvas:
+
+```ts
+// 'contain' - scales to fit while preserving aspect ratio (may letterbox)
+// 'cover' - scales to fill while preserving aspect ratio (may crop)
+await core.clip.add(
+  { type: "Image", src: "photo.jpg" },
+  { objectFit: "cover" }
+);
+```
+
+### Direct Command API
+
+For maximum control, dispatch the `clip.add` command directly:
+
+```ts
+import { core, nanoid } from "@openvideo/core";
+
+// First prepare the clip (loads metadata)
+const clipData = await core.clip.prepare({
+  type: "Video",
+  src: "video.mp4",
 });
 
-// For Text clips, styles are nested
-core.clip.update(textClipId, {
-  text: "New Heading",
-  style: { fill: "#ff0000" },
+// Then add it via command
+core.execute({
+  id: nanoid(),
+  type: "clip.add",
+  payload: {
+    clip: clipData,
+    trackId: "my-track",
+  },
 });
 ```
 
-## Common Operations
+## Reading Clips (Read)
+
+Access clips from the project store:
+
+```ts
+// Get all clips
+const state = core.store.getState();
+const allClips = Object.values(state.clips);
+
+// Get a specific clip
+const clip = state.clips[clipId];
+
+// Get clips on a specific track
+const track = state.tracks.find(t => t.id === trackId);
+const trackClips = track?.clipIds.map(id => state.clips[id]);
+
+// Get selected clips
+const selectedClips = state.selectedIds.map(id => state.clips[id]);
+```
+
+### Subscribing to Changes
+
+```ts
+// Listen for any project changes
+core.store.subscribe((state, prevState) => {
+  console.log("Clips changed:", state.clips);
+});
+
+// Listen for specific patch changes
+const unsubscribe = core.store.getState().onChange((patches) => {
+  patches.forEach(patch => {
+    if (patch.path.startsWith("/clips/")) {
+      console.log("Clip patch:", patch);
+    }
+  });
+});
+```
+
+## Updating Clips (Update)
+
+### Single Property Updates
+
+```ts
+// Update position
+core.clip.update(clipId, { transform: { x: 500 } });
+
+// Update timing
+core.clip.update(clipId, {
+  timing: { display: { from: 2_000_000, to: 8_000_000 } }
+});
+
+// Update text content
+core.clip.update(textClipId, { text: "Updated text" });
+```
+
+### Multiple Property Updates
+
+```ts
+// Batch multiple properties in one update
+core.clip.update(clipId, {
+  transform: {
+    x: 100,
+    y: 200,
+    width: 1920,
+    height: 1080,
+    opacity: 0.8,
+    angle: 45,
+  },
+  timing: {
+    display: { from: 0, to: 5_000_000 },
+  },
+});
+```
+
+### Deep Merging Nested Properties
+
+Core automatically deep-merges nested objects like `style`, `caption`, `timing`, and `transform`:
+
+```ts
+// Only updates fontSize, keeps other style properties
+const textClip = core.store.getState().clips[textClipId];
+core.clip.update(textClipId, {
+  style: { fontSize: 96 }, // Merges with existing style
+});
+```
+
+### Legacy Property Mapping
+
+For convenience, flat properties are automatically mapped to the nested `transform` object:
+
+```ts
+// These are equivalent:
+core.clip.update(clipId, { left: 100, top: 200 });
+core.clip.update(clipId, { transform: { x: 100, y: 200 } });
+```
+
+Supported legacy mappings:
+| Legacy | Maps To |
+|--------|---------|
+| `left` | `transform.x` |
+| `top` | `transform.y` |
+| `width` | `transform.width` |
+| `height` | `transform.height` |
+| `angle` | `transform.angle` |
+| `opacity` | `transform.opacity` |
+| `zIndex` | `transform.zIndex` |
+| `flip` | `transform.flip` |
+
+## Deleting Clips (Delete)
+
+### Remove Single or Multiple Clips
+
+```ts
+// Remove one clip
+core.clip.remove(["clip-id-1"]);
+
+// Remove multiple clips
+core.clip.remove(["clip-1", "clip-2", "clip-3"]);
+```
+
+Removing clips automatically:
+- Removes them from their tracks
+- Cleans up empty tracks (unless marked `static`)
+- Removes them from the selection
+
+## Batch Operations
+
+### Updating Multiple Clips at Once
+
+```ts
+// Update the same property on multiple clips
+core.execute({
+  id: nanoid(),
+  type: "clip.update",
+  payload: [
+    { id: "clip-1", updates: { transform: { opacity: 0.5 } } },
+    { id: "clip-2", updates: { transform: { opacity: 0.5 } } },
+    { id: "clip-3", updates: { transform: { opacity: 0.5 } } },
+  ],
+});
+```
+
+### Batching Multiple Commands
+
+Group related operations into a single undoable action:
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+core.batch([
+  // Add a video clip
+  {
+    id: nanoid(),
+    type: "clip.add",
+    payload: {
+      clip: await core.clip.prepare({ type: "Video", src: "intro.mp4" }),
+    },
+  },
+  // Add a text overlay
+  {
+    id: nanoid(),
+    type: "clip.add",
+    payload: {
+      clip: await core.clip.prepare({
+        type: "Text",
+        text: "Welcome",
+        style: { fontSize: 48 },
+      }),
+    },
+  },
+  // Select the text clip
+  {
+    id: nanoid(),
+    type: "project.select",
+    payload: { ids: [textClipId] },
+  },
+]);
+```
+
+## Clip Operations
 
 ### Splitting Clips
 
-Split a clip into two at a specific time.
+Split a clip at a specific time, creating two separate clips:
 
 ```ts
-// Split at 2 seconds
+// Split at specific time (microseconds)
 core.clip.split(2_000_000, clipId);
 
-// If clipId is omitted, it splits the currently selected clip at the current playhead
+// Split at current playhead position
 core.clip.split();
+
+// Split automatically selects the newly created clip
 ```
 
 ### Duplicating Clips
 
 ```ts
-core.clip.duplicate([clipId]);
+// Duplicate creates new clips on new tracks
+core.clip.duplicate(["clip-id"]);
+
+// Duplicate multiple clips
+core.clip.duplicate(["clip-1", "clip-2"]);
 ```
 
-### Removing Clips
+Duplicated clips:
+- Get new unique IDs
+- Are placed on new tracks above the originals
+- Are automatically selected
+
+## Working with Timing
+
+### Understanding the Timing Model
+
+All time values in OpenVideo are in **microseconds** (μs) for precision:
 
 ```ts
-core.clip.remove([clipId]);
+const ONE_SECOND = 1_000_000;
+const ONE_MINUTE = 60_000_000;
+
+const timing = {
+  display: { from: 0, to: 10 * ONE_SECOND },      // When clip appears on timeline
+  trim: { from: 2 * ONE_SECOND, to: 8 * ONE_SECOND }, // Which portion of source to use
+  duration: 6 * ONE_SECOND,                          // Effective duration (trim.to - trim.from)
+  playbackRate: 1.0,                                 // Speed multiplier
+};
 ```
 
-## The Command API (Direct)
-
-Under the hood, all the helpers above use `core.execute()`. You can dispatch commands directly for more control:
+### Updating Timing
 
 ```ts
-import { core, nanoid } from "@openvideo/core";
+// Change when clip appears on timeline
+core.clip.update(clipId, {
+  timing: { display: { from: 5_000_000, to: 15_000_000 } }
+});
 
-core.execute({
-  id: nanoid(),
-  type: "clip.update",
-  payload: {
-    id: "clip_123",
-    updates: { opacity: 0.8 },
+// Change which portion of source is used (trim)
+core.clip.update(clipId, {
+  timing: { trim: { from: 2_000_000, to: 8_000_000 } }
+});
+
+// Change playback speed
+core.clip.update(clipId, {
+  timing: { playbackRate: 2.0 } // 2x speed
+});
+```
+
+## Working with Transforms
+
+### Position and Size
+
+```ts
+core.clip.update(clipId, {
+  transform: {
+    x: 100,      // left position
+    y: 200,      // top position
+    width: 1920,
+    height: 1080,
   },
 });
 ```
 
-## Batching Commands
-
-You can group multiple operations into a single history entry:
+### Rotation and Opacity
 
 ```ts
-core.batch([
-  {
-    id: nanoid(),
-    type: "clip.add",
-    payload: { clip: myNewClip },
+core.clip.update(clipId, {
+  transform: {
+    angle: 45,     // degrees
+    opacity: 0.8,  // 0.0 to 1.0
   },
-  {
-    id: nanoid(),
-    type: "project.select",
-    payload: { ids: [myNewClip.id] },
-  },
-]);
+});
 ```
+
+### Flip
+
+```ts
+core.clip.update(clipId, {
+  transform: {
+    flip: { horizontal: true, vertical: false },
+  },
+});
+```
+
+## Best Practices
+
+1. **Always use microseconds**: All time values are in μs (seconds × 1,000,000)
+2. **Use the DX layer**: `core.clip.add()`, `core.clip.update()` for common operations
+3. **Batch related operations**: Group commands that should be undone together
+4. **Handle async preparation**: `core.clip.prepare()` and `core.clip.add()` return promises
+5. **Use the store for reading**: Access `core.store.getState()` for current clip data
+6. **Normalize before commands**: Use `core.clip.prepare()` to ensure clips have all required fields
 
 ---
 
-Next, learn how to organize clips into [Tracks](./tracks) or manage playback with the [Command API](./commands).
+Next, learn how to organize clips into [Tracks](./tracks) or work with clip [Animations](./animations).

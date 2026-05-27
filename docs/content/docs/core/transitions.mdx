@@ -1,13 +1,29 @@
 ---
 title: Transitions
-description: Visual effects between clips in Core using the Command API.
+description: Smooth visual effects between consecutive clips using the Command API.
 ---
 
-In OpenVideo Core, transitions are represented as specialized **Transition Clips**. To add a transition, you dispatch a `clip.add` command with the appropriate transition data.
+Transitions create smooth visual effects between two consecutive clips on the timeline. In OpenVideo Core, transitions are represented as specialized **Transition Clips** that blend from one clip to another using GLSL shaders.
 
-## Adding a Transition
+## Overview
 
-A transition is placed on the timeline where two clips overlap. It references a `fromClipId` and a `toClipId`.
+Transitions in OpenVideo are:
+- **GLSL-based**: GPU-accelerated blending between two clips
+- **Clip-based**: Implemented as a special clip type that references two other clips
+- **Time-precise**: Positioned at the junction between clips with exact microsecond timing
+- **Reversible**: All transition changes are undoable via commands
+
+## How Transitions Work
+
+A transition clip:
+1. References a `fromClipId` (the clip transitioning out)
+2. References a `toClipId` (the clip transitioning in)
+3. Has a `transitionKey` specifying the visual effect
+4. Is positioned at the junction between the two clips
+
+## Adding Transitions
+
+### Basic Transition
 
 ```ts
 import { core, nanoid } from "@openvideo/core";
@@ -21,10 +37,10 @@ core.execute({
       id: nanoid(),
       type: "Transition",
       name: "Fade Transition",
-      transitionKey: "fade", // The transition key/identifier
+      transitionKey: "fade",
       display: {
-        from: 4_500_000, // Starts 0.5s before the junction
-        to: 5_500_000, // Ends 0.5s after the junction
+        from: 4_500_000,  // Starts 0.5s before the junction
+        to: 5_500_000,    // Ends 0.5s after the junction
       },
       fromClipId: "video_1",
       toClipId: "video_2",
@@ -33,52 +49,331 @@ core.execute({
 });
 ```
 
-## Available Transition Effects
+### Transition Helper Function
 
-OpenVideo supports a wide range of GL-based transitions. Common keys include:
-
-| Key                      | Effect                    |
-| :----------------------- | :------------------------ |
-| `fade`                   | Standard cross-fade       |
-| `cube`                   | 3D cube rotation          |
-| `wipeLeft` / `wipeRight` | Linear directional wipes  |
-| `zoomInCircles`          | Concentric circles reveal |
-| `glitchMemories`         | Digital glitch transition |
-| `dreamy`                 | Soft blur transition      |
-
-## Custom Transitions
-
-You can define custom transition shaders and register them with the engine.
+Create a helper to calculate transition timing automatically:
 
 ```ts
-import { core, registerCustomTransition } from "@openvideo/core";
+function addTransition(
+  fromClipId: string,
+  toClipId: string,
+  transitionKey: string,
+  duration: number, // microseconds
+  junctionTime: number
+) {
+  const halfDuration = duration / 2;
 
-registerCustomTransition("my_custom_effect", {
-  label: "My Custom Effect",
-  fragment: `
-    vec4 transition(vec2 p) {
-      return mix(getFromColor(p), getToColor(p), progress);
-    }
-  `,
-});
+  core.execute({
+    id: nanoid(),
+    type: "clip.add",
+    payload: {
+      clip: {
+        id: nanoid(),
+        type: "Transition",
+        transitionKey,
+        display: {
+          from: junctionTime - halfDuration,
+          to: junctionTime + halfDuration,
+        },
+        fromClipId,
+        toClipId,
+      },
+    },
+  });
+}
+
+// Usage: 2-second fade at the junction between clips
+addTransition("clip-1", "clip-2", "fade", 2_000_000, 10_000_000);
 ```
 
-Once registered, you can use `"my_custom_effect"` as the `key` in your transition clip.
+## Available Transition Effects
+
+### Fade and Dissolve
+
+| Key | Description |
+|-----|-------------|
+| `fade` | Standard cross-fade |
+| `fadegrayscale` | Fade through grayscale |
+| `fadecolor` | Fade with color tint |
+
+### Wipes
+
+| Key | Description |
+|-----|-------------|
+| `wipeLeft` | Slide left |
+| `wipeRight` | Slide right |
+| `wipeUp` | Slide up |
+| `wipeDown` | Slide down |
+| `directional` | Directional wipe with angle |
+| `directionalwipe` | Smooth directional wipe |
+| `radialSwipe` | Radial wipe from center |
+
+### Zoom and Scale
+
+| Key | Description |
+|-----|-------------|
+| `cube` | 3D cube rotation |
+| `zoomInCircles` | Concentric circles reveal |
+| `SimpleZoom` | Simple zoom transition |
+| `CrossZoom` | Cross-directional zoom |
+| `DreamyZoom` | Soft zoom with blur |
+
+### Distortion Effects
+
+| Key | Description |
+|-----|-------------|
+| `glitchMemories` | Glitch-style transition |
+| `GlitchDisplace` | Displacement glitch |
+| `dreamy` | Soft blur transition |
+| `Swirl` | Swirling transition |
+| `waterDrop` | Water ripple effect |
+| `ripple` | Ripple distortion |
+| `wind` | Wind-blown effect |
+
+### Geometric
+
+| Key | Description |
+|-----|-------------|
+| `circle` | Circle reveal |
+| `circleopen` | Opening circle |
+| `CircleCrop` | Circular crop transition |
+| `windowblinds` | Window blinds |
+| `windowslice` | Sliced window effect |
+| `GridFlip` | Flipping grid |
+| `hexagonalize` | Hexagon pattern |
+| `kaleidoscope` | Kaleidoscope effect |
+
+### Creative
+
+| Key | Description |
+|-----|-------------|
+| `heart` | Heart-shaped reveal |
+| `pinwheel` | Spinning pinwheel |
+| `morph` | Morphing transition |
+| `flyeye` | Fly-eye distortion |
+| `doorway` | Doorway transition |
+| `squeeze` | Squeeze effect |
+| `swap` | Swap positions |
+| `burn` | Film burn effect |
+| `angular` | Angular wipe |
+
+### Advanced
+
+| Key | Description |
+|-----|-------------|
+| `Mosaic` | Mosaic tile reveal |
+| `PolkaDotsCurtain` | Polka dot curtain |
+| `StereoViewer` | Stereo 3D effect |
+| `InvertedPageCurl` | Page curl |
+| `LinearBlur` | Linear blur transition |
+| `BowTieHorizontal` | Horizontal bow tie |
+| `BowTieVertical` | Vertical bow tie |
+| `CrazyParametricFun` | Parametric distortion |
+| `ColourDistance` | Color-based distance |
+| `ButterflyWaveScrawler` | Butterfly wave effect |
+| `displacement` | Displacement map |
+| `directionalwarp` | Directional warp |
+| `crosswarp` | Cross-warp |
+| `crosshatch` | Cross-hatch |
+| `colorphase` | Color phase shift |
+| `luma` | Luminance-based |
+| `luminance_melt` | Luminance melt |
+| `multiply_blend` | Multiply blend |
+| `perlin` | Perlin noise |
+| `pixelize` | Pixelated transition |
+| `randomsquares` | Random squares |
+| `rotate_scale_fade` | Rotate, scale, fade |
+| `squareswire` | Wire squares |
+| `undulatingBurnOut` | Burn out effect |
+| `cannabisleaf` | Leaf pattern |
+| `Bounce` | Bouncing transition |
 
 ## Managing Transitions
 
-Since transitions are clips, you can update them (e.g., change duration or effect) or remove them using the standard Clip API.
+### Updating Transitions
+
+Since transitions are clips, you can update their properties:
 
 ```ts
-// Update transition duration
+// Change transition type
+core.clip.update(transitionId, {
+  transitionKey: "cube",
+});
+
+// Adjust timing
 core.clip.update(transitionId, {
   display: { from: 4_000_000, to: 6_000_000 },
 });
 
-// Remove transition
-core.clip.remove([transitionId]);
+// Change which clips are connected
+core.clip.update(transitionId, {
+  fromClipId: "new-from-clip",
+  toClipId: "new-to-clip",
+});
 ```
+
+### Removing Transitions
+
+```ts
+// Remove a single transition
+core.clip.remove([transitionId]);
+
+// Remove multiple transitions
+core.clip.remove(["trans-1", "trans-2"]);
+```
+
+### Finding Transitions
+
+```ts
+// Get all transition clips
+const state = core.store.getState();
+const transitions = Object.values(state.clips).filter(
+  clip => clip.type === "Transition"
+);
+
+// Find transitions for a specific clip
+const clipTransitions = transitions.filter(
+  t => t.fromClipId === clipId || t.toClipId === clipId
+);
+```
+
+## Batch Transition Operations
+
+### Adding Multiple Transitions
+
+```ts
+// Add transitions between consecutive clips in a sequence
+const clipIds = ["clip-1", "clip-2", "clip-3", "clip-4"];
+const commands = [];
+
+for (let i = 0; i < clipIds.length - 1; i++) {
+  const fromId = clipIds[i];
+  const toId = clipIds[i + 1];
+  const junctionTime = 5_000_000 * (i + 1); // 5 seconds apart
+
+  commands.push({
+    id: nanoid(),
+    type: "clip.add",
+    payload: {
+      clip: {
+        id: nanoid(),
+        type: "Transition",
+        transitionKey: i % 2 === 0 ? "fade" : "cube",
+        display: {
+          from: junctionTime - 500_000,
+          to: junctionTime + 500_000,
+        },
+        fromClipId: fromId,
+        toClipId: toId,
+      },
+    },
+  });
+}
+
+core.batch(commands);
+```
+
+### Replacing All Transitions
+
+```ts
+// Replace all transitions with a new type
+const state = core.store.getState();
+const transitions = Object.values(state.clips).filter(
+  clip => clip.type === "Transition"
+);
+
+core.execute({
+  id: nanoid(),
+  type: "clip.update",
+  payload: transitions.map(t => ({
+    id: t.id,
+    updates: { transitionKey: "dreamy" },
+  })),
+});
+```
+
+## Custom Transitions
+
+Register your own GLSL transition shaders:
+
+```ts
+import { registerCustomTransition } from "@openvideo/core";
+
+registerCustomTransition("diagonalWipe", {
+  label: "Diagonal Wipe",
+  fragment: `
+    vec4 transition(vec2 p) {
+      float x = p.x + p.y;
+      float progress = smoothstep(0.0, 1.0, x - (progress * 2.0 - 0.5));
+      return mix(getFromColor(p), getToColor(p), progress);
+    }
+  `,
+  uniforms: {
+    direction: { value: 1.0, type: "f32" },
+  },
+});
+```
+
+### GlTransition Interface
+
+```ts
+interface GlTransition {
+  label: string;                    // Display name
+  fragment: string;                 // GLSL fragment shader
+  uniforms?: Record<string, {       // Default uniform values
+    value: number;
+    type: "f32" | "i32";
+  }>;
+  previewStatic?: string;           // Static preview image URL
+  previewDynamic?: string;          // Animated preview URL
+}
+```
+
+## Transition Timing Best Practices
+
+### Standard Durations
+
+```ts
+const TRANSITION_DURATIONS = {
+  quick: 250_000,      // 0.25s - for fast cuts
+  normal: 500_000,     // 0.5s - standard transition
+  slow: 1_000_000,     // 1s - dramatic effect
+  verySlow: 2_000_000, // 2s - cinematic
+};
+```
+
+### Overlap Calculation
+
+```ts
+function calculateOverlap(fromClip: AnyClip, toClip: AnyClip, duration: number) {
+  const fromEnd = fromClip.timing?.display?.to || 0;
+  const toStart = toClip.timing?.display?.from || 0;
+  const junction = (fromEnd + toStart) / 2;
+
+  return {
+    from: junction - duration / 2,
+    to: junction + duration / 2,
+  };
+}
+```
+
+### Clip Requirements
+
+For transitions to work properly:
+1. **Consecutive clips**: The `fromClip` must end before or at the same time the `toClip` begins
+2. **Sufficient duration**: Both clips must have enough content for the overlap period
+3. **Valid references**: `fromClipId` and `toClipId` must reference existing clips
+
+## Best Practices
+
+1. **Keep transitions short**: 0.25-1 second is usually sufficient
+2. **Match style to content**: Use subtle fades for interviews, dynamic transitions for action
+3. **Don't overuse**: Too many transitions can be distracting
+4. **Consider timing**: Place transitions at natural breakpoints in content
+5. **Test with audio**: Some transitions work better with certain audio transitions
+6. **Batch operations**: Group multiple transition changes into single batches
+7. **Use unique IDs**: Always generate new IDs when creating transitions
 
 ---
 
-Next, learn how to apply [Effects](./effects) or manage [Tracks](./tracks).
+Next, learn how to apply visual [Effects](./effects) or manage [Tracks](./tracks).
