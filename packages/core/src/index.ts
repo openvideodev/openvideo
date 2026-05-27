@@ -54,3 +54,4 @@ export { CoreConfig } from "./config";
 export type { IMediaMetadata, IMediaMetadataProvider } from "./config";
 export * from "./utils/browser-metadata-provider";
 export * from "./transitions";
+export * from "./animations";
