@@ -1,10 +1,19 @@
 # @openvideo/engine-pixi
 
+## 1.1.1
+
+### Patch Changes
+
+- Add `@openvideo/ai` package for OpenVideo Director; update docs structure into numbered sections.
+- Updated dependencies
+  - @openvideo/core@1.1.1
+
 ## 1.0.6
 
 ### Patch Changes
 
 - fix: export aspect ratio, timeline scroll, and drag improvements
+
   - Preserve aspect ratio when exporting with presets (portrait/landscape detection)
   - Add container-level scale transform in compositor for dimension mapping
   - Store original JSON dimensions for proper clip scaling during render

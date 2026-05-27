@@ -1,6 +1,6 @@
 {
   "name": "@openvideo/core",
-  "version": "1.0.6",
+  "version": "1.1.1",
   "description": "Core state management and logic for OpenVideo",
   "keywords": [
     "mp4",
