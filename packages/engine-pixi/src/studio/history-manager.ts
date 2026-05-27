@@ -25,9 +25,9 @@ export class HistoryManager {
     const clips: Record<string, ClipJSON> = {};
     const tracks: StudioTrackJSON[] = JSON.parse(JSON.stringify(project.tracks || []));
 
-    project.clips.forEach((clip) => {
-      if (clip.id) clips[clip.id] = JSON.parse(JSON.stringify(clip));
-    });
+    for (const [id, clip] of Object.entries(project.clips ?? {})) {
+      clips[id] = JSON.parse(JSON.stringify(clip));
+    }
 
     return {
       clips,

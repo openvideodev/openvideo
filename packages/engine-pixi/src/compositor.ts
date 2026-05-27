@@ -42,7 +42,7 @@ export interface ICompositorOpts {
   height?: number;
   bitrate?: number;
   fps?: number;
-  bgColor?: string;
+  backgroundColor?: string;
   format?: string;
   videoCodec?: string;
   /**
@@ -63,33 +63,36 @@ export interface ICompositorOpts {
 
 let COM_ID = 0;
 
-/**
- * A MessageChannel-based yield that schedules a macrotask in the browser's
- * message queue. Unlike `await Promise.resolve()` (microtask) or
- * `setTimeout` (vsync-coupled), MessageChannel tasks are dispatched at
- * scheduler speed and are NOT throttled by the page's vsync/paint cycle.
- *
- * This is the key fix for the active-tab export slowdown: when a tab is
- * active, `rAF` and paint callbacks saturate the event loop at ~60 fps.
- * `await Promise.resolve()` yields within the same task, so the JS engine
- * never actually gives the browser a chance to paint between *encoding*
- * frames — but every await still competes with vsync bookkeeping.
- * MessageChannel bypasses all of that and lets the encoder run at full CPU
- * throughput regardless of whether the tab is visible.
- */
-const { port1: _mcPort1, port2: _mcPort2 } = new MessageChannel();
-const yieldToScheduler = (): Promise<void> =>
-  new Promise<void>((resolve) => {
-    _mcPort1.onmessage = resolve;
-    _mcPort2.postMessage(null);
-  });
+// ---------------------------------------------------------------------------
+// Scheduler Utilities
+// ---------------------------------------------------------------------------
 
 /**
- * Prevent VideoEncoder queue from accumulating too many VideoFrames and causing memory issues.
- * Uses yieldToScheduler instead of sleep() to avoid the 16.6 ms workerTimer overhead.
+ * Yield to the browser's task scheduler without vsync delay.
+ *
+ * Why MessageChannel instead of setTimeout or Promise.resolve?
+ * - `setTimeout(0)` is clamped to ~4 ms and tied to vsync on active tabs.
+ * - `await Promise.resolve()` is a microtask (no real yield).
+ * - MessageChannel fires a true macrotask at full scheduler speed,
+ *   so the encoder runs at max CPU throughput on both active & background tabs.
  */
-async function waitEncoderQueue(getQSize: () => number) {
-  while (getQSize() > 20) {
+const schedulerChannel = new MessageChannel();
+function yieldToScheduler(): Promise<void> {
+  return new Promise((resolve) => {
+    schedulerChannel.port1.onmessage = () => resolve();
+    schedulerChannel.port2.postMessage(null);
+  });
+}
+
+/** Max frames allowed in the VideoEncoder queue before back-pressure kicks in. */
+const ENCODER_QUEUE_LIMIT = 20;
+
+/**
+ * Wait until the encoder queue drains below the limit.
+ * Prevents OOM from too many queued VideoFrames.
+ */
+async function waitEncoderQueue(getQueueSize: () => number) {
+  while (getQueueSize() > ENCODER_QUEUE_LIMIT) {
     await yieldToScheduler();
   }
 }
@@ -112,7 +115,7 @@ async function waitEncoderQueue(getQSize: () => number) {
  *
  */
 export class Compositor extends EventEmitter<{
-  OutputProgress: number;
+  "export:progress": number;
   error: Error;
 }> {
   /**
@@ -173,6 +176,8 @@ export class Compositor extends EventEmitter<{
 
   private opts: Required<ICompositorOpts>;
 
+  private explicitOpts: ICompositorOpts;
+
   private hasVideoTrack: boolean;
 
   /**
@@ -188,7 +193,7 @@ export class Compositor extends EventEmitter<{
 
     this.opts = Object.assign(
       {
-        bgColor: "#000",
+        backgroundColor: "#000",
         width: 0,
         height: 0,
         format: "mp4",
@@ -202,6 +207,8 @@ export class Compositor extends EventEmitter<{
       },
       opts,
     );
+
+    this.explicitOpts = { ...opts };
 
     this.hasVideoTrack = width * height > 0;
 
@@ -372,13 +379,13 @@ export class Compositor extends EventEmitter<{
     const startTime = performance.now();
     const stopMuxer = this.runEncoding(muxer, maxTime, {
       onProgress: (prog) => {
-        this.logger.debug("OutputProgress:", prog);
-        this.emit("OutputProgress", prog);
+        this.logger.debug("export:progress:", prog);
+        this.emit("export:progress", prog);
       },
       onEnded: async () => {
         await muxer.flush();
         this.logger.info("===== output ended =====, cost:", performance.now() - startTime);
-        this.emit("OutputProgress", 1);
+        this.emit("export:progress", 1);
         this.destroy();
       },
       onError: (err) => {
@@ -404,7 +411,7 @@ export class Compositor extends EventEmitter<{
     this.destroyed = true;
 
     this.stopOutput?.();
-    this.off("OutputProgress");
+    this.off("export:progress");
     this.off("error");
 
     // Clean up Pixi.js resources
@@ -464,7 +471,7 @@ export class Compositor extends EventEmitter<{
     let renderSprites: ReturnType<typeof createSpritesRender> | null = null;
 
     const run = async () => {
-      const { fps, bgColor, audio: outputAudio } = this.opts;
+      const { fps, backgroundColor, audio: outputAudio } = this.opts;
       const timeSlice = Math.round(1e6 / fps);
 
       // Check if any sprites actually have video capabilities
@@ -472,7 +479,7 @@ export class Compositor extends EventEmitter<{
 
       renderSprites = createSpritesRender({
         pixiApp: this.pixiApp,
-        bgColor,
+        backgroundColor,
         sprites: this.sprites,
         aborter,
       });
@@ -575,9 +582,10 @@ export class Compositor extends EventEmitter<{
    * Export current compositor state to JSON
    */
   exportToJSON(): ProjectJSON {
-    const clips: ClipJSON[] = this.sprites.map((sprite) => {
-      return clipToJSON(sprite, sprite.main);
-    });
+    const clips: Record<string, ClipJSON> = {};
+    for (const sprite of this.sprites) {
+      clips[sprite.id] = clipToJSON(sprite, sprite.main);
+    }
 
     const transitions: TransitionJSON[] = [];
 
@@ -610,7 +618,7 @@ export class Compositor extends EventEmitter<{
         width: this.opts.width,
         height: this.opts.height,
         fps: this.opts.fps,
-        bgColor: this.opts.bgColor,
+        backgroundColor: this.opts.backgroundColor,
         format: this.opts.format,
         videoCodec: this.opts.videoCodec,
         bitrate: this.opts.bitrate,
@@ -633,22 +641,37 @@ export class Compositor extends EventEmitter<{
     });
     this.sprites = [];
 
-    // Update settings if provided
+    // Update settings if provided, but never overwrite options that were
+    // explicitly passed to the constructor (e.g. user-chosen export settings).
     if (json.settings) {
-      if (json.settings.width !== undefined) this.opts.width = json.settings.width;
-      if (json.settings.height !== undefined) this.opts.height = json.settings.height;
-      if (json.settings.fps !== undefined) this.opts.fps = json.settings.fps;
-      if (json.settings.bgColor !== undefined) this.opts.bgColor = json.settings.bgColor;
-      if (json.settings.format !== undefined) this.opts.format = json.settings.format;
-      if (json.settings.videoCodec !== undefined) this.opts.videoCodec = json.settings.videoCodec;
-      if (json.settings.bitrate !== undefined) this.opts.bitrate = json.settings.bitrate;
-      if (json.settings.audio !== undefined) {
+      if (json.settings.width !== undefined && this.explicitOpts.width === undefined)
+        this.opts.width = json.settings.width;
+      if (json.settings.height !== undefined && this.explicitOpts.height === undefined)
+        this.opts.height = json.settings.height;
+      if (json.settings.fps !== undefined && this.explicitOpts.fps === undefined)
+        this.opts.fps = json.settings.fps;
+      if (
+        json.settings.backgroundColor !== undefined &&
+        this.explicitOpts.backgroundColor === undefined
+      )
+        this.opts.backgroundColor = json.settings.backgroundColor;
+      if (json.settings.format !== undefined && this.explicitOpts.format === undefined)
+        this.opts.format = json.settings.format;
+      if (json.settings.videoCodec !== undefined && this.explicitOpts.videoCodec === undefined)
+        this.opts.videoCodec = json.settings.videoCodec;
+      if (json.settings.bitrate !== undefined && this.explicitOpts.bitrate === undefined)
+        this.opts.bitrate = json.settings.bitrate;
+      if (json.settings.audio !== undefined && this.explicitOpts.audio === undefined) {
         this.opts.audio = json.settings.audio === false ? false : (undefined as any);
       }
-      if (json.settings.audioCodec !== undefined) this.opts.audioCodec = json.settings.audioCodec;
-      if (json.settings.audioSampleRate !== undefined)
+      if (json.settings.audioCodec !== undefined && this.explicitOpts.audioCodec === undefined)
+        this.opts.audioCodec = json.settings.audioCodec;
+      if (
+        json.settings.audioSampleRate !== undefined &&
+        this.explicitOpts.audioSampleRate === undefined
+      )
         this.opts.audioSampleRate = json.settings.audioSampleRate;
-      if (json.settings.metaDataTags !== undefined)
+      if (json.settings.metaDataTags !== undefined && this.explicitOpts.metaDataTags === undefined)
         this.opts.metaDataTags = json.settings.metaDataTags;
     }
 
@@ -666,10 +689,8 @@ export class Compositor extends EventEmitter<{
       });
     }
 
-    // Load all clips (normalize object/array)
-    const clipsArray = (
-      Array.isArray(json.clips) ? json.clips : json.clips ? Object.values(json.clips) : []
-    ) as ClipJSON[];
+    // Load all clips
+    const clipsArray = Object.values(json.clips ?? {});
 
     for (const clipJSON of clipsArray) {
       const clip = await jsonToClip(clipJSON);
@@ -764,7 +785,7 @@ export class Compositor extends EventEmitter<{
     // Sprites must NOT be marked expired before this call — use a fresh aborter.
     const spriteRender = createSpritesRender({
       pixiApp: this.pixiApp,
-      bgColor: this.opts.bgColor,
+      backgroundColor: this.opts.backgroundColor,
       sprites: this.sprites,
       aborter: { aborted: false },
     });
@@ -789,7 +810,7 @@ export class Compositor extends EventEmitter<{
 
 function createSpritesRender(opts: {
   pixiApp: Application | null;
-  bgColor: string;
+  backgroundColor: string;
   sprites: Array<IClip & { main: boolean; expired: boolean }>;
   aborter: { aborted: boolean };
 }): {
@@ -804,7 +825,7 @@ function createSpritesRender(opts: {
   const hasVideoTrack = pixiApp != null;
 
   // if (pixiApp) {
-  //   pixiApp.renderer.background.color = bgColor;
+  //   pixiApp.renderer.background.color = backgroundColor;
   // }
 
   // Map to store PixiSpriteRenderer instances for each clip (only for video)
@@ -1708,7 +1729,7 @@ function createAVEncoder(opts: {
   // Resolve the WebGL context once — reused every frame.
   const gl = hasVideoTrack ? getCanvasGl(canvas) : null;
 
-  const audioTrackBuf = createAudioTrackBuf(1024);
+  const audioTrackBuf = createAudioTrackBuf(1024, opts.fps);
 
   return async (timestamp: number, audios: Float32Array[][], hasVideo: boolean) => {
     if (outputAudio !== false) {
@@ -1753,10 +1774,15 @@ function createAVEncoder(opts: {
  * Buffer input data and convert to AudioData with fixed frame count
  * @param framesPerChunk Number of audio frames per AudioData instance
  */
-export function createAudioTrackBuf(framesPerChunk: number) {
+export function createAudioTrackBuf(framesPerChunk: number, fps: number = 30) {
   const dataSize = framesPerChunk * DEFAULT_AUDIO_CONF.channelCount;
+  // Buffer must hold at least one full video frame worth of audio samples
+  // (sampleRate / fps * channelCount) plus extra headroom for two audio chunks.
+  const samplesPerVideoFrame =
+    Math.ceil(DEFAULT_AUDIO_CONF.sampleRate / fps) * DEFAULT_AUDIO_CONF.channelCount;
+  const minBufSize = samplesPerVideoFrame + dataSize * 2;
   // PCM data buffer
-  const channelBuf = new Float32Array(dataSize * 3);
+  const channelBuf = new Float32Array(Math.max(dataSize * 3, minBufSize));
   let writePos = 0;
 
   let audioTimestamp = 0;
@@ -1805,7 +1831,8 @@ export function createAudioTrackBuf(framesPerChunk: number) {
   };
 
   return (timestamp: number, trackAudios: Float32Array[][]) => {
-    const maxLen = Math.max(...trackAudios.map((a) => a[0]?.length ?? 0));
+    const maxLen =
+      trackAudios.length === 0 ? 0 : Math.max(...trackAudios.map((a) => a[0]?.length ?? 0));
     for (let bufIdx = 0; bufIdx < maxLen; bufIdx++) {
       let ch0 = 0;
       let ch1 = 0;

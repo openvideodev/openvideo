@@ -855,9 +855,10 @@ export class TimelineModel {
   exportToJSON(): ProjectJSON {
     this.reconcileTracks();
 
-    const clips: ClipJSON[] = this.clips.map((clip) => {
-      return clipToJSON(clip, false);
-    });
+    const clips: Record<string, ClipJSON> = {};
+    for (const clip of this.clips) {
+      clips[clip.id] = clipToJSON(clip, false);
+    }
 
     const tracks = this.tracks.map((track) => ({
       id: track.id,
@@ -892,7 +893,7 @@ export class TimelineModel {
         width: this.studio.opts.width,
         height: this.studio.opts.height,
         fps: this.studio.opts.fps,
-        bgColor: this.studio.opts.bgColor,
+        backgroundColor: this.studio.opts.backgroundColor,
       },
     };
   }
@@ -903,11 +904,6 @@ export class TimelineModel {
   async loadFromJSON(json: ProjectJSON): Promise<void> {
     await this.clear();
 
-    // Normalize clips if they are provided as a dictionary
-    if (json.clips && !Array.isArray(json.clips)) {
-      json.clips = Object.values(json.clips) as any;
-    }
-
     // Update settings if provided
     if (json.settings) {
       const dimensionsChanged =
@@ -917,7 +913,8 @@ export class TimelineModel {
       if (json.settings.width) this.studio.opts.width = json.settings.width;
       if (json.settings.height) this.studio.opts.height = json.settings.height;
       if (json.settings.fps) this.studio.opts.fps = json.settings.fps;
-      if (json.settings.bgColor) this.studio.opts.bgColor = json.settings.bgColor;
+      if (json.settings.backgroundColor)
+        this.studio.opts.backgroundColor = json.settings.backgroundColor;
 
       // Resize PixiJS renderer and canvas if dimensions changed
       if (dimensionsChanged && this.studio.pixiApp != null) {
@@ -941,12 +938,13 @@ export class TimelineModel {
       clip: IClip | null;
       intendedTrackId?: string;
     }>[] = [];
-    if (json.clips) {
+    const clipsArray = Object.values(json.clips ?? {});
+    if (clipsArray.length > 0) {
       // 1. Load Fonts First
-      await this.ensureFontsForClips(json.clips);
+      await this.ensureFontsForClips(clipsArray);
 
       // 2. Preload Resources (Video, Audio, Image) - DO NOT AWAIT (Performance)
-      const urlsToPreload = json.clips
+      const urlsToPreload = clipsArray
         .map((clip) => clip.src)
         .filter((src) => src && src.trim() !== "");
       this.studio.resourceManager.preload(urlsToPreload as string[]);
@@ -976,7 +974,7 @@ export class TimelineModel {
       }
 
       // Create promises for clip loading
-      for (const clipJSON of json.clips) {
+      for (const clipJSON of clipsArray) {
         clipPromises.push(
           (async () => {
             try {

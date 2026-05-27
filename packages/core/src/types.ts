@@ -198,6 +198,7 @@ export interface IProjectSettings {
   height: number;
   fps: number;
   duration: number;
+  backgroundColor?: string;
 }
 
 export interface IProject {

@@ -230,7 +230,7 @@ describe("studio-core-functionality", () => {
       const json = studio.exportToJSON();
 
       // Ensure the serialized JSON has transform object and offsetX/offsetY shadow
-      const serializedClip = json.clips[0] as any;
+      const serializedClip = Object.values(json.clips)[0] as any;
       expect(serializedClip.transform).toBeDefined();
       expect(serializedClip.transform.x).toBe(50);
       expect(serializedClip.transform.y).toBe(100);

@@ -269,7 +269,7 @@ export interface ISettings {
   width: number;
   height: number;
   fps: number;
-  bgColor: string;
+  backgroundColor: string;
 }
 
 // ============================================================================

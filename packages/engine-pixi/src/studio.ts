@@ -41,7 +41,7 @@ export interface IStudioOpts {
   width: number;
   height: number;
   fps?: number;
-  bgColor?: string;
+  backgroundColor?: string;
   canvas?: HTMLCanvasElement;
   interactivity?: boolean;
   spacing?: number;
@@ -111,7 +111,7 @@ export interface StudioTrack {
  *   width: 1280,
  *   height: 720,
  *   fps: 30,
- *   bgColor: '#000'
+ *   backgroundColor: '#000'
  * });
  *
  * await studio.addClip(spr1);
@@ -276,7 +276,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     super();
     this.opts = {
       fps: 30,
-      bgColor: "#000000",
+      backgroundColor: "#000000",
       interactivity: true,
       spacing: 0,
       allowZoom: false,
@@ -579,7 +579,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       canvas,
       resizeTo, // Auto-resize to fill the container
       // width/height are derived from resizeTo, so we don't set them explicitly for the renderer
-      backgroundColor: this.hexToNumber(this.opts.bgColor),
+      backgroundColor: this.hexToNumber(this.opts.backgroundColor),
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
@@ -679,8 +679,8 @@ export class Studio extends EventEmitter<StudioEvents> {
   /**
    * Update the background color of the studio
    */
-  public setBgColor(color: string) {
-    this.opts.bgColor = color;
+  public setBackgroundColor(color: string) {
+    this.opts.backgroundColor = color;
     const colorNum = this.hexToNumber(color);
 
     if (this.pixiApp) {

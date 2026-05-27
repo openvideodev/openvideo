@@ -1574,25 +1574,35 @@ function idrNALUOffset(u8Arr: Uint8Array, type: MP4Sample["description"]["type"]
   return -1;
 }
 
-// Large time offset for the first frame may lead to a black frame. Attempt to eliminate it automatically.
-function fixFirstBlackFrame(samples: ExtMP4Sample[]) {
-  let iframeCnt = 0;
-  let minCtsSample: ExtMP4Sample | null = null;
-  // cts minimum represents the first frame of the video
-  for (const s of samples) {
-    if (s.deleted) continue;
-    // Detect frames between up to two I-frames
-    if (s.is_sync) iframeCnt += 1;
-    if (iframeCnt >= 2) break;
+/**
+ * Fix black first-frame caused by a non-zero CTS (composition time) offset.
+ *
+ * Some encoders produce an initial keyframe with CTS > 0, which means the
+ * decoder shows nothing (black) until that timestamp. This function finds
+ * the first keyframe and shifts its CTS to 0 (absorbing the gap into its
+ * duration) so playback starts immediately with a visible frame.
+ *
+ * Only applied when the offset is < 200 ms (empirical threshold).
+ */
+const MAX_BLACK_FRAME_OFFSET_US = 200_000; // 200 ms in microseconds
 
-    if (s.is_sync && (minCtsSample == null || s.cts < minCtsSample.cts)) {
-      minCtsSample = s;
+function fixFirstBlackFrame(samples: ExtMP4Sample[]) {
+  let firstKeyframe: ExtMP4Sample | null = null;
+  let keyframeCount = 0;
+
+  for (const sample of samples) {
+    if (sample.deleted) continue;
+    if (sample.is_sync) keyframeCount++;
+    if (keyframeCount >= 2) break; // Only inspect up to the first GOP
+
+    if (sample.is_sync && (firstKeyframe == null || sample.cts < firstKeyframe.cts)) {
+      firstKeyframe = sample;
     }
   }
-  // 200ms is an empirical value; automatically eliminate black frames within 200ms, otherwise do not process
-  if (minCtsSample != null && minCtsSample.cts < 200e3) {
-    minCtsSample.duration += minCtsSample.cts;
-    minCtsSample.cts = 0;
+
+  if (firstKeyframe != null && firstKeyframe.cts < MAX_BLACK_FRAME_OFFSET_US) {
+    firstKeyframe.duration += firstKeyframe.cts;
+    firstKeyframe.cts = 0;
   }
 }
 

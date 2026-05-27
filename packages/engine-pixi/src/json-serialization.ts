@@ -298,7 +298,7 @@ export interface StudioTrackJSON {
 
 export interface ProjectJSON {
   tracks?: StudioTrackJSON[];
-  clips: ClipJSON[]; // Normalized: Source of truth for clips
+  clips: Record<string, ClipJSON>;
   transition?: GlobalTransitionJSON[];
   transitions?: GlobalTransitionJSON[]; // Alias for transition for better compatibility
   globalEffects?: Array<{
@@ -311,7 +311,8 @@ export interface ProjectJSON {
     width?: number;
     height?: number;
     fps?: number;
-    bgColor?: string;
+    duration?: number;
+    backgroundColor?: string;
     format?: string;
     videoCodec?: string;
     bitrate?: number;
