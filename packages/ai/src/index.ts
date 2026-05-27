@@ -4,7 +4,7 @@
 // Developer-friendly API client for OpenVideo Director
 //
 // Usage:
-//   import { OpenVideo } from '@openvideo/sdk';
+//   import { OpenVideo } from '@openvideo/ai';
 //
 //   const ov = new OpenVideo({ apiKey: 'ov_live_xxx' });
 //   const space = await ov.spaces.create({ name: 'My Project' });

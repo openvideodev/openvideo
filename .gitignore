@@ -38,4 +38,5 @@ yarn-error.log*
 *.pem
 .trigger
 # editor
-# editor/
+editor
+services

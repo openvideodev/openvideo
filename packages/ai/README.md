@@ -1,21 +1,21 @@
-# @openvideo/sdk
+# @openvideo/ai
 
 Developer-friendly API client for OpenVideo Director.
 
 ## Installation
 
 ```bash
-npm install @openvideo/sdk
+npm install @openvideo/ai
 # or
-yarn add @openvideo/sdk
+yarn add @openvideo/ai
 # or
-pnpm add @openvideo/sdk
+pnpm add @openvideo/ai
 ```
 
 ## Quick Start
 
 ```typescript
-import { OpenVideo } from "@openvideo/sdk";
+import { OpenVideo } from "@openvideo/ai";
 
 // Initialize with API key (recommended for server/CLI)
 const ov = new OpenVideo({
@@ -175,7 +175,7 @@ const { token: jwt } = await ov.tokens.exchange("ov_live_xxx");
 ## Error Handling
 
 ```typescript
-import { OpenVideo, AuthenticationError, NotFoundError, RateLimitError } from "@openvideo/sdk";
+import { OpenVideo, AuthenticationError, NotFoundError, RateLimitError } from "@openvideo/ai";
 
 const ov = new OpenVideo({ apiKey: "ov_live_xxx" });
 
