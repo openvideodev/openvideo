@@ -1,0 +1,489 @@
+---
+title: AI Integration
+description: Building AI agents and automation with OpenVideo Core.
+---
+
+OpenVideo's command-driven architecture makes it ideal for AI integration. LLMs can generate, validate, and execute command sequences to automate video editing.
+
+## Why Commands Are AI-Friendly
+
+### Structured Intent
+
+Commands are plain JSON objects that clearly express intent:
+
+```ts
+{
+  id: "cmd_abc123",
+  type: "clip.add",
+  payload: {
+    trackId: "main",
+    clip: {
+      type: "Video",
+      src: "./intro.mp4",
+      timing: { display: { from: 0, to: 5_000_000 } },
+    },
+  },
+}
+```
+
+This structure is:
+- **Serializable**: Send over HTTP, WebSocket, save to database
+- **Validatable**: JSON Schema can validate before execution
+- **Reversible**: Automatic undo/redo support
+- **Inspectable**: Easy to log, audit, and debug
+
+## Basic AI Integration
+
+### Generate Commands with LLM
+
+```ts
+async function aiEdit(project: IProject, userPrompt: string) {
+  const response = await fetch("/api/ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: userPrompt,
+      context: {
+        projectSettings: project.settings,
+        trackCount: project.tracks.length,
+        clipTypes: Object.values(project.clips).map((c) => c.type),
+      },
+    }),
+  });
+
+  const { commands } = await response.json();
+
+  // Validate before executing
+  const validCommands = commands.filter(validateCommand);
+
+  // Execute with batch for single undo point
+  core.batch(validCommands);
+}
+```
+
+### Example Prompt → Commands
+
+**User:** "Add a title card at the beginning"
+
+**LLM generates:**
+
+```json
+[
+  {
+    "id": "cmd_title_1",
+    "type": "clip.add",
+    "payload": {
+      "trackId": "overlays",
+      "clip": {
+        "id": "title_clip",
+        "type": "Text",
+        "text": "My Video",
+        "timing": {
+          "display": { "from": 0, "to": 3000000 }
+        },
+        "transform": {
+          "x": 960,
+          "y": 540,
+          "width": 800,
+          "height": 200,
+          "angle": 0,
+          "zIndex": 10,
+          "opacity": 1
+        }
+      }
+    }
+  },
+  {
+    "id": "cmd_animate_1",
+    "type": "clip.addKeyframes",
+    "payload": {
+      "clipId": "title_clip",
+      "property": "transform.opacity",
+      "keyframes": [
+        { "time": 0, "value": 0, "easing": "easeOut" },
+        { "time": 500000, "value": 1, "easing": "linear" }
+      ]
+    }
+  }
+]
+```
+
+## Command Validation
+
+### JSON Schema Validation
+
+```ts
+import { z } from "zod";
+
+const CommandSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  payload: z.record(z.any()),
+  meta: z
+    .object({
+      source: z.enum(["user", "agent", "system"]),
+      timestamp: z.number(),
+    })
+    .optional(),
+});
+
+function validateCommand(cmd: unknown): Command | null {
+  const result = CommandSchema.safeParse(cmd);
+  return result.success ? result.data : null;
+}
+```
+
+### Context-Aware Validation
+
+```ts
+function validateInContext(
+  cmd: Command,
+  state: ProjectStore
+): { valid: boolean; reason?: string } {
+  switch (cmd.type) {
+    case "clip.add":
+      const track = state.tracks.find(
+        (t) => t.id === cmd.payload.trackId
+      );
+      if (!track) {
+        return { valid: false, reason: "Track not found" };
+      }
+      return { valid: true };
+
+    case "clip.move":
+      const clip = state.clips[cmd.payload.clipId];
+      if (!clip) {
+        return { valid: false, reason: "Clip not found" };
+      }
+      return { valid: true };
+
+    default:
+      return { valid: true };
+  }
+}
+```
+
+## Building AI Agents
+
+### Step 1: Define Available Actions
+
+```ts
+const AI_ACTIONS = [
+  {
+    name: "add_video",
+    description: "Add a video clip to the timeline",
+    parameters: {
+      src: { type: "string", required: true },
+      position: { type: "number", description: "Start time in seconds" },
+      duration: { type: "number", description: "Duration in seconds" },
+    },
+  },
+  {
+    name: "add_text",
+    description: "Add a text overlay",
+    parameters: {
+      text: { type: "string", required: true },
+      position: { type: "number" },
+      style: { type: "object" },
+    },
+  },
+  {
+    name: "add_transition",
+    description: "Add a transition between two clips",
+    parameters: {
+      type: { enum: ["fade", "slide", "wipe"] },
+      duration: { type: "number" },
+    },
+  },
+];
+```
+
+### Step 2: Convert Actions to Commands
+
+```ts
+function actionToCommand(action: AIAction): Command {
+  const id = nanoid();
+
+  switch (action.name) {
+    case "add_video":
+      return {
+        id,
+        type: "clip.add",
+        payload: {
+          trackId: "video-main",
+          clip: {
+            id: nanoid(),
+            type: "Video",
+            src: action.parameters.src,
+            timing: {
+              display: {
+                from: action.parameters.position * 1_000_000,
+                to: (action.parameters.position + action.parameters.duration) * 1_000_000,
+              },
+            },
+          },
+        },
+      };
+
+    case "add_text":
+      return {
+        id,
+        type: "clip.add",
+        payload: {
+          trackId: "overlays",
+          clip: {
+            id: nanoid(),
+            type: "Text",
+            text: action.parameters.text,
+            style: action.parameters.style,
+            timing: {
+              display: {
+                from: (action.parameters.position || 0) * 1_000_000,
+                to: ((action.parameters.position || 0) + 5) * 1_000_000,
+              },
+            },
+          },
+        },
+      };
+
+    default:
+      throw new Error(`Unknown action: ${action.name}`);
+  }
+}
+```
+
+### Step 3: Execute with Confirmation
+
+```ts
+async function executeAIActions(actions: AIAction[]) {
+  // Preview mode: show what will happen
+  const commands = actions.map(actionToCommand);
+
+  // Show preview to user
+  const confirmed = await showPreview(commands);
+  if (!confirmed) return;
+
+  // Execute as batch for single undo
+  core.batch(commands);
+}
+```
+
+## Smart Editing
+
+### Auto-Trim Silence
+
+```ts
+async function removeSilence(
+  clipId: string,
+  audioAnalysis: { start: number; end: number }[]
+) {
+  const clip = core.store.getState().clips[clipId];
+  const segments = findSpeechSegments(audioAnalysis);
+
+  // Generate split and trim commands
+  const commands: Command[] = [];
+
+  segments.forEach((seg, i) => {
+    commands.push({
+      id: nanoid(),
+      type: "clip.add",
+      payload: {
+        trackId: "audio-main",
+        clip: {
+          ...clip,
+          id: nanoid(),
+          timing: {
+            trim: { from: seg.start, to: seg.end },
+            display: { from: seg.start, to: seg.end },
+          },
+        },
+      },
+    });
+  });
+
+  commands.push({
+    id: nanoid(),
+    type: "clip.remove",
+    payload: { clipId },
+  });
+
+  core.batch(commands);
+}
+```
+
+### Auto-Captions
+
+```ts
+async function generateCaptions(clipId: string, transcription: Word[]) {
+  const commands = transcription.map((word) => ({
+    id: nanoid(),
+    type: "clip.add",
+    payload: {
+      trackId: "captions",
+      clip: {
+        id: nanoid(),
+        type: "Caption",
+        text: word.text,
+        timing: {
+          display: {
+            from: word.startTime,
+            to: word.endTime,
+          },
+        },
+        style: {
+          fontSize: 24,
+          color: "#ffffff",
+        },
+      },
+    },
+  }));
+
+  core.batch(commands);
+}
+```
+
+## Safety and Sandboxing
+
+### Rate Limiting
+
+```ts
+class AIRateLimiter {
+  private count = 0;
+  private lastReset = Date.now();
+
+  canExecute(): boolean {
+    const now = Date.now();
+    if (now - this.lastReset > 60000) {
+      this.count = 0;
+      this.lastReset = now;
+    }
+    return this.count++ < 100; // 100 commands per minute
+  }
+}
+```
+
+### Command Blacklist
+
+```ts
+const DANGEROUS_COMMANDS = [
+  "project.delete", // Could delete entire project
+  "settings.reset", // Could lose work
+];
+
+function isSafeCommand(cmd: Command): boolean {
+  return !DANGEROUS_COMMANDS.includes(cmd.type);
+}
+```
+
+### Preview Mode
+
+```ts
+async function previewAIChanges(commands: Command[]) {
+  // Save current state
+  const snapshot = core.store.getState().getSnapshot();
+
+  // Apply changes
+  core.batch(commands);
+
+  // Show preview UI
+  await showPreviewUI();
+
+  // User can accept or reject
+  const accepted = await waitForUserDecision();
+
+  if (!accepted) {
+    // Restore original state
+    core.reset(snapshot);
+  }
+}
+```
+
+## Debugging AI Actions
+
+### Logging
+
+```ts
+function logAIExecution(commands: Command[], result: unknown) {
+  console.log("[AI] Executed commands:", {
+    timestamp: Date.now(),
+    commandCount: commands.length,
+    commands: commands.map((c) => c.type),
+    result,
+  });
+}
+```
+
+### Rollback on Error
+
+```ts
+async function safeAIExecute(commands: Command[]) {
+  const before = core.store.getState().getSnapshot();
+
+  try {
+    core.batch(commands);
+    return { success: true };
+  } catch (error) {
+    // Restore state
+    core.reset(before);
+    return { success: false, error };
+  }
+}
+```
+
+## Example: Full AI Agent
+
+```ts
+class VideoEditingAgent {
+  private core: Core;
+
+  constructor(core: Core) {
+    this.core = core;
+  }
+
+  async processRequest(prompt: string): Promise<void> {
+    // 1. Get current state context
+    const context = this.getContext();
+
+    // 2. Ask LLM for plan
+    const plan = await this.llm.plan(prompt, context);
+
+    // 3. Convert plan to commands
+    const commands = this.planToCommands(plan);
+
+    // 4. Validate
+    const valid = this.validate(commands);
+    if (!valid.valid) {
+      throw new Error(`Invalid plan: ${valid.reason}`);
+    }
+
+    // 5. Confirm with user (optional)
+    const confirmed = await this.confirm(commands);
+    if (!confirmed) return;
+
+    // 6. Execute
+    this.core.batch(commands);
+
+    // 7. Log
+    this.log(commands);
+  }
+
+  private getContext() {
+    const state = this.core.store.getState();
+    return {
+      duration: state.settings.duration,
+      tracks: state.tracks.map((t) => ({
+        id: t.id,
+        name: t.name,
+        clipCount: t.clips.length,
+      })),
+      selected: state.selectedIds,
+    };
+  }
+}
+```
+
+## Next Steps
+
+- **[Commands](../01-concepts/commands)** - Master the command system
+- **[Project State](../01-concepts/project-state)** - Understand the store structure
+- **[Custom Commands](../04-advanced/custom-commands)** - Extend the command registry

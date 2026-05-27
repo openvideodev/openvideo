@@ -1,0 +1,75 @@
+---
+title: Creative Features
+description: Add visual flair with animations, transitions, and effects.
+---
+
+Enhance your videos with OpenVideo's creative tools.
+
+## Animation
+
+Bring clips to life with motion:
+
+- **[Animations](./animations)** - Keyframe-based animation system
+- Move, scale, rotate, fade—anything over time
+
+## Transitions
+
+Smooth clip transitions:
+
+- **[Transitions](./transitions)** - Fade, slide, wipe, dissolve
+- Automatic interpolation between clips
+
+## Visual Effects
+
+Professional video effects:
+
+- **[Effects](./effects)** - Blur, color correction, filters
+- Real-time preview and rendering
+
+## Text & Captions
+
+Add typography and subtitles:
+
+- **[Captions](./captions)** - Subtitles, lyrics, karaoke-style text
+- SRT import, auto-sync, styling options
+
+## Special Effects
+
+Advanced techniques:
+
+- **[Chroma Key](./chroma-key)** - Green screen compositing
+
+## Quick Example
+
+```ts
+// Animate position
+core.execute({
+  id: nanoid(),
+  type: "clip.addKeyframes",
+  payload: {
+    clipId: "clip_1",
+    property: "transform.x",
+    keyframes: [
+      { time: 0, value: 0, easing: "easeOut" },
+      { time: 1_000_000, value: 100, easing: "linear" },
+    ],
+  },
+});
+
+// Add transition
+core.execute({
+  id: nanoid(),
+  type: "transition.add",
+  payload: {
+    trackId: "main",
+    between: ["clip_1", "clip_2"],
+    type: "fade",
+    duration: 500_000,
+  },
+});
+```
+
+## Next Steps
+
+- **[Rendering](../04-advanced/rendering)** - Export your creative work
+- **[Serialization](../04-advanced/serialization)** - Save project state

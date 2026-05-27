@@ -1,0 +1,352 @@
+---
+title: Adding Media
+description: Load and add videos, images, audio, and text to your project.
+---
+
+Media clips are the building blocks of your video composition. This guide covers loading different media types and adding them to the timeline.
+
+## The `clip.prepare()` Method
+
+The easiest way to load media is through the `clip.prepare()` convenience method:
+
+```ts
+const clip = await core.clip.prepare(payload, options);
+```
+
+This method:
+1. Loads the media file
+2. Extracts metadata (dimensions, duration)
+3. Creates a normalized clip object
+4. Returns a ready-to-use clip
+
+## Video Clips
+
+### From URL
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+const video = await core.clip.prepare({
+  type: "Video",
+  src: "https://example.com/video.mp4",
+  timing: {
+    display: { from: 0, to: 10_000_000 }, // 10 seconds
+    trim: { from: 0, to: 10_000_000 },    // Use first 10s of source
+  },
+});
+
+core.execute({
+  id: nanoid(),
+  type: "clip.add",
+  payload: { trackId: "video-main", clip: video },
+});
+```
+
+### From File Input
+
+```ts
+const input = document.querySelector('input[type="file"]');
+input.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  const url = URL.createObjectURL(file);
+
+  const video = await core.clip.prepare({
+    type: "Video",
+    src: url,
+    name: file.name,
+  });
+
+  core.execute({
+    id: nanoid(),
+    type: "clip.add",
+    payload: { trackId: "video-main", clip: video },
+  });
+});
+```
+
+### Timing Options
+
+```ts
+const video = await core.clip.prepare({
+  type: "Video",
+  src: "./interview.mp4",
+  timing: {
+    // When on timeline
+    display: { from: 0, to: 30_000_000 },
+    // Which part of source to use
+    trim: { from: 5_000_000, to: 35_000_000 },
+    // Playback speed
+    playbackRate: 1.0,
+  },
+});
+```
+
+## Image Clips
+
+### Static Images
+
+```ts
+const image = await core.clip.prepare({
+  type: "Image",
+  src: "./photo.jpg",
+  timing: {
+    display: { from: 0, to: 5_000_000 }, // Display for 5 seconds
+  },
+});
+```
+
+### Object Fit
+
+Control how images fit the canvas:
+
+```ts
+const image = await core.clip.prepare(
+  {
+    type: "Image",
+    src: "./wide-photo.jpg",
+  },
+  { objectFit: "contain" } // or "cover"
+);
+```
+
+| Option | Description |
+|--------|-------------|
+| `contain` | Fit within frame, letterbox if needed (default) |
+| `cover` | Fill frame, crop if aspect ratio differs |
+
+### GIF Support
+
+Animated GIFs are treated like video:
+
+```ts
+const gif = await core.clip.prepare({
+  type: "Video", // GIFs use Video type
+  src: "./animation.gif",
+});
+```
+
+## Audio Clips
+
+### Background Music
+
+```ts
+const music = await core.clip.prepare({
+  type: "Audio",
+  src: "./music.mp3",
+  timing: {
+    display: { from: 0, to: 60_000_000 },
+    trim: { from: 0, to: 60_000_000 },
+  },
+});
+
+core.execute({
+  id: nanoid(),
+  type: "clip.add",
+  payload: { trackId: "audio-music", clip: music },
+});
+```
+
+### Volume Control
+
+```ts
+// Adjust clip volume
+const music = await core.clip.prepare({
+  type: "Audio",
+  src: "./music.mp3",
+  transform: {
+    x: 0,
+    y: 0,
+    width: 1920,
+    height: 1080,
+    angle: 0,
+    zIndex: 0,
+    opacity: 0.5, // 50% volume for audio
+  },
+});
+```
+
+## Text Clips
+
+### Basic Text
+
+```ts
+const title = await core.clip.prepare({
+  type: "Text",
+  text: "Hello World",
+  timing: { display: { from: 0, to: 3_000_000 } },
+  transform: {
+    x: 960, // Center X
+    y: 540, // Center Y
+    width: 400,
+    height: 100,
+    angle: 0,
+    zIndex: 10,
+    opacity: 1,
+  },
+});
+```
+
+### Styled Text
+
+```ts
+const title = await core.clip.prepare({
+  type: "Text",
+  text: "BIG TITLE",
+  style: {
+    fontSize: 72,
+    fontFamily: "Inter",
+    fontWeight: "bold",
+    color: "#ffffff",
+    textAlign: "center",
+    textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+  },
+});
+```
+
+## Multiple Media
+
+### Batch Loading
+
+```ts
+const files = [
+  { type: "Video", src: "./intro.mp4" },
+  { type: "Image", src: "./slide1.jpg" },
+  { type: "Image", src: "./slide2.jpg" },
+  { type: "Video", src: "./outro.mp4" },
+];
+
+const clips = await Promise.all(
+  files.map((f, i) =>
+    core.clip.prepare({
+      ...f,
+      timing: {
+        display: {
+          from: i * 10_000_000,
+          to: (i + 1) * 10_000_000,
+        },
+      },
+    })
+  )
+);
+
+// Add all clips in a batch
+import { nanoid } from "@openvideo/core";
+
+core.batch(
+  clips.map((clip) => ({
+    id: nanoid(),
+    type: "clip.add",
+    payload: { trackId: "video-main", clip },
+  }))
+);
+```
+
+## Media Metadata
+
+### Custom Metadata Provider
+
+For advanced use cases, provide custom metadata:
+
+```ts
+import { CoreConfig } from "@openvideo/core";
+
+CoreConfig.setMetadataProvider({
+  async getMetadata(src: string) {
+    // Your custom logic
+    return {
+      width: 1920,
+      height: 1080,
+      duration: 10_000_000,
+      fps: 30,
+    };
+  },
+});
+```
+
+## Error Handling
+
+### Failed Loads
+
+```ts
+try {
+  const video = await core.clip.prepare({
+    type: "Video",
+    src: "./missing.mp4",
+  });
+} catch (error) {
+  console.error("Failed to load video:", error);
+  // Show user-friendly error
+}
+```
+
+### Partial Failures in Batches
+
+```ts
+const results = await Promise.allSettled(
+  files.map((f) => core.clip.prepare(f))
+);
+
+results.forEach((result, i) => {
+  if (result.status === "fulfilled") {
+    console.log(`Loaded: ${files[i].src}`);
+  } else {
+    console.error(`Failed: ${files[i].src}`, result.reason);
+  }
+});
+```
+
+## Best Practices
+
+### 1. Reuse Object URLs
+
+```ts
+const cache = new Map<string, string>();
+
+async function loadMedia(file: File) {
+  if (cache.has(file.name)) {
+    return cache.get(file.name);
+  }
+
+  const url = URL.createObjectURL(file);
+  cache.set(file.name, url);
+  return url;
+}
+```
+
+### 2. Preload Important Media
+
+```ts
+// Preload videos that will be used soon
+const preloadVideos = async (srcs: string[]) => {
+  await Promise.all(
+    srcs.map((src) => {
+      const video = document.createElement("video");
+      video.src = src;
+      video.preload = "auto";
+      return new Promise((resolve) => {
+        video.oncanplaythrough = resolve;
+      });
+    })
+  );
+};
+```
+
+### 3. Clean Up Object URLs
+
+```ts
+// Revoke when clips are removed
+core.execute({
+  id: nanoid(),
+  type: "clip.remove",
+  payload: { clipId: "clip_123" },
+});
+
+// In the command handler or event listener:
+URL.revokeObjectURL(clip.src);
+```
+
+## Next Steps
+
+- **[Timeline Editing](./timeline-editing)** - Position and arrange clips
+- **[Clips](../01-concepts/clips)** - Deep dive into clip structure
+- **[Animations](../03-creative/animations)** - Add motion to your media

@@ -1,0 +1,236 @@
+---
+title: Creating Projects
+description: Initialize and configure new video projects.
+---
+
+Creating a project is the first step in any OpenVideo workflow. This guide covers project initialization, configuration, and management.
+
+## Creating a New Project
+
+### Basic Setup
+
+```ts
+import { Core } from "@openvideo/core";
+
+const core = new Core({
+  settings: {
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    duration: 60_000_000, // 60 seconds in microseconds
+  },
+  tracks: [
+    { id: "video-1", name: "Video", clips: [] },
+    { id: "audio-1", name: "Audio", clips: [] },
+  ],
+});
+```
+
+### Project Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `width` | 1920 | Canvas width in pixels |
+| `height` | 1080 | Canvas height in pixels |
+| `fps` | 30 | Frames per second |
+| `duration` | 30,000,000 | Total project duration (µs) |
+
+### Common Presets
+
+```ts
+// 1080p @ 30fps (default)
+const HD30 = { width: 1920, height: 1080, fps: 30 };
+
+// 4K @ 60fps
+const UHD60 = { width: 3840, height: 2160, fps: 60 };
+
+// Vertical video (TikTok/Reels)
+const VERTICAL = { width: 1080, height: 1920, fps: 30 };
+
+// Square format
+const SQUARE = { width: 1080, height: 1080, fps: 30 };
+```
+
+## Updating Settings
+
+### Modify Settings
+
+```ts
+core.store.getState().updateSettings({
+  width: 1280,
+  height: 720,
+});
+```
+
+### Extend Duration
+
+```ts
+core.store.getState().updateSettings({
+  duration: 120_000_000, // 2 minutes
+});
+```
+
+## Project Lifecycle
+
+### 1. Initialize
+
+```ts
+const core = new Core({
+  settings: { width: 1920, height: 1080, fps: 30, duration: 30_000_000 },
+  tracks: [],
+});
+
+// Wait for any async initialization
+await core.ready;
+```
+
+### 2. Add Content
+
+```ts
+// Load and add media
+const video = await core.clip.prepare({
+  type: "Video",
+  src: "./intro.mp4",
+});
+
+core.execute({
+  id: nanoid(),
+  type: "clip.add",
+  payload: { trackId: "video-1", clip: video },
+});
+```
+
+### 3. Navigate and Preview
+
+```ts
+// Seek to specific time
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time: 5_000_000 }, // 5 seconds
+});
+
+// Listen for state changes
+core.on("timeupdate", (time) => {
+  updatePreview(time);
+});
+```
+
+### 4. Export
+
+```ts
+import { render } from "@openvideo/core/rendering";
+
+const blob = await render(core.store.getState().getSnapshot(), {
+  format: "mp4",
+  fps: 30,
+});
+```
+
+### 5. Cleanup
+
+```ts
+// Remove event listeners
+core.off("timeupdate", handler);
+
+// The Core instance can be garbage collected when no longer referenced
+```
+
+## Resetting a Project
+
+Replace the entire project state:
+
+```ts
+const newProject = {
+  settings: { width: 1920, height: 1080, fps: 30, duration: 60_000_000 },
+  tracks: [],
+};
+
+core.reset(newProject);
+```
+
+This is useful for:
+- Loading saved projects
+- Implementing "New Project" functionality
+- Reverting to a known state
+
+## Project Validation
+
+Validate project structure before saving:
+
+```ts
+function validateProject(project: IProject): string[] {
+  const errors: string[] = [];
+
+  // Check settings
+  if (project.settings.width <= 0) {
+    errors.push("Invalid width");
+  }
+  if (project.settings.height <= 0) {
+    errors.push("Invalid height");
+  }
+  if (project.settings.fps <= 0) {
+    errors.push("Invalid FPS");
+  }
+
+  // Check for orphaned clips
+  const trackClipIds = new Set(
+    project.tracks.flatMap((t) => t.clips)
+  );
+  const allClipIds = Object.keys(project.clips);
+  const orphaned = allClipIds.filter((id) => !trackClipIds.has(id));
+
+  if (orphaned.length > 0) {
+    errors.push(`Orphaned clips: ${orphaned.join(", ")}`);
+  }
+
+  return errors;
+}
+```
+
+## Best Practices
+
+### 1. Set Duration Based on Content
+
+```ts
+// Auto-calculate duration from clips
+function recalculateDuration(core: Core) {
+  const state = core.store.getState();
+  const maxEnd = Math.max(
+    ...state.tracks.flatMap((t) =>
+      t.clips.map((id) => state.clips[id].timing.display.to)
+    )
+  );
+
+  core.store.getState().updateSettings({
+    duration: Math.max(maxEnd + 1_000_000, 30_000_000),
+  });
+}
+```
+
+### 2. Create Tracks Upfront
+
+```ts
+const core = new Core({
+  tracks: [
+    { id: "background", name: "Background", clips: [] },
+    { id: "video-main", name: "Main Video", clips: [] },
+    { id: "video-pip", name: "Picture-in-Picture", clips: [] },
+    { id: "overlays", name: "Overlays", clips: [] },
+    { id: "audio-music", name: "Music", clips: [] },
+    { id: "audio-voice", name: "Voice", clips: [] },
+  ],
+});
+```
+
+### 3. Use Meaningful Track Names
+
+Track names help users understand the composition structure. Consider naming conventions like:
+- `Video Main`, `Video B-Roll`, `Video PIP`
+- `Audio Music`, `Audio SFX`, `Audio Voice`
+
+## Next Steps
+
+- **[Add Media](./add-media)** - Loading videos, images, and audio
+- **[Timeline Editing](./timeline-editing)** - Working with the timeline
+- **[Serialization](../04-advanced/serialization)** - Saving and loading projects

@@ -1,0 +1,243 @@
+---
+title: Project State
+description: Understanding the timeline, tracks, and project store.
+---
+
+The project state is the single source of truth for your video composition. It's a [Zustand](https://github.com/pmndrs/zustand) store that holds everything from timeline position to clip properties.
+
+## Store Structure
+
+```ts
+interface ProjectStore {
+  // ─── Project Settings ───
+  settings: {
+    width: number;        // Canvas width (default: 1920)
+    height: number;       // Canvas height (default: 1080)
+    fps: number;          // Frames per second (default: 30)
+    duration: number;     // Total duration in microseconds
+  };
+
+  // ─── Timeline Data ───
+  tracks: ITrack[];       // Array of tracks
+  clips: Record<string, AnyClip>;  // Clip registry by ID
+
+  // ─── Playback State ───
+  currentTime: number;    // Playhead position (µs)
+  isPlaying: boolean;   // Playback status
+  volume: number;       // 0-1
+  muted: boolean;
+  speed: number;        // Playback rate (1 = normal)
+
+  // ─── UI State ───
+  selectedIds: string[];  // Currently selected clip IDs
+  scale: IScaleState;     // Timeline zoom/pan
+}
+```
+
+## Tracks
+
+Tracks are horizontal lanes on the timeline that contain clips. They stack visually—clips on higher tracks appear on top of clips on lower tracks.
+
+```ts
+interface ITrack {
+  id: string;
+  name: string;
+  clips: string[];  // Array of clip IDs
+  locked?: boolean; // Prevent editing
+  hidden?: boolean; // Hide from view
+}
+```
+
+### Creating Tracks
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+core.execute({
+  id: nanoid(),
+  type: "track.add",
+  payload: {
+    track: {
+      id: "video-main",
+      name: "Main Video",
+      clips: [],
+    },
+  },
+});
+```
+
+## Clips Registry
+
+Clips are stored in a flat `Record<string, AnyClip>` for O(1) lookup. Each track references clips by ID:
+
+```ts
+// The clips object
+{
+  "clip_abc123": { type: "Video", id: "clip_abc123", ... },
+  "clip_def456": { type: "Text", id: "clip_def456", ... },
+}
+
+// A track references them
+{
+  id: "track_1",
+  clips: ["clip_abc123", "clip_def456"]
+}
+```
+
+This design enables:
+- **Efficient lookups**: Get any clip instantly by ID
+- **Track independence**: Move clips between tracks without copying data
+- **Consistent state**: Single source of truth for clip properties
+
+## Microsecond Timeline
+
+All time values use **microseconds** (µs) for frame-accurate precision:
+
+```ts
+const SECOND = 1_000_000;
+const FRAME_30FPS = 33_333;  // ~33ms at 30fps
+
+// Examples
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time: 5 * SECOND },  // 5 seconds
+});
+```
+
+### Converting Units
+
+```ts
+// Seconds to microseconds
+const toMicros = (seconds: number) => seconds * 1_000_000;
+
+// Microseconds to seconds
+const toSeconds = (micros: number) => micros / 1_000_000;
+
+// Frame number at given FPS
+const toFrame = (micros: number, fps: number) =>
+  Math.floor(micros / (1_000_000 / fps));
+```
+
+## Accessing State
+
+### From the Core Instance
+
+```ts
+// Get current state snapshot
+const state = core.store.getState();
+
+// Subscribe to changes
+const unsubscribe = core.store.subscribe((state, prevState) => {
+  if (state.currentTime !== prevState.currentTime) {
+    console.log("Time changed:", state.currentTime);
+  }
+});
+```
+
+### Selectors
+
+```ts
+// Get specific clips efficiently
+const videoClips = Object.values(state.clips).filter(
+  (c) => c.type === "Video"
+);
+
+// Check if a time has any clips
+const hasClipAtTime = (time: number) =>
+  state.tracks.some((track) =>
+    track.clips.some((clipId) => {
+      const clip = state.clips[clipId];
+      return (
+        time >= clip.timing.display.from &&
+        time <= clip.timing.display.to
+      );
+    })
+  );
+```
+
+## Selection State
+
+The `selectedIds` array tracks which clips are currently selected:
+
+```ts
+// Select a single clip
+core.store.getState().select("clip_abc123");
+
+// Multi-select (Ctrl/Cmd click)
+core.store.getState().select("clip_def456", true);
+
+// Deselect
+core.store.getState().deselect("clip_abc123");
+
+// Deselect all
+core.store.getState().deselect();
+```
+
+## Scale (Timeline Zoom)
+
+The `scale` state controls timeline zoom and pan:
+
+```ts
+interface IScaleState {
+  zoom: number;  // Pixels per microsecond
+  pan: number;   // Horizontal scroll offset (px)
+}
+
+// Zoom in
+core.store.getState().setScale({ zoom: 0.1 });
+
+// Zoom to fit project duration
+const projectWidth = state.settings.duration * scale.zoom;
+```
+
+## State Persistence
+
+### Save Project
+
+```ts
+const snapshot = core.store.getState().getSnapshot();
+localStorage.setItem("project", JSON.stringify(snapshot));
+```
+
+### Load Project
+
+```ts
+const saved = localStorage.getItem("project");
+if (saved) {
+  const project = JSON.parse(saved);
+  core.reset(project);
+}
+```
+
+## React Integration
+
+Use Zustand's selector hooks for efficient re-renders:
+
+```tsx
+import { useShallow } from "zustand/react/shallow";
+
+function Timeline() {
+  const { currentTime, isPlaying } = core.store(
+    useShallow((state) => ({
+      currentTime: state.currentTime,
+      isPlaying: state.isPlaying,
+    }))
+  );
+
+  return (
+    <div>
+      <span>{formatTime(currentTime)}</span>
+      <button onClick={() => core.playback.toggle()}>
+        {isPlaying ? "Pause" : "Play"}
+      </button>
+    </div>
+  );
+}
+```
+
+## Next Steps
+
+- **[Commands](./commands)** - How to mutate state
+- **[Clips](./clips)** - Understanding clip structure
+- **[Timeline Editing](../02-guides/timeline-editing)** - Working with the timeline

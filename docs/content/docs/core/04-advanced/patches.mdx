@@ -1,0 +1,420 @@
+---
+title: Patches
+description: Understanding the patch system for state changes and real-time sync.
+---
+
+Patches are the atomic units of change in OpenVideo Core. They describe exactly what changed in the state, enabling undo/redo, real-time collaboration, and time-travel debugging.
+
+## What Are Patches?
+
+A patch is a JSON object describing a single state mutation:
+
+```ts
+interface Patch {
+  op: "add" | "update" | "remove";
+  path: string;      // JSON Pointer path (e.g., "/clips/clip_123/transform/x")
+  value?: any;       // New value (for add/update)
+  oldValue?: any;    // Previous value (for update/remove)
+}
+```
+
+### Example Patch Flow
+
+```ts
+// Initial state
+{ clips: { clip_123: { transform: { x: 0 } } } }
+
+// User moves clip to x: 100
+// → Generated patch:
+{
+  op: "update",
+  path: "/clips/clip_123/transform/x",
+  value: 100,
+  oldValue: 0
+}
+
+// Applied to state:
+{ clips: { clip_123: { transform: { x: 100 } } } }
+
+// Undo: Apply inverse (oldValue → value)
+{
+  op: "update",
+  path: "/clips/clip_123/transform/x",
+  value: 0,  // oldValue becomes new value
+  oldValue: 100
+}
+```
+
+## Patch Operations
+
+### Add
+
+Add a new property or array item:
+
+```ts
+// Add a new clip
+{
+  op: "add",
+  path: "/clips/clip_new",
+  value: { id: "clip_new", type: "Video", ... }
+}
+
+// Add clip to track
+{
+  op: "add",
+  path: "/tracks/0/clips/-",  // "-" means append to array
+  value: "clip_new"
+}
+```
+
+### Update
+
+Modify an existing value:
+
+```ts
+// Update clip position
+{
+  op: "update",
+  path: "/clips/clip_123/transform/x",
+  value: 100,
+  oldValue: 0  // Required for undo
+}
+
+// Update project settings
+{
+  op: "update",
+  path: "/settings/duration",
+  value: 60_000_000,
+  oldValue: 30_000_000
+}
+```
+
+### Remove
+
+Delete a property or array item:
+
+```ts
+// Remove a clip
+{
+  op: "remove",
+  path: "/clips/clip_old",
+  oldValue: { id: "clip_old", ... }  // Full value for undo
+}
+
+// Remove clip from track
+{
+  op: "remove",
+  path: "/tracks/0/clips/2",  // Remove index 2
+  oldValue: "clip_old"
+}
+```
+
+## Working with Patches
+
+### Subscribing to Changes
+
+```ts
+// Listen to all patches
+const unsubscribe = core.store
+  .getState()
+  .onChange((patches) => {
+    console.log("State changed:", patches);
+
+    patches.forEach((patch) => {
+      if (patch.path.startsWith("/clips/")) {
+        console.log("Clip changed:", patch.path);
+      }
+    });
+  });
+
+// Cleanup
+unsubscribe();
+```
+
+### Applying Patches Manually
+
+```ts
+// Apply patches without recording history
+// Useful for real-time collaboration
+const patches = [
+  { op: "update", path: "/currentTime", value: 5_000_000 },
+];
+
+core.applyPatch(patches);
+```
+
+### Generating Patches
+
+Use the utility functions to create patches:
+
+```ts
+import { compare } from "@openvideo/core/utils/patch";
+
+const oldState = { clips: { a: { x: 0 } } };
+const newState = { clips: { a: { x: 100 } } };
+
+const patches = compare(oldState, newState);
+// [{ op: "update", path: "/clips/a/x", value: 100, oldValue: 0 }]
+```
+
+## Inverse Patches
+
+Every patch can be inverted for undo support:
+
+```ts
+import { invertPatches } from "@openvideo/core/utils/patch";
+
+const patches = [
+  { op: "add", path: "/clips/new", value: {...} },
+  { op: "update", path: "/settings/fps", value: 60, oldValue: 30 },
+];
+
+const inverse = invertPatches(patches);
+// [
+//   { op: "remove", path: "/clips/new", oldValue: {...} },
+//   { op: "update", path: "/settings/fps", value: 30, oldValue: 60 },
+// ]
+```
+
+## Real-Time Collaboration
+
+### Broadcasting Patches
+
+```ts
+// Server WebSocket handler
+io.on("connection", (socket) => {
+  // Listen for patches from this client
+  socket.on("patches", (patches: Patch[]) => {
+    // Validate patches
+    const valid = validatePatches(patches);
+    if (!valid) return;
+
+    // Broadcast to other clients
+    socket.broadcast.emit("patches", patches);
+
+    // Persist to database
+    savePatches(patches);
+  });
+});
+```
+
+### Applying Remote Patches
+
+```ts
+// Client WebSocket handler
+socket.on("patches", (patches: Patch[]) => {
+  // Apply without recording history (it's already recorded server-side)
+  core.applyPatch(patches);
+});
+```
+
+### Conflict Resolution
+
+Handle concurrent edits:
+
+```ts
+interface PatchWithTimestamp extends Patch {
+  timestamp: number;
+  clientId: string;
+}
+
+function mergePatches(
+  localPatches: PatchWithTimestamp[],
+  remotePatches: PatchWithTimestamp[]
+): Patch[] {
+  // Last-write-wins based on timestamp
+  const all = [...localPatches, ...remotePatches];
+  all.sort((a, b) => a.timestamp - b.timestamp);
+
+  // Group by path, take latest
+  const byPath = new Map<string, PatchWithTimestamp>();
+  for (const patch of all) {
+    byPath.set(patch.path, patch);
+  }
+
+  return Array.from(byPath.values());
+}
+```
+
+## Patch Batching
+
+### Atomic Operations
+
+Group related patches for atomic application:
+
+```ts
+// Move clip to new track and update position
+const patches: Patch[] = [
+  // Remove from old track
+  {
+    op: "remove",
+    path: "/tracks/0/clips/2",
+    oldValue: "clip_123",
+  },
+  // Add to new track
+  {
+    op: "add",
+    path: "/tracks/1/clips/-",
+    value: "clip_123",
+  },
+  // Update position
+  {
+    op: "update",
+    path: "/clips/clip_123/transform/x",
+    value: 100,
+    oldValue: 0,
+  },
+];
+
+// Apply all at once
+core.applyPatch(patches);
+```
+
+## Debugging with Patches
+
+### Patch Logger
+
+```ts
+function createPatchLogger(core: Core) {
+  return core.store.getState().onChange((patches) => {
+    console.group("State Change");
+    console.log("Timestamp:", Date.now());
+    console.log("Patches:", patches.length);
+
+    patches.forEach((patch, i) => {
+      console.log(`  ${i + 1}. ${patch.op} ${patch.path}`, {
+        from: patch.oldValue,
+        to: patch.value,
+      });
+    });
+
+    console.groupEnd();
+  });
+}
+```
+
+### Time Travel Debugging
+
+```ts
+class PatchRecorder {
+  private patches: Patch[][] = [];
+
+  constructor(core: Core) {
+    core.store.getState().onChange((patches) => {
+      this.patches.push(patches);
+    });
+  }
+
+  replay(upToIndex: number) {
+    const allPatches = this.patches.slice(0, upToIndex + 1).flat();
+
+    // Reset and replay
+    core.reset(INITIAL_STATE);
+    allPatches.forEach((patch) => core.applyPatch([patch]));
+  }
+}
+```
+
+## Optimizing Patches
+
+### Deduplication
+
+Remove redundant patches:
+
+```ts
+function dedupePatches(patches: Patch[]): Patch[] {
+  const seen = new Map<string, Patch>();
+
+  for (const patch of patches) {
+    // Keep only the last patch per path
+    seen.set(patch.path, patch);
+  }
+
+  return Array.from(seen.values());
+}
+
+// Example:
+// [
+//   { op: "update", path: "/clips/a/x", value: 50 },
+//   { op: "update", path: "/clips/a/x", value: 100 },
+// ]
+// → [{ op: "update", path: "/clips/a/x", value: 100 }]
+```
+
+### Compression
+
+Compress large arrays of patches:
+
+```ts
+function compressPatches(patches: Patch[]): CompressedPatch[] {
+  const grouped = groupBy(patches, "op");
+
+  return Object.entries(grouped).map(([op, group]) => ({
+    op,
+    paths: group.map((p) => p.path),
+    values: group.map((p) => p.value),
+  }));
+}
+```
+
+## Best Practices
+
+### 1. Always Include oldValue
+
+```ts
+// Required for undo
+{
+  op: "update",
+  path: "/clips/123/x",
+  value: 100,
+  oldValue: 0, // ← Don't forget this
+}
+```
+
+### 2. Use Specific Paths
+
+```ts
+// GOOD: Specific update
+{ op: "update", path: "/clips/123/transform/x", value: 100 }
+
+// BAD: Broad update (harder to merge)
+{ op: "update", path: "/clips/123", value: { ... } }
+```
+
+### 3. Batch Related Changes
+
+```ts
+// GOOD: All changes in one batch
+core.batch([
+  { id: nanoid(), type: "clip.move", ... },
+  { id: nanoid(), type: "clip.update", ... },
+]);
+
+// Generates single set of patches for undo
+```
+
+### 4. Validate Before Applying
+
+```ts
+function validatePatch(patch: Patch, state: ProjectState): boolean {
+  // Check path exists for update/remove
+  if (patch.op === "update" || patch.op === "remove") {
+    const value = getValueAtPath(state, patch.path);
+    if (value === undefined) return false;
+  }
+
+  // Check path doesn't exist for add
+  if (patch.op === "add") {
+    const value = getValueAtPath(state, patch.path);
+    if (value !== undefined) return false;
+  }
+
+  return true;
+}
+```
+
+## Next Steps
+
+- **[Custom Commands](./custom-commands)** - Create commands that generate patches
+- **[Serialization](./serialization)** - Save/restore project state
+- **[AI Integration](../02-guides/ai-integration)** - Patches for AI collaboration

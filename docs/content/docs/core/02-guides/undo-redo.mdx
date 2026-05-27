@@ -1,0 +1,363 @@
+---
+title: Undo & Redo
+description: History management and time travel in OpenVideo.
+---
+
+OpenVideo Core has built-in undo/redo support through the command system. Every command generates inverse patches that can be applied to reverse changes.
+
+## How It Works
+
+When you execute a command:
+
+1. **Patches** are generated describing what changed
+2. **Inverse patches** are computed to reverse those changes
+3. Both are stored in the **history stack**
+4. Undo applies the inverse patches; redo re-applies the original patches
+
+```
+Execute: Add Clip
+├─ Patches: [{ op: "add", path: "/clips", value: {...} }]
+└─ Inverse: [{ op: "remove", path: "/clips/clip_123" }]
+
+History Stack: [Add Clip]
+
+Undo: Apply inverse patches (clip removed)
+Redo: Re-apply original patches (clip restored)
+```
+
+## Basic Usage
+
+### Undo
+
+```ts
+core.undo();
+```
+
+### Redo
+
+```ts
+core.redo();
+```
+
+### Check State
+
+```ts
+const state = core.store.getState();
+
+// Can we undo?
+const canUndo = state.history.length > 0;
+
+// Can we redo?
+const canRedo = state.future.length > 0;
+
+// How many actions in history?
+const actionCount = state.history.length;
+```
+
+## History Stack
+
+### Structure
+
+```ts
+interface HistoryEntry {
+  command: Command;           // The original command
+  patches: Patch[];           // Changes made
+  inversePatches: Patch[];    // How to reverse
+}
+
+// In the store
+interface ProjectState {
+  history: HistoryEntry[];  // Past actions (can undo)
+  future: HistoryEntry[];   // Undone actions (can redo)
+}
+```
+
+### Inspect History
+
+```ts
+const state = core.store.getState();
+
+// See recent commands
+const recent = state.history.slice(-5).map((entry) => ({
+  type: entry.command.type,
+  id: entry.command.id,
+  timestamp: entry.command.meta?.timestamp,
+}));
+
+console.log("Recent actions:", recent);
+// [{ type: "clip.move", id: "cmd_1" }, { type: "clip.add", id: "cmd_2" }]
+```
+
+## Batching and History
+
+### Batch Commands = Single History Entry
+
+When you batch multiple commands, they're treated as a single undoable action:
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+// All 3 commands become ONE history entry
+core.batch([
+  { id: nanoid(), type: "clip.add", payload: { ... } },
+  { id: nanoid(), type: "clip.add", payload: { ... } },
+  { id: nanoid(), type: "track.add", payload: { ... } },
+]);
+
+// One undo removes all 3 changes
+core.undo();
+```
+
+### When to Batch
+
+```ts
+// Multi-selection move - batch them
+core.batch(
+  selectedIds.map((id) => ({
+    id: nanoid(),
+    type: "clip.move",
+    payload: { clipId: id, newPosition: ... },
+  }))
+);
+
+// Import with multiple clips - batch them
+core.batch(
+  importedClips.map((clip) => ({
+    id: nanoid(),
+    type: "clip.add",
+    payload: { trackId: "main", clip },
+  }))
+);
+```
+
+## History Limits
+
+### Setting a Maximum History Size
+
+Prevent memory issues in long editing sessions:
+
+```ts
+// Custom middleware to limit history
+function limitHistory(maxEntries: number) {
+  const state = core.store.getState();
+
+  if (state.history.length > maxEntries) {
+    // Remove oldest entries
+    core.store.setState((s) => ({
+      ...s,
+      history: s.history.slice(-maxEntries),
+    }));
+  }
+}
+
+// Call after commands
+core.store.subscribe(() => limitHistory(100));
+```
+
+### Clearing History
+
+```ts
+// Clear redo stack (e.g., after significant action)
+core.store.setState((state) => ({ ...state, future: [] }));
+
+// Clear all history (e.g., after save)
+core.store.setState((state) => ({
+  ...state,
+  history: [],
+  future: [],
+}));
+```
+
+## UI Patterns
+
+### Undo/Redo Buttons
+
+```tsx
+function HistoryControls() {
+  const { canUndo, canRedo } = useStore(
+    useShallow((state) => ({
+      canUndo: state.history.length > 0,
+      canRedo: state.future.length > 0,
+    }))
+  );
+
+  return (
+    <div className="history-controls">
+      <button onClick={() => core.undo()} disabled={!canUndo}>
+        <UndoIcon /> Undo
+      </button>
+      <button onClick={() => core.redo()} disabled={!canRedo}>
+        <RedoIcon /> Redo
+      </button>
+    </div>
+  );
+}
+```
+
+### History Panel
+
+```tsx
+function HistoryPanel() {
+  const history = useStore((state) => state.history);
+  const future = useStore((state) => state.future);
+  const currentIndex = history.length - 1;
+
+  return (
+    <div className="history-panel">
+      <h3>History</h3>
+      <ul>
+        {history.map((entry, index) => (
+          <li
+            key={entry.command.id}
+            className={index === currentIndex ? "active" : ""}
+          >
+            {entry.command.type}
+          </li>
+        ))}
+        {future.map((entry) => (
+          <li key={entry.command.id} className="future">
+            {entry.command.type}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### Keyboard Shortcuts
+
+```ts
+document.addEventListener("keydown", (e) => {
+  const isMac = navigator.platform.includes("Mac");
+  const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+  if (modifier && e.key === "z") {
+    e.preventDefault();
+    if (e.shiftKey) {
+      core.redo();
+    } else {
+      core.undo();
+    }
+  }
+
+  if (modifier && (e.key === "y" || (e.shiftKey && e.key === "z"))) {
+    e.preventDefault();
+    core.redo();
+  }
+});
+```
+
+## Advanced: Selective History
+
+### Commands Without History
+
+Some commands shouldn't be undoable (e.g., selection changes):
+
+```ts
+// These update state directly - no history
+core.store.getState().select("clip_123");
+core.store.getState().setScale({ zoom: 0.5 });
+
+// These go through execute() - added to history
+core.execute({ id: nanoid(), type: "clip.add", ... });
+```
+
+### Grouping Related Actions
+
+Use the `meta` field to group actions:
+
+```ts
+// All these are part of the same user gesture
+core.batch([
+  {
+    id: nanoid(),
+    type: "clip.add",
+    payload: { ... },
+    meta: { source: "user", gesture: "import-batch" },
+  },
+  {
+    id: nanoid(),
+    type: "clip.add",
+    payload: { ... },
+    meta: { source: "user", gesture: "import-batch" },
+  },
+]);
+```
+
+## Best Practices
+
+### 1. Always Use `nanoid()` for Command IDs
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+core.execute({
+  id: nanoid(), // Required for history tracking
+  type: "clip.move",
+  payload: { ... },
+});
+```
+
+### 2. Batch Related Changes
+
+```ts
+// BAD: Each drag event creates a history entry
+core.execute({ id: nanoid(), type: "clip.move", ... }); // while dragging
+
+// GOOD: Only save final position
+core.execute({ id: nanoid(), type: "clip.move", ... }); // on drag end only
+```
+
+### 3. Clear Future on New Actions
+
+After undoing, any new command should clear the redo stack:
+
+```ts
+// This happens automatically in Core
+// history: [A, B, C], future: [D, E]
+// Undo -> history: [A, B], future: [C, D, E]
+// New command F -> history: [A, B, F], future: []
+```
+
+### 4. Show Feedback
+
+```ts
+// Toast notification after undo
+function undoWithFeedback() {
+  const prevEntry = core.store.getState().history.at(-1);
+  core.undo();
+  toast.info(`Undid: ${prevEntry?.command.type}`);
+}
+```
+
+## Debugging History
+
+### Log All Changes
+
+```ts
+core.store.subscribe((state, prevState) => {
+  if (state.history.length > prevState.history.length) {
+    const latest = state.history.at(-1);
+    console.log("New action:", latest?.command.type, latest?.patches);
+  }
+});
+```
+
+### Export History
+
+```ts
+function exportHistory() {
+  const state = core.store.getState();
+  return {
+    past: state.history.map((h) => h.command),
+    future: state.future.map((h) => h.command),
+  };
+}
+```
+
+## Next Steps
+
+- **[Commands](../01-concepts/commands)** - Deep dive into the command system
+- **[Patches](../04-advanced/patches)** - Understanding the patch system
+- **[AI Integration](./ai-integration)** - Building AI agents with history

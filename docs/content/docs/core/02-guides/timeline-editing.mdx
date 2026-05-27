@@ -1,0 +1,441 @@
+---
+title: Timeline Editing
+description: Navigate, seek, trim, split, and arrange clips on the timeline.
+---
+
+Timeline editing is where your video comes together. This guide covers navigation, playback control, and clip manipulation.
+
+## Navigation
+
+### Seek
+
+Move the playhead to a specific time:
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+// Seek to 5 seconds
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time: 5_000_000 },
+});
+
+// Seek to frame at 30fps
+const frame = 150; // 5 seconds at 30fps
+const time = (frame / 30) * 1_000_000;
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time },
+});
+```
+
+### Relative Seek
+
+```ts
+// Jump forward/backward
+const JUMP_MS = 5_000_000; // 5 seconds
+
+function skipForward() {
+  const current = core.store.getState().currentTime;
+  core.execute({
+    id: nanoid(),
+    type: "playback.seek",
+    payload: { time: current + JUMP_MS },
+  });
+}
+
+function skipBackward() {
+  const current = core.store.getState().currentTime;
+  core.execute({
+    id: nanoid(),
+    type: "playback.seek",
+    payload: { time: Math.max(0, current - JUMP_MS) },
+  });
+}
+```
+
+### Go to Start/End
+
+```ts
+// Start of timeline
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time: 0 },
+});
+
+// End of project duration
+const duration = core.store.getState().settings.duration;
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time: duration },
+});
+```
+
+## Playback Control
+
+### Play/Pause
+
+```ts
+// Toggle playback
+core.execute({
+  id: nanoid(),
+  type: "playback.play",
+  payload: {},
+});
+
+// Or use the playback controller
+core.playback.play();
+core.playback.pause();
+core.playback.toggle();
+```
+
+### Playback Speed
+
+```ts
+// Set speed (1.0 = normal, 2.0 = 2x)
+core.store.getState().setSpeed(2.0);
+
+// Common speeds
+const SPEEDS = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+```
+
+### Volume
+
+```ts
+// Set volume (0-1)
+core.store.getState().setVolume(0.8);
+
+// Mute/unmute
+core.store.getState().setMuted(true);
+```
+
+## Clip Manipulation
+
+### Move Clips
+
+```ts
+// Move to different time
+core.execute({
+  id: nanoid(),
+  type: "clip.move",
+  payload: {
+    clipId: "clip_abc123",
+    timing: {
+      display: { from: 10_000_000, to: 20_000_000 },
+    },
+  },
+});
+```
+
+### Move Between Tracks
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "clip.moveToTrack",
+  payload: {
+    clipId: "clip_abc123",
+    fromTrackId: "video-1",
+    toTrackId: "video-2",
+  },
+});
+```
+
+### Trim Clips
+
+Adjust the visible portion of a clip:
+
+```ts
+// Trim the clip (keep only first 5 seconds)
+core.execute({
+  id: nanoid(),
+  type: "clip.update",
+  payload: {
+    id: "clip_abc123",
+    timing: {
+      trim: { from: 0, to: 5_000_000 },
+      display: { from: 0, to: 5_000_000 },
+    },
+  },
+});
+```
+
+### Split Clips
+
+Cut a clip at the current playhead position:
+
+```ts
+function splitAtPlayhead(clipId: string) {
+  const state = core.store.getState();
+  const clip = state.clips[clipId];
+  const splitTime = state.currentTime - clip.timing.display.from;
+
+  // Create two new clips
+  const clipA = { ...clip, id: nanoid() };
+  const clipB = { ...clip, id: nanoid() };
+
+  // Update timings
+  clipA.timing = {
+    ...clip.timing,
+    trim: { ...clip.timing.trim, to: splitTime },
+    display: {
+      from: clip.timing.display.from,
+      to: state.currentTime,
+    },
+  };
+
+  clipB.timing = {
+    ...clip.timing,
+    trim: { from: splitTime, to: clip.timing.trim.to },
+    display: {
+      from: state.currentTime,
+      to: clip.timing.display.to,
+    },
+  };
+
+  // Execute batch
+  core.batch([
+    { id: nanoid(), type: "clip.remove", payload: { clipId } },
+    { id: nanoid(), type: "clip.add", payload: { trackId: "video-1", clip: clipA } },
+    { id: nanoid(), type: "clip.add", payload: { trackId: "video-1", clip: clipB } },
+  ]);
+}
+```
+
+### Delete Clips
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "clip.remove",
+  payload: { clipId: "clip_abc123" },
+});
+```
+
+## Selection
+
+### Select Single Clip
+
+```ts
+core.store.getState().select("clip_abc123");
+```
+
+### Multi-Select
+
+```ts
+// Hold Ctrl/Cmd for multi-select
+core.store.getState().select("clip_def456", true); // true = add to selection
+```
+
+### Deselect
+
+```ts
+// Deselect specific
+core.store.getState().deselect("clip_abc123");
+
+// Deselect all
+core.store.getState().deselect();
+```
+
+### Get Selection
+
+```ts
+const selectedIds = core.store.getState().selectedIds;
+const selectedClips = selectedIds.map((id) => state.clips[id]);
+```
+
+## Transformations
+
+### Position and Size
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "clip.update",
+  payload: {
+    id: "clip_abc123",
+    transform: {
+      x: 100,      // Position X
+      y: 200,      // Position Y
+      width: 800,  // Width
+      height: 600, // Height
+      angle: 0,    // Rotation (degrees)
+      zIndex: 1,   // Layer order
+      opacity: 1,  // 0-1
+    },
+  },
+});
+```
+
+### Animate Transform
+
+Use keyframes for animated transforms:
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "clip.addKeyframes",
+  payload: {
+    clipId: "clip_abc123",
+    property: "transform.x",
+    keyframes: [
+      { time: 0, value: 0, easing: "easeOut" },
+      { time: 1_000_000, value: 100, easing: "linear" },
+    ],
+  },
+});
+```
+
+## Timeline Zoom
+
+### Zoom Level
+
+```ts
+// Set zoom (pixels per microsecond)
+core.store.getState().setScale({ zoom: 0.1 });
+
+// Zoom to fit entire project
+function zoomToFit() {
+  const state = core.store.getState();
+  const containerWidth = 1920; // Your timeline width
+  const zoom = containerWidth / state.settings.duration;
+  core.store.getState().setScale({ zoom });
+}
+```
+
+### Pan
+
+```ts
+core.store.getState().setScale((prev) => ({
+  ...prev,
+  pan: prev.pan + 100, // Pan right by 100px
+}));
+```
+
+## Common Patterns
+
+### Ripple Delete
+
+Delete a clip and shift subsequent clips to fill the gap:
+
+```ts
+function rippleDelete(clipId: string, trackId: string) {
+  const state = core.store.getState();
+  const track = state.tracks.find((t) => t.id === trackId)!;
+  const clip = state.clips[clipId];
+  const clipDuration = clip.timing.display.to - clip.timing.display.from;
+  const clipIndex = track.clips.indexOf(clipId);
+
+  // Build commands
+  const commands: Command[] = [
+    { id: nanoid(), type: "clip.remove", payload: { clipId } },
+  ];
+
+  // Shift subsequent clips
+  for (let i = clipIndex + 1; i < track.clips.length; i++) {
+    const nextId = track.clips[i];
+    const nextClip = state.clips[nextId];
+
+    commands.push({
+      id: nanoid(),
+      type: "clip.move",
+      payload: {
+        clipId: nextId,
+        timing: {
+          display: {
+            from: nextClip.timing.display.from - clipDuration,
+            to: nextClip.timing.display.to - clipDuration,
+          },
+        },
+      },
+    });
+  }
+
+  core.batch(commands);
+}
+```
+
+### Insert Gap
+
+Insert empty space on the timeline:
+
+```ts
+function insertGap(trackId: string, atTime: number, duration: number) {
+  const state = core.store.getState();
+  const track = state.tracks.find((t) => t.id === trackId)!;
+
+  const commands: Command[] = [];
+
+  // Find and shift clips after the gap
+  for (const clipId of track.clips) {
+    const clip = state.clips[clipId];
+    if (clip.timing.display.from >= atTime) {
+      commands.push({
+        id: nanoid(),
+        type: "clip.move",
+        payload: {
+          clipId,
+          timing: {
+            display: {
+              from: clip.timing.display.from + duration,
+              to: clip.timing.display.to + duration,
+            },
+          },
+        },
+      });
+    }
+  }
+
+  core.batch(commands);
+}
+```
+
+## Keyboard Shortcuts
+
+Common shortcuts to implement:
+
+```ts
+document.addEventListener("keydown", (e) => {
+  const state = core.store.getState();
+
+  switch (e.key) {
+    case " ":
+      e.preventDefault();
+      core.playback.toggle();
+      break;
+    case "ArrowLeft":
+      skipBackward();
+      break;
+    case "ArrowRight":
+      skipForward();
+      break;
+    case "Delete":
+    case "Backspace":
+      if (state.selectedIds.length > 0) {
+        core.batch(
+          state.selectedIds.map((id) => ({
+            id: nanoid(),
+            type: "clip.remove",
+            payload: { clipId: id },
+          }))
+        );
+      }
+      break;
+    case "z":
+      if (e.metaKey || e.ctrlKey) {
+        e.shiftKey ? core.redo() : core.undo();
+      }
+      break;
+  }
+});
+```
+
+## Next Steps
+
+- **[Undo/Redo](./undo-redo)** - History management
+- **[Animations](../03-creative/animations)** - Add motion to clips
+- **[Transitions](../03-creative/transitions)** - Smooth clip transitions

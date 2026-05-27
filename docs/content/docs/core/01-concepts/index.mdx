@@ -1,0 +1,109 @@
+---
+title: Core Concepts
+description: Understanding the OpenVideo architecture.
+---
+
+Before diving into code, let's understand how OpenVideo Core works under the hood. This mental model will help you write better, more predictable video editing code.
+
+## Architecture Overview
+
+OpenVideo Core follows a **Command → Patches → State** flow:
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Command   │ ──► │   Patches   │ ──► │    State    │
+│  (Intent)   │     │  (Changes)  │     │  (Zustand)  │
+└─────────────┘     └─────────────┘     └─────────────┘
+       │                   │                   │
+       ▼                   ▼                   ▼
+   Generated           Recorded for       Subscribed by
+   by user/AI          undo/redo          UI/Renderers
+```
+
+### Commands Are Intents
+
+Instead of calling methods like `addClip()`, you dispatch **commands** that describe what you want to achieve:
+
+```ts
+{
+  id: "cmd_abc123",
+  type: "clip.add",
+  payload: { trackId: "main", clip: videoClip }
+}
+```
+
+This approach makes the system:
+- **Deterministic**: Same input always produces same output
+- **Serializable**: Commands can be logged, sent over network, replayed
+- **AI-friendly**: LLMs can easily generate valid commands
+
+### Patches Are Atomic Changes
+
+When a command executes, it produces one or more **patches** describing exactly what changed:
+
+```ts
+{ op: "add", path: "/tracks/0/clips", value: { id: "clip_1", ... } }
+{ op: "update", path: "/duration", value: 15_000_000 }
+```
+
+Patches enable:
+- **Undo/Redo**: Store inverse patches to reverse changes
+- **Real-time sync**: Broadcast patches to collaborators
+- **Debugging**: See exactly what changed after each action
+
+### State Is Immutable
+
+The project state lives in a [Zustand](https://github.com/pmndrs/zustand) store. All mutations happen through commands—never direct modification.
+
+## The Timeline
+
+OpenVideo uses **microsecond precision** (`1 second = 1,000,000 µs`) for frame-accurate synchronization:
+
+```ts
+// 5 seconds = 5,000,000 microseconds
+const time = 5_000_000;
+```
+
+This precision ensures perfect alignment between:
+- Video frames
+- Audio samples
+- Animations
+- Effects
+
+## Project Structure
+
+```ts
+interface IProject {
+  settings: {
+    width: number;      // Canvas width (px)
+    height: number;     // Canvas height (px)
+    fps: number;        // Frames per second
+    duration: number;   // Total duration (µs)
+  };
+  tracks: ITrack[];     // Timeline tracks
+  clips: Record<string, AnyClip>;  // Clip registry
+}
+```
+
+## Key Concepts
+
+| Concept | Description | Learn More |
+|---------|-------------|------------|
+| **Commands** | Descriptive intents that mutate state | [Commands](./commands) |
+| **Clips** | Video, audio, image, text elements | [Clips](./clips) |
+| **Tracks** | Containers for clips on the timeline | [Tracks](./tracks) |
+| **Events** | Reactive notifications from the engine | [Events](./events) |
+
+## Why This Design?
+
+1. **Headless First**: Core runs anywhere—browser, Node.js, Web Workers
+2. **Collaboration-Ready**: Commands/patches enable real-time multiplayer editing
+3. **AI-Native**: LLMs can reason about and generate command sequences
+4. **Time Travel**: Built-in undo/redo with full history
+5. **Framework Agnostic**: Works with React, Vue, Svelte, or vanilla JS
+
+## Next Steps
+
+- **[Commands](./commands)** - Deep dive into the command system
+- **[Clips](./clips)** - Understand clip types and timing
+- **[Project State](../02-guides/create-project)** - Learn to create and manage projects

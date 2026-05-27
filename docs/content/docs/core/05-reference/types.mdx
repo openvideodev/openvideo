@@ -1,0 +1,428 @@
+---
+title: TypeScript Types
+description: Key TypeScript interfaces and types in OpenVideo Core.
+---
+
+Reference for the main TypeScript types used throughout OpenVideo Core.
+
+## Core Classes
+
+### Core
+
+The main engine class:
+
+```ts
+class Core extends EventEmitter {
+  store: StoreApi<ProjectStore>;  // Zustand store
+  playback: PlaybackController;   // Playback controls
+
+  constructor(initialState?: Partial<IProject>);
+
+  // Commands
+  execute<T>(command: Command<T>): void;
+  batch(commands: Command[]): void;
+  undo(): void;
+  redo(): void;
+
+  // State management
+  applyPatch(patches: Patch[]): void;
+  reset(project: IProject): void;
+
+  // Convenience methods
+  clip: {
+    prepare(payload: AddClipPayload, options?: { objectFit?: "contain" | "cover" }): Promise<AnyClip>;
+  };
+}
+```
+
+## Project Types
+
+### IProject
+
+The root project structure:
+
+```ts
+interface IProject {
+  settings: IProjectSettings;
+  tracks: ITrack[];
+  clips: Record<string, AnyClip>;
+}
+
+interface IProjectSettings {
+  width: number;      // Canvas width (default: 1920)
+  height: number;     // Canvas height (default: 1080)
+  fps: number;        // Frames per second (default: 30)
+  duration: number;   // Total duration in microseconds
+}
+```
+
+### ProjectStore
+
+The full Zustand store state:
+
+```ts
+interface ProjectStore extends ProjectState, ProjectActions {}
+
+interface ProjectState extends IProject {
+  selectedIds: string[];      // Currently selected clip IDs
+  currentTime: number;        // Playhead position (µs)
+  isPlaying: boolean;         // Playback status
+  volume: number;             // 0-1
+  muted: boolean;
+  speed: number;              // Playback rate (1 = normal)
+  scale: IScaleState;         // Timeline zoom/pan
+  history: HistoryEntry[];    // Undo history
+  future: HistoryEntry[];    // Redo stack
+}
+
+interface IScaleState {
+  zoom: number;   // Pixels per microsecond
+  pan: number;    // Horizontal scroll offset (px)
+}
+```
+
+## Track Types
+
+### ITrack
+
+```ts
+interface ITrack {
+  id: string;
+  name: string;
+  clips: string[];     // Clip IDs (references clips registry)
+  locked?: boolean;    // Prevent editing
+  hidden?: boolean;    // Hide from view
+}
+```
+
+## Clip Types
+
+### IBaseClip
+
+All clips extend this interface:
+
+```ts
+interface IBaseClip {
+  id: string;
+  type: ClipType;
+  name: string;
+  timing: IClipTiming;
+  transform: IClipTransform;
+  src?: string;
+  text?: string;
+  style?: IBaseClipStyle;
+  locked?: boolean;
+  metadata?: Record<string, any>;
+}
+
+type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption" | "Effect";
+```
+
+### IClipTiming
+
+```ts
+interface IClipTiming {
+  display: IDisplay;    // When on timeline
+  trim: ITrim;          // Which part of source
+  duration: number;       // Total duration (µs)
+  playbackRate: number;   // Speed multiplier
+}
+
+interface IDisplay {
+  from: number;   // Start time on timeline (µs)
+  to: number;     // End time on timeline (µs)
+}
+
+interface ITrim {
+  from: number;   // Start time in source (µs)
+  to: number;     // End time in source (µs)
+}
+```
+
+### IClipTransform
+
+```ts
+interface IClipTransform {
+  x: number;          // Position X (px)
+  y: number;          // Position Y (px)
+  width: number;      // Width (px)
+  height: number;     // Height (px)
+  angle: number;      // Rotation (degrees)
+  zIndex: number;     // Layer order
+  opacity: number;    // 0-1
+  flip?: IFlip | null;
+}
+
+interface IFlip {
+  x: boolean;
+  y: boolean;
+}
+```
+
+### Specific Clip Types
+
+```ts
+interface IVideoClip extends IBaseClip {
+  type: "Video";
+  src: string;
+}
+
+interface IAudioClip extends IBaseClip {
+  type: "Audio";
+  src: string;
+}
+
+interface IImageClip extends IBaseClip {
+  type: "Image";
+  src: string;
+}
+
+interface ITextClip extends IBaseClip {
+  type: "Text";
+  text: string;
+  style?: ITextStyle;
+}
+
+interface ICaptionClip extends IBaseClip {
+  type: "Caption";
+  text: string;
+  words?: ICaptionWord[];
+  style?: ICaptionStyle;
+}
+
+type AnyClip = IVideoClip | IAudioClip | IImageClip | ITextClip | ICaptionClip | ITransitionClip | IEffectClip;
+```
+
+## Command Types
+
+### Command
+
+```ts
+interface Command<T = any> {
+  id: string;
+  type: string;
+  payload: T;
+  meta?: CommandMeta;
+}
+
+interface CommandMeta {
+  userId?: string;
+  timestamp?: number;
+  source?: "user" | "agent" | "system";
+}
+```
+
+### Patch
+
+```ts
+type PatchOp = "add" | "update" | "remove";
+
+interface Patch {
+  op: PatchOp;
+  path: string;       // JSON Pointer path
+  value?: any;        // New value
+  oldValue?: any;     // Previous value
+}
+
+type CommandHandler<T = any> = (
+  state: ProjectStore,
+  command: Command<T>
+) => Patch[];
+
+interface HistoryEntry {
+  command: Command;
+  patches: Patch[];
+  inversePatches: Patch[];
+}
+```
+
+## Style Types
+
+### Caption & Text Styles
+
+```ts
+interface IBaseClipStyle {
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string;
+  color?: string;
+  backgroundColor?: string;
+  textAlign?: "left" | "center" | "right";
+  padding?: number;
+  borderRadius?: number;
+  textShadow?: string;
+}
+
+interface ICaptionStyle extends IBaseClipStyle {
+  activeColor?: string;    // For karaoke-style
+  wordSpacing?: number;
+  lineHeight?: number;
+}
+
+interface ICaptionWord {
+  text: string;
+  startTime: number;
+  endTime: number;
+}
+```
+
+### Effect Styles
+
+```ts
+interface IEffectStyle {
+  blur?: number;
+  brightness?: number;
+  contrast?: number;
+  saturation?: number;
+  hue?: number;
+  sepia?: number;
+  grayscale?: number;
+}
+```
+
+## Animation Types
+
+### Keyframes
+
+```ts
+interface IKeyframe<T> {
+  time: number;       // Time in microseconds
+  value: T;           // Value at this time
+  easing?: IEasing;   // Easing function
+}
+
+type IEasing =
+  | "linear"
+  | "easeIn"
+  | "easeOut"
+  | "easeInOut"
+  | "bounce"
+  | "elastic";
+
+interface IKeyframeTrack<T> {
+  property: string;           // e.g., "transform.x"
+  keyframes: IKeyframe<T>[];
+}
+```
+
+## Config Types
+
+### CoreConfig
+
+```ts
+interface CoreConfig {
+  metadataProvider?: IMediaMetadataProvider;
+}
+
+interface IMediaMetadataProvider {
+  getMetadata(src: string): Promise<IMediaMetadata>;
+}
+
+interface IMediaMetadata {
+  width: number;
+  height: number;
+  duration: number;
+  fps: number;
+}
+```
+
+## Event Types
+
+### Core Events
+
+```ts
+type CoreEventMap = {
+  change: Patch[];        // State changed
+  timeupdate: number;     // Time changed (µs)
+  play: void;             // Started playing
+  pause: void;            // Paused
+  seek: number;           // Seeked to time
+  loaded: void;           // Project loaded
+};
+```
+
+## Rendering Types
+
+### Render Options
+
+```ts
+interface IRenderOptions {
+  format: "mp4" | "webm" | "gif";
+  fps?: number;
+  quality?: "low" | "medium" | "high" | "ultra";
+  bitrate?: number;       // Video bitrate (bps)
+  includeAudio?: boolean;
+  includeCaptions?: boolean;
+}
+
+interface IRenderProgress {
+  frame: number;
+  totalFrames: number;
+  percent: number;
+  estimatedTimeRemaining: number;
+}
+```
+
+## Utility Types
+
+### DeepPartial
+
+```ts
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+```
+
+### AddClipPayload
+
+```ts
+type AddClipPayload = Omit<Partial<AnyClip>, "timing"> & {
+  type: string;
+  timing?: IClipTimingInput;
+};
+
+interface IClipTimingInput {
+  display?: Partial<IDisplay>;
+  trim?: Partial<ITrim>;
+  duration?: number;
+  playbackRate?: number;
+}
+```
+
+## Import Reference
+
+```ts
+// Main exports
+import { Core, nanoid } from "@openvideo/core";
+
+// Types
+import type {
+  IProject,
+  IProjectSettings,
+  ITrack,
+  AnyClip,
+  IBaseClip,
+  IVideoClip,
+  IAudioClip,
+  IImageClip,
+  ITextClip,
+  ICaptionClip,
+  Command,
+  Patch,
+  ProjectStore,
+} from "@openvideo/core";
+
+// Commands
+import { commandRegistry } from "@openvideo/core/commands/registry";
+import type { CommandHandler, PatchOp } from "@openvideo/core/commands/types";
+
+// Utilities
+import { applyPatches, invertPatches } from "@openvideo/core/utils/patch";
+import { loadClip } from "@openvideo/core/utils/load-item";
+```
+
+## Next Steps
+
+- **[Command Catalog](./command-catalog)** - Built-in commands reference
+- **[API Reference](./api-reference)** - Full API documentation
+- **[Custom Commands](../04-advanced/custom-commands)** - Create your own commands
