@@ -1,0 +1,2 @@
+- captions size and position
+- caption presets
