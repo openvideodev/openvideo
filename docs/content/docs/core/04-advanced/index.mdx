@@ -1,0 +1,83 @@
+---
+title: Advanced Topics
+description: Deep dive into OpenVideo's architecture and advanced features.
+---
+
+Advanced concepts for power users and framework developers.
+
+## Architecture
+
+Understand how OpenVideo works under the hood:
+
+- **[Custom Commands](./custom-commands)** - Extend Core with your own handlers
+- **[Patches](./patches)** - State changes and real-time sync
+
+## Export & Deployment
+
+Production workflows:
+
+- **[Rendering](./rendering)** - Video export with WebCodecs
+- **[Serialization](./serialization)** - Project save/load
+- **[Headless Node.js](./headless-node)** - Server-side processing
+
+## Use Cases
+
+### Building a Video Editor UI
+
+Use Core as the state layer:
+
+```ts
+// Sync UI to Core state
+const { currentTime, isPlaying } = useSyncExternalStore(
+  core.store.subscribe,
+  () => core.store.getState()
+);
+
+// User interactions dispatch commands
+const onSeek = (time: number) => {
+  core.execute({ id: nanoid(), type: "playback.seek", payload: { time } });
+};
+```
+
+### Real-Time Collaboration
+
+Broadcast patches to collaborators:
+
+```ts
+core.store.getState().onChange((patches) => {
+  websocket.emit("patches", patches);
+});
+```
+
+### AI Agent Integration
+
+Generate commands from LLM output:
+
+```ts
+const aiResponse = await llm.generate("Add a title card");
+const commands = parseAIResponse(aiResponse);
+core.batch(commands);
+```
+
+### Server-Side Rendering
+
+Generate videos on your backend:
+
+```ts
+import { render } from "@openvideo/core/rendering";
+
+const blob = await render(project, { format: "mp4" });
+// Stream to client or save to storage
+```
+
+## Performance Tips
+
+- **Batch commands** for fewer state updates
+- **Use selectors** in React to prevent unnecessary re-renders
+- **Debounce rapid changes** (e.g., dragging) and only commit final values
+- **Lazy load** heavy media until needed
+
+## Next Steps
+
+- **[API Reference](../05-reference)** - Complete type documentation
+- **[Core Concepts](../01-concepts)** - Review the fundamentals

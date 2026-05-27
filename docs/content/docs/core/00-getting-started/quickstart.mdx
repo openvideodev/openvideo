@@ -1,0 +1,100 @@
+---
+title: Quickstart
+description: Build your first video project in 10 minutes.
+---
+
+Get up and running with OpenVideo Core in minutes. This guide walks you through creating a simple video project programmatically.
+
+## Prerequisites
+
+- Node.js 18+ or a modern browser with WebCodecs support
+- Basic knowledge of TypeScript/JavaScript
+
+## Installation
+
+```bash
+npm install @openvideo/core
+```
+
+## Your First Project
+
+### 1. Create a Core Instance
+
+```ts
+import { Core } from "@openvideo/core";
+
+const core = new Core({
+  settings: {
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    duration: 30_000_000, // 30 seconds in microseconds
+  },
+  tracks: [],
+});
+```
+
+### 2. Add a Video Clip
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+// Load and prepare a clip
+const videoClip = await core.clip.prepare({
+  type: "Video",
+  src: "https://example.com/video.mp4",
+  timing: {
+    display: { from: 0, to: 10_000_000 }, // Display for 10 seconds
+  },
+});
+
+// Add it to the timeline
+core.execute({
+  id: nanoid(),
+  type: "clip.add",
+  payload: {
+    trackId: "main",
+    clip: videoClip,
+  },
+});
+```
+
+### 3. Navigate the Timeline
+
+```ts
+// Seek to 5 seconds
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time: 5_000_000 },
+});
+
+// Listen for time updates
+core.on("timeupdate", (time) => {
+  console.log("Current time:", time / 1_000_000, "seconds");
+});
+```
+
+### 4. Export Your Project
+
+```ts
+import { render } from "@openvideo/core/rendering";
+
+const blob = await render(core.store.getState().getSnapshot(), {
+  format: "mp4",
+  quality: "high",
+});
+
+// Download the result
+const url = URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "my-video.mp4";
+a.click();
+```
+
+## Next Steps
+
+- **[Core Concepts](../01-concepts)** - Understand the command-driven architecture
+- **[Clips](../01-concepts/clips)** - Learn about different clip types
+- **[Commands](../01-concepts/commands)** - Master the command API

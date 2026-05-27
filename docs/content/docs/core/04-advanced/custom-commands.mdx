@@ -1,0 +1,454 @@
+---
+title: Custom Commands
+description: Extend OpenVideo Core with your own command handlers.
+---
+
+While OpenVideo Core provides many built-in commands, you can register custom handlers to extend functionality for your specific needs.
+
+## Command Registry
+
+### How Commands Work
+
+```
+Command → Registry Lookup → Handler → Patches → State Update
+```
+
+The registry maps command types to handler functions:
+
+```ts
+// Registry entry
+"clip.rotate": (state, command) => {
+  // Calculate patches
+  return [{ op: "update", path: "/clips/123/transform/angle", value: 45 }];
+}
+```
+
+## Creating Custom Commands
+
+### Step 1: Define the Handler
+
+```ts
+import { CommandHandler } from "@openvideo/core/commands/types";
+
+const rotateHandler: CommandHandler<{ clipId: string; angle: number }> = (
+  state,
+  command
+) => {
+  const { clipId, angle } = command.payload;
+  const clip = state.clips[clipId];
+
+  if (!clip) {
+    throw new Error(`Clip not found: ${clipId}`);
+  }
+
+  // Return patches describing the change
+  return [
+    {
+      op: "update",
+      path: `/clips/${clipId}/transform/angle`,
+      value: angle,
+      oldValue: clip.transform.angle,
+    },
+  ];
+};
+```
+
+### Step 2: Register the Handler
+
+```ts
+import { commandRegistry } from "@openvideo/core/commands/registry";
+
+// Register your custom command
+commandRegistry.register("clip.rotate", rotateHandler);
+```
+
+### Step 3: Execute the Command
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+core.execute({
+  id: nanoid(),
+  type: "clip.rotate",
+  payload: {
+    clipId: "clip_abc123",
+    angle: 45,
+  },
+});
+```
+
+## Handler Patterns
+
+### Simple Property Update
+
+```ts
+const updateClipOpacity: CommandHandler<{ clipId: string; opacity: number }> = (
+  state,
+  command
+) => {
+  const { clipId, opacity } = command.payload;
+
+  return [
+    {
+      op: "update",
+      path: `/clips/${clipId}/transform/opacity`,
+      value: Math.max(0, Math.min(1, opacity)),
+      oldValue: state.clips[clipId].transform.opacity,
+    },
+  ];
+};
+```
+
+### Multi-Property Update
+
+```ts
+const resizeClip: CommandHandler<{
+  clipId: string;
+  width: number;
+  height: number;
+  maintainAspectRatio?: boolean;
+}> = (state, command) => {
+  const { clipId, width, height, maintainAspectRatio } = command.payload;
+  const clip = state.clips[clipId];
+
+  const patches: Patch[] = [];
+
+  if (maintainAspectRatio) {
+    const aspectRatio = clip.transform.width / clip.transform.height;
+    const newHeight = width / aspectRatio;
+
+    patches.push(
+      { op: "update", path: `/clips/${clipId}/transform/width`, value: width },
+      { op: "update", path: `/clips/${clipId}/transform/height`, value: newHeight }
+    );
+  } else {
+    patches.push(
+      { op: "update", path: `/clips/${clipId}/transform/width`, value: width },
+      { op: "update", path: `/clips/${clipId}/transform/height`, value: height }
+    );
+  }
+
+  return patches;
+};
+```
+
+### Adding New Data
+
+```ts
+const addClipTag: CommandHandler<{ clipId: string; tag: string }> = (
+  state,
+  command
+) => {
+  const { clipId, tag } = command.payload;
+  const clip = state.clips[clipId];
+
+  // Initialize tags array if needed
+  const currentTags = clip.metadata?.tags || [];
+
+  return [
+    {
+      op: "update",
+      path: `/clips/${clipId}/metadata/tags`,
+      value: [...currentTags, tag],
+      oldValue: currentTags,
+    },
+  ];
+};
+```
+
+### Complex Operations
+
+```ts
+const duplicateClip: CommandHandler<{ clipId: string; offset?: number }> = (
+  state,
+  command
+) => {
+  const { clipId, offset = 0 } = command.payload;
+  const clip = state.clips[clipId];
+
+  // Find which track contains the clip
+  const track = state.tracks.find((t) => t.clips.includes(clipId));
+  if (!track) throw new Error("Clip not on any track");
+
+  const newClip = {
+    ...clip,
+    id: nanoid(),
+    timing: {
+      ...clip.timing,
+      display: {
+        from: clip.timing.display.from + offset,
+        to: clip.timing.display.to + offset,
+      },
+    },
+  };
+
+  return [
+    {
+      op: "update",
+      path: "/clips",
+      value: { ...state.clips, [newClip.id]: newClip },
+    },
+    {
+      op: "update",
+      path: `/tracks/${state.tracks.indexOf(track)}/clips`,
+      value: [...track.clips, newClip.id],
+    },
+  ];
+};
+```
+
+## Validation
+
+### Input Validation
+
+```ts
+const safeHandler: CommandHandler<any> = (state, command) => {
+  // Validate payload
+  if (!command.payload?.clipId) {
+    throw new Error("clipId is required");
+  }
+
+  // Validate state
+  const clip = state.clips[command.payload.clipId];
+  if (!clip) {
+    throw new Error(`Clip ${command.payload.clipId} not found`);
+  }
+
+  // Validate permissions (if applicable)
+  if (clip.locked) {
+    throw new Error("Cannot modify locked clip");
+  }
+
+  // ... generate patches
+};
+```
+
+### State Guards
+
+```ts
+const guardedHandler: CommandHandler<any> = (state, command) => {
+  // Prevent changes during playback
+  if (state.isPlaying) {
+    throw new Error("Cannot modify while playing");
+  }
+
+  // Prevent changes to locked tracks
+  const track = findTrack(state, command.payload.clipId);
+  if (track?.locked) {
+    throw new Error("Track is locked");
+  }
+
+  // ... generate patches
+};
+```
+
+## Batch-Friendly Commands
+
+Design commands that work well in batches:
+
+```ts
+// GOOD: Works in batch, single patch per command
+const setClipPosition: CommandHandler<{ clipId: string; x: number; y: number }> = (
+  state,
+  command
+) => {
+  const { clipId, x, y } = command.payload;
+
+  return [
+    { op: "update", path: `/clips/${clipId}/transform/x`, value: x },
+    { op: "update", path: `/clips/${clipId}/transform/y`, value: y },
+  ];
+};
+
+// BETTER: Single patch for related changes
+const setClipPosition2: CommandHandler<{ clipId: string; x: number; y: number }> = (
+  state,
+  command
+) => {
+  const { clipId, x, y } = command.payload;
+  const clip = state.clips[clipId];
+
+  return [
+    {
+      op: "update",
+      path: `/clips/${clipId}/transform`,
+      value: { ...clip.transform, x, y },
+    },
+  ];
+};
+```
+
+## Command Composition
+
+### Higher-Order Handlers
+
+```ts
+function withUndoLogging(handler: CommandHandler): CommandHandler {
+  return (state, command) => {
+    console.log("Executing:", command.type);
+    const patches = handler(state, command);
+    console.log("Generated patches:", patches.length);
+    return patches;
+  };
+}
+
+// Wrap existing handler
+commandRegistry.register(
+  "clip.update",
+  withUndoLogging(originalUpdateHandler)
+);
+```
+
+### Command Chains
+
+```ts
+// Execute multiple commands as a single logical operation
+const alignClipsToGrid: CommandHandler<{ clipIds: string[]; gridSize: number }> = (
+  state,
+  command
+) => {
+  const { clipIds, gridSize } = command.payload;
+  const patches: Patch[] = [];
+
+  clipIds.forEach((clipId) => {
+    const clip = state.clips[clipId];
+
+    // Snap to grid
+    const x = Math.round(clip.transform.x / gridSize) * gridSize;
+    const y = Math.round(clip.transform.y / gridSize) * gridSize;
+
+    patches.push({
+      op: "update",
+      path: `/clips/${clipId}/transform`,
+      value: { ...clip.transform, x, y },
+    });
+  });
+
+  return patches;
+};
+```
+
+## Testing Custom Commands
+
+### Unit Tests
+
+```ts
+import { createProjectStore } from "@openvideo/core";
+
+describe("clip.rotate command", () => {
+  it("should rotate clip by given angle", () => {
+    const store = createProjectStore({
+      clips: {
+        clip1: {
+          id: "clip1",
+          type: "Video",
+          transform: { x: 0, y: 0, width: 100, height: 100, angle: 0, zIndex: 0, opacity: 1 },
+          timing: { display: { from: 0, to: 1_000_000 }, trim: { from: 0, to: 1_000_000 }, duration: 1_000_000, playbackRate: 1 },
+        },
+      },
+    });
+
+    const command = {
+      id: "cmd1",
+      type: "clip.rotate",
+      payload: { clipId: "clip1", angle: 45 },
+    };
+
+    store.getState().execute(command);
+
+    expect(store.getState().clips.clip1.transform.angle).toBe(45);
+  });
+});
+```
+
+### Integration Tests
+
+```ts
+it("should support undo/redo for custom command", () => {
+  const core = new Core({ ... });
+
+  core.execute({
+    id: nanoid(),
+    type: "clip.rotate",
+    payload: { clipId: "clip1", angle: 90 },
+  });
+
+  expect(core.store.getState().clips.clip1.transform.angle).toBe(90);
+
+  core.undo();
+  expect(core.store.getState().clips.clip1.transform.angle).toBe(0);
+});
+```
+
+## Best Practices
+
+### 1. Keep Handlers Pure
+
+```ts
+// GOOD: Pure function, only uses inputs and state
+const handler: CommandHandler = (state, command) => {
+  return calculatePatches(state, command.payload);
+};
+
+// BAD: Side effects
+const badHandler: CommandHandler = (state, command) => {
+  fetch("/api/log"); // Don't do this!
+  localStorage.setItem("lastCommand", command.type); // Or this!
+  return patches;
+};
+```
+
+### 2. Return Complete Patches
+
+Always include `oldValue` for proper undo support:
+
+```ts
+// GOOD: Includes oldValue
+{
+  op: "update",
+  path: "/clips/123/transform/x",
+  value: 100,
+  oldValue: state.clips["123"].transform.x, // ← Required for undo
+}
+```
+
+### 3. Use Descriptive Types
+
+```ts
+// Define clear payload types
+interface CropClipPayload {
+  clipId: string;
+  crop: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+}
+
+const cropHandler: CommandHandler<CropClipPayload> = (state, command) => {
+  // Handler knows exact payload shape
+  const { clipId, crop } = command.payload;
+  // ...
+};
+```
+
+### 4. Handle Errors Gracefully
+
+```ts
+const safeHandler: CommandHandler = (state, command) => {
+  try {
+    return calculatePatches(state, command);
+  } catch (error) {
+    // Log but don't crash
+    console.error(`Command ${command.type} failed:`, error);
+    return []; // Empty patches = no change
+  }
+};
+```
+
+## Next Steps
+
+- **[Commands](../01-concepts/commands)** - Built-in command reference
+- **[Patches](./patches)** - Understanding the patch system
+- **[AI Integration](../02-guides/ai-integration)** - Commands for AI agents

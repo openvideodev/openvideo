@@ -1,0 +1,434 @@
+---
+title: Captions
+description: Add subtitles, lyrics, and text overlays to your videos.
+---
+
+Captions add accessibility and engagement to your videos. OpenVideo supports both manual caption clips and AI-generated subtitles.
+
+## Caption Clips
+
+### Basic Caption
+
+```ts
+import { nanoid } from "@openvideo/core";
+
+const caption = {
+  id: nanoid(),
+  type: "Caption",
+  text: "Hello, world!",
+  timing: {
+    display: { from: 0, to: 3_000_000 }, // 3 seconds
+    duration: 3_000_000,
+  },
+  transform: {
+    x: 960,      // Center X
+    y: 900,      // Bottom of screen
+    width: 800,
+    height: 100,
+    angle: 0,
+    zIndex: 100,
+    opacity: 1,
+  },
+};
+
+core.execute({
+  id: nanoid(),
+  type: "clip.add",
+  payload: { trackId: "captions", clip: caption },
+});
+```
+
+## Styling Captions
+
+### Caption Styles
+
+```ts
+const styledCaption = {
+  type: "Caption",
+  text: "Styled Caption",
+  style: {
+    fontSize: 32,
+    fontFamily: "Inter",
+    fontWeight: "600",
+    color: "#ffffff",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    padding: 12,
+    borderRadius: 8,
+    textAlign: "center",
+    textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+  },
+};
+```
+
+### Word-Level Styling
+
+For karaoke-style word-by-word highlighting:
+
+```ts
+const karaokeCaption = {
+  type: "Caption",
+  text: "Word by word",
+  words: [
+    { text: "Word", startTime: 0, endTime: 500000 },
+    { text: "by", startTime: 500000, endTime: 800000 },
+    { text: "word", startTime: 800000, endTime: 1500000 },
+  ],
+  style: {
+    fontSize: 48,
+    color: "#888888", // Inactive color
+  },
+  wordStyle: {
+    activeColor: "#ffffff", // Active word color
+    transition: "color 0.1s ease",
+  },
+};
+```
+
+## Auto-Generated Captions
+
+### From Transcription
+
+```ts
+interface TranscriptionWord {
+  text: string;
+  startTime: number; // microseconds
+  endTime: number;
+}
+
+function createCaptionsFromTranscription(
+  words: TranscriptionWord[],
+  maxWordsPerLine = 3
+) {
+  const commands = [];
+  const lines = chunk(words, maxWordsPerLine);
+
+  for (const line of lines) {
+    const start = line[0].startTime;
+    const end = line[line.length - 1].endTime;
+    const text = line.map((w) => w.text).join(" ");
+
+    commands.push({
+      id: nanoid(),
+      type: "clip.add",
+      payload: {
+        trackId: "captions",
+        clip: {
+          id: nanoid(),
+          type: "Caption",
+          text,
+          timing: { display: { from: start, to: end } },
+          style: DEFAULT_CAPTION_STYLE,
+        },
+      },
+    });
+  }
+
+  core.batch(commands);
+}
+```
+
+### From SRT File
+
+```ts
+async function importSRT(srtContent: string) {
+  const entries = parseSRT(srtContent); // Parse SRT format
+
+  const commands = entries.map((entry) => ({
+    id: nanoid(),
+    type: "clip.add",
+    payload: {
+      trackId: "captions",
+      clip: {
+        id: nanoid(),
+        type: "Caption",
+        text: entry.text,
+        timing: {
+          display: {
+            from: entry.startMs * 1000, // Convert to µs
+            to: entry.endMs * 1000,
+          },
+        },
+      },
+    },
+  }));
+
+  core.batch(commands);
+}
+```
+
+## Caption Positioning
+
+### Standard Positions
+
+```ts
+const POSITIONS = {
+  bottom: { x: 960, y: 900, textAlign: "center" },
+  top: { x: 960, y: 100, textAlign: "center" },
+  center: { x: 960, y: 540, textAlign: "center" },
+  left: { x: 100, y: 540, textAlign: "left" },
+  right: { x: 1820, y: 540, textAlign: "right" },
+};
+
+function createCaption(text: string, position: keyof typeof POSITIONS) {
+  const pos = POSITIONS[position];
+  return {
+    type: "Caption",
+    text,
+    transform: {
+      x: pos.x,
+      y: pos.y,
+      width: 800,
+      height: 100,
+      angle: 0,
+      zIndex: 100,
+      opacity: 1,
+    },
+    style: {
+      ...DEFAULT_STYLE,
+      textAlign: pos.textAlign as any,
+    },
+  };
+}
+```
+
+### Safe Areas
+
+Keep captions within the safe area:
+
+```ts
+const SAFE_AREA = {
+  x: 96, // 5% of 1920
+  y: 54, // 5% of 1080
+  width: 1728, // 90% of 1920
+  height: 972, // 90% of 1080
+};
+
+function positionInSafeArea(
+  caption: AnyClip,
+  position: "bottom" | "top"
+): AnyClip {
+  const y =
+    position === "bottom"
+      ? SAFE_AREA.y + SAFE_AREA.height - 100
+      : SAFE_AREA.y;
+
+  return {
+    ...caption,
+    transform: {
+      ...caption.transform,
+      x: 960,
+      y,
+    },
+  };
+}
+```
+
+## Caption Animation
+
+### Fade In/Out
+
+```ts
+function addCaptionFadeAnimation(clipId: string) {
+  core.batch([
+    {
+      id: nanoid(),
+      type: "clip.addKeyframes",
+      payload: {
+        clipId,
+        property: "transform.opacity",
+        keyframes: [
+          { time: 0, value: 0, easing: "easeOut" },
+          { time: 200000, value: 1, easing: "linear" },
+        ],
+      },
+    },
+    {
+      id: nanoid(),
+      type: "clip.addKeyframes",
+      payload: {
+        clipId,
+        property: "transform.opacity",
+        keyframes: [
+          { time: 2800000, value: 1, easing: "linear" },
+          { time: 3000000, value: 0, easing: "easeIn" },
+        ],
+      },
+    },
+  ]);
+}
+```
+
+### Typewriter Effect
+
+```ts
+function createTypewriterCaption(
+  text: string,
+  duration: number,
+  charDuration = 50000 // 50ms per character
+) {
+  const clipId = nanoid();
+  const chars = text.length;
+  const totalTypeTime = chars * charDuration;
+
+  // Ensure we have enough time
+  const actualDuration = Math.max(duration, totalTypeTime + 500000);
+
+  return {
+    id: clipId,
+    type: "Caption",
+    text,
+    timing: { display: { from: 0, to: actualDuration } },
+    animation: {
+      type: "typewriter",
+      charDuration,
+    },
+  };
+}
+```
+
+## Burn-In Captions
+
+### Export with Captions
+
+When rendering, captions are automatically burned into the video:
+
+```ts
+import { render } from "@openvideo/core/rendering";
+
+const blob = await render(project, {
+  format: "mp4",
+  includeCaptions: true, // Burn captions into output
+});
+```
+
+### Separate Caption Track
+
+Export captions as a separate SRT file:
+
+```ts
+function exportSRT(clips: ICaptionClip[]): string {
+  return clips
+    .map((clip, i) => {
+      const start = formatSRTTime(clip.timing.display.from);
+      const end = formatSRTTime(clip.timing.display.to);
+      return `${i + 1}\n${start} --> ${end}\n${clip.text}\n`;
+    })
+    .join("\n");
+}
+
+function formatSRTTime(micros: number): string {
+  const ms = Math.floor(micros / 1000);
+  const hours = Math.floor(ms / 3600000);
+  const minutes = Math.floor((ms % 3600000) / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  const millis = ms % 1000;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")},${String(millis).padStart(3, "0")}`;
+}
+```
+
+## Bulk Operations
+
+### Update All Caption Styles
+
+```ts
+function updateAllCaptionStyles(style: Partial<ICaptionStyle>) {
+  const state = core.store.getState();
+
+  const commands = Object.values(state.clips)
+    .filter((c) => c.type === "Caption")
+    .map((clip) => ({
+      id: nanoid(),
+      type: "clip.update",
+      payload: {
+        id: clip.id,
+        style: { ...clip.style, ...style },
+      },
+    }));
+
+  core.batch(commands);
+}
+
+// Example: Change all captions to yellow
+updateAllCaptionStyles({ color: "#ffff00" });
+```
+
+### Shift All Captions
+
+```ts
+function shiftAllCaptions(offsetMs: number) {
+  const state = core.store.getState();
+
+  const commands = Object.values(state.clips)
+    .filter((c) => c.type === "Caption")
+    .map((clip) => ({
+      id: nanoid(),
+      type: "clip.update",
+      payload: {
+        id: clip.id,
+        timing: {
+          display: {
+            from: clip.timing.display.from + offsetMs * 1000,
+            to: clip.timing.display.to + offsetMs * 1000,
+          },
+        },
+      },
+    }));
+
+  core.batch(commands);
+}
+```
+
+## Best Practices
+
+### 1. Readability Guidelines
+
+```ts
+const READABLE_CAPTION_STYLE = {
+  fontSize: 24,
+  fontFamily: "Inter, system-ui, sans-serif",
+  fontWeight: "500",
+  color: "#ffffff",
+  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  padding: 8,
+  borderRadius: 4,
+  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+  lineHeight: 1.4,
+};
+```
+
+### 2. Timing Guidelines
+
+- Minimum duration: 1 second (1_000_000 µs)
+- Characters per second: Max 15-20
+- Line length: Max 32 characters
+
+```ts
+function validateCaptionTiming(caption: ICaptionClip): boolean {
+  const duration = caption.timing.display.to - caption.timing.display.from;
+  const charCount = caption.text.length;
+  const cps = charCount / (duration / 1_000_000);
+
+  return duration >= 1_000_000 && cps <= 20;
+}
+```
+
+### 3. Track Organization
+
+Keep captions on a dedicated track:
+
+```ts
+const tracks = [
+  { id: "video-main", name: "Video" },
+  { id: "captions", name: "Captions" }, // Dedicated track
+  { id: "overlays", name: "Other Overlays" },
+];
+```
+
+## Next Steps
+
+- **[AI Integration](../02-guides/ai-integration)** - Auto-generate captions with AI
+- **[Text Clips](../01-concepts/clips)** - Regular text overlays
+- **[Animations](../animations)** - Animate your captions

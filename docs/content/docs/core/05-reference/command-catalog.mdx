@@ -1,0 +1,562 @@
+---
+title: Command Catalog
+description: Reference for all built-in commands in OpenVideo Core.
+---
+
+Complete reference of built-in commands organized by category.
+
+## Playback Commands
+
+### `playback.seek`
+
+Move the playhead to a specific time.
+
+```ts
+{
+  id: string;
+  type: "playback.seek";
+  payload: {
+    time: number;  // Target time in microseconds
+  };
+}
+```
+
+**Example:**
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "playback.seek",
+  payload: { time: 5_000_000 }, // 5 seconds
+});
+```
+
+### `playback.play`
+
+Start playback from current position.
+
+```ts
+{
+  id: string;
+  type: "playback.play";
+  payload: {};
+}
+```
+
+### `playback.pause`
+
+Pause playback.
+
+```ts
+{
+  id: string;
+  type: "playback.pause";
+  payload: {};
+}
+```
+
+### `playback.toggle`
+
+Toggle between play and pause.
+
+```ts
+{
+  id: string;
+  type: "playback.toggle";
+  payload: {};
+}
+```
+
+## Clip Commands
+
+### `clip.add`
+
+Add a clip to a track.
+
+```ts
+{
+  id: string;
+  type: "clip.add";
+  payload: {
+    trackId: string;
+    clip: AnyClip;
+  };
+}
+```
+
+**Example:**
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "clip.add",
+  payload: {
+    trackId: "video-main",
+    clip: {
+      id: nanoid(),
+      type: "Video",
+      src: "./video.mp4",
+      timing: {
+        display: { from: 0, to: 10_000_000 },
+        trim: { from: 0, to: 10_000_000 },
+        duration: 10_000_000,
+        playbackRate: 1,
+      },
+      transform: {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+        angle: 0,
+        zIndex: 0,
+        opacity: 1,
+      },
+    },
+  },
+});
+```
+
+### `clip.remove`
+
+Remove a clip from the timeline.
+
+```ts
+{
+  id: string;
+  type: "clip.remove";
+  payload: {
+    clipId: string;
+  };
+}
+```
+
+### `clip.move`
+
+Move a clip to a new time position.
+
+```ts
+{
+  id: string;
+  type: "clip.move";
+  payload: {
+    clipId: string;
+    timing: Partial<IClipTiming>;
+  };
+}
+```
+
+**Example:**
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "clip.move",
+  payload: {
+    clipId: "clip_123",
+    timing: {
+      display: { from: 5_000_000, to: 15_000_000 },
+    },
+  },
+});
+```
+
+### `clip.update`
+
+Update clip properties.
+
+```ts
+{
+  id: string;
+  type: "clip.update";
+  payload: {
+    id: string;
+    // Any clip properties to update
+    transform?: Partial<IClipTransform>;
+    timing?: Partial<IClipTiming>;
+    style?: Partial<IBaseClipStyle>;
+    text?: string;
+    // ... etc
+  };
+}
+```
+
+### `clip.moveToTrack`
+
+Move a clip between tracks.
+
+```ts
+{
+  id: string;
+  type: "clip.moveToTrack";
+  payload: {
+    clipId: string;
+    fromTrackId: string;
+    toTrackId: string;
+  };
+}
+```
+
+### `clip.split`
+
+Split a clip at a specific time.
+
+```ts
+{
+  id: string;
+  type: "clip.split";
+  payload: {
+    clipId: string;
+    time: number;  // Split time (microseconds)
+  };
+}
+```
+
+## Track Commands
+
+### `track.add`
+
+Add a new track.
+
+```ts
+{
+  id: string;
+  type: "track.add";
+  payload: {
+    track: ITrack;
+  };
+}
+```
+
+**Example:**
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "track.add",
+  payload: {
+    track: {
+      id: "overlay-track",
+      name: "Overlays",
+      clips: [],
+    },
+  },
+});
+```
+
+### `track.remove`
+
+Remove a track and all its clips.
+
+```ts
+{
+  id: string;
+  type: "track.remove";
+  payload: {
+    trackId: string;
+  };
+}
+```
+
+### `track.reorder`
+
+Change track order.
+
+```ts
+{
+  id: string;
+  type: "track.reorder";
+  payload: {
+    trackId: string;
+    newIndex: number;
+  };
+}
+```
+
+## Project Commands
+
+### `project.updateSettings`
+
+Update project settings.
+
+```ts
+{
+  id: string;
+  type: "project.updateSettings";
+  payload: {
+    settings: Partial<IProjectSettings>;
+  };
+}
+```
+
+### `project.setDuration`
+
+Set project duration.
+
+```ts
+{
+  id: string;
+  type: "project.setDuration";
+  payload: {
+    duration: number;  // Microseconds
+  };
+}
+```
+
+## Selection Commands
+
+### `selection.select`
+
+Select clips.
+
+```ts
+{
+  id: string;
+  type: "selection.select";
+  payload: {
+    ids: string | string[];
+    multi?: boolean;  // Add to existing selection
+  };
+}
+```
+
+### `selection.deselect`
+
+Deselect clips.
+
+```ts
+{
+  id: string;
+  type: "selection.deselect";
+  payload: {
+    ids?: string | string[];  // Omit to deselect all
+  };
+}
+```
+
+## Animation Commands
+
+### `clip.addKeyframes`
+
+Add animation keyframes to a clip property.
+
+```ts
+{
+  id: string;
+  type: "clip.addKeyframes";
+  payload: {
+    clipId: string;
+    property: string;      // e.g., "transform.x", "transform.opacity"
+    keyframes: IKeyframe[];
+  };
+}
+```
+
+**Example:**
+
+```ts
+core.execute({
+  id: nanoid(),
+  type: "clip.addKeyframes",
+  payload: {
+    clipId: "clip_123",
+    property: "transform.x",
+    keyframes: [
+      { time: 0, value: 0, easing: "easeOut" },
+      { time: 1_000_000, value: 100, easing: "linear" },
+    ],
+  },
+});
+```
+
+### `clip.removeKeyframes`
+
+Remove keyframes from a property.
+
+```ts
+{
+  id: string;
+  type: "clip.removeKeyframes";
+  payload: {
+    clipId: string;
+    property: string;
+    times?: number[];  // Specific times to remove, omit for all
+  };
+}
+```
+
+## Effect Commands
+
+### `effect.add`
+
+Add an effect to a clip.
+
+```ts
+{
+  id: string;
+  type: "effect.add";
+  payload: {
+    clipId: string;
+    effect: IEffectClip;
+  };
+}
+```
+
+### `effect.remove`
+
+Remove an effect from a clip.
+
+```ts
+{
+  id: string;
+  type: "effect.remove";
+  payload: {
+    clipId: string;
+    effectId: string;
+  };
+}
+```
+
+### `effect.update`
+
+Update effect parameters.
+
+```ts
+{
+  id: string;
+  type: "effect.update";
+  payload: {
+    clipId: string;
+    effectId: string;
+    params: Record<string, any>;
+  };
+}
+```
+
+## Transition Commands
+
+### `transition.add`
+
+Add a transition between clips.
+
+```ts
+{
+  id: string;
+  type: "transition.add";
+  payload: {
+    trackId: string;
+    between: [string, string];  // Clip IDs
+    type: "fade" | "slide" | "wipe" | "dissolve";
+    duration: number;  // Microseconds
+  };
+}
+```
+
+### `transition.remove`
+
+Remove a transition.
+
+```ts
+{
+  id: string;
+  type: "transition.remove";
+  payload: {
+    transitionId: string;
+  };
+}
+```
+
+## Caption Commands
+
+### `caption.add`
+
+Add a caption clip.
+
+```ts
+{
+  id: string;
+  type: "caption.add";
+  payload: {
+    trackId: string;
+    caption: ICaptionClip;
+  };
+}
+```
+
+### `caption.updateStyle`
+
+Update caption styling.
+
+```ts
+{
+  id: string;
+  type: "caption.updateStyle";
+  payload: {
+    clipId: string;
+    style: Partial<ICaptionStyle>;
+  };
+}
+```
+
+### `caption.syncToAudio`
+
+Auto-sync captions to audio timing.
+
+```ts
+{
+  id: string;
+  type: "caption.syncToAudio";
+  payload: {
+    captionClipId: string;
+    audioClipId: string;
+    words: ICaptionWord[];
+  };
+}
+```
+
+## Batch Operations
+
+All commands can be executed individually or batched:
+
+```ts
+// Individual execution
+core.execute(cmd1);
+core.execute(cmd2);
+
+// Batch execution (single undo point)
+core.batch([cmd1, cmd2, cmd3]);
+```
+
+## Command Metadata
+
+All commands support optional metadata:
+
+```ts
+{
+  id: nanoid(),
+  type: "clip.add",
+  payload: { ... },
+  meta: {
+    source: "user",      // "user" | "agent" | "system"
+    timestamp: Date.now(),
+    userId: "user_123",
+  },
+}
+```
+
+## Command Validation
+
+Commands are validated before execution:
+
+| Error | Cause |
+|-------|-------|
+| `Clip not found` | Invalid clipId in payload |
+| `Track not found` | Invalid trackId in payload |
+| `Invalid timing` | display.from > display.to |
+| `Track is locked` | Attempting to modify locked track |
+| `Clip is locked` | Attempting to modify locked clip |
+
+## Next Steps
+
+- **[Custom Commands](../04-advanced/custom-commands)** - Create your own commands
+- **[Commands Concept](../01-concepts/commands)** - How commands work
+- **[Patches](../04-advanced/patches)** - Understanding state changes

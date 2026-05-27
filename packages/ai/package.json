@@ -1,0 +1,51 @@
+{
+  "name": "@openvideo/ai",
+  "version": "0.1.0",
+  "description": "OpenVideo AI - Developer-friendly API client for OpenVideo Director",
+  "keywords": [
+    "ai",
+    "api",
+    "openvideo",
+    "video"
+  ],
+  "license": "MIT",
+  "author": "OpenVideo Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openvideo/openvideo.git",
+    "directory": "packages/ai"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

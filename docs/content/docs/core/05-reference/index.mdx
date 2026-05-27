@@ -1,0 +1,122 @@
+---
+title: Reference
+description: Complete API documentation and type reference.
+---
+
+Quick reference for OpenVideo Core APIs.
+
+## Documentation
+
+- **[Command Catalog](./command-catalog)** - All built-in commands
+- **[TypeScript Types](./types)** - Complete type definitions
+- **[API Reference](./api-reference)** - Class and method documentation
+
+## Quick Links
+
+### Core Methods
+
+| Method | Description |
+|--------|-------------|
+| `core.execute(cmd)` | Execute a single command |
+| `core.batch(cmds)` | Execute multiple commands |
+| `core.undo()` | Undo last action |
+| `core.redo()` | Redo last undone action |
+| `core.reset(project)` | Load new project |
+
+### Store Access
+
+```ts
+// Get current state
+const state = core.store.getState();
+
+// Subscribe to changes
+const unsubscribe = core.store.subscribe((state, prev) => {
+  console.log("State changed");
+});
+
+// Listen to patches
+const off = state.onChange((patches) => {
+  console.log("Patches:", patches);
+});
+```
+
+### Playback
+
+```ts
+core.playback.play();
+core.playback.pause();
+core.playback.toggle();
+core.playback.seek(time);
+```
+
+## Type Imports
+
+```ts
+// Core classes and functions
+import { Core, nanoid, createProjectStore } from "@openvideo/core";
+
+// Types
+import type {
+  IProject,
+  IProjectSettings,
+  ITrack,
+  AnyClip,
+  IBaseClip,
+  IVideoClip,
+  IAudioClip,
+  IImageClip,
+  ITextClip,
+  ICaptionClip,
+  IClipTiming,
+  IClipTransform,
+  Command,
+  Patch,
+  ProjectStore,
+} from "@openvideo/core";
+
+// Commands
+import { commandRegistry } from "@openvideo/core/commands/registry";
+import type { CommandHandler, CommandMeta } from "@openvideo/core/commands/types";
+
+// Utils
+import { applyPatches, invertPatches } from "@openvideo/core/utils/patch";
+```
+
+## Common Patterns
+
+### Command Structure
+
+```ts
+{
+  id: string;           // Unique identifier (use nanoid())
+  type: string;         // Command type (e.g., "clip.add")
+  payload: object;      // Command-specific data
+  meta?: {
+    source?: "user" | "agent" | "system";
+    timestamp?: number;
+    userId?: string;
+  };
+}
+```
+
+### Patch Structure
+
+```ts
+{
+  op: "add" | "update" | "remove";
+  path: string;         // JSON Pointer path
+  value?: any;          // New value
+  oldValue?: any;       // Previous value (for undo)
+}
+```
+
+## External Resources
+
+- [Zustand Documentation](https://docs.pmnd.rs/zustand) - State management
+- [WebCodecs API](https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API) - Video encoding
+- [PixiJS Documentation](https://pixijs.com/) - Rendering (Studio)
+
+## Next Steps
+
+- **[Changelog](../06-changelog/changelog)** - Version history
+- **[Core Concepts](../01-concepts)** - Architecture overview

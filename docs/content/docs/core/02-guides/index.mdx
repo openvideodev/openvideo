@@ -1,0 +1,57 @@
+---
+title: Guides
+description: Step-by-step tutorials for common tasks.
+---
+
+Practical guides for building with OpenVideo Core.
+
+## Getting Started
+
+New to OpenVideo? Start here:
+
+- **[Create a Project](./create-project)** - Initialize and configure projects
+- **[Add Media](./add-media)** - Load videos, images, audio, and text
+- **[Basic Usage](../00-getting-started/basic-usage)** - Your first steps
+
+## Timeline Editing
+
+Learn to manipulate the timeline:
+
+- **[Timeline Editing](./timeline-editing)** - Navigate, seek, trim, split, and arrange clips
+- **[Undo & Redo](./undo-redo)** - History management and time travel
+
+## Advanced Workflows
+
+For complex use cases:
+
+- **[AI Integration](./ai-integration)** - Build AI-powered video editing agents
+
+## Quick Reference
+
+Common patterns at a glance:
+
+```ts
+// Seek to time
+core.execute({ id: nanoid(), type: "playback.seek", payload: { time: 5_000_000 } });
+
+// Add clip
+core.execute({ id: nanoid(), type: "clip.add", payload: { trackId: "main", clip } });
+
+// Move clip
+core.execute({ id: nanoid(), type: "clip.move", payload: { clipId: "clip_1", timing: {...} } });
+
+// Batch operations
+core.batch([cmd1, cmd2, cmd3]);
+
+// Undo/redo
+core.undo();
+core.redo();
+```
+
+## Next Steps
+
+After completing these guides, explore:
+
+- **[Creative Features](../03-creative)** - Animations, transitions, effects
+- **[Advanced Topics](../04-advanced)** - Custom commands, patches, headless usage
+- **[API Reference](../05-reference)** - Complete type documentation
