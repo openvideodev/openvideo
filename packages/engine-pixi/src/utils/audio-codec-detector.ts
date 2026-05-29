@@ -85,7 +85,6 @@ export async function getDefaultAudioCodec(): Promise<AudioCodecConfig> {
 
     if (supported) {
       cachedCodec = { ...config };
-      console.log(`[AudioCodec] Selected ${config.codec} for ${os}`);
       return cachedCodec;
     }
   }

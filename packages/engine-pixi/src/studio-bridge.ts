@@ -22,7 +22,6 @@ export class StudioBridge {
   private isSyncing = false;
 
   private async init() {
-    console.log("StudioBridge.init");
     await this.studio.ready;
 
     // 1. Sync Playback
@@ -34,7 +33,6 @@ export class StudioBridge {
         // If we ARE playing, the studio's own loop is already updating time,
         // but we still want to allow external seeks (scrubbing) to take precedence.
         if (!this.studio.isPlaying) {
-          console.log("Seeking studio to", time);
           await this.studio.transport.seek(time);
         }
       } finally {
@@ -43,12 +41,10 @@ export class StudioBridge {
     });
 
     this.core.on("play", () => {
-      console.log("core:play -> studio.play()");
       this.studio.play();
     });
 
     this.core.on("pause", () => {
-      console.log("core:pause -> studio.pause()");
       this.studio.pause();
     });
 
@@ -182,7 +178,6 @@ export class StudioBridge {
       const changed = this.syncClipProperties(clip, value);
 
       if (changed) {
-        console.log("handleUpdateClip [UPDATED]", clipId, value);
         // If lock status changed and it's selected, refresh transformer
         if (wasLocked !== clip.locked && this.studio.selection.selectedClips.has(clip)) {
           this.studio.selection.recreateTransformer();
@@ -230,7 +225,6 @@ export class StudioBridge {
         }
       } else if (prop === "display") {
         if (!clip.display || clip.display.from !== value.from || clip.display.to !== value.to) {
-          console.log("handleUpdateClip [DISPLAY UPDATED]", clipId, value);
           clip.display = { ...value };
           changed = true;
         }
@@ -306,7 +300,6 @@ export class StudioBridge {
         const currentValue = (clip as any)[prop];
 
         if (currentValue !== value) {
-          console.log("handleUpdateClip [PROP UPDATED]", clipId, prop, value);
           Object.assign(clip, { [prop]: value });
 
           if (
@@ -332,7 +325,6 @@ export class StudioBridge {
     this.isSyncing = true;
 
     try {
-      console.log("[StudioBridge] syncInitialState starting...");
       await this.studio.clear();
       const state = this.core.store.getState();
       this.studio.setSize(state.settings.width, state.settings.height);
@@ -346,7 +338,6 @@ export class StudioBridge {
       this.studio.updateFrame(state.currentTime);
     } finally {
       this.isSyncing = false;
-      console.log("[StudioBridge] syncInitialState finished.");
     }
   }
 

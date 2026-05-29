@@ -374,16 +374,6 @@ export const splitClipHandler: CommandHandler<{
   delete (rightClip as any).duration;
   delete (rightClip as any).playbackRate;
 
-  console.log("split", {
-    leftClip,
-    rightClip,
-    splitOffsetInSource,
-    playbackRate,
-    splitOffset,
-    time,
-    clip,
-  });
-
   patches.push({
     op: "add",
     path: `/clips/${newClipId}`,
