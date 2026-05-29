@@ -215,13 +215,13 @@ async function batchProcess(inputs: string[], template: any) {
 
 ### What's Different in Headless Mode
 
-| Feature | Browser | Node.js |
-|---------|---------|---------|
-| Video preview | Real-time playback | Not available |
-| Canvas rendering | GPU accelerated | Software fallback |
-| WebGL effects | Full support | Limited |
-| Audio playback | Yes | No (process only) |
-| User interaction | Yes | N/A |
+| Feature          | Browser            | Node.js           |
+| ---------------- | ------------------ | ----------------- |
+| Video preview    | Real-time playback | Not available     |
+| Canvas rendering | GPU accelerated    | Software fallback |
+| WebGL effects    | Full support       | Limited           |
+| Audio playback   | Yes                | No (process only) |
+| User interaction | Yes                | N/A               |
 
 ### Workarounds
 
@@ -317,8 +317,8 @@ class VideoProcessor {
           id: nanoid(),
           type: "clip.remove",
           payload: { clipId: id },
-        }))
-      )
+        })),
+      ),
     );
   }
 }

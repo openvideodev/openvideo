@@ -161,7 +161,7 @@
     font-size: var(--font-size-50);
   }
 
-  [data-slot="scroll-area-viewport"]>* {
+  [data-slot="scroll-area-viewport"] > * {
     height: 100% !important;
   }
 

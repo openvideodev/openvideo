@@ -18,6 +18,7 @@ Use this skill when the user asks you to **automatically build a complete video*
 ### Step 1 — Understand the request
 
 Extract from the user's message:
+
 - **topic**: the subject/theme (e.g. "Artificial Intelligence", "nature", "product launch")
 - **duration**: total target duration in seconds (default: 30s if not specified)
 - **bgMusic**: whether background music is requested (boolean, default true)
@@ -31,6 +32,7 @@ Call `get_space_state` to retrieve all available assets. Note their `id`, `type`
 ### Step 3 — Semantic search for matching segments
 
 Call `search_all_context` with a query derived from the topic to find the most relevant video/image segments from indexed assets. Use a rich query like:
+
 - `"<topic> scenes visuals concepts"`
 
 Also call `search_space_context` if you want to search within a specific asset's transcript or visual descriptions.
@@ -127,6 +129,7 @@ Use this mode when the user provides a **structured brief** with sections, a tar
 ### Detecting Narrative Mode
 
 Switch to Narrative Mode when the prompt includes ANY of:
+
 - Numbered sections / narrative flow (intro → middle → closing)
 - A defined audience ("early career talent", "customers", "investors")
 - A tone descriptor ("authentic", "energetic", "inspiring", "warm")
@@ -138,6 +141,7 @@ Switch to Narrative Mode when the prompt includes ANY of:
 #### Step 1 — Parse the brief
 
 Extract:
+
 - **sections**: ordered list of narrative beats (e.g. `["introductions", "daily routines", "collaboration", "culture", "closing"]`)
 - **durationRange**: `{ min: N, max: M }` in seconds (if a range is given, target the midpoint)
 - **outputFormat**: `"vertical"` (9:16) or `"horizontal"` (16:9). Default to `"vertical"` for LinkedIn Reels / TikTok / Instagram
@@ -179,6 +183,7 @@ Call `get_space_state`. Note each asset's `id`, `name`, `type`, `src`, and `dura
 For each narrative section, run a **separate `search_all_context` call** using `topK=20`. Do NOT use a single broad query for the whole video.
 
 Example section → query mapping for an employee highlight reel:
+
 - `"introductions"` → `"employee introduction name role team greeting hi hello"`
 - `"daily routines"` → `"morning routine daily work desk laptop office focused working"`
 - `"collaboration"` → `"team meeting together discussion whiteboard pair programming review"`
@@ -194,12 +199,14 @@ Collect all results per section. You will filter them in Step 5.
 This is where quality is determined. For each section, go through the results and apply ALL of the following filters before selecting a segment:
 
 **A. Sentence boundary check (never cut mid-sentence)**
+
 - Examine the `pageContent` field of each RAG result.
 - Only select segments where the `pageContent` text **starts at the beginning of a sentence or phrase** (begins with a capital letter or a name) and **ends at a natural pause** (ends with `.`, `?`, `!`, `,`, `—`, or a complete phrase).
 - Discard any segment whose `pageContent` starts mid-word or mid-sentence.
 - If the segment text is a complete, self-contained thought or soundbite, it is a good candidate.
 
 **B. Minimum duration floor**
+
 - The natural duration of the segment = `(endMs - startMs)` from the RAG result.
 - Discard any segment shorter than **2000ms** (2 seconds). These are too short to feel complete.
 - Prefer segments in the **3000ms–8000ms** range. They are long enough to feel meaningful but short enough to stay punchy.
@@ -207,17 +214,20 @@ This is where quality is determined. For each section, go through the results an
 - For a `"medium"` pace, use the full natural segment up to 7s.
 
 **C. Global deduplication (critical — prevents repeated clips)**
+
 - Maintain a mental set of all used segments: `usedSegments = Set` of `"assetId::startMs"` strings.
 - Before selecting any segment, check: if `"assetId::startMs"` is already in `usedSegments`, **skip it entirely** — do not use it even if it scores well for the current section.
 - After selecting a segment, immediately add it to `usedSegments`.
 - This applies **across all sections** — a segment used in "introductions" must never appear again in "collaboration" or any other section.
 
 **D. Per-asset variety (diversity of speakers/scenes)**
+
 - Within a single section, do not use the same `Asset ID` more than twice.
 - Never place two clips from the same asset back-to-back. Always alternate assets between consecutive clips.
 - If only one or two assets are available, allow repeats but still enforce minimum 15 seconds of source distance between uses of the same asset (i.e. `|startMs_B - startMs_A| >= 15000`).
 
 **E. Relevance threshold**
+
 - If a result's `pageContent` is clearly off-topic (e.g. a "culture" section gets a result about technical onboarding), skip it.
 - Prefer results whose `Topics` metadata includes keywords matching the section theme.
 
@@ -235,6 +245,7 @@ perSectionSeconds = targetDuration / numberOfSections
 ```
 
 Then for each section, calculate how many clips fit:
+
 ```
 clipsPerSection = floor(perSectionSeconds / avgClipDuration)
 ```
@@ -249,6 +260,7 @@ clipsPerSection = floor(perSectionSeconds / avgClipDuration)
 Place clips sequentially, tracking a running `cursor` (starts at 0):
 
 For each selected segment:
+
 1. Set `trim.from = segmentStartMs * 1000` (convert to µs)
 2. Set `trim.to`:
    - For `"fast"` pace: `min(segmentEndMs, segmentStartMs + 3500) * 1000`
@@ -374,6 +386,7 @@ Music should sit **under** speech, not over it. The prompt should describe the e
 **User prompt**: "Create a 60–90 second vertical highlight reel from employee videos. Theme: A Day in the Life. Include subtitles and upbeat music. Fast-paced cuts. Sections: introductions, daily routines, collaboration, culture, closing."
 
 **Tool calls**:
+
 1. `get_space_state` → list employee video assets
 2. `search_all_context("employee introduction name role greeting")` → intro segments
 3. `search_all_context("daily routine morning desk office working")` → routine segments
@@ -382,6 +395,7 @@ Music should sit **under** speech, not over it. The prompt should describe the e
 6. `search_all_context("why I love working here inspiration closing")` → closing segments
 
 **Then output steps** (targeting 75s total, 2–3s cuts, vertical):
+
 ```
 1. command: project.updateSettings (1080×1920, black bg)
 2. command: clip.add Video (intro employee 1, 2s cut)
@@ -407,10 +421,12 @@ Music should sit **under** speech, not over it. The prompt should describe the e
 **User prompt**: "Using my assets, create a 45 seconds video about AI. Add background music and sound effects."
 
 **Tool calls to make first**:
+
 1. `get_space_state` → discover available assets
 2. `search_all_context` with query `"artificial intelligence technology machine learning"` → find matching segments
 
 **Then output steps**:
+
 ```
 1. clip.add (Video, asset matching AI segment 0–15s)
 2. clip.add (Video, asset matching AI segment 15–30s)

@@ -60,15 +60,15 @@ const actionCount = state.history.length;
 
 ```ts
 interface HistoryEntry {
-  command: Command;           // The original command
-  patches: Patch[];           // Changes made
-  inversePatches: Patch[];    // How to reverse
+  command: Command; // The original command
+  patches: Patch[]; // Changes made
+  inversePatches: Patch[]; // How to reverse
 }
 
 // In the store
 interface ProjectState {
-  history: HistoryEntry[];  // Past actions (can undo)
-  future: HistoryEntry[];   // Undone actions (can redo)
+  history: HistoryEntry[]; // Past actions (can undo)
+  future: HistoryEntry[]; // Undone actions (can redo)
 }
 ```
 
@@ -178,7 +178,7 @@ function HistoryControls() {
     useShallow((state) => ({
       canUndo: state.history.length > 0,
       canRedo: state.future.length > 0,
-    }))
+    })),
   );
 
   return (
@@ -207,10 +207,7 @@ function HistoryPanel() {
       <h3>History</h3>
       <ul>
         {history.map((entry, index) => (
-          <li
-            key={entry.command.id}
-            className={index === currentIndex ? "active" : ""}
-          >
+          <li key={entry.command.id} className={index === currentIndex ? "active" : ""}>
             {entry.command.type}
           </li>
         ))}

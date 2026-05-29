@@ -16,14 +16,14 @@ Clips in OpenVideo Core are data-driven entities stored in the project state. In
 
 ## Clip Types
 
-| Type | Description | Key Properties |
-|------|-------------|----------------|
-| `Video` | Video file with audio | `src`, `timing` |
-| `Image` | Static image | `src`, `transform` |
-| `Text` | Text overlay | `text`, `style` |
-| `Caption` | Subtitles/captions | `text`, `caption.words` |
-| `Audio` | Audio-only track | `src`, `timing` |
-| `Effect` | Visual effect overlay | `effectKey`, `values` |
+| Type         | Description             | Key Properties                            |
+| ------------ | ----------------------- | ----------------------------------------- |
+| `Video`      | Video file with audio   | `src`, `timing`                           |
+| `Image`      | Static image            | `src`, `transform`                        |
+| `Text`       | Text overlay            | `text`, `style`                           |
+| `Caption`    | Subtitles/captions      | `text`, `caption.words`                   |
+| `Audio`      | Audio-only track        | `src`, `timing`                           |
+| `Effect`     | Visual effect overlay   | `effectKey`, `values`                     |
 | `Transition` | Clip-to-clip transition | `transitionKey`, `fromClipId`, `toClipId` |
 
 ## Creating Clips (Create)
@@ -78,10 +78,7 @@ const audio = await core.clip.add({
 
 ```ts
 // Add to a specific track
-await core.clip.add(
-  { type: "Video", src: "video.mp4" },
-  { trackId: "main-video-track" }
-);
+await core.clip.add({ type: "Video", src: "video.mp4" }, { trackId: "main-video-track" });
 
 // Or use the string shorthand for trackId
 await core.clip.add({ type: "Video", src: "video.mp4" }, "main-video-track");
@@ -94,10 +91,7 @@ Automatically scale clips to fit the canvas:
 ```ts
 // 'contain' - scales to fit while preserving aspect ratio (may letterbox)
 // 'cover' - scales to fill while preserving aspect ratio (may crop)
-await core.clip.add(
-  { type: "Image", src: "photo.jpg" },
-  { objectFit: "cover" }
-);
+await core.clip.add({ type: "Image", src: "photo.jpg" }, { objectFit: "cover" });
 ```
 
 ### Direct Command API
@@ -137,11 +131,11 @@ const allClips = Object.values(state.clips);
 const clip = state.clips[clipId];
 
 // Get clips on a specific track
-const track = state.tracks.find(t => t.id === trackId);
-const trackClips = track?.clipIds.map(id => state.clips[id]);
+const track = state.tracks.find((t) => t.id === trackId);
+const trackClips = track?.clipIds.map((id) => state.clips[id]);
 
 // Get selected clips
-const selectedClips = state.selectedIds.map(id => state.clips[id]);
+const selectedClips = state.selectedIds.map((id) => state.clips[id]);
 ```
 
 ### Subscribing to Changes
@@ -154,7 +148,7 @@ core.store.subscribe((state, prevState) => {
 
 // Listen for specific patch changes
 const unsubscribe = core.store.getState().onChange((patches) => {
-  patches.forEach(patch => {
+  patches.forEach((patch) => {
     if (patch.path.startsWith("/clips/")) {
       console.log("Clip patch:", patch);
     }
@@ -172,7 +166,7 @@ core.clip.update(clipId, { transform: { x: 500 } });
 
 // Update timing
 core.clip.update(clipId, {
-  timing: { display: { from: 2_000_000, to: 8_000_000 } }
+  timing: { display: { from: 2_000_000, to: 8_000_000 } },
 });
 
 // Update text content
@@ -245,6 +239,7 @@ core.clip.remove(["clip-1", "clip-2", "clip-3"]);
 ```
 
 Removing clips automatically:
+
 - Removes them from their tracks
 - Cleans up empty tracks (unless marked `static`)
 - Removes them from the selection
@@ -330,6 +325,7 @@ core.clip.duplicate(["clip-1", "clip-2"]);
 ```
 
 Duplicated clips:
+
 - Get new unique IDs
 - Are placed on new tracks above the originals
 - Are automatically selected
@@ -345,10 +341,10 @@ const ONE_SECOND = 1_000_000;
 const ONE_MINUTE = 60_000_000;
 
 const timing = {
-  display: { from: 0, to: 10 * ONE_SECOND },      // When clip appears on timeline
+  display: { from: 0, to: 10 * ONE_SECOND }, // When clip appears on timeline
   trim: { from: 2 * ONE_SECOND, to: 8 * ONE_SECOND }, // Which portion of source to use
-  duration: 6 * ONE_SECOND,                          // Effective duration (trim.to - trim.from)
-  playbackRate: 1.0,                                 // Speed multiplier
+  duration: 6 * ONE_SECOND, // Effective duration (trim.to - trim.from)
+  playbackRate: 1.0, // Speed multiplier
 };
 ```
 
@@ -357,17 +353,17 @@ const timing = {
 ```ts
 // Change when clip appears on timeline
 core.clip.update(clipId, {
-  timing: { display: { from: 5_000_000, to: 15_000_000 } }
+  timing: { display: { from: 5_000_000, to: 15_000_000 } },
 });
 
 // Change which portion of source is used (trim)
 core.clip.update(clipId, {
-  timing: { trim: { from: 2_000_000, to: 8_000_000 } }
+  timing: { trim: { from: 2_000_000, to: 8_000_000 } },
 });
 
 // Change playback speed
 core.clip.update(clipId, {
-  timing: { playbackRate: 2.0 } // 2x speed
+  timing: { playbackRate: 2.0 }, // 2x speed
 });
 ```
 
@@ -378,8 +374,8 @@ core.clip.update(clipId, {
 ```ts
 core.clip.update(clipId, {
   transform: {
-    x: 100,      // left position
-    y: 200,      // top position
+    x: 100, // left position
+    y: 200, // top position
     width: 1920,
     height: 1080,
   },
@@ -391,8 +387,8 @@ core.clip.update(clipId, {
 ```ts
 core.clip.update(clipId, {
   transform: {
-    angle: 45,     // degrees
-    opacity: 0.8,  // 0.0 to 1.0
+    angle: 45, // degrees
+    opacity: 0.8, // 0.0 to 1.0
   },
 });
 ```

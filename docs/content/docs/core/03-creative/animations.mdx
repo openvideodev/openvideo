@@ -8,6 +8,7 @@ Animations bring life to your video compositions by changing clip properties ove
 ## Overview
 
 Animations in OpenVideo are:
+
 - **Stackable**: Multiple animations can run on a single clip
 - **Precise**: Timing in microseconds for smooth playback
 - **Reversible**: All changes are undoable via the command system
@@ -19,14 +20,14 @@ Each animation has the following structure:
 
 ```ts
 interface Animation {
-  id: string;           // Unique identifier
-  type: string;         // Animation type (preset or "keyframes")
-  duration: number;     // Duration in microseconds
-  delay?: number;       // Delay before start (microseconds)
-  easing?: string;      // Easing function name
-  iterCount?: number;   // Iterations (default: 1, use Infinity for loop)
-  params?: object;      // Type-specific parameters
-  keyframes?: object;   // For custom keyframe animations
+  id: string; // Unique identifier
+  type: string; // Animation type (preset or "keyframes")
+  duration: number; // Duration in microseconds
+  delay?: number; // Delay before start (microseconds)
+  easing?: string; // Easing function name
+  iterCount?: number; // Iterations (default: 1, use Infinity for loop)
+  params?: object; // Type-specific parameters
+  keyframes?: object; // For custom keyframe animations
 }
 ```
 
@@ -60,8 +61,8 @@ core.clip.update(clipId, {
       duration: 800_000,
       easing: "easeOutBack",
       params: {
-        direction: "left",    // "left", "right", "top", "bottom"
-        distance: 500,        // Pixels to travel
+        direction: "left", // "left", "right", "top", "bottom"
+        distance: 500, // Pixels to travel
       },
     },
   ],
@@ -127,15 +128,15 @@ core.clip.update(clipId, {
 
 ### Available Presets
 
-| Preset | Description | Parameters |
-|--------|-------------|------------|
-| `fadeIn` | Opacity 0 → 1 | — |
-| `fadeOut` | Opacity 1 → 0 | — |
-| `zoomIn` | Scale 0 → 1 | — |
-| `zoomOut` | Scale 1 → 0 | — |
-| `slideIn` | Enter from edge | `direction`, `distance` |
-| `slideOut` | Exit to edge | `direction`, `distance` |
-| `stagger` | Character-by-character text animation | GSAP-based |
+| Preset     | Description                           | Parameters              |
+| ---------- | ------------------------------------- | ----------------------- |
+| `fadeIn`   | Opacity 0 → 1                         | —                       |
+| `fadeOut`  | Opacity 1 → 0                         | —                       |
+| `zoomIn`   | Scale 0 → 1                           | —                       |
+| `zoomOut`  | Scale 1 → 0                           | —                       |
+| `slideIn`  | Enter from edge                       | `direction`, `distance` |
+| `slideOut` | Exit to edge                          | `direction`, `distance` |
+| `stagger`  | Character-by-character text animation | GSAP-based              |
 
 ## Custom Keyframe Animations
 
@@ -151,23 +152,27 @@ core.clip.update(clipId, {
       duration: 3_000_000,
       easing: "easeInOutQuad",
       keyframes: {
-        "0%": {               // Start state
+        "0%": {
+          // Start state
           opacity: 0,
           scale: 0.5,
           x: 0,
           y: 0,
         },
-        "30%": {              // At 30% through animation
+        "30%": {
+          // At 30% through animation
           opacity: 1,
           scale: 1.2,
           x: 100,
         },
-        "60%": {              // At 60% through
+        "60%": {
+          // At 60% through
           scale: 1,
           x: 200,
           y: 50,
         },
-        "100%": {             // End state
+        "100%": {
+          // End state
           x: 300,
           y: 100,
           angle: 45,
@@ -202,22 +207,22 @@ core.clip.update(clipId, {
 
 Control the acceleration and deceleration of animations:
 
-| Easing | Description |
-|--------|-------------|
-| `linear` | Constant speed |
-| `easeInQuad` | Accelerate from zero |
-| `easeOutQuad` | Decelerate to zero |
-| `easeInOutQuad` | Accelerate then decelerate |
-| `easeInCubic` | Strong acceleration |
-| `easeOutCubic` | Strong deceleration |
-| `easeInOutCubic` | Strong accel/decel |
-| `easeInSine` | Sine curve acceleration |
-| `easeOutSine` | Sine curve deceleration |
-| `easeInExpo` | Exponential acceleration |
-| `easeOutExpo` | Exponential deceleration |
-| `easeInCirc` | Circular acceleration |
-| `easeOutCirc` | Circular deceleration |
-| `slow` | SlowMo with configurable linear ratio |
+| Easing           | Description                           |
+| ---------------- | ------------------------------------- |
+| `linear`         | Constant speed                        |
+| `easeInQuad`     | Accelerate from zero                  |
+| `easeOutQuad`    | Decelerate to zero                    |
+| `easeInOutQuad`  | Accelerate then decelerate            |
+| `easeInCubic`    | Strong acceleration                   |
+| `easeOutCubic`   | Strong deceleration                   |
+| `easeInOutCubic` | Strong accel/decel                    |
+| `easeInSine`     | Sine curve acceleration               |
+| `easeOutSine`    | Sine curve deceleration               |
+| `easeInExpo`     | Exponential acceleration              |
+| `easeOutExpo`    | Exponential deceleration              |
+| `easeInCirc`     | Circular acceleration                 |
+| `easeOutCirc`    | Circular deceleration                 |
+| `slow`           | SlowMo with configurable linear ratio |
 
 ### Per-Keyframe Easing
 
@@ -230,15 +235,16 @@ core.clip.update(clipId, {
       id: "multi-ease",
       type: "keyframes",
       duration: 2_000_000,
-      easing: "easeInOutQuad",      // Global easing
-      disableGlobalEasing: true,     // Allow per-keyframe easing
+      easing: "easeInOutQuad", // Global easing
+      disableGlobalEasing: true, // Allow per-keyframe easing
       keyframes: {
         "0%": { x: 0 },
-        "50%": {                     // Easing from 0% to 50%
+        "50%": {
+          // Easing from 0% to 50%
           x: 100,
           easing: "easeOutBack",
         },
-        "100%": { x: 200 },          // Uses global easing from 50% to 100%
+        "100%": { x: 200 }, // Uses global easing from 50% to 100%
       },
     },
   ],
@@ -249,21 +255,21 @@ core.clip.update(clipId, {
 
 The following properties can be animated across all clip types:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `x` | number | Horizontal position offset (pixels) |
-| `y` | number | Vertical position offset (pixels) |
-| `width` | number | Width offset (pixels) |
-| `height` | number | Height offset (pixels) |
-| `scale` | number | Uniform scale multiplier (1.0 = normal) |
-| `scaleX` | number | Horizontal scale multiplier |
-| `scaleY` | number | Vertical scale multiplier |
-| `opacity` | number | Opacity multiplier (0.0 - 1.0) |
-| `angle` | number | Rotation in degrees |
-| `blur` | number | Blur amount |
-| `brightness` | number | Brightness multiplier |
-| `mirror` | number | Mirror effect (0 or 1) |
-| `motionBlur` | number | Motion blur amount |
+| Property     | Type   | Description                             |
+| ------------ | ------ | --------------------------------------- |
+| `x`          | number | Horizontal position offset (pixels)     |
+| `y`          | number | Vertical position offset (pixels)       |
+| `width`      | number | Width offset (pixels)                   |
+| `height`     | number | Height offset (pixels)                  |
+| `scale`      | number | Uniform scale multiplier (1.0 = normal) |
+| `scaleX`     | number | Horizontal scale multiplier             |
+| `scaleY`     | number | Vertical scale multiplier               |
+| `opacity`    | number | Opacity multiplier (0.0 - 1.0)          |
+| `angle`      | number | Rotation in degrees                     |
+| `blur`       | number | Blur amount                             |
+| `brightness` | number | Brightness multiplier                   |
+| `mirror`     | number | Mirror effect (0 or 1)                  |
+| `motionBlur` | number | Motion blur amount                      |
 
 ## Managing Animations
 
@@ -303,10 +309,10 @@ Replace a specific animation by ID:
 ```ts
 // Keep existing animations, replace one
 core.clip.update(clipId, {
-  animations: existingAnimations.map(anim =>
+  animations: existingAnimations.map((anim) =>
     anim.id === "entry"
       ? { ...anim, duration: 1_000_000 } // Update duration
-      : anim
+      : anim,
   ),
 });
 ```
@@ -320,7 +326,7 @@ core.clip.update(clipId, { animations: [] });
 // Remove specific animation by ID
 const currentAnims = core.store.getState().clips[clipId].animations || [];
 core.clip.update(clipId, {
-  animations: currentAnims.filter(a => a.id !== "entry"),
+  animations: currentAnims.filter((a) => a.id !== "entry"),
 });
 ```
 
@@ -360,7 +366,7 @@ const selectedIds = state.selectedIds;
 core.execute({
   id: nanoid(),
   type: "clip.update",
-  payload: selectedIds.map(id => ({
+  payload: selectedIds.map((id) => ({
     id,
     updates: {
       animations: [
@@ -388,10 +394,10 @@ core.clip.update(textClipId, {
       duration: 2_000_000,
       easing: "easeOutBack",
       params: {
-        from: "start",      // "start", "center", "edges", "random"
-        amount: 0.5,        // Total stagger time as fraction of duration
-        y: 50,              // Characters start 50px below
-        opacity: 0,         // Characters start invisible
+        from: "start", // "start", "center", "edges", "random"
+        amount: 0.5, // Total stagger time as fraction of duration
+        y: 50, // Characters start 50px below
+        opacity: 0, // Characters start invisible
       },
     },
   ],

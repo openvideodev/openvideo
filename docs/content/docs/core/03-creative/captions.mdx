@@ -21,8 +21,8 @@ const caption = {
     duration: 3_000_000,
   },
   transform: {
-    x: 960,      // Center X
-    y: 900,      // Bottom of screen
+    x: 960, // Center X
+    y: 900, // Bottom of screen
     width: 800,
     height: 100,
     angle: 0,
@@ -95,10 +95,7 @@ interface TranscriptionWord {
   endTime: number;
 }
 
-function createCaptionsFromTranscription(
-  words: TranscriptionWord[],
-  maxWordsPerLine = 3
-) {
+function createCaptionsFromTranscription(words: TranscriptionWord[], maxWordsPerLine = 3) {
   const commands = [];
   const lines = chunk(words, maxWordsPerLine);
 
@@ -203,14 +200,8 @@ const SAFE_AREA = {
   height: 972, // 90% of 1080
 };
 
-function positionInSafeArea(
-  caption: AnyClip,
-  position: "bottom" | "top"
-): AnyClip {
-  const y =
-    position === "bottom"
-      ? SAFE_AREA.y + SAFE_AREA.height - 100
-      : SAFE_AREA.y;
+function positionInSafeArea(caption: AnyClip, position: "bottom" | "top"): AnyClip {
+  const y = position === "bottom" ? SAFE_AREA.y + SAFE_AREA.height - 100 : SAFE_AREA.y;
 
   return {
     ...caption,
@@ -264,7 +255,7 @@ function addCaptionFadeAnimation(clipId: string) {
 function createTypewriterCaption(
   text: string,
   duration: number,
-  charDuration = 50000 // 50ms per character
+  charDuration = 50000, // 50ms per character
 ) {
   const clipId = nanoid();
   const chars = text.length;
@@ -324,7 +315,7 @@ function formatSRTTime(micros: number): string {
   const millis = ms % 1000;
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
     2,
-    "0"
+    "0",
   )}:${String(seconds).padStart(2, "0")},${String(millis).padStart(3, "0")}`;
 }
 ```

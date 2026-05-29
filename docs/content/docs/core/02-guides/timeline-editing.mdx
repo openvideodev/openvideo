@@ -259,13 +259,13 @@ core.execute({
   payload: {
     id: "clip_abc123",
     transform: {
-      x: 100,      // Position X
-      y: 200,      // Position Y
-      width: 800,  // Width
+      x: 100, // Position X
+      y: 200, // Position Y
+      width: 800, // Width
       height: 600, // Height
-      angle: 0,    // Rotation (degrees)
-      zIndex: 1,   // Layer order
-      opacity: 1,  // 0-1
+      angle: 0, // Rotation (degrees)
+      zIndex: 1, // Layer order
+      opacity: 1, // 0-1
     },
   },
 });
@@ -331,9 +331,7 @@ function rippleDelete(clipId: string, trackId: string) {
   const clipIndex = track.clips.indexOf(clipId);
 
   // Build commands
-  const commands: Command[] = [
-    { id: nanoid(), type: "clip.remove", payload: { clipId } },
-  ];
+  const commands: Command[] = [{ id: nanoid(), type: "clip.remove", payload: { clipId } }];
 
   // Shift subsequent clips
   for (let i = clipIndex + 1; i < track.clips.length; i++) {
@@ -421,7 +419,7 @@ document.addEventListener("keydown", (e) => {
             id: nanoid(),
             type: "clip.remove",
             payload: { clipId: id },
-          }))
+          })),
         );
       }
       break;

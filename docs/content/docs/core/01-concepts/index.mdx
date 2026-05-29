@@ -33,6 +33,7 @@ Instead of calling methods like `addClip()`, you dispatch **commands** that desc
 ```
 
 This approach makes the system:
+
 - **Deterministic**: Same input always produces same output
 - **Serializable**: Commands can be logged, sent over network, replayed
 - **AI-friendly**: LLMs can easily generate valid commands
@@ -47,6 +48,7 @@ When a command executes, it produces one or more **patches** describing exactly 
 ```
 
 Patches enable:
+
 - **Undo/Redo**: Store inverse patches to reverse changes
 - **Real-time sync**: Broadcast patches to collaborators
 - **Debugging**: See exactly what changed after each action
@@ -65,6 +67,7 @@ const time = 5_000_000;
 ```
 
 This precision ensures perfect alignment between:
+
 - Video frames
 - Audio samples
 - Animations
@@ -75,24 +78,24 @@ This precision ensures perfect alignment between:
 ```ts
 interface IProject {
   settings: {
-    width: number;      // Canvas width (px)
-    height: number;     // Canvas height (px)
-    fps: number;        // Frames per second
-    duration: number;   // Total duration (µs)
+    width: number; // Canvas width (px)
+    height: number; // Canvas height (px)
+    fps: number; // Frames per second
+    duration: number; // Total duration (µs)
   };
-  tracks: ITrack[];     // Timeline tracks
-  clips: Record<string, AnyClip>;  // Clip registry
+  tracks: ITrack[]; // Timeline tracks
+  clips: Record<string, AnyClip>; // Clip registry
 }
 ```
 
 ## Key Concepts
 
-| Concept | Description | Learn More |
-|---------|-------------|------------|
-| **Commands** | Descriptive intents that mutate state | [Commands](./commands) |
-| **Clips** | Video, audio, image, text elements | [Clips](./clips) |
-| **Tracks** | Containers for clips on the timeline | [Tracks](./tracks) |
-| **Events** | Reactive notifications from the engine | [Events](./events) |
+| Concept      | Description                            | Learn More             |
+| ------------ | -------------------------------------- | ---------------------- |
+| **Commands** | Descriptive intents that mutate state  | [Commands](./commands) |
+| **Clips**    | Video, audio, image, text elements     | [Clips](./clips)       |
+| **Tracks**   | Containers for clips on the timeline   | [Tracks](./tracks)     |
+| **Events**   | Reactive notifications from the engine | [Events](./events)     |
 
 ## Why This Design?
 

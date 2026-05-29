@@ -14,6 +14,7 @@ const clip = await core.clip.prepare(payload, options);
 ```
 
 This method:
+
 1. Loads the media file
 2. Extracts metadata (dimensions, duration)
 3. Creates a normalized clip object
@@ -31,7 +32,7 @@ const video = await core.clip.prepare({
   src: "https://example.com/video.mp4",
   timing: {
     display: { from: 0, to: 10_000_000 }, // 10 seconds
-    trim: { from: 0, to: 10_000_000 },    // Use first 10s of source
+    trim: { from: 0, to: 10_000_000 }, // Use first 10s of source
   },
 });
 
@@ -105,14 +106,14 @@ const image = await core.clip.prepare(
     type: "Image",
     src: "./wide-photo.jpg",
   },
-  { objectFit: "contain" } // or "cover"
+  { objectFit: "contain" }, // or "cover"
 );
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option    | Description                                     |
+| --------- | ----------------------------------------------- |
 | `contain` | Fit within frame, letterbox if needed (default) |
-| `cover` | Fill frame, crop if aspect ratio differs |
+| `cover`   | Fill frame, crop if aspect ratio differs        |
 
 ### GIF Support
 
@@ -225,8 +226,8 @@ const clips = await Promise.all(
           to: (i + 1) * 10_000_000,
         },
       },
-    })
-  )
+    }),
+  ),
 );
 
 // Add all clips in a batch
@@ -237,7 +238,7 @@ core.batch(
     id: nanoid(),
     type: "clip.add",
     payload: { trackId: "video-main", clip },
-  }))
+  })),
 );
 ```
 
@@ -282,9 +283,7 @@ try {
 ### Partial Failures in Batches
 
 ```ts
-const results = await Promise.allSettled(
-  files.map((f) => core.clip.prepare(f))
-);
+const results = await Promise.allSettled(files.map((f) => core.clip.prepare(f)));
 
 results.forEach((result, i) => {
   if (result.status === "fulfilled") {
@@ -326,7 +325,7 @@ const preloadVideos = async (srcs: string[]) => {
       return new Promise((resolve) => {
         video.oncanplaythrough = resolve;
       });
-    })
+    }),
   );
 };
 ```

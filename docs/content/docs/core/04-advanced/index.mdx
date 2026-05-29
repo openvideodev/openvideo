@@ -28,9 +28,8 @@ Use Core as the state layer:
 
 ```ts
 // Sync UI to Core state
-const { currentTime, isPlaying } = useSyncExternalStore(
-  core.store.subscribe,
-  () => core.store.getState()
+const { currentTime, isPlaying } = useSyncExternalStore(core.store.subscribe, () =>
+  core.store.getState(),
 );
 
 // User interactions dispatch commands

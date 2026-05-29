@@ -21,14 +21,14 @@ Use the standard presets below. Always set **both** `width` and `height` togethe
 
 ### Presets
 
-| Name | Ratio | Width | Height | Use case |
-|---|---|---|---|---|
-| Vertical / Portrait | 9:16 | 1080 | 1920 | TikTok, Reels, Shorts |
-| Horizontal / Landscape | 16:9 | 1920 | 1080 | YouTube, presentations |
-| Square | 1:1 | 1080 | 1080 | Instagram feed, profile |
-| Portrait (Instagram) | 4:5 | 1080 | 1350 | Instagram portrait feed |
-| Classic TV | 4:3 | 1440 | 1080 | Legacy, classic look |
-| Cinescope | 21:9 | 2560 | 1080 | Ultra-wide cinematic |
+| Name                   | Ratio | Width | Height | Use case                |
+| ---------------------- | ----- | ----- | ------ | ----------------------- |
+| Vertical / Portrait    | 9:16  | 1080  | 1920   | TikTok, Reels, Shorts   |
+| Horizontal / Landscape | 16:9  | 1920  | 1080   | YouTube, presentations  |
+| Square                 | 1:1   | 1080  | 1080   | Instagram feed, profile |
+| Portrait (Instagram)   | 4:5   | 1080  | 1350   | Instagram portrait feed |
+| Classic TV             | 4:3   | 1440  | 1080   | Legacy, classic look    |
+| Cinescope              | 21:9  | 2560  | 1080   | Ultra-wide cinematic    |
 
 **Example: Set canvas to vertical 9:16**
 
@@ -177,13 +177,13 @@ You can change multiple settings in a single command. Only include the fields yo
 
 ## 5. Settings Reference
 
-| Field | Type | Description |
-|---|---|---|
-| `width` | `number` | Canvas width in pixels |
-| `height` | `number` | Canvas height in pixels |
-| `backgroundColor` | `string` | Hex color, e.g. `"#000000"` |
-| `fps` | `number` | Frames per second (e.g. `24`, `30`, `60`) |
-| `duration` | `number` | Total project duration in **microseconds** (usually managed automatically) |
+| Field             | Type     | Description                                                                |
+| ----------------- | -------- | -------------------------------------------------------------------------- |
+| `width`           | `number` | Canvas width in pixels                                                     |
+| `height`          | `number` | Canvas height in pixels                                                    |
+| `backgroundColor` | `string` | Hex color, e.g. `"#000000"`                                                |
+| `fps`             | `number` | Frames per second (e.g. `24`, `30`, `60`)                                  |
+| `duration`        | `number` | Total project duration in **microseconds** (usually managed automatically) |
 
 > ⚠️ Do **not** set `duration` manually unless explicitly asked. It is recalculated automatically from clip timings.
 

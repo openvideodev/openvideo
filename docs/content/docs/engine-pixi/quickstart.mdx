@@ -3,7 +3,7 @@ title: Quickstart
 description: Get started with OpenVideo Engine Pixi in under 5 minutes
 ---
 
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 
 This guide will walk you through setting up the GPU-accelerated **Engine Pixi** to render your video editor timeline.
 
@@ -11,22 +11,10 @@ This guide will walk you through setting up the GPU-accelerated **Engine Pixi** 
 
 Install the engine package along with its required dependencies:
 
-<Tabs items={['pnpm', 'npm', 'yarn']}>
-  <Tab value="pnpm">
-  ```bash
-  pnpm add @openvideo/engine-pixi pixi.js
-  ```
-  </Tab>
-  <Tab value="npm">
-  ```bash
-  npm install @openvideo/engine-pixi pixi.js
-  ```
-  </Tab>
-  <Tab value="yarn">
-  ```bash
-  yarn add @openvideo/engine-pixi pixi.js
-  ```
-  </Tab>
+<Tabs items={["pnpm", "npm", "yarn"]}>
+  <Tab value="pnpm">```bash pnpm add @openvideo/engine-pixi pixi.js ```</Tab>
+  <Tab value="npm">```bash npm install @openvideo/engine-pixi pixi.js ```</Tab>
+  <Tab value="yarn">```bash yarn add @openvideo/engine-pixi pixi.js ```</Tab>
 </Tabs>
 
 ## Basic Usage
@@ -34,22 +22,24 @@ Install the engine package along with its required dependencies:
 Here is a full integration showing how to link a timeline to your Pixi-powered player:
 
 ```ts
-import { Timeline, Track, VideoClip } from '@openvideo/core';
-import { PixiRenderer } from '@openvideo/engine-pixi';
+import { Timeline, Track, VideoClip } from "@openvideo/core";
+import { PixiRenderer } from "@openvideo/engine-pixi";
 
 // 1. Set up a core timeline
 const timeline = new Timeline();
 const track = new Track();
-track.addClip(new VideoClip({
-  id: 'video-1',
-  source: '/assets/sample.mp4',
-  start: 0,
-  duration: 10,
-}));
+track.addClip(
+  new VideoClip({
+    id: "video-1",
+    source: "/assets/sample.mp4",
+    start: 0,
+    duration: 10,
+  }),
+);
 timeline.addTrack(track);
 
 // 2. Query your HTML Canvas
-const canvas = document.querySelector('#preview-canvas') as HTMLCanvasElement;
+const canvas = document.querySelector("#preview-canvas") as HTMLCanvasElement;
 
 // 3. Initialize the PixiRenderer
 const renderer = new PixiRenderer({
@@ -68,5 +58,9 @@ renderer.play();
 Now you have high-performance, GPU-accelerated playback running in the browser. Learn more about advanced effects:
 
 <Cards>
-  <Card title="Core Reference" href="/core" description="Learn about timeline, track, and clip configuration options." />
+  <Card
+    title="Core Reference"
+    href="/core"
+    description="Learn about timeline, track, and clip configuration options."
+  />
 </Cards>

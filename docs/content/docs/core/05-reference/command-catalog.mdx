@@ -16,8 +16,8 @@ Move the playhead to a specific time.
   id: string;
   type: "playback.seek";
   payload: {
-    time: number;  // Target time in microseconds
-  };
+    time: number; // Target time in microseconds
+  }
 }
 ```
 
@@ -39,7 +39,8 @@ Start playback from current position.
 {
   id: string;
   type: "playback.play";
-  payload: {};
+  payload: {
+  }
 }
 ```
 
@@ -51,7 +52,8 @@ Pause playback.
 {
   id: string;
   type: "playback.pause";
-  payload: {};
+  payload: {
+  }
 }
 ```
 
@@ -63,7 +65,8 @@ Toggle between play and pause.
 {
   id: string;
   type: "playback.toggle";
-  payload: {};
+  payload: {
+  }
 }
 ```
 
@@ -80,7 +83,7 @@ Add a clip to a track.
   payload: {
     trackId: string;
     clip: AnyClip;
-  };
+  }
 }
 ```
 
@@ -126,7 +129,7 @@ Remove a clip from the timeline.
   type: "clip.remove";
   payload: {
     clipId: string;
-  };
+  }
 }
 ```
 
@@ -141,7 +144,7 @@ Move a clip to a new time position.
   payload: {
     clipId: string;
     timing: Partial<IClipTiming>;
-  };
+  }
 }
 ```
 
@@ -192,7 +195,7 @@ Move a clip between tracks.
     clipId: string;
     fromTrackId: string;
     toTrackId: string;
-  };
+  }
 }
 ```
 
@@ -206,8 +209,8 @@ Split a clip at a specific time.
   type: "clip.split";
   payload: {
     clipId: string;
-    time: number;  // Split time (microseconds)
-  };
+    time: number; // Split time (microseconds)
+  }
 }
 ```
 
@@ -223,7 +226,7 @@ Add a new track.
   type: "track.add";
   payload: {
     track: ITrack;
-  };
+  }
 }
 ```
 
@@ -253,7 +256,7 @@ Remove a track and all its clips.
   type: "track.remove";
   payload: {
     trackId: string;
-  };
+  }
 }
 ```
 
@@ -268,7 +271,7 @@ Change track order.
   payload: {
     trackId: string;
     newIndex: number;
-  };
+  }
 }
 ```
 
@@ -284,7 +287,7 @@ Update project settings.
   type: "project.updateSettings";
   payload: {
     settings: Partial<IProjectSettings>;
-  };
+  }
 }
 ```
 
@@ -297,8 +300,8 @@ Set project duration.
   id: string;
   type: "project.setDuration";
   payload: {
-    duration: number;  // Microseconds
-  };
+    duration: number; // Microseconds
+  }
 }
 ```
 
@@ -397,7 +400,7 @@ Add an effect to a clip.
   payload: {
     clipId: string;
     effect: IEffectClip;
-  };
+  }
 }
 ```
 
@@ -412,7 +415,7 @@ Remove an effect from a clip.
   payload: {
     clipId: string;
     effectId: string;
-  };
+  }
 }
 ```
 
@@ -428,7 +431,7 @@ Update effect parameters.
     clipId: string;
     effectId: string;
     params: Record<string, any>;
-  };
+  }
 }
 ```
 
@@ -444,10 +447,10 @@ Add a transition between clips.
   type: "transition.add";
   payload: {
     trackId: string;
-    between: [string, string];  // Clip IDs
+    between: [string, string]; // Clip IDs
     type: "fade" | "slide" | "wipe" | "dissolve";
-    duration: number;  // Microseconds
-  };
+    duration: number; // Microseconds
+  }
 }
 ```
 
@@ -461,7 +464,7 @@ Remove a transition.
   type: "transition.remove";
   payload: {
     transitionId: string;
-  };
+  }
 }
 ```
 
@@ -478,7 +481,7 @@ Add a caption clip.
   payload: {
     trackId: string;
     caption: ICaptionClip;
-  };
+  }
 }
 ```
 
@@ -493,7 +496,7 @@ Update caption styling.
   payload: {
     clipId: string;
     style: Partial<ICaptionStyle>;
-  };
+  }
 }
 ```
 
@@ -547,13 +550,13 @@ All commands support optional metadata:
 
 Commands are validated before execution:
 
-| Error | Cause |
-|-------|-------|
-| `Clip not found` | Invalid clipId in payload |
-| `Track not found` | Invalid trackId in payload |
-| `Invalid timing` | display.from > display.to |
+| Error             | Cause                             |
+| ----------------- | --------------------------------- |
+| `Clip not found`  | Invalid clipId in payload         |
+| `Track not found` | Invalid trackId in payload        |
+| `Invalid timing`  | display.from > display.to         |
 | `Track is locked` | Attempting to modify locked track |
-| `Clip is locked` | Attempting to modify locked clip |
+| `Clip is locked`  | Attempting to modify locked clip  |
 
 ## Next Steps
 

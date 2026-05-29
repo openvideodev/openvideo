@@ -28,11 +28,11 @@ const core = new Core({
 
 ### Project Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `width` | 1920 | Canvas width in pixels |
-| `height` | 1080 | Canvas height in pixels |
-| `fps` | 30 | Frames per second |
+| Setting    | Default    | Description                 |
+| ---------- | ---------- | --------------------------- |
+| `width`    | 1920       | Canvas width in pixels      |
+| `height`   | 1080       | Canvas height in pixels     |
+| `fps`      | 30         | Frames per second           |
 | `duration` | 30,000,000 | Total project duration (µs) |
 
 ### Common Presets
@@ -150,6 +150,7 @@ core.reset(newProject);
 ```
 
 This is useful for:
+
 - Loading saved projects
 - Implementing "New Project" functionality
 - Reverting to a known state
@@ -174,9 +175,7 @@ function validateProject(project: IProject): string[] {
   }
 
   // Check for orphaned clips
-  const trackClipIds = new Set(
-    project.tracks.flatMap((t) => t.clips)
-  );
+  const trackClipIds = new Set(project.tracks.flatMap((t) => t.clips));
   const allClipIds = Object.keys(project.clips);
   const orphaned = allClipIds.filter((id) => !trackClipIds.has(id));
 
@@ -197,9 +196,7 @@ function validateProject(project: IProject): string[] {
 function recalculateDuration(core: Core) {
   const state = core.store.getState();
   const maxEnd = Math.max(
-    ...state.tracks.flatMap((t) =>
-      t.clips.map((id) => state.clips[id].timing.display.to)
-    )
+    ...state.tracks.flatMap((t) => t.clips.map((id) => state.clips[id].timing.display.to)),
   );
 
   core.store.getState().updateSettings({
@@ -226,6 +223,7 @@ const core = new Core({
 ### 3. Use Meaningful Track Names
 
 Track names help users understand the composition structure. Consider naming conventions like:
+
 - `Video Main`, `Video B-Roll`, `Video PIP`
 - `Audio Music`, `Audio SFX`, `Audio Voice`
 

@@ -27,6 +27,7 @@ Commands are plain JSON objects that clearly express intent:
 ```
 
 This structure is:
+
 - **Serializable**: Send over HTTP, WebSocket, save to database
 - **Validatable**: JSON Schema can validate before execution
 - **Reversible**: Automatic undo/redo support
@@ -136,15 +137,10 @@ function validateCommand(cmd: unknown): Command | null {
 ### Context-Aware Validation
 
 ```ts
-function validateInContext(
-  cmd: Command,
-  state: ProjectStore
-): { valid: boolean; reason?: string } {
+function validateInContext(cmd: Command, state: ProjectStore): { valid: boolean; reason?: string } {
   switch (cmd.type) {
     case "clip.add":
-      const track = state.tracks.find(
-        (t) => t.id === cmd.payload.trackId
-      );
+      const track = state.tracks.find((t) => t.id === cmd.payload.trackId);
       if (!track) {
         return { valid: false, reason: "Track not found" };
       }
@@ -273,10 +269,7 @@ async function executeAIActions(actions: AIAction[]) {
 ### Auto-Trim Silence
 
 ```ts
-async function removeSilence(
-  clipId: string,
-  audioAnalysis: { start: number; end: number }[]
-) {
+async function removeSilence(clipId: string, audioAnalysis: { start: number; end: number }[]) {
   const clip = core.store.getState().clips[clipId];
   const segments = findSpeechSegments(audioAnalysis);
 

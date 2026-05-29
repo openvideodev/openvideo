@@ -13,8 +13,8 @@ The main engine class:
 
 ```ts
 class Core extends EventEmitter {
-  store: StoreApi<ProjectStore>;  // Zustand store
-  playback: PlaybackController;   // Playback controls
+  store: StoreApi<ProjectStore>; // Zustand store
+  playback: PlaybackController; // Playback controls
 
   constructor(initialState?: Partial<IProject>);
 
@@ -30,7 +30,10 @@ class Core extends EventEmitter {
 
   // Convenience methods
   clip: {
-    prepare(payload: AddClipPayload, options?: { objectFit?: "contain" | "cover" }): Promise<AnyClip>;
+    prepare(
+      payload: AddClipPayload,
+      options?: { objectFit?: "contain" | "cover" },
+    ): Promise<AnyClip>;
   };
 }
 ```
@@ -49,10 +52,10 @@ interface IProject {
 }
 
 interface IProjectSettings {
-  width: number;      // Canvas width (default: 1920)
-  height: number;     // Canvas height (default: 1080)
-  fps: number;        // Frames per second (default: 30)
-  duration: number;   // Total duration in microseconds
+  width: number; // Canvas width (default: 1920)
+  height: number; // Canvas height (default: 1080)
+  fps: number; // Frames per second (default: 30)
+  duration: number; // Total duration in microseconds
 }
 ```
 
@@ -64,20 +67,20 @@ The full Zustand store state:
 interface ProjectStore extends ProjectState, ProjectActions {}
 
 interface ProjectState extends IProject {
-  selectedIds: string[];      // Currently selected clip IDs
-  currentTime: number;        // Playhead position (µs)
-  isPlaying: boolean;         // Playback status
-  volume: number;             // 0-1
+  selectedIds: string[]; // Currently selected clip IDs
+  currentTime: number; // Playhead position (µs)
+  isPlaying: boolean; // Playback status
+  volume: number; // 0-1
   muted: boolean;
-  speed: number;              // Playback rate (1 = normal)
-  scale: IScaleState;         // Timeline zoom/pan
-  history: HistoryEntry[];    // Undo history
-  future: HistoryEntry[];    // Redo stack
+  speed: number; // Playback rate (1 = normal)
+  scale: IScaleState; // Timeline zoom/pan
+  history: HistoryEntry[]; // Undo history
+  future: HistoryEntry[]; // Redo stack
 }
 
 interface IScaleState {
-  zoom: number;   // Pixels per microsecond
-  pan: number;    // Horizontal scroll offset (px)
+  zoom: number; // Pixels per microsecond
+  pan: number; // Horizontal scroll offset (px)
 }
 ```
 
@@ -89,9 +92,9 @@ interface IScaleState {
 interface ITrack {
   id: string;
   name: string;
-  clips: string[];     // Clip IDs (references clips registry)
-  locked?: boolean;    // Prevent editing
-  hidden?: boolean;    // Hide from view
+  clips: string[]; // Clip IDs (references clips registry)
+  locked?: boolean; // Prevent editing
+  hidden?: boolean; // Hide from view
 }
 ```
 
@@ -122,20 +125,20 @@ type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption" 
 
 ```ts
 interface IClipTiming {
-  display: IDisplay;    // When on timeline
-  trim: ITrim;          // Which part of source
-  duration: number;       // Total duration (µs)
-  playbackRate: number;   // Speed multiplier
+  display: IDisplay; // When on timeline
+  trim: ITrim; // Which part of source
+  duration: number; // Total duration (µs)
+  playbackRate: number; // Speed multiplier
 }
 
 interface IDisplay {
-  from: number;   // Start time on timeline (µs)
-  to: number;     // End time on timeline (µs)
+  from: number; // Start time on timeline (µs)
+  to: number; // End time on timeline (µs)
 }
 
 interface ITrim {
-  from: number;   // Start time in source (µs)
-  to: number;     // End time in source (µs)
+  from: number; // Start time in source (µs)
+  to: number; // End time in source (µs)
 }
 ```
 
@@ -143,13 +146,13 @@ interface ITrim {
 
 ```ts
 interface IClipTransform {
-  x: number;          // Position X (px)
-  y: number;          // Position Y (px)
-  width: number;      // Width (px)
-  height: number;     // Height (px)
-  angle: number;      // Rotation (degrees)
-  zIndex: number;     // Layer order
-  opacity: number;    // 0-1
+  x: number; // Position X (px)
+  y: number; // Position Y (px)
+  width: number; // Width (px)
+  height: number; // Height (px)
+  angle: number; // Rotation (degrees)
+  zIndex: number; // Layer order
+  opacity: number; // 0-1
   flip?: IFlip | null;
 }
 
@@ -190,7 +193,14 @@ interface ICaptionClip extends IBaseClip {
   style?: ICaptionStyle;
 }
 
-type AnyClip = IVideoClip | IAudioClip | IImageClip | ITextClip | ICaptionClip | ITransitionClip | IEffectClip;
+type AnyClip =
+  | IVideoClip
+  | IAudioClip
+  | IImageClip
+  | ITextClip
+  | ICaptionClip
+  | ITransitionClip
+  | IEffectClip;
 ```
 
 ## Command Types
@@ -219,15 +229,12 @@ type PatchOp = "add" | "update" | "remove";
 
 interface Patch {
   op: PatchOp;
-  path: string;       // JSON Pointer path
-  value?: any;        // New value
-  oldValue?: any;     // Previous value
+  path: string; // JSON Pointer path
+  value?: any; // New value
+  oldValue?: any; // Previous value
 }
 
-type CommandHandler<T = any> = (
-  state: ProjectStore,
-  command: Command<T>
-) => Patch[];
+type CommandHandler<T = any> = (state: ProjectStore, command: Command<T>) => Patch[];
 
 interface HistoryEntry {
   command: Command;
@@ -254,7 +261,7 @@ interface IBaseClipStyle {
 }
 
 interface ICaptionStyle extends IBaseClipStyle {
-  activeColor?: string;    // For karaoke-style
+  activeColor?: string; // For karaoke-style
   wordSpacing?: number;
   lineHeight?: number;
 }
@@ -286,21 +293,15 @@ interface IEffectStyle {
 
 ```ts
 interface IKeyframe<T> {
-  time: number;       // Time in microseconds
-  value: T;           // Value at this time
-  easing?: IEasing;   // Easing function
+  time: number; // Time in microseconds
+  value: T; // Value at this time
+  easing?: IEasing; // Easing function
 }
 
-type IEasing =
-  | "linear"
-  | "easeIn"
-  | "easeOut"
-  | "easeInOut"
-  | "bounce"
-  | "elastic";
+type IEasing = "linear" | "easeIn" | "easeOut" | "easeInOut" | "bounce" | "elastic";
 
 interface IKeyframeTrack<T> {
-  property: string;           // e.g., "transform.x"
+  property: string; // e.g., "transform.x"
   keyframes: IKeyframe<T>[];
 }
 ```
@@ -332,12 +333,12 @@ interface IMediaMetadata {
 
 ```ts
 type CoreEventMap = {
-  change: Patch[];        // State changed
-  timeupdate: number;     // Time changed (µs)
-  play: void;             // Started playing
-  pause: void;            // Paused
-  seek: number;           // Seeked to time
-  loaded: void;           // Project loaded
+  change: Patch[]; // State changed
+  timeupdate: number; // Time changed (µs)
+  play: void; // Started playing
+  pause: void; // Paused
+  seek: number; // Seeked to time
+  loaded: void; // Project loaded
 };
 ```
 
@@ -350,7 +351,7 @@ interface IRenderOptions {
   format: "mp4" | "webm" | "gif";
   fps?: number;
   quality?: "low" | "medium" | "high" | "ultra";
-  bitrate?: number;       // Video bitrate (bps)
+  bitrate?: number; // Video bitrate (bps)
   includeAudio?: boolean;
   includeCaptions?: boolean;
 }

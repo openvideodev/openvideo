@@ -23,12 +23,12 @@ When the user asks to add or edit transitions (e.g. crossfades, slides, wipes, c
 **Transitions only work between `Video` and `Image` clips.** The rendering engine (`engine-pixi`) will not blend any other clip types.
 
 | Clip type | Transitions supported? |
-|---|---|
-| `Video` | ✅ Yes |
-| `Image` | ✅ Yes |
-| `Text` | ❌ No |
-| `Caption` | ❌ No |
-| `Audio` | ❌ No |
+| --------- | ---------------------- |
+| `Video`   | ✅ Yes                 |
+| `Image`   | ✅ Yes                 |
+| `Text`    | ❌ No                  |
+| `Caption` | ❌ No                  |
+| `Audio`   | ❌ No                  |
 
 **Never add a Transition clip between two `Text`, `Caption`, or `Audio` clips.** Even though the command will succeed at the data layer, the engine will silently ignore the blend and the clips will render normally without any transition.
 

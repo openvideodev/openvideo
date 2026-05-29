@@ -8,6 +8,7 @@ OpenVideo Core provides a complete rendering pipeline for exporting your video c
 ## Overview
 
 The rendering system in OpenVideo includes:
+
 - **Playback Control**: Start, pause, and seek through your composition
 - **Frame Extraction**: Capture individual frames as images
 - **Video Export**: Render complete videos to MP4, WebM, or GIF
@@ -118,10 +119,10 @@ Extract frames for feeding into AI pipelines:
 ```ts
 // Extract frames at specific timestamps for analysis
 const analysisFrames = await Promise.all([
-  compositor.renderFrame(0),      // Start
-  compositor.renderFrame(5000),   // 5 seconds
-  compositor.renderFrame(10000),  // 10 seconds
-  compositor.renderFrame(15000),  // 15 seconds
+  compositor.renderFrame(0), // Start
+  compositor.renderFrame(5000), // 5 seconds
+  compositor.renderFrame(10000), // 10 seconds
+  compositor.renderFrame(15000), // 15 seconds
 ]);
 
 // Send to AI service
@@ -196,11 +197,11 @@ await writeFile("output.mp4", Buffer.concat(chunks));
 
 The `Compositor` supports multiple output formats:
 
-| Format | Codec | Best For |
-|--------|-------|----------|
-| **MP4** | H.264 / AAC | General purpose, compatibility |
-| **WebM** | VP9 / Opus | Web streaming, smaller files |
-| **GIF** | N/A | Short animations, memes |
+| Format   | Codec       | Best For                       |
+| -------- | ----------- | ------------------------------ |
+| **MP4**  | H.264 / AAC | General purpose, compatibility |
+| **WebM** | VP9 / Opus  | Web streaming, smaller files   |
+| **GIF**  | N/A         | Short animations, memes        |
 
 ### Format Selection
 
@@ -208,7 +209,7 @@ The `Compositor` supports multiple output formats:
 // The format is determined by the output extension
 // or can be specified in options
 const stream = await compositor.output({
-  format: "mp4",  // "mp4" | "webm" | "gif"
+  format: "mp4", // "mp4" | "webm" | "gif"
   quality: "high", // "low" | "medium" | "high"
 });
 ```
@@ -247,10 +248,10 @@ compositor.on("error", (error: Error) => {
 
 ```ts
 const compositor = new Compositor({
-  width: 1920,        // Output width
-  height: 1080,       // Output height
-  fps: 30,            // Frame rate
-  bitrate: 8000000,   // Video bitrate (bps)
+  width: 1920, // Output width
+  height: 1080, // Output height
+  fps: 30, // Frame rate
+  bitrate: 8000000, // Video bitrate (bps)
 });
 ```
 
@@ -259,9 +260,9 @@ const compositor = new Compositor({
 ```ts
 const compositor = new Compositor({
   // Video settings...
-  audioBitrate: 128000,  // Audio bitrate (bps)
-  sampleRate: 48000,      // Audio sample rate
-  channels: 2,            // Stereo (1 for mono)
+  audioBitrate: 128000, // Audio bitrate (bps)
+  sampleRate: 48000, // Audio sample rate
+  channels: 2, // Stereo (1 for mono)
 });
 ```
 
@@ -270,24 +271,24 @@ const compositor = new Compositor({
 ```ts
 const stream = await compositor.output({
   // Time range (export portion of timeline)
-  startTime: 0,           // Start at beginning (microseconds)
-  endTime: 30_000_000,    // End at 30 seconds
+  startTime: 0, // Start at beginning (microseconds)
+  endTime: 30_000_000, // End at 30 seconds
 
   // Quality
-  videoBitrate: 5000000,  // 5 Mbps
+  videoBitrate: 5000000, // 5 Mbps
   audioBitrate: 128000, // 128 kbps
 
   // Format-specific
   mp4: {
-    fastStart: true,      // Enable streaming optimization
+    fastStart: true, // Enable streaming optimization
   },
   webm: {
-    quality: 50,          // 0-100, higher is better
+    quality: 50, // 0-100, higher is better
   },
   gif: {
-    width: 480,           // GIF width (height auto)
-    fps: 15,              // GIF frame rate
-    colors: 128,          // Color palette size
+    width: 480, // GIF width (height auto)
+    fps: 15, // GIF frame rate
+    colors: 128, // Color palette size
   },
 });
 ```
@@ -332,7 +333,7 @@ const compositor = new Compositor({
   width: 1920,
   height: 1080,
   fps: 30,
-  headless: true,  // No DOM required
+  headless: true, // No DOM required
 });
 
 // Load and export

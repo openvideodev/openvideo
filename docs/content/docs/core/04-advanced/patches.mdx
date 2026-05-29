@@ -12,9 +12,9 @@ A patch is a JSON object describing a single state mutation:
 ```ts
 interface Patch {
   op: "add" | "update" | "remove";
-  path: string;      // JSON Pointer path (e.g., "/clips/clip_123/transform/x")
-  value?: any;       // New value (for add/update)
-  oldValue?: any;    // Previous value (for update/remove)
+  path: string; // JSON Pointer path (e.g., "/clips/clip_123/transform/x")
+  value?: any; // New value (for add/update)
+  oldValue?: any; // Previous value (for update/remove)
 }
 ```
 
@@ -115,17 +115,15 @@ Delete a property or array item:
 
 ```ts
 // Listen to all patches
-const unsubscribe = core.store
-  .getState()
-  .onChange((patches) => {
-    console.log("State changed:", patches);
+const unsubscribe = core.store.getState().onChange((patches) => {
+  console.log("State changed:", patches);
 
-    patches.forEach((patch) => {
-      if (patch.path.startsWith("/clips/")) {
-        console.log("Clip changed:", patch.path);
-      }
-    });
+  patches.forEach((patch) => {
+    if (patch.path.startsWith("/clips/")) {
+      console.log("Clip changed:", patch.path);
+    }
   });
+});
 
 // Cleanup
 unsubscribe();
@@ -136,9 +134,7 @@ unsubscribe();
 ```ts
 // Apply patches without recording history
 // Useful for real-time collaboration
-const patches = [
-  { op: "update", path: "/currentTime", value: 5_000_000 },
-];
+const patches = [{ op: "update", path: "/currentTime", value: 5_000_000 }];
 
 core.applyPatch(patches);
 ```
@@ -220,7 +216,7 @@ interface PatchWithTimestamp extends Patch {
 
 function mergePatches(
   localPatches: PatchWithTimestamp[],
-  remotePatches: PatchWithTimestamp[]
+  remotePatches: PatchWithTimestamp[],
 ): Patch[] {
   // Last-write-wins based on timestamp
   const all = [...localPatches, ...remotePatches];

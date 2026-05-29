@@ -11,26 +11,26 @@ The project state is the single source of truth for your video composition. It's
 interface ProjectStore {
   // ─── Project Settings ───
   settings: {
-    width: number;        // Canvas width (default: 1920)
-    height: number;       // Canvas height (default: 1080)
-    fps: number;          // Frames per second (default: 30)
-    duration: number;     // Total duration in microseconds
+    width: number; // Canvas width (default: 1920)
+    height: number; // Canvas height (default: 1080)
+    fps: number; // Frames per second (default: 30)
+    duration: number; // Total duration in microseconds
   };
 
   // ─── Timeline Data ───
-  tracks: ITrack[];       // Array of tracks
-  clips: Record<string, AnyClip>;  // Clip registry by ID
+  tracks: ITrack[]; // Array of tracks
+  clips: Record<string, AnyClip>; // Clip registry by ID
 
   // ─── Playback State ───
-  currentTime: number;    // Playhead position (µs)
-  isPlaying: boolean;   // Playback status
-  volume: number;       // 0-1
+  currentTime: number; // Playhead position (µs)
+  isPlaying: boolean; // Playback status
+  volume: number; // 0-1
   muted: boolean;
-  speed: number;        // Playback rate (1 = normal)
+  speed: number; // Playback rate (1 = normal)
 
   // ─── UI State ───
-  selectedIds: string[];  // Currently selected clip IDs
-  scale: IScaleState;     // Timeline zoom/pan
+  selectedIds: string[]; // Currently selected clip IDs
+  scale: IScaleState; // Timeline zoom/pan
 }
 ```
 
@@ -42,7 +42,7 @@ Tracks are horizontal lanes on the timeline that contain clips. They stack visua
 interface ITrack {
   id: string;
   name: string;
-  clips: string[];  // Array of clip IDs
+  clips: string[]; // Array of clip IDs
   locked?: boolean; // Prevent editing
   hidden?: boolean; // Hide from view
 }
@@ -85,6 +85,7 @@ Clips are stored in a flat `Record<string, AnyClip>` for O(1) lookup. Each track
 ```
 
 This design enables:
+
 - **Efficient lookups**: Get any clip instantly by ID
 - **Track independence**: Move clips between tracks without copying data
 - **Consistent state**: Single source of truth for clip properties
@@ -95,13 +96,13 @@ All time values use **microseconds** (µs) for frame-accurate precision:
 
 ```ts
 const SECOND = 1_000_000;
-const FRAME_30FPS = 33_333;  // ~33ms at 30fps
+const FRAME_30FPS = 33_333; // ~33ms at 30fps
 
 // Examples
 core.execute({
   id: nanoid(),
   type: "playback.seek",
-  payload: { time: 5 * SECOND },  // 5 seconds
+  payload: { time: 5 * SECOND }, // 5 seconds
 });
 ```
 
@@ -115,8 +116,7 @@ const toMicros = (seconds: number) => seconds * 1_000_000;
 const toSeconds = (micros: number) => micros / 1_000_000;
 
 // Frame number at given FPS
-const toFrame = (micros: number, fps: number) =>
-  Math.floor(micros / (1_000_000 / fps));
+const toFrame = (micros: number, fps: number) => Math.floor(micros / (1_000_000 / fps));
 ```
 
 ## Accessing State
@@ -139,20 +139,15 @@ const unsubscribe = core.store.subscribe((state, prevState) => {
 
 ```ts
 // Get specific clips efficiently
-const videoClips = Object.values(state.clips).filter(
-  (c) => c.type === "Video"
-);
+const videoClips = Object.values(state.clips).filter((c) => c.type === "Video");
 
 // Check if a time has any clips
 const hasClipAtTime = (time: number) =>
   state.tracks.some((track) =>
     track.clips.some((clipId) => {
       const clip = state.clips[clipId];
-      return (
-        time >= clip.timing.display.from &&
-        time <= clip.timing.display.to
-      );
-    })
+      return time >= clip.timing.display.from && time <= clip.timing.display.to;
+    }),
   );
 ```
 
@@ -180,8 +175,8 @@ The `scale` state controls timeline zoom and pan:
 
 ```ts
 interface IScaleState {
-  zoom: number;  // Pixels per microsecond
-  pan: number;   // Horizontal scroll offset (px)
+  zoom: number; // Pixels per microsecond
+  pan: number; // Horizontal scroll offset (px)
 }
 
 // Zoom in
@@ -222,15 +217,13 @@ function Timeline() {
     useShallow((state) => ({
       currentTime: state.currentTime,
       isPlaying: state.isPlaying,
-    }))
+    })),
   );
 
   return (
     <div>
       <span>{formatTime(currentTime)}</span>
-      <button onClick={() => core.playback.toggle()}>
-        {isPlaying ? "Pause" : "Play"}
-      </button>
+      <button onClick={() => core.playback.toggle()}>{isPlaying ? "Pause" : "Play"}</button>
     </div>
   );
 }

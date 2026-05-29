@@ -8,6 +8,7 @@ Effects add visual flair to your video compositions. In OpenVideo Core, effects 
 ## Overview
 
 Effects in OpenVideo are:
+
 - **GLSL-based**: Run on the GPU for smooth performance
 - **Time-aware**: Can be applied to specific time ranges within a clip
 - **Parameterized**: Many effects accept custom values for fine-tuning
@@ -20,11 +21,11 @@ Each effect follows this structure:
 
 ```ts
 interface Effect {
-  id: string;           // Unique identifier
-  key: string;          // Effect type identifier
-  startTime: number;    // When effect starts (microseconds from clip start)
-  duration: number;       // How long effect lasts (microseconds)
-  values?: object;      // Effect-specific parameters (optional)
+  id: string; // Unique identifier
+  key: string; // Effect type identifier
+  startTime: number; // When effect starts (microseconds from clip start)
+  duration: number; // How long effect lasts (microseconds)
+  values?: object; // Effect-specific parameters (optional)
 }
 ```
 
@@ -106,10 +107,10 @@ core.clip.update(clipId, {
       startTime: 0,
       duration: 5_000_000,
       values: {
-        distance: 20,           // Glow distance
-        outerStrength: 3,       // Outer glow intensity
-        innerStrength: 1,       // Inner glow intensity
-        color: "#ff0000",       // Glow color
+        distance: 20, // Glow distance
+        outerStrength: 3, // Outer glow intensity
+        innerStrength: 1, // Inner glow intensity
+        color: "#ff0000", // Glow color
       },
     },
     {
@@ -118,7 +119,7 @@ core.clip.update(clipId, {
       startTime: 2_000_000,
       duration: 3_000_000,
       values: {
-        pixelSize: 20,          // Pixel block size
+        pixelSize: 20, // Pixel block size
       },
     },
   ],
@@ -129,101 +130,101 @@ core.clip.update(clipId, {
 
 ### Color Effects
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `grayscale` | Black and white conversion | — |
-| `sepia` | Warm vintage brown tint | — |
-| `invert` | Color inversion | — |
-| `duotone` | Two-color palette mapping | `color1`, `color2` |
-| `tritone` | Three-tone color grading | `shadows`, `mids`, `highlights` |
-| `hueShift` | Continuous hue rotation | — |
-| `neonFlash` | Neon-colored flashes | — |
+| Effect Key  | Description                | Common Values                   |
+| ----------- | -------------------------- | ------------------------------- |
+| `grayscale` | Black and white conversion | —                               |
+| `sepia`     | Warm vintage brown tint    | —                               |
+| `invert`    | Color inversion            | —                               |
+| `duotone`   | Two-color palette mapping  | `color1`, `color2`              |
+| `tritone`   | Three-tone color grading   | `shadows`, `mids`, `highlights` |
+| `hueShift`  | Continuous hue rotation    | —                               |
+| `neonFlash` | Neon-colored flashes       | —                               |
 
 ### Blur and Focus
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `curtainBlur` | Curtain-like blur transition | — |
-| `focusTransition` | Focus pull effect | — |
-| `scaleMoveBlur` | Motion blur with scaling | — |
-| `motionBlur` | Directional motion blur | — |
+| Effect Key        | Description                  | Common Values |
+| ----------------- | ---------------------------- | ------------- |
+| `curtainBlur`     | Curtain-like blur transition | —             |
+| `focusTransition` | Focus pull effect            | —             |
+| `scaleMoveBlur`   | Motion blur with scaling     | —             |
+| `motionBlur`      | Directional motion blur      | —             |
 
 ### Distortion and Warping
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `distort` | General wave/swirl distortion | — |
-| `distortGrid` | Grid-based distortion | — |
-| `distortSpin` | Spinning distortion | — |
-| `distortRip` | Horizontal ripping | — |
-| `wave` / `waveDistort` | Fluid wave animation | — |
-| `sinewave` | Sine wave distortion | — |
-| `swirlMovement` | Swirling motion | — |
+| Effect Key             | Description                   | Common Values |
+| ---------------------- | ----------------------------- | ------------- |
+| `distort`              | General wave/swirl distortion | —             |
+| `distortGrid`          | Grid-based distortion         | —             |
+| `distortSpin`          | Spinning distortion           | —             |
+| `distortRip`           | Horizontal ripping            | —             |
+| `wave` / `waveDistort` | Fluid wave animation          | —             |
+| `sinewave`             | Sine wave distortion          | —             |
+| `swirlMovement`        | Swirling motion               | —             |
 
 ### Glitch and Digital
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `glitch` | Digital glitch effect | — |
-| `rgbGlitch` | RGB channel splitting glitch | — |
-| `rgbShift` | RGB channel separation | — |
-| `pixelate` | Blocky pixelation | `pixelSize` |
-| `pixelError` | Compression error simulation | — |
-| `darkError` | Intense error aesthetic | — |
+| Effect Key   | Description                  | Common Values |
+| ------------ | ---------------------------- | ------------- |
+| `glitch`     | Digital glitch effect        | —             |
+| `rgbGlitch`  | RGB channel splitting glitch | —             |
+| `rgbShift`   | RGB channel separation       | —             |
+| `pixelate`   | Blocky pixelation            | `pixelSize`   |
+| `pixelError` | Compression error simulation | —             |
+| `darkError`  | Intense error aesthetic      | —             |
 
 ### Light and Atmosphere
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `vignette` | Edge darkening | — |
-| `shine` | Moving light gleam | — |
-| `laser` | Glowing laser beams | — |
-| `lightning` / `lightningVeins` | Electric discharge | — |
-| `sparks` | Particle sparks | — |
-| `brightPulse` | Periodic bright flashes | — |
-| `flashLoop` | Looping flash | — |
-| `blackFlash` | Black flash transitions | — |
+| Effect Key                     | Description             | Common Values |
+| ------------------------------ | ----------------------- | ------------- |
+| `vignette`                     | Edge darkening          | —             |
+| `shine`                        | Moving light gleam      | —             |
+| `laser`                        | Glowing laser beams     | —             |
+| `lightning` / `lightningVeins` | Electric discharge      | —             |
+| `sparks`                       | Particle sparks         | —             |
+| `brightPulse`                  | Periodic bright flashes | —             |
+| `flashLoop`                    | Looping flash           | —             |
+| `blackFlash`                   | Black flash transitions | —             |
 
 ### Stylized Looks
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `halftone` | CMYK dot pattern | — |
-| `filmStripPro` | Film strip overlay | — |
-| `tvScanlines` | CRT scanlines | — |
-| `retro70s` | 70s vintage look | — |
-| `hologramScan` | Sci-fi hologram | — |
-| `graffiti` | Graffiti overlay | — |
-| `solution` | Chemical fluid effect | — |
+| Effect Key     | Description           | Common Values |
+| -------------- | --------------------- | ------------- |
+| `halftone`     | CMYK dot pattern      | —             |
+| `filmStripPro` | Film strip overlay    | —             |
+| `tvScanlines`  | CRT scanlines         | —             |
+| `retro70s`     | 70s vintage look      | —             |
+| `hologramScan` | Sci-fi hologram       | —             |
+| `graffiti`     | Graffiti overlay      | —             |
+| `solution`     | Chemical fluid effect | —             |
 
 ### Transitions (Within Clips)
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `curtainOpen` | Curtain opening | — |
-| `paperBreakReveal` | Tearing paper reveal | — |
-| `warpTransition` | Spiraling warp | — |
-| `pixelateTransition` | Pixel dissolve | — |
-| `focusTransition` | Blur transition | — |
-| `inverseAperture` | Aperture close | — |
+| Effect Key           | Description          | Common Values |
+| -------------------- | -------------------- | ------------- |
+| `curtainOpen`        | Curtain opening      | —             |
+| `paperBreakReveal`   | Tearing paper reveal | —             |
+| `warpTransition`     | Spiraling warp       | —             |
+| `pixelateTransition` | Pixel dissolve       | —             |
+| `focusTransition`    | Blur transition      | —             |
+| `inverseAperture`    | Aperture close       | —             |
 
 ### Camera Movement
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `cameraMove` | Handheld camera shake | — |
-| `fastZoom` | Rapid zoom effect | — |
-| `rotationMovement` | Continuous rotation | — |
-| `perspectiveSingle` | 3D perspective shift | — |
+| Effect Key          | Description           | Common Values |
+| ------------------- | --------------------- | ------------- |
+| `cameraMove`        | Handheld camera shake | —             |
+| `fastZoom`          | Rapid zoom effect     | —             |
+| `rotationMovement`  | Continuous rotation   | —             |
+| `perspectiveSingle` | 3D perspective shift  | —             |
 
 ### Special Overlays
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `bubbleSparkles` | Rising bubbles | — |
-| `butterflySparkles` | Butterfly particles | — |
-| `heartSparkles` | Heart-shaped sparkles | — |
-| `chromatic` | Chromatic aberration | — |
+| Effect Key          | Description           | Common Values |
+| ------------------- | --------------------- | ------------- |
+| `bubbleSparkles`    | Rising bubbles        | —             |
+| `butterflySparkles` | Butterfly particles   | —             |
+| `heartSparkles`     | Heart-shaped sparkles | —             |
+| `chromatic`         | Chromatic aberration  | —             |
 
 ## Pixi Filter Effects
 
@@ -231,74 +232,74 @@ OpenVideo also supports PixiJS filters (via pixi-filters):
 
 ### Color and Tone
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `adjustmentFilter` | Gamma, saturation, contrast, brightness | `gamma`, `saturation`, `contrast`, `brightness` |
-| `hslAdjustmentFilter` | Hue, saturation, lightness | `hue`, `saturation`, `lightness` |
-| `colorReplaceFilter` | Replace specific colors | `originalColor`, `targetColor` |
-| `colorOverlayFilter` | Solid color tint | `color` |
-| `grayscaleFilter` | Simple grayscale | — |
+| Effect Key            | Description                             | Common Values                                   |
+| --------------------- | --------------------------------------- | ----------------------------------------------- |
+| `adjustmentFilter`    | Gamma, saturation, contrast, brightness | `gamma`, `saturation`, `contrast`, `brightness` |
+| `hslAdjustmentFilter` | Hue, saturation, lightness              | `hue`, `saturation`, `lightness`                |
+| `colorReplaceFilter`  | Replace specific colors                 | `originalColor`, `targetColor`                  |
+| `colorOverlayFilter`  | Solid color tint                        | `color`                                         |
+| `grayscaleFilter`     | Simple grayscale                        | —                                               |
 
 ### Blur Filters
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `kawaseBlurFilter` | High-performance blur | `blur`, `quality` |
-| `motionBlurFilter` | Directional blur | `velocity`, `kernelSize` |
-| `radialBlurFilter` | Radial zoom blur | `radius`, `angle` |
-| `zoomBlurFilter` | Zoom blur | `center`, `strength` |
-| `tiltShiftFilter` | Partial blur | `blur`, `gradientBlur` |
-| `backdropBlurFilter` | Blur background | `blur` |
+| Effect Key           | Description           | Common Values            |
+| -------------------- | --------------------- | ------------------------ |
+| `kawaseBlurFilter`   | High-performance blur | `blur`, `quality`        |
+| `motionBlurFilter`   | Directional blur      | `velocity`, `kernelSize` |
+| `radialBlurFilter`   | Radial zoom blur      | `radius`, `angle`        |
+| `zoomBlurFilter`     | Zoom blur             | `center`, `strength`     |
+| `tiltShiftFilter`    | Partial blur          | `blur`, `gradientBlur`   |
+| `backdropBlurFilter` | Blur background       | `blur`                   |
 
 ### Glow and Bloom
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `bloomFilter` | Standard bloom | `blur`, `quality` |
-| `advancedBloomFilter` | High-quality glow | `threshold`, `bloomScale` |
-| `godrayFilter` | Volumetric light rays | `gain`, `lacunarity` |
-| `glowFilter` | Configurable glow | `distance`, `outerStrength`, `color` |
+| Effect Key            | Description           | Common Values                        |
+| --------------------- | --------------------- | ------------------------------------ |
+| `bloomFilter`         | Standard bloom        | `blur`, `quality`                    |
+| `advancedBloomFilter` | High-quality glow     | `threshold`, `bloomScale`            |
+| `godrayFilter`        | Volumetric light rays | `gain`, `lacunarity`                 |
+| `glowFilter`          | Configurable glow     | `distance`, `outerStrength`, `color` |
 
 ### Edge and Outline
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `outlineFilter` | Solid outline | `thickness`, `color` |
-| `embossFilter` | 3D embossed effect | `strength` |
-| `bevelFilter` | Beveled edges | `rotation`, `thickness` |
-| `crossHatchFilter` | Cross-hatch drawing | `blur`, `thickness` |
+| Effect Key         | Description         | Common Values           |
+| ------------------ | ------------------- | ----------------------- |
+| `outlineFilter`    | Solid outline       | `thickness`, `color`    |
+| `embossFilter`     | 3D embossed effect  | `strength`              |
+| `bevelFilter`      | Beveled edges       | `rotation`, `thickness` |
+| `crossHatchFilter` | Cross-hatch drawing | `blur`, `thickness`     |
 
 ### Distortion
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `bulgePinchFilter` | Bulge/pinch distortion | `center`, `radius`, `strength` |
-| `twistFilter` | Twist around center | `radius`, `angle` |
-| `shockwaveFilter` | Expanding shockwave | `center`, `time`, `amplitude` |
-| `reflectionFilter` | Water reflection | `mirror`, `boundary`, `amplitude` |
+| Effect Key         | Description            | Common Values                     |
+| ------------------ | ---------------------- | --------------------------------- |
+| `bulgePinchFilter` | Bulge/pinch distortion | `center`, `radius`, `strength`    |
+| `twistFilter`      | Twist around center    | `radius`, `angle`                 |
+| `shockwaveFilter`  | Expanding shockwave    | `center`, `time`, `amplitude`     |
+| `reflectionFilter` | Water reflection       | `mirror`, `boundary`, `amplitude` |
 
 ### Vintage and Glitch
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `crtFilter` | CRT monitor simulation | `curvature`, `lineWidth`, `noise` |
-| `oldFilmFilter` | Vintage film look | `sepia`, `noise`, `vignette` |
-| `glitchFilter` | Digital glitching | `slices`, `offset`, `direction` |
-| `rgbSplitFilter` | RGB channel split | `red`, `green`, `blue` |
-| `dotFilter` | Halftone dots | `scale`, `angle`, `grayscale` |
-| `asciiFilter` | ASCII art conversion | `size` |
+| Effect Key       | Description            | Common Values                     |
+| ---------------- | ---------------------- | --------------------------------- |
+| `crtFilter`      | CRT monitor simulation | `curvature`, `lineWidth`, `noise` |
+| `oldFilmFilter`  | Vintage film look      | `sepia`, `noise`, `vignette`      |
+| `glitchFilter`   | Digital glitching      | `slices`, `offset`, `direction`   |
+| `rgbSplitFilter` | RGB channel split      | `red`, `green`, `blue`            |
+| `dotFilter`      | Halftone dots          | `scale`, `angle`, `grayscale`     |
+| `asciiFilter`    | ASCII art conversion   | `size`                            |
 
 ### Special Effects
 
-| Effect Key | Description | Common Values |
-|------------|-------------|---------------|
-| `dropShadowFilter` | Drop shadow | `blur`, `distance`, `color` |
-| `convolutionFilter` | Convolution matrix | `matrix` |
-| `simplexNoiseFilter` | Simplex noise | `strength`, `noiseScale` |
-| `simpleLightmapFilter` | Lightmap lighting | `lightMap`, `ambient` |
-| `colorMapFilter` | Color lookup table | `colorMap`, `mix` |
-| `colorGradientFilter` | Multi-stop gradients | `type`, `stops`, `alpha` |
-| `multiColorReplaceFilter` | Batch color replace | `replacements` |
+| Effect Key                | Description          | Common Values               |
+| ------------------------- | -------------------- | --------------------------- |
+| `dropShadowFilter`        | Drop shadow          | `blur`, `distance`, `color` |
+| `convolutionFilter`       | Convolution matrix   | `matrix`                    |
+| `simplexNoiseFilter`      | Simplex noise        | `strength`, `noiseScale`    |
+| `simpleLightmapFilter`    | Lightmap lighting    | `lightMap`, `ambient`       |
+| `colorMapFilter`          | Color lookup table   | `colorMap`, `mix`           |
+| `colorGradientFilter`     | Multi-stop gradients | `type`, `stops`, `alpha`    |
+| `multiColorReplaceFilter` | Batch color replace  | `replacements`              |
 
 ## Managing Effects
 
@@ -326,10 +327,10 @@ core.clip.update(clipId, {
 // Update specific effect values
 const currentEffects = core.store.getState().clips[clipId].effects;
 core.clip.update(clipId, {
-  effects: currentEffects.map(effect =>
+  effects: currentEffects.map((effect) =>
     effect.id === "custom-glow"
       ? { ...effect, values: { ...effect.values, color: "#00ff00" } }
-      : effect
+      : effect,
   ),
 });
 ```
@@ -343,7 +344,7 @@ core.clip.update(clipId, { effects: [] });
 // Remove specific effect by ID
 const currentEffects = core.store.getState().clips[clipId].effects || [];
 core.clip.update(clipId, {
-  effects: currentEffects.filter(e => e.id !== "vintage"),
+  effects: currentEffects.filter((e) => e.id !== "vintage"),
 });
 ```
 
@@ -359,7 +360,7 @@ const selectedIds = state.selectedIds;
 core.execute({
   id: nanoid(),
   type: "clip.update",
-  payload: selectedIds.map(id => ({
+  payload: selectedIds.map((id) => ({
     id,
     updates: {
       effects: [
@@ -415,14 +416,18 @@ core.clip.update(clipId, {
 
 ```ts
 interface GlEffect {
-  label: string;                    // Display name
-  fragment: string;                 // GLSL fragment shader
-  uniforms?: Record<string, {       // Default uniform values
-    value: number;
-    type: "f32" | "i32";
-  }>;
-  previewStatic?: string;           // Static preview image URL
-  previewDynamic?: string;          // Animated preview URL
+  label: string; // Display name
+  fragment: string; // GLSL fragment shader
+  uniforms?: Record<
+    string,
+    {
+      // Default uniform values
+      value: number;
+      type: "f32" | "i32";
+    }
+  >;
+  previewStatic?: string; // Static preview image URL
+  previewDynamic?: string; // Animated preview URL
 }
 ```
 

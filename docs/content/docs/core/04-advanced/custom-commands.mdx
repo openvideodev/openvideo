@@ -30,10 +30,7 @@ The registry maps command types to handler functions:
 ```ts
 import { CommandHandler } from "@openvideo/core/commands/types";
 
-const rotateHandler: CommandHandler<{ clipId: string; angle: number }> = (
-  state,
-  command
-) => {
+const rotateHandler: CommandHandler<{ clipId: string; angle: number }> = (state, command) => {
   const { clipId, angle } = command.payload;
   const clip = state.clips[clipId];
 
@@ -82,10 +79,7 @@ core.execute({
 ### Simple Property Update
 
 ```ts
-const updateClipOpacity: CommandHandler<{ clipId: string; opacity: number }> = (
-  state,
-  command
-) => {
+const updateClipOpacity: CommandHandler<{ clipId: string; opacity: number }> = (state, command) => {
   const { clipId, opacity } = command.payload;
 
   return [
@@ -119,12 +113,12 @@ const resizeClip: CommandHandler<{
 
     patches.push(
       { op: "update", path: `/clips/${clipId}/transform/width`, value: width },
-      { op: "update", path: `/clips/${clipId}/transform/height`, value: newHeight }
+      { op: "update", path: `/clips/${clipId}/transform/height`, value: newHeight },
     );
   } else {
     patches.push(
       { op: "update", path: `/clips/${clipId}/transform/width`, value: width },
-      { op: "update", path: `/clips/${clipId}/transform/height`, value: height }
+      { op: "update", path: `/clips/${clipId}/transform/height`, value: height },
     );
   }
 
@@ -135,10 +129,7 @@ const resizeClip: CommandHandler<{
 ### Adding New Data
 
 ```ts
-const addClipTag: CommandHandler<{ clipId: string; tag: string }> = (
-  state,
-  command
-) => {
+const addClipTag: CommandHandler<{ clipId: string; tag: string }> = (state, command) => {
   const { clipId, tag } = command.payload;
   const clip = state.clips[clipId];
 
@@ -159,10 +150,7 @@ const addClipTag: CommandHandler<{ clipId: string; tag: string }> = (
 ### Complex Operations
 
 ```ts
-const duplicateClip: CommandHandler<{ clipId: string; offset?: number }> = (
-  state,
-  command
-) => {
+const duplicateClip: CommandHandler<{ clipId: string; offset?: number }> = (state, command) => {
   const { clipId, offset = 0 } = command.payload;
   const clip = state.clips[clipId];
 
@@ -250,7 +238,7 @@ Design commands that work well in batches:
 // GOOD: Works in batch, single patch per command
 const setClipPosition: CommandHandler<{ clipId: string; x: number; y: number }> = (
   state,
-  command
+  command,
 ) => {
   const { clipId, x, y } = command.payload;
 
@@ -263,7 +251,7 @@ const setClipPosition: CommandHandler<{ clipId: string; x: number; y: number }> 
 // BETTER: Single patch for related changes
 const setClipPosition2: CommandHandler<{ clipId: string; x: number; y: number }> = (
   state,
-  command
+  command,
 ) => {
   const { clipId, x, y } = command.payload;
   const clip = state.clips[clipId];
@@ -293,10 +281,7 @@ function withUndoLogging(handler: CommandHandler): CommandHandler {
 }
 
 // Wrap existing handler
-commandRegistry.register(
-  "clip.update",
-  withUndoLogging(originalUpdateHandler)
-);
+commandRegistry.register("clip.update", withUndoLogging(originalUpdateHandler));
 ```
 
 ### Command Chains
@@ -305,7 +290,7 @@ commandRegistry.register(
 // Execute multiple commands as a single logical operation
 const alignClipsToGrid: CommandHandler<{ clipIds: string[]; gridSize: number }> = (
   state,
-  command
+  command,
 ) => {
   const { clipIds, gridSize } = command.payload;
   const patches: Patch[] = [];
@@ -343,7 +328,12 @@ describe("clip.rotate command", () => {
           id: "clip1",
           type: "Video",
           transform: { x: 0, y: 0, width: 100, height: 100, angle: 0, zIndex: 0, opacity: 1 },
-          timing: { display: { from: 0, to: 1_000_000 }, trim: { from: 0, to: 1_000_000 }, duration: 1_000_000, playbackRate: 1 },
+          timing: {
+            display: { from: 0, to: 1_000_000 },
+            trim: { from: 0, to: 1_000_000 },
+            duration: 1_000_000,
+            playbackRate: 1,
+          },
         },
       },
     });

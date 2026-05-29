@@ -14,7 +14,6 @@
     "version": "changeset version",
     "release": "turbo run build --filter=\"@openvideo/*\" && changeset publish",
     "build:packages": "turbo run build --filter=\"@openvideo/*\""
-
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",

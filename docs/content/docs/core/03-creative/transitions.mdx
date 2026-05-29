@@ -8,6 +8,7 @@ Transitions create smooth visual effects between two consecutive clips on the ti
 ## Overview
 
 Transitions in OpenVideo are:
+
 - **GLSL-based**: GPU-accelerated blending between two clips
 - **Clip-based**: Implemented as a special clip type that references two other clips
 - **Time-precise**: Positioned at the junction between clips with exact microsecond timing
@@ -16,6 +17,7 @@ Transitions in OpenVideo are:
 ## How Transitions Work
 
 A transition clip:
+
 1. References a `fromClipId` (the clip transitioning out)
 2. References a `toClipId` (the clip transitioning in)
 3. Has a `transitionKey` specifying the visual effect
@@ -39,8 +41,8 @@ core.execute({
       name: "Fade Transition",
       transitionKey: "fade",
       display: {
-        from: 4_500_000,  // Starts 0.5s before the junction
-        to: 5_500_000,    // Ends 0.5s after the junction
+        from: 4_500_000, // Starts 0.5s before the junction
+        to: 5_500_000, // Ends 0.5s after the junction
       },
       fromClipId: "video_1",
       toClipId: "video_2",
@@ -59,7 +61,7 @@ function addTransition(
   toClipId: string,
   transitionKey: string,
   duration: number, // microseconds
-  junctionTime: number
+  junctionTime: number,
 ) {
   const halfDuration = duration / 2;
 
@@ -90,103 +92,103 @@ addTransition("clip-1", "clip-2", "fade", 2_000_000, 10_000_000);
 
 ### Fade and Dissolve
 
-| Key | Description |
-|-----|-------------|
-| `fade` | Standard cross-fade |
+| Key             | Description            |
+| --------------- | ---------------------- |
+| `fade`          | Standard cross-fade    |
 | `fadegrayscale` | Fade through grayscale |
-| `fadecolor` | Fade with color tint |
+| `fadecolor`     | Fade with color tint   |
 
 ### Wipes
 
-| Key | Description |
-|-----|-------------|
-| `wipeLeft` | Slide left |
-| `wipeRight` | Slide right |
-| `wipeUp` | Slide up |
-| `wipeDown` | Slide down |
-| `directional` | Directional wipe with angle |
-| `directionalwipe` | Smooth directional wipe |
-| `radialSwipe` | Radial wipe from center |
+| Key               | Description                 |
+| ----------------- | --------------------------- |
+| `wipeLeft`        | Slide left                  |
+| `wipeRight`       | Slide right                 |
+| `wipeUp`          | Slide up                    |
+| `wipeDown`        | Slide down                  |
+| `directional`     | Directional wipe with angle |
+| `directionalwipe` | Smooth directional wipe     |
+| `radialSwipe`     | Radial wipe from center     |
 
 ### Zoom and Scale
 
-| Key | Description |
-|-----|-------------|
-| `cube` | 3D cube rotation |
+| Key             | Description               |
+| --------------- | ------------------------- |
+| `cube`          | 3D cube rotation          |
 | `zoomInCircles` | Concentric circles reveal |
-| `SimpleZoom` | Simple zoom transition |
-| `CrossZoom` | Cross-directional zoom |
-| `DreamyZoom` | Soft zoom with blur |
+| `SimpleZoom`    | Simple zoom transition    |
+| `CrossZoom`     | Cross-directional zoom    |
+| `DreamyZoom`    | Soft zoom with blur       |
 
 ### Distortion Effects
 
-| Key | Description |
-|-----|-------------|
+| Key              | Description             |
+| ---------------- | ----------------------- |
 | `glitchMemories` | Glitch-style transition |
-| `GlitchDisplace` | Displacement glitch |
-| `dreamy` | Soft blur transition |
-| `Swirl` | Swirling transition |
-| `waterDrop` | Water ripple effect |
-| `ripple` | Ripple distortion |
-| `wind` | Wind-blown effect |
+| `GlitchDisplace` | Displacement glitch     |
+| `dreamy`         | Soft blur transition    |
+| `Swirl`          | Swirling transition     |
+| `waterDrop`      | Water ripple effect     |
+| `ripple`         | Ripple distortion       |
+| `wind`           | Wind-blown effect       |
 
 ### Geometric
 
-| Key | Description |
-|-----|-------------|
-| `circle` | Circle reveal |
-| `circleopen` | Opening circle |
-| `CircleCrop` | Circular crop transition |
-| `windowblinds` | Window blinds |
-| `windowslice` | Sliced window effect |
-| `GridFlip` | Flipping grid |
-| `hexagonalize` | Hexagon pattern |
-| `kaleidoscope` | Kaleidoscope effect |
+| Key            | Description              |
+| -------------- | ------------------------ |
+| `circle`       | Circle reveal            |
+| `circleopen`   | Opening circle           |
+| `CircleCrop`   | Circular crop transition |
+| `windowblinds` | Window blinds            |
+| `windowslice`  | Sliced window effect     |
+| `GridFlip`     | Flipping grid            |
+| `hexagonalize` | Hexagon pattern          |
+| `kaleidoscope` | Kaleidoscope effect      |
 
 ### Creative
 
-| Key | Description |
-|-----|-------------|
-| `heart` | Heart-shaped reveal |
-| `pinwheel` | Spinning pinwheel |
-| `morph` | Morphing transition |
-| `flyeye` | Fly-eye distortion |
-| `doorway` | Doorway transition |
-| `squeeze` | Squeeze effect |
-| `swap` | Swap positions |
-| `burn` | Film burn effect |
-| `angular` | Angular wipe |
+| Key        | Description         |
+| ---------- | ------------------- |
+| `heart`    | Heart-shaped reveal |
+| `pinwheel` | Spinning pinwheel   |
+| `morph`    | Morphing transition |
+| `flyeye`   | Fly-eye distortion  |
+| `doorway`  | Doorway transition  |
+| `squeeze`  | Squeeze effect      |
+| `swap`     | Swap positions      |
+| `burn`     | Film burn effect    |
+| `angular`  | Angular wipe        |
 
 ### Advanced
 
-| Key | Description |
-|-----|-------------|
-| `Mosaic` | Mosaic tile reveal |
-| `PolkaDotsCurtain` | Polka dot curtain |
-| `StereoViewer` | Stereo 3D effect |
-| `InvertedPageCurl` | Page curl |
-| `LinearBlur` | Linear blur transition |
-| `BowTieHorizontal` | Horizontal bow tie |
-| `BowTieVertical` | Vertical bow tie |
-| `CrazyParametricFun` | Parametric distortion |
-| `ColourDistance` | Color-based distance |
-| `ButterflyWaveScrawler` | Butterfly wave effect |
-| `displacement` | Displacement map |
-| `directionalwarp` | Directional warp |
-| `crosswarp` | Cross-warp |
-| `crosshatch` | Cross-hatch |
-| `colorphase` | Color phase shift |
-| `luma` | Luminance-based |
-| `luminance_melt` | Luminance melt |
-| `multiply_blend` | Multiply blend |
-| `perlin` | Perlin noise |
-| `pixelize` | Pixelated transition |
-| `randomsquares` | Random squares |
-| `rotate_scale_fade` | Rotate, scale, fade |
-| `squareswire` | Wire squares |
-| `undulatingBurnOut` | Burn out effect |
-| `cannabisleaf` | Leaf pattern |
-| `Bounce` | Bouncing transition |
+| Key                     | Description            |
+| ----------------------- | ---------------------- |
+| `Mosaic`                | Mosaic tile reveal     |
+| `PolkaDotsCurtain`      | Polka dot curtain      |
+| `StereoViewer`          | Stereo 3D effect       |
+| `InvertedPageCurl`      | Page curl              |
+| `LinearBlur`            | Linear blur transition |
+| `BowTieHorizontal`      | Horizontal bow tie     |
+| `BowTieVertical`        | Vertical bow tie       |
+| `CrazyParametricFun`    | Parametric distortion  |
+| `ColourDistance`        | Color-based distance   |
+| `ButterflyWaveScrawler` | Butterfly wave effect  |
+| `displacement`          | Displacement map       |
+| `directionalwarp`       | Directional warp       |
+| `crosswarp`             | Cross-warp             |
+| `crosshatch`            | Cross-hatch            |
+| `colorphase`            | Color phase shift      |
+| `luma`                  | Luminance-based        |
+| `luminance_melt`        | Luminance melt         |
+| `multiply_blend`        | Multiply blend         |
+| `perlin`                | Perlin noise           |
+| `pixelize`              | Pixelated transition   |
+| `randomsquares`         | Random squares         |
+| `rotate_scale_fade`     | Rotate, scale, fade    |
+| `squareswire`           | Wire squares           |
+| `undulatingBurnOut`     | Burn out effect        |
+| `cannabisleaf`          | Leaf pattern           |
+| `Bounce`                | Bouncing transition    |
 
 ## Managing Transitions
 
@@ -227,14 +229,10 @@ core.clip.remove(["trans-1", "trans-2"]);
 ```ts
 // Get all transition clips
 const state = core.store.getState();
-const transitions = Object.values(state.clips).filter(
-  clip => clip.type === "Transition"
-);
+const transitions = Object.values(state.clips).filter((clip) => clip.type === "Transition");
 
 // Find transitions for a specific clip
-const clipTransitions = transitions.filter(
-  t => t.fromClipId === clipId || t.toClipId === clipId
-);
+const clipTransitions = transitions.filter((t) => t.fromClipId === clipId || t.toClipId === clipId);
 ```
 
 ## Batch Transition Operations
@@ -278,14 +276,12 @@ core.batch(commands);
 ```ts
 // Replace all transitions with a new type
 const state = core.store.getState();
-const transitions = Object.values(state.clips).filter(
-  clip => clip.type === "Transition"
-);
+const transitions = Object.values(state.clips).filter((clip) => clip.type === "Transition");
 
 core.execute({
   id: nanoid(),
   type: "clip.update",
-  payload: transitions.map(t => ({
+  payload: transitions.map((t) => ({
     id: t.id,
     updates: { transitionKey: "dreamy" },
   })),
@@ -318,14 +314,18 @@ registerCustomTransition("diagonalWipe", {
 
 ```ts
 interface GlTransition {
-  label: string;                    // Display name
-  fragment: string;                 // GLSL fragment shader
-  uniforms?: Record<string, {       // Default uniform values
-    value: number;
-    type: "f32" | "i32";
-  }>;
-  previewStatic?: string;           // Static preview image URL
-  previewDynamic?: string;          // Animated preview URL
+  label: string; // Display name
+  fragment: string; // GLSL fragment shader
+  uniforms?: Record<
+    string,
+    {
+      // Default uniform values
+      value: number;
+      type: "f32" | "i32";
+    }
+  >;
+  previewStatic?: string; // Static preview image URL
+  previewDynamic?: string; // Animated preview URL
 }
 ```
 
@@ -335,9 +335,9 @@ interface GlTransition {
 
 ```ts
 const TRANSITION_DURATIONS = {
-  quick: 250_000,      // 0.25s - for fast cuts
-  normal: 500_000,     // 0.5s - standard transition
-  slow: 1_000_000,     // 1s - dramatic effect
+  quick: 250_000, // 0.25s - for fast cuts
+  normal: 500_000, // 0.5s - standard transition
+  slow: 1_000_000, // 1s - dramatic effect
   verySlow: 2_000_000, // 2s - cinematic
 };
 ```
@@ -360,6 +360,7 @@ function calculateOverlap(fromClip: AnyClip, toClip: AnyClip, duration: number) 
 ### Clip Requirements
 
 For transitions to work properly:
+
 1. **Consecutive clips**: The `fromClip` must end before or at the same time the `toClip` begins
 2. **Sufficient duration**: Both clips must have enough content for the overlap period
 3. **Valid references**: `fromClipId` and `toClipId` must reference existing clips
