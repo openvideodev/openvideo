@@ -1,5 +1,3 @@
 packages:
-  - "app"
+  - "apps/*"
   - "packages/*"
-  - "docs"
-  - "director"
