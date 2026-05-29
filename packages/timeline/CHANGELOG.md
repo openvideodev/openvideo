@@ -1,5 +1,19 @@
 # @openvideo/timeline
 
+## 1.1.2
+
+### Patch Changes
+
+- Remove debug console logs from packages
+
+  Cleaned up console.debug and console.log statements from:
+  - `@openvideo/ai`: SpaceConnection debug logs
+  - `@openvideo/core`: Clip split command debug log
+  - `@openvideo/engine-pixi`: StudioBridge and audio codec detector debug logs
+
+- Updated dependencies
+  - @openvideo/core@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes
@@ -13,7 +27,6 @@
 ### Patch Changes
 
 - fix: export aspect ratio, timeline scroll, and drag improvements
-
   - Preserve aspect ratio when exporting with presets (portrait/landscape detection)
   - Add container-level scale transform in compositor for dimension mapping
   - Store original JSON dimensions for proper clip scaling during render
