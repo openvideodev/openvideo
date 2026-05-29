@@ -1,0 +1,83 @@
+import { Injectable, Logger, Inject, forwardRef } from "@nestjs/common";
+import { PlannerService } from "../planner/planner.service";
+import { ExecutorService } from "../executor/executor.service";
+import { SessionService } from "../session/session.service";
+import { ConfirmationGateService } from "../executor/confirmation-gate.service";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
+import { BroadcastService } from "../broadcast/broadcast.service";
+
+@Injectable()
+export class DirectorService {
+  private readonly logger = new Logger(DirectorService.name);
+
+  constructor(
+    private planner: PlannerService,
+    private executor: ExecutorService,
+    private session: SessionService,
+    private gate: ConfirmationGateService,
+    private broadcastService: BroadcastService,
+  ) {}
+
+  /**
+   * Main entry point for a user chat request.
+   */
+  async handleUserRequest(spaceId: string, userId: string, text: string): Promise<void> {
+    this.logger.log(`Handling request from ${userId} for space ${spaceId}: ${text}`);
+
+    // 1. Get Session & History
+    const sessionId = await this.session.getOrCreateSession(spaceId, userId);
+    const history = await this.session.getHistory(sessionId);
+
+    // 2. Generate Plan
+    try {
+      const plan = await this.planner.generatePlan(spaceId, sessionId, text, history);
+
+      const summary = plan.summary || `I created a plan: ${plan.goal}`;
+
+      // Save interaction to history
+      await this.session.appendMessages(sessionId, [
+        new HumanMessage(text),
+        new AIMessage(summary),
+      ]);
+
+      // Broadcast summary as a chat response for immediate UI feedback
+      this.broadcastService.broadcast(spaceId, {
+        type: "chat.response",
+        message: summary,
+      });
+
+      // Always execute immediately
+      await this.executor.executePlan(spaceId, plan);
+    } catch (error: any) {
+      this.logger.error(`Failed to handle user request`, error);
+      this.broadcastService.broadcast(spaceId, {
+        type: "error",
+        code: "PLAN_GENERATION_FAILED",
+        message: error.message || "I had trouble understanding that request. Could you rephrase?",
+      });
+    }
+  }
+
+  /**
+   * Handles user confirming a pending plan.
+   */
+  async handlePlanConfirmation(spaceId: string, userId: string, planId: string): Promise<void> {
+    const sessionId = await this.session.getOrCreateSession(spaceId, userId);
+    const plan = await this.gate.consumePendingPlan(sessionId, planId);
+
+    if (plan) {
+      await this.executor.executePlan(spaceId, plan);
+    } else {
+      this.logger.warn(`Plan ${planId} not found or already consumed`);
+    }
+  }
+
+  /**
+   * Handles user rejecting a pending plan.
+   */
+  async handlePlanRejection(spaceId: string, userId: string, planId: string): Promise<void> {
+    const sessionId = await this.session.getOrCreateSession(spaceId, userId);
+    await this.gate.consumePendingPlan(sessionId, planId); // Just consume it and discard
+    this.logger.log(`Plan ${planId} rejected by user`);
+  }
+}
