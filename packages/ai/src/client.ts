@@ -17,8 +17,8 @@ export class HttpClient {
   private defaultRetries: number;
 
   constructor(config: OpenVideoConfig = {}) {
-    this.apiKey = config.apiKey;
-    this.accessToken = config.accessToken;
+    this.apiKey = config.apiKey?.replace(/^["']|["']$/g, "").trim();
+    this.accessToken = config.accessToken?.replace(/^["']|["']$/g, "").trim();
     this.baseURL = config.baseURL?.replace(/\/$/, "") || DEFAULT_BASE_URL;
     this.defaultTimeout = config.timeout || DEFAULT_TIMEOUT;
     this.defaultRetries = config.retries || DEFAULT_RETRIES;
@@ -33,8 +33,8 @@ export class HttpClient {
       return { Authorization: `Bearer ${this.accessToken}` };
     }
     if (this.apiKey) {
-      // API key can be used as Bearer token for simplicity
-      return { Authorization: `Bearer ${this.apiKey}` };
+      // API key uses X-API-Token header for Director service
+      return { "X-API-Token": this.apiKey };
     }
     return {};
   }
@@ -150,7 +150,6 @@ export class HttpClient {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         "X-API-Token": apiKey,
       },
     });

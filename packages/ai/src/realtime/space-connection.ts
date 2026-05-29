@@ -70,7 +70,14 @@ export class SpaceConnection {
     public readonly spaceId: string,
     options: SpaceConnectionOptions,
   ) {
-    this.socket = io(options.wsUrl, {
+    const socketUrl = options.wsUrl;
+    const hasToken = !!options.token;
+
+    console.debug(
+      `[SpaceConnection] connecting to ${socketUrl} | spaceId=${spaceId} | hasToken=${hasToken}`,
+    );
+
+    this.socket = io(socketUrl, {
       path: "/ws",
       query: {
         spaceId,
@@ -81,12 +88,27 @@ export class SpaceConnection {
       reconnectionDelayMax: 30000,
     });
 
+    console.debug(`[SpaceConnection] socket created, id=${this.socket.id ?? "(pending)"}`);
+
     // Map raw socket events to typed SDK events
-    this.socket.on("connect", () => this._emit("connect"));
-    this.socket.on("disconnect", (reason: string) => this._emit("disconnect", reason));
-    this.socket.on("error", (err: any) => this._emit("error", err));
+    this.socket.on("connect", () => {
+      console.debug(`[SpaceConnection] connected | id=${this.socket.id}`);
+      this._emit("connect");
+    });
+    this.socket.on("disconnect", (reason: string) => {
+      console.debug(`[SpaceConnection] disconnected | reason=${reason}`);
+      this._emit("disconnect", reason);
+    });
+    this.socket.on("connect_error", (err: Error) => {
+      console.error(`[SpaceConnection] connect_error | ${err.message}`, err);
+    });
+    this.socket.on("error", (err: any) => {
+      console.error(`[SpaceConnection] error`, err);
+      this._emit("error", err);
+    });
 
     this.socket.on("message", (data: any) => {
+      console.debug(`[SpaceConnection] message | type=${data?.type}`, data);
       switch (data.type) {
         case "init":
           this._emit("init", { state: data.state } satisfies SpaceInitEvent);
