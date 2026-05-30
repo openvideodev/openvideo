@@ -15,7 +15,7 @@ import { AssetGeneratorModal } from "@/components/editor/media-panel/asset-gener
 import Assistant from "./assistant/assistant";
 import { core } from "@/lib/project";
 import { IProject } from "@openvideo/core";
-import { projectsAPI } from "@/lib/projects-api";
+import { spacesAPI } from "@/lib/spaces-api";
 import { useProjectStore } from "@/stores/project-store";
 
 export default function Editor({
@@ -59,9 +59,9 @@ export default function Editor({
 
     const loadProject = async () => {
       try {
-        const projectData = await projectsAPI.getProject(projectId);
+        const projectData = await spacesAPI.get(projectId);
         if (projectData) {
-          setSpaceId(projectData.spaceId);
+          setSpaceId(projectData.id);
           if (projectData.name) {
             setProjectName(projectData.name);
           }

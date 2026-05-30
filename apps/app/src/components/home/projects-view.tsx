@@ -6,9 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { Plus, MoreHorizontal, Trash2, Folder } from "lucide-react";
 import { useState, useEffect } from "react";
-import type { Project } from "@/lib/projects-api";
+import type { Space } from "@/lib/spaces-api";
 import { toast } from "sonner";
-import { projectsAPI } from "@/lib/projects-api";
+import { spacesAPI } from "@/lib/spaces-api";
 import { useProjectsStore } from "@/stores/projects-store";
 import {
   DropdownMenu,
@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 interface ProjectCardProps {
-  project: Project;
+  project: Space;
   onDelete: (projectId: string) => void;
 }
 
@@ -108,8 +108,8 @@ export default function ProjectsView() {
   const loadProjects = async () => {
     try {
       setIsLoading(true);
-      const projectsData = await projectsAPI.getProjects();
-      setProjects(projectsData);
+      const spacesData = await spacesAPI.list();
+      setProjects(spacesData);
     } catch {
       toast.error("Failed to load projects");
     } finally {
@@ -126,11 +126,11 @@ export default function ProjectsView() {
     if (isCreating || !newProjectName.trim()) return;
     setIsCreating(true);
     try {
-      const newProject = await projectsAPI.createProject({
+      const newSpace = await spacesAPI.create({
         name: newProjectName.trim(),
         description: "",
       });
-      addProject(newProject);
+      addProject(newSpace);
       toast.success("Project created");
       setCreateDialogOpen(false);
       setNewProjectName("");
@@ -149,7 +149,7 @@ export default function ProjectsView() {
   const confirmDelete = async () => {
     if (!projectToDelete) return;
     try {
-      await projectsAPI.deleteProject(projectToDelete);
+      await spacesAPI.delete(projectToDelete);
       removeProject(projectToDelete);
       toast.success("Project deleted");
     } catch {

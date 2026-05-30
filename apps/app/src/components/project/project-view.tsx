@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { projectsAPI, type Project } from "@/lib/projects-api";
+import { spacesAPI, type Space } from "@/lib/spaces-api";
 import { getOpenVideoClient } from "@/lib/openvideo-client";
 import {
   ArrowLeft,
@@ -49,14 +49,14 @@ import { useAssetsStore, type ProjectFile } from "@/stores/assets-store";
 
 export default function ProjectView({ projectId }: { projectId: string }) {
   const router = useRouter();
-  const [project, setProject] = useState<Project | null>(null);
+  const [project, setProject] = useState<Space | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
-  const { messages: chatMessages, sendMessage, isThinking } = useDirector(project?.spaceId ?? "");
+  const { messages: chatMessages, sendMessage, isThinking } = useDirector(project?.id ?? "");
 
   // Zustand store
   const files = useAssetsStore((state) => state.files);
@@ -71,7 +71,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     loadProject().then((projectData) => {
-      if (projectData?.spaceId) loadFiles(projectData.spaceId);
+      if (projectData?.id) loadFiles(projectData.id);
     });
   }, [projectId]);
 
@@ -111,7 +111,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
 
   const loadProject = async () => {
     try {
-      const projectData = await projectsAPI.getProject(projectId);
+      const projectData = await spacesAPI.get(projectId);
       setProject(projectData);
       return projectData;
     } catch (error) {
@@ -153,9 +153,9 @@ export default function ProjectView({ projectId }: { projectId: string }) {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = event.target.files;
-    if (!uploadedFiles || uploadedFiles.length === 0 || !project?.spaceId) return;
+    if (!uploadedFiles || uploadedFiles.length === 0 || !project?.id) return;
 
-    const spaceId = project.spaceId;
+    const spaceId = project.id;
     const fileArray = Array.from(uploadedFiles);
 
     // Create temporary file entries with uploading status
@@ -245,12 +245,12 @@ export default function ProjectView({ projectId }: { projectId: string }) {
 
   const handleDeleteFile = async (fileId: string) => {
     try {
-      if (!project?.spaceId) return;
+      if (!project?.id) return;
       const file = files.find((f) => f.id === fileId);
       const openVideo = getOpenVideoClient();
 
       await Promise.all([
-        openVideo.assets.delete({ spaceId: project.spaceId, assetId: fileId }),
+        openVideo.assets.delete({ spaceId: project.id, assetId: fileId }),
         file?.src
           ? fetch("/api/uploads", {
               method: "DELETE",
@@ -269,10 +269,10 @@ export default function ProjectView({ projectId }: { projectId: string }) {
   };
 
   const handleResyncFile = async (fileId: string) => {
-    if (!project?.spaceId) return;
+    if (!project?.id) return;
     try {
       const openVideo = getOpenVideoClient();
-      await openVideo.assets.reindex({ spaceId: project.spaceId, assetId: fileId });
+      await openVideo.assets.reindex({ spaceId: project.id, assetId: fileId });
       toast.success("Resyncing file...");
       updateFile(fileId, { indexingStatus: "pending" });
     } catch (error) {
@@ -564,7 +564,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
                 if (!project) return;
                 setIsDeleting(true);
                 try {
-                  await projectsAPI.deleteProject(project.id);
+                  await spacesAPI.delete(project.id);
                   toast.success("Project deleted");
                   router.push("/home");
                 } catch {
@@ -600,7 +600,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
               onClick={async () => {
                 if (!project || !renameValue.trim()) return;
                 try {
-                  const updated = await projectsAPI.updateProject(project.id, {
+                  const updated = await spacesAPI.update(project.id, {
                     name: renameValue.trim(),
                   });
                   setProject(updated);

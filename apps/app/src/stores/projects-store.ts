@@ -1,21 +1,21 @@
 import { create } from "zustand";
-import type { Project } from "@/lib/projects-api";
+import type { Space } from "@/lib/spaces-api";
 
 interface ProjectsState {
-  projects: Project[];
+  projects: Space[];
   isLoading: boolean;
   isCreating: boolean;
 
   // Actions
-  setProjects: (projects: Project[]) => void;
-  addProject: (project: Project) => void;
+  setProjects: (projects: Space[]) => void;
+  addProject: (project: Space) => void;
   removeProject: (id: string) => void;
-  updateProject: (id: string, updates: Partial<Pick<Project, "name" | "description">>) => void;
+  updateProject: (id: string, updates: Partial<Pick<Space, "name" | "description">>) => void;
   setIsLoading: (loading: boolean) => void;
   setIsCreating: (creating: boolean) => void;
 
   // Getters
-  getProjectById: (id: string) => Project | undefined;
+  getProjectById: (id: string) => Space | undefined;
 }
 
 export const useProjectsStore = create<ProjectsState>((set, get) => ({
