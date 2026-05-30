@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useGeneratedStore } from "@/stores/generated-store";
@@ -19,6 +19,11 @@ import {
   IconSettings,
   IconDeviceMobile,
   IconUpload,
+  IconClock,
+  IconChevronDown,
+  IconX,
+  IconPlus,
+  IconMinus,
 } from "@tabler/icons-react";
 
 export type GenerateAssetType = "video" | "image" | "lip-sync" | "voiceover" | "music" | "sfx";
@@ -113,10 +118,14 @@ export function AssetGeneratorExpandable({
   const currentTypeOption = ASSET_TYPES.find((t) => t.id === selectedType)!;
   const CurrentIcon = currentTypeOption.icon;
 
-  // Close when clicking outside
+  // Check if any popover is open
+  const anyPopoverOpen = typeOpen || modelOpen || ratioOpen || durationOpen;
+
+  // Close when clicking outside (but not when popovers are open)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (anyPopoverOpen) return;
         if (!prompt.trim() && !loading) {
           setIsExpanded(false);
         }
@@ -124,51 +133,68 @@ export function AssetGeneratorExpandable({
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [prompt, loading]);
+  }, [prompt, loading, anyPopoverOpen]);
 
-  const handleSurpriseMe = () => {
+  const handleSurpriseMe = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * SURPRISE_PROMPTS.length);
     setPrompt(SURPRISE_PROMPTS[randomIndex]);
-  };
+  }, []);
 
-  const handleGenerate = async () => {
+  const handleCancel = useCallback(() => {
+    setPrompt("");
+    setIsExpanded(false);
+  }, []);
+
+  const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) return;
     setLoading(true);
-
     try {
-      // Mock generation for demo
       await new Promise((r) => setTimeout(r, 2000));
-      toast.success(`${currentTypeOption.label} generated!`);
+      toast.success(`${currentTypeOption.label} generated successfully`);
       setPrompt("");
       setIsExpanded(false);
     } catch (error) {
-      console.error(error);
-      toast.error(`Failed to generate`);
+      toast.error("Failed to generate asset");
     } finally {
       setLoading(false);
     }
-  };
+  }, [prompt, currentTypeOption.label]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isExpanded) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleGenerate();
+      }
+      if (e.key === "Escape" && !anyPopoverOpen) {
+        e.preventDefault();
+        handleCancel();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isExpanded, handleGenerate, handleCancel, anyPopoverOpen]);
 
   // Collapsed state - minimal input bar
   if (!isExpanded) {
     return (
       <div
         ref={containerRef}
-        className={cn("shrink-0 bg-card p-3 cursor-pointer", !floating && "border-t border-border")}
-        onClick={() => setIsExpanded(true)}
+        className={cn("shrink-0 bg-card p-3", !floating && "border-t border-border")}
       >
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-secondary/50 border border-border/60 rounded-xl hover:bg-secondary/70 hover:border-border transition-all">
-          <IconSparkles className="size-4 text-primary shrink-0" />
-          <span className="text-sm text-muted-foreground flex-1">
-            Describe what you want to create
-          </span>
-          <IconUpload
-            className="size-4 text-muted-foreground hover:text-foreground shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              onUploadClick();
-            }}
-          />
+        <div className="flex w-full items-center gap-2 rounded-xl border border-border/60 bg-secondary/50 px-3 py-2">
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="flex flex-1 items-center gap-3 text-left"
+          >
+            <IconSparkles className="size-4 shrink-0 text-primary" stroke={1.5} />
+            <span className="text-sm text-muted-foreground">Describe what you want to create</span>
+          </button>
+          <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={onUploadClick}>
+            <IconUpload className="size-4" stroke={1.5} />
+          </Button>
         </div>
       </div>
     );
@@ -184,38 +210,32 @@ export function AssetGeneratorExpandable({
       )}
     >
       {/* Text Input */}
-      <div className="relative bg-secondary/30 rounded-xl border border-border/50 p-3 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/20 transition-all mb-3">
+      <div className="relative mb-3">
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder={currentTypeOption.placeholder}
-          className="w-full min-h-[80px] bg-transparent resize-none focus:outline-none text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60"
+          className={cn(
+            "w-full min-h-[90px] resize-none rounded-xl border bg-transparent p-3 text-sm",
+            "border-border/50 bg-secondary/30 placeholder:text-muted-foreground/50",
+            "focus:border-primary/30 focus:outline-none focus:ring-1 focus:ring-primary/20",
+            "transition-all",
+          )}
           autoFocus
         />
-        {!prompt && (
-          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-            <span className="text-xs text-muted-foreground/60">Press Enter to generate</span>
-            <button
-              onClick={handleSurpriseMe}
-              className="text-xs text-primary font-medium pointer-events-auto"
-            >
-              Surprise me
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3">
         {/* Left - Type selector then Settings */}
         <div className="flex items-center gap-1.5">
-          {/* Type Selector - now at bottom left */}
+          {/* Type Selector - icon with chevron */}
           <Popover open={typeOpen} onOpenChange={setTypeOpen}>
             <PopoverTrigger asChild>
-              <button className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-foreground bg-secondary/50 hover:bg-secondary rounded-lg border border-border/50 transition-colors">
+              <Button variant="secondary" size="sm" className="h-8 gap-1 px-2 text-xs">
                 <CurrentIcon className="size-3.5" stroke={1.5} />
-                <span>{currentTypeOption.label}</span>
-              </button>
+                <IconChevronDown className="size-3" stroke={1.5} />
+              </Button>
             </PopoverTrigger>
             <PopoverContent
               side="top"
@@ -248,13 +268,13 @@ export function AssetGeneratorExpandable({
             </PopoverContent>
           </Popover>
 
-          {/* Model */}
+          {/* Model - icon with chevron */}
           <Popover open={modelOpen} onOpenChange={setModelOpen}>
             <PopoverTrigger asChild>
-              <button className="flex items-center gap-1 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors">
+              <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs">
                 <IconSettings className="size-3.5" stroke={1.5} />
-                <span className="hidden sm:inline">{selectedModel}</span>
-              </button>
+                <IconChevronDown className="size-3" stroke={1.5} />
+              </Button>
             </PopoverTrigger>
             <PopoverContent
               side="top"
@@ -281,14 +301,14 @@ export function AssetGeneratorExpandable({
             </PopoverContent>
           </Popover>
 
-          {/* Ratio */}
+          {/* Ratio - icon with chevron */}
           {["video", "image"].includes(selectedType) && (
             <Popover open={ratioOpen} onOpenChange={setRatioOpen}>
               <PopoverTrigger asChild>
-                <button className="flex items-center gap-1 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors">
+                <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs">
                   <IconDeviceMobile className="size-3.5" stroke={1.5} />
-                  <span>{selectedRatio}</span>
-                </button>
+                  <IconChevronDown className="size-3" stroke={1.5} />
+                </Button>
               </PopoverTrigger>
               <PopoverContent
                 side="top"
@@ -315,13 +335,14 @@ export function AssetGeneratorExpandable({
             </Popover>
           )}
 
-          {/* Duration */}
+          {/* Duration - icon with chevron */}
           {["video", "music", "voiceover", "sfx"].includes(selectedType) && (
             <Popover open={durationOpen} onOpenChange={setDurationOpen}>
               <PopoverTrigger asChild>
-                <button className="px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors">
-                  {selectedDuration}s
-                </button>
+                <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs">
+                  <IconClock className="size-3.5" stroke={1.5} />
+                  <IconChevronDown className="size-3" stroke={1.5} />
+                </Button>
               </PopoverTrigger>
               <PopoverContent
                 side="top"
@@ -350,43 +371,34 @@ export function AssetGeneratorExpandable({
 
           {/* Quantity for images */}
           {selectedType === "image" && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <button
+            <div className="flex items-center gap-1 h-8 px-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg border border-border/50">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="p-1 hover:text-foreground transition-colors"
               >
-                −
-              </button>
-              <span className="w-4 text-center font-medium">{quantity}</span>
-              <button
+                <IconMinus className="size-3" stroke={1.5} />
+              </Button>
+              <span className="w-4 text-center font-medium text-foreground">{quantity}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
                 onClick={() => setQuantity((q) => Math.min(4, q + 1))}
-                className="p-1 hover:text-foreground transition-colors"
               >
-                +
-              </button>
+                <IconPlus className="size-3" stroke={1.5} />
+              </Button>
             </div>
           )}
         </div>
 
         {/* Right - Actions */}
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              setPrompt("");
-              setIsExpanded(false);
-            }}
-          >
+          <Button size="sm" variant="ghost" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button
-            size="sm"
-            className="h-8 px-4 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-            onClick={handleGenerate}
-            disabled={loading || !prompt.trim()}
-          >
+          <Button size="sm" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
             {loading ? <IconLoader2 className="size-4 animate-spin" /> : "Generate"}
           </Button>
         </div>

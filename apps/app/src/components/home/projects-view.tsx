@@ -40,7 +40,7 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const router = useRouter();
 
   const handleOpen = () => {
-    router.push(`/spaces/${project.id}`);
+    router.push(`/edit/${project.id}`);
   };
 
   const formatDate = (date: string | Date) => {

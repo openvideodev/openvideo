@@ -522,7 +522,7 @@ export default function PanelAssets({ showHeader = true }: PanelAssetsProps) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       <input
         type="file"
         ref={fileInputRef}
@@ -633,12 +633,15 @@ export default function PanelAssets({ showHeader = true }: PanelAssetsProps) {
               )}
             </ScrollArea>
 
-            {/* Expandable Generator */}
+            {/* Expandable Generator - Floating */}
             {!showHeader && (
-              <AssetGeneratorExpandable
-                onUploadClick={() => fileInputRef.current?.click()}
-                isUploading={isUploading}
-              />
+              <div className="absolute bottom-4 left-4 right-4">
+                <AssetGeneratorExpandable
+                  onUploadClick={() => fileInputRef.current?.click()}
+                  isUploading={isUploading}
+                  floating
+                />
+              </div>
             )}
           </>
         )}

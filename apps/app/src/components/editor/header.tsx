@@ -123,87 +123,99 @@ export default function Header() {
   };
 
   return (
-    <header className="relative flex h-[52px] w-full shrink-0 items-center justify-between px-3 bg-card z-10 border-b">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          asChild
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+    <header className="flex h-12 w-full shrink-0 items-center px-4 bg-card z-10 border-b">
+      {/* Left: Project Navigation */}
+      <div className="flex items-center gap-4 w-[280px]">
+        <button
+          onClick={() => router.push("/home")}
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <Link href="/home">
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex items-center">
-          <AutosizeInput
-            name="title"
-            value={title}
-            onChange={handleTitleChange}
-            width={150}
-            inputClassName="border-none bg-transparent px-2 py-1 text-sm font-medium hover:bg-muted rounded-md transition-colors focus:bg-muted"
-          />
-        </div>
+          <ChevronLeft className="h-4 w-4" />
+          <span className="text-sm font-medium">Projects</span>
+        </button>
+
+        <div className="w-px h-4 bg-border" />
+
+        <AutosizeInput
+          name="title"
+          value={title}
+          onChange={handleTitleChange}
+          width={140}
+          inputClassName="border-none bg-transparent px-0 py-1 text-sm font-semibold text-foreground focus:outline-none"
+        />
       </div>
 
-      {/* Center Section - Mode Toggle */}
-      <Tabs
-        value={editorMode}
-        onValueChange={(v) => setEditorMode(v as "editor" | "agent" | "playground")}
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-      >
-        <TabsList className="h-8 bg-muted/80 border shadow-sm">
-          <TabsTrigger value="editor" className="text-xs gap-1.5 px-3 h-6">
-            <PenLine className="h-3.5 w-3.5" />
-            Editor
-          </TabsTrigger>
-          <TabsTrigger value="agent" className="text-xs gap-1.5 px-3 h-6">
-            <Bot className="h-3.5 w-3.5" />
-            Agent
-          </TabsTrigger>
-          <TabsTrigger value="playground" className="text-xs gap-1.5 px-3 h-6">
-            <Play className="h-3.5 w-3.5" />
-            Playground
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Center: Mode Switcher */}
+      <div className="flex-1 flex justify-center">
+        <Tabs
+          value={editorMode}
+          onValueChange={(v) => setEditorMode(v as "editor" | "agent" | "playground")}
+        >
+          <TabsList className="h-8 bg-muted/50 border-0">
+            <TabsTrigger
+              value="editor"
+              className="text-xs gap-1.5 px-3 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <PenLine className="h-3.5 w-3.5" />
+              Editor
+            </TabsTrigger>
+            <TabsTrigger
+              value="agent"
+              className="text-xs gap-1.5 px-3 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              Agent
+            </TabsTrigger>
+            <TabsTrigger
+              value="playground"
+              className="text-xs gap-1.5 px-3 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Playground
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-      {/* Right Section */}
-      <div className="flex items-center gap-2 pr-1">
-        <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
-          <Button
+      {/* Right: Actions */}
+      <div className="flex items-center justify-end gap-3 w-[280px]">
+        {/* History Controls */}
+        <div className="flex items-center gap-1">
+          <button
             onClick={() => core.undo()}
             disabled={!canUndo}
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors disabled:opacity-30"
           >
             <Undo2 className="h-4 w-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => core.redo()}
             disabled={!canRedo}
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors disabled:opacity-30"
           >
             <Redo2 className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          onClick={() => setIsShortcutsModalOpen(true)}
-        >
-          <Keyboard className="h-4 w-4" />
-        </Button>
+        <div className="w-px h-4 bg-border" />
 
-        <Button size="sm" className="gap-2 h-8 px-3" onClick={() => setIsExportModalOpen(true)}>
-          <Download className="h-3.5 w-3.5" />
-          Export
-        </Button>
+        {/* Help & Export */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setIsShortcutsModalOpen(true)}
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+          >
+            <Keyboard className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-foreground text-background text-xs font-medium rounded-md hover:bg-foreground/90 transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </button>
+        </div>
 
         <ExportModal open={isExportModalOpen} onOpenChange={setIsExportModalOpen} />
         <ShortcutsModal open={isShortcutsModalOpen} onOpenChange={setIsShortcutsModalOpen} />
