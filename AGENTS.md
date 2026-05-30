@@ -8,15 +8,16 @@ Welcome to the OpenVideo monorepo! This document serves as the **source of truth
 
 OpenVideo is designed around a **Direct Client-to-Director** pattern within a `pnpm` monorepo.
 
-*   **`apps/app` (Next.js 15)**: The primary frontend client. It serves pages to the user and hosts authentication endpoints. The frontend talks directly to the Director service for data and real-time operations.
-*   **`apps/director` (NestJS Fastify)**: The **primary API server and real-time coordinator**. It hosts REST endpoints (`/spaces`, `/auth`, `/assets`), WebSocket/Socket.io gateway, BullMQ background workers, and Trigger.dev serverless tasks. Runs on port 4000 with CORS enabled for browser clients.
-*   **`packages/api` (tRPC)**: The type-safe communication layer for internal use. Contains tRPC router definitions that can be used when type-safe server-to-server or internal Next.js API calls are needed.
-*   **`packages/db` (Drizzle ORM)**: The shared database schema and client. Both Next.js (`apps/app`) and NestJS (`apps/director`) import `@openvideo/db` directly to query a single, unified PostgreSQL instance.
-*   **`packages/auth` (Better Auth)**: Shared authentication layer. Next.js handles session cookies; Director validates JWT tokens issued by the auth system.
+- **`apps/app` (Next.js 15)**: The primary frontend client. It serves pages to the user and hosts authentication endpoints. The frontend talks directly to the Director service for data and real-time operations.
+- **`apps/director` (NestJS Fastify)**: The **primary API server and real-time coordinator**. It hosts REST endpoints (`/spaces`, `/auth`, `/assets`), WebSocket/Socket.io gateway, BullMQ background workers, and Trigger.dev serverless tasks. Runs on port 4000 with CORS enabled for browser clients.
+- **`packages/api` (tRPC)**: The type-safe communication layer for internal use. Contains tRPC router definitions that can be used when type-safe server-to-server or internal Next.js API calls are needed.
+- **`packages/db` (Drizzle ORM)**: The shared database schema and client. Both Next.js (`apps/app`) and NestJS (`apps/director`) import `@openvideo/db` directly to query a single, unified PostgreSQL instance.
+- **`packages/auth` (Better Auth)**: Shared authentication layer. Next.js handles session cookies; Director validates JWT tokens issued by the auth system.
 
 ### 🔄 Request & Execution Flows
 
 #### 1. Standard Client Action (Direct REST API)
+
 ```mermaid
 sequenceDiagram
     participant Client as Next.js Client
@@ -31,7 +32,9 @@ sequenceDiagram
 ```
 
 #### 2. Background Task Flow (BullMQ / Redis)
+
 For lightweight background processing (e.g. asset indexing or quick updates):
+
 ```mermaid
 sequenceDiagram
     participant Client as Next.js Client
@@ -51,7 +54,9 @@ sequenceDiagram
 ```
 
 #### 3. Heavy/Serverless Task Flow (Trigger.dev v3)
+
 For highly intensive video rendering, asset transcribing, ElevenLabs sound generation, or heavy RAG workflows:
+
 ```mermaid
 sequenceDiagram
     participant Client as Next.js Client
@@ -120,24 +125,27 @@ All tables are managed inside `@openvideo/db`. Use PostgreSQL as the target engi
 ### Schemas Quick Reference
 
 #### 🔑 Auth Schema (`packages/db/src/schema/auth.ts`)
-*   **`user`**: User accounts (name, email, emailVerified, image, createdAt, updatedAt).
-*   **`session`**: Active login sessions (expiresAt, token, ipAddress, userAgent, userId).
-*   **`account`**: Auth credentials (accountId, providerId, userId, password, accessToken, etc.).
-*   **`verification`**: Token-based verification (identifier, value, expiresAt).
-*   **`apiToken`**: Custom API tokens with prefix `ov_live_` for programmatic API access.
+
+- **`user`**: User accounts (name, email, emailVerified, image, createdAt, updatedAt).
+- **`session`**: Active login sessions (expiresAt, token, ipAddress, userAgent, userId).
+- **`account`**: Auth credentials (accountId, providerId, userId, password, accessToken, etc.).
+- **`verification`**: Token-based verification (identifier, value, expiresAt).
+- **`apiToken`**: Custom API tokens with prefix `ov_live_` for programmatic API access.
 
 #### 🎥 Project Schema (`packages/db/src/schema/project.ts`)
-*   **`project`**: Single editing project details (name, description, thumbnail, width, height, fps, JSON data, userId, spaceId).
-*   **`space`**: Video organization workspaces (name, userId, JSON data).
-*   **`directorSession`**: AI director agent state sessions (spaceId, userId, historyJson, pendingPlan, activePlanId).
+
+- **`project`**: Single editing project details (name, description, thumbnail, width, height, fps, JSON data, userId, spaceId).
+- **`space`**: Video organization workspaces (name, userId, JSON data).
+- **`directorSession`**: AI director agent state sessions (spaceId, userId, historyJson, pendingPlan, activePlanId).
 
 #### 📦 Asset Schema (`packages/db/src/schema/asset.ts`)
-*   **`asset`**: Media assets uploaded to spaces (name, type `image|video|audio`, src URL, duration, size, dimensions, spaceId, userId).
-*   **`assetTranscript`**: Text segments extracted from media assets (assetId, spaceId, segments JSON).
-*   **`assetVisualTimeline`**: Scene descriptions from media assets (assetId, spaceId, scenes JSON).
-*   **`assetIndexingStatus`**: Pipeline statuses (status `'pending'|'processing'|'completed'|'failed'`, progress, stage, error).
-*   **`clipTranscript`**: Transcripts of individual cut clips.
-*   **`upload`**: Global user uploads.
+
+- **`asset`**: Media assets uploaded to spaces (name, type `image|video|audio`, src URL, duration, size, dimensions, spaceId, userId).
+- **`assetTranscript`**: Text segments extracted from media assets (assetId, spaceId, segments JSON).
+- **`assetVisualTimeline`**: Scene descriptions from media assets (assetId, spaceId, scenes JSON).
+- **`assetIndexingStatus`**: Pipeline statuses (status `'pending'|'processing'|'completed'|'failed'`, progress, stage, error).
+- **`clipTranscript`**: Transcripts of individual cut clips.
+- **`upload`**: Global user uploads.
 
 ### How to Access the DB
 
@@ -161,6 +169,7 @@ const userProjects = await db.query.project.findMany({
 Communication between client and backend is handled via tRPC.
 
 ### Routers List
+
 All endpoints live in `@openvideo/api/src/routers/` and are merged into `appRouter` in `root.ts`:
 
 1.  **`project`**: `list`, `getById`, `create`, `update`, `delete`, `linkToSpace`
@@ -171,8 +180,9 @@ All endpoints live in `@openvideo/api/src/routers/` and are merged into `appRout
 6.  **`token`**: `create`, `list`, `update`, `delete`
 
 ### Key Conventions
-*   **Authentication**: Use `protectedProcedure` for all user-authenticated routes. It populates `ctx.user` and `ctx.session`.
-*   **Context**: Built-in context (`createTRPCContext`) extracts sessions via Better Auth headers/cookies.
+
+- **Authentication**: Use `protectedProcedure` for all user-authenticated routes. It populates `ctx.user` and `ctx.session`.
+- **Context**: Built-in context (`createTRPCContext`) extracts sessions via Better Auth headers/cookies.
 
 ---
 
@@ -181,30 +191,30 @@ All endpoints live in `@openvideo/api/src/routers/` and are merged into `appRout
 NestJS operates purely as a background processor. Let's look at the key technologies:
 
 1.  **BullMQ (Redis Queues)**:
-    *   Next.js/tRPC pushes a message to a queue (e.g. `index-project` inside `indexingRouter`).
-    *   NestJS listens to the queue via module processors:
-        ```typescript
-        @Processor("index-project")
-        export class ProjectIndexConsumer extends WorkerHost {
-          async process(job: Job<any>) { ... }
-        }
-        ```
+    - Next.js/tRPC pushes a message to a queue (e.g. `index-project` inside `indexingRouter`).
+    - NestJS listens to the queue via module processors:
+      ```typescript
+      @Processor("index-project")
+      export class ProjectIndexConsumer extends WorkerHost {
+        async process(job: Job<any>) { ... }
+      }
+      ```
 2.  **Trigger.dev (v3)**:
-    *   Handles CPU/Memory-intensive operations in isolated serverless environments.
-    *   Trigger configurations are defined in `apps/director/trigger.config.ts`.
-    *   Task scripts are located in `apps/director/trigger/`.
-    *   Invoked from Next.js via tRPC using:
-        ```typescript
-        import { tasks } from "@trigger.dev/sdk/v3";
-        const handle = await tasks.trigger("index-asset", { assetId });
-        ```
+    - Handles CPU/Memory-intensive operations in isolated serverless environments.
+    - Trigger configurations are defined in `apps/director/trigger.config.ts`.
+    - Task scripts are located in `apps/director/trigger/`.
+    - Invoked from Next.js via tRPC using:
+      ```typescript
+      import { tasks } from "@trigger.dev/sdk/v3";
+      const handle = await tasks.trigger("index-asset", { assetId });
+      ```
 3.  **Real-Time Broadcast (Socket.io)**:
-    *   Background consumers send progress updates to users.
-    *   NestJS leverages a Redis WebSocket Adapter to scale horizontally.
-    *   Services inject `BroadcastGateway` to emit to specific user/room channels:
-        ```typescript
-        this.broadcastGateway.server.to(`space:${spaceId}`).emit("indexing:progress", { progress });
-        ```
+    - Background consumers send progress updates to users.
+    - NestJS leverages a Redis WebSocket Adapter to scale horizontally.
+    - Services inject `BroadcastGateway` to emit to specific user/room channels:
+      ```typescript
+      this.broadcastGateway.server.to(`space:${spaceId}`).emit("indexing:progress", { progress });
+      ```
 
 ---
 
@@ -244,9 +254,10 @@ NestJS operates purely as a background processor. Let's look at the key technolo
     });
     ```
 3.  **Consume in Next.js Client**:
+
     ```typescript
     import { trpc } from "@/lib/trpc";
-    
+
     const { mutate } = trpc.myRouter.myProcedure.useMutation();
     mutate({ id: "123" });
     ```
@@ -258,6 +269,7 @@ NestJS operates purely as a background processor. Let's look at the key technolo
 Ensure these are properly set in your local `.env` files:
 
 ### Next.js Client (`apps/app/.env`)
+
 ```bash
 # Database & Auth
 DATABASE_URL="postgresql://user:pass@localhost:5432/openvideo"
@@ -282,6 +294,7 @@ R2_PUBLIC_DOMAIN="https://cdn.openvideo.io"
 ```
 
 ### NestJS Worker (`apps/director/.env`)
+
 ```bash
 PORT=4000
 NODE_ENV=development
@@ -312,16 +325,17 @@ R2_PUBLIC_URL="https://pub-xxx.r2.dev"
 
 ## 🚀 Dev Commands & Ports
 
-| Command | Workspace Location | Description |
-| :--- | :--- | :--- |
-| `pnpm dev` | Root | Run all apps (`apps/app` and `apps/director`) in dev mode |
-| `pnpm build` | Root | Build all packages and applications |
-| `pnpm check-types` | Root | Run TypeScript validation on all packages and apps |
-| `pnpm db:generate` | `packages/db` | Generate schema migrations |
-| `pnpm db:migrate` | `packages/db` | Apply database migrations |
+| Command            | Workspace Location | Description                                               |
+| :----------------- | :----------------- | :-------------------------------------------------------- |
+| `pnpm dev`         | Root               | Run all apps (`apps/app` and `apps/director`) in dev mode |
+| `pnpm build`       | Root               | Build all packages and applications                       |
+| `pnpm check-types` | Root               | Run TypeScript validation on all packages and apps        |
+| `pnpm db:generate` | `packages/db`      | Generate schema migrations                                |
+| `pnpm db:migrate`  | `packages/db`      | Apply database migrations                                 |
 
 ### Default Ports
-*   **`3000`**: Next.js App
-*   **`4000`**: NestJS Director Service
-*   **`6379`**: Redis Server
-*   **`5432`**: PostgreSQL Database
+
+- **`3000`**: Next.js App
+- **`4000`**: NestJS Director Service
+- **`6379`**: Redis Server
+- **`5432`**: PostgreSQL Database

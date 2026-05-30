@@ -47,9 +47,7 @@ export async function getSessionFromRequest(
 /**
  * Check if user is authenticated
  */
-export function isAuthenticated(
-  session: SessionValidationResult,
-): session is {
+export function isAuthenticated(session: SessionValidationResult): session is {
   user: NonNullable<SessionValidationResult["user"]>;
   session: NonNullable<SessionValidationResult["session"]>;
 } {

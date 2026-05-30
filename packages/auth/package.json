@@ -28,9 +28,9 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "better-auth": "^1.6.12",
     "@better-auth/drizzle-adapter": "^1.6.11",
-    "@openvideo/db": "workspace:*"
+    "@openvideo/db": "workspace:*",
+    "better-auth": "^1.6.12"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -108,7 +108,7 @@ export default function Editor({
               minSize={15}
               maxSize={40}
               onResize={setToolsPanel}
-              className="max-w-7xl relative overflow-visible! bg-card min-w-0"
+              className="max-w-7xl relative overflow-visible! bg-card min-w-[400px]"
             >
               <MediaPanel />
               <FloatingControl />
@@ -191,17 +191,7 @@ export default function Editor({
             />
             {/* Full Space Assets View */}
             <div className="h-full w-full overflow-auto">
-              <PanelAssets showHeader={true} />
-            </div>
-            {/* Floating Media Generation Prompt */}
-            <div className="absolute bottom-4 left-4 right-4 flex justify-center">
-              <div className="w-full max-w-[600px] bg-card">
-                <AssetGeneratorExpandable
-                  onUploadClick={() => fileInputRef.current?.click()}
-                  isUploading={isUploading}
-                  floating
-                />
-              </div>
+              <PanelAssets showGenerator={true} showHeader={true} />
             </div>
           </div>
         )}

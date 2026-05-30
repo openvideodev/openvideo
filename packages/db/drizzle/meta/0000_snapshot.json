@@ -110,12 +110,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -224,12 +220,8 @@
           "name": "api_token_user_id_user_id_fk",
           "tableFrom": "api_token",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -239,9 +231,7 @@
         "api_token_token_hash_unique": {
           "name": "api_token_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -324,12 +314,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -339,9 +325,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -405,9 +389,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -586,12 +568,8 @@
           "name": "director_session_space_id_spaces_id_fk",
           "tableFrom": "director_session",
           "tableTo": "spaces",
-          "columnsFrom": [
-            "space_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["space_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -599,12 +577,8 @@
           "name": "director_session_user_id_user_id_fk",
           "tableFrom": "director_session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -741,12 +715,8 @@
           "name": "spaces_user_id_user_id_fk",
           "tableFrom": "spaces",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -901,12 +871,8 @@
           "name": "asset_space_id_spaces_id_fk",
           "tableFrom": "asset",
           "tableTo": "spaces",
-          "columnsFrom": [
-            "space_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["space_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -914,12 +880,8 @@
           "name": "asset_user_id_user_id_fk",
           "tableFrom": "asset",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1084,12 +1046,8 @@
           "name": "asset_indexing_status_asset_id_asset_id_fk",
           "tableFrom": "asset_indexing_status",
           "tableTo": "asset",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1097,12 +1055,8 @@
           "name": "asset_indexing_status_space_id_spaces_id_fk",
           "tableFrom": "asset_indexing_status",
           "tableTo": "spaces",
-          "columnsFrom": [
-            "space_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["space_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1112,9 +1066,7 @@
         "asset_indexing_status_asset_id_unique": {
           "name": "asset_indexing_status_asset_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "asset_id"
-          ]
+          "columns": ["asset_id"]
         }
       },
       "policies": {},
@@ -1215,12 +1167,8 @@
           "name": "asset_transcript_asset_id_asset_id_fk",
           "tableFrom": "asset_transcript",
           "tableTo": "asset",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1228,12 +1176,8 @@
           "name": "asset_transcript_space_id_spaces_id_fk",
           "tableFrom": "asset_transcript",
           "tableTo": "spaces",
-          "columnsFrom": [
-            "space_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["space_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1338,12 +1282,8 @@
           "name": "asset_visual_timeline_asset_id_asset_id_fk",
           "tableFrom": "asset_visual_timeline",
           "tableTo": "asset",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1351,12 +1291,8 @@
           "name": "asset_visual_timeline_space_id_spaces_id_fk",
           "tableFrom": "asset_visual_timeline",
           "tableTo": "spaces",
-          "columnsFrom": [
-            "space_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["space_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1461,12 +1397,8 @@
           "name": "clip_transcript_space_id_spaces_id_fk",
           "tableFrom": "clip_transcript",
           "tableTo": "spaces",
-          "columnsFrom": [
-            "space_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["space_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1476,9 +1408,7 @@
         "clip_transcript_clip_id_unique": {
           "name": "clip_transcript_clip_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "clip_id"
-          ]
+          "columns": ["clip_id"]
         }
       },
       "policies": {},
@@ -1580,12 +1510,8 @@
           "name": "upload_user_id_user_id_fk",
           "tableFrom": "upload",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

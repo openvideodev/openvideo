@@ -277,9 +277,10 @@ function AssetCard({
 
 interface PanelAssetsProps {
   showHeader?: boolean;
+  showGenerator?: boolean;
 }
 
-export default function PanelAssets({ showHeader = true }: PanelAssetsProps) {
+export default function PanelAssets({ showHeader = true, showGenerator = true }: PanelAssetsProps) {
   const spaceId = useProjectStore((state) => state.spaceId);
   const files = useAssetsStore((state) => state.files);
   const setFiles = useAssetsStore((state) => state.setFiles);
@@ -544,20 +545,6 @@ export default function PanelAssets({ showHeader = true }: PanelAssetsProps) {
             <p className="text-sm text-muted-foreground leading-relaxed max-w-[210px] mb-5">
               Get started by uploading your own files or generating new ones using AI.
             </p>
-            <div className="flex flex-col w-full max-w-[200px] gap-2">
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full justify-center h-10 bg-secondary/30 hover:bg-secondary/60 text-foreground text-[13px] font-medium rounded-xl border-0 shadow-none transition-colors"
-              >
-                Upload a file
-              </Button>
-              <Button
-                onClick={() => openGenerator()}
-                className="w-full justify-center h-10 bg-secondary/30 hover:bg-secondary/60 text-foreground text-[13px] font-medium rounded-xl border-0 shadow-none transition-colors"
-              >
-                Generate with AI
-              </Button>
-            </div>
           </div>
         ) : (
           /* With assets: search + grid */
@@ -632,20 +619,18 @@ export default function PanelAssets({ showHeader = true }: PanelAssetsProps) {
                 </div>
               )}
             </ScrollArea>
-
-            {/* Expandable Generator - Floating */}
-            {!showHeader && (
-              <div className="absolute bottom-4 left-4 right-4">
-                <AssetGeneratorExpandable
-                  onUploadClick={() => fileInputRef.current?.click()}
-                  isUploading={isUploading}
-                  floating
-                />
-              </div>
-            )}
           </>
         )}
       </div>
+      {showGenerator && (
+        <div className="absolute bottom-4 left-4 right-4 max-w-[600px] mx-auto">
+          <AssetGeneratorExpandable
+            onUploadClick={() => fileInputRef.current?.click()}
+            isUploading={isUploading}
+            floating
+          />
+        </div>
+      )}
     </div>
   );
 }

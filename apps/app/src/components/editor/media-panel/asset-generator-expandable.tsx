@@ -22,9 +22,8 @@ import {
   IconClock,
   IconChevronDown,
   IconX,
-  IconPlus,
-  IconMinus,
 } from "@tabler/icons-react";
+import { ArrowUpIcon } from "lucide-react";
 
 export type GenerateAssetType = "video" | "image" | "lip-sync" | "voiceover" | "music" | "sfx";
 
@@ -114,12 +113,13 @@ export function AssetGeneratorExpandable({
   const [ratioOpen, setRatioOpen] = useState(false);
   const [durationOpen, setDurationOpen] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
+  const [quantityOpen, setQuantityOpen] = useState(false);
 
   const currentTypeOption = ASSET_TYPES.find((t) => t.id === selectedType)!;
   const CurrentIcon = currentTypeOption.icon;
 
   // Check if any popover is open
-  const anyPopoverOpen = typeOpen || modelOpen || ratioOpen || durationOpen;
+  const anyPopoverOpen = typeOpen || modelOpen || ratioOpen || durationOpen || quantityOpen;
 
   // Close when clicking outside (but not when popovers are open)
   useEffect(() => {
@@ -205,8 +205,7 @@ export function AssetGeneratorExpandable({
     <div
       ref={containerRef}
       className={cn(
-        "shrink-0 bg-secondary/30 p-4 animate-in slide-in-from-bottom-2 duration-200",
-        !floating && "border-t border-border",
+        "shrink-0 bg-secondary/30 p-4 animate-in slide-in-from-bottom-2 duration-200 border",
       )}
     >
       {/* Text Input */}
@@ -371,35 +370,51 @@ export function AssetGeneratorExpandable({
 
           {/* Quantity for images */}
           {selectedType === "image" && (
-            <div className="flex items-center gap-1 h-8 px-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg border border-border/50">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            <Popover open={quantityOpen} onOpenChange={setQuantityOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs">
+                  <span className="font-medium text-foreground">{quantity}</span>
+                  <IconChevronDown className="size-3" stroke={1.5} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                className="p-1.5 w-16 bg-popover border border-border shadow-lg rounded-xl text-xs"
               >
-                <IconMinus className="size-3" stroke={1.5} />
-              </Button>
-              <span className="w-4 text-center font-medium text-foreground">{quantity}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5"
-                onClick={() => setQuantity((q) => Math.min(4, q + 1))}
-              >
-                <IconPlus className="size-3" stroke={1.5} />
-              </Button>
-            </div>
+                {[1, 2, 3, 4].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => {
+                      setQuantity(q);
+                      setQuantityOpen(false);
+                    }}
+                    className={cn(
+                      "w-full px-2.5 py-2 rounded-lg transition-colors text-center",
+                      quantity === q
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
+                    )}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           )}
         </div>
 
         {/* Right - Actions */}
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
-            {loading ? <IconLoader2 className="size-4 animate-spin" /> : "Generate"}
+          <Button
+            size="icon"
+            className="size-6 rounded-full ml-auto bg-foreground hover:bg-foreground/90 text-background"
+            onClick={handleGenerate}
+            disabled={loading || !prompt.trim()}
+          >
+            {/* {loading ? <IconLoader2 className="size-4 animate-spin" /> : "Generate"} */}
+
+            <ArrowUpIcon className="w-4 h-4" />
+            <span className="sr-only">Send</span>
           </Button>
         </div>
       </div>
