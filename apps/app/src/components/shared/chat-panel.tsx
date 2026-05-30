@@ -82,7 +82,7 @@ export function ChatPanel({
               >
                 <div
                   className={cn(
-                    "flex flex-col space-y-1 max-w-[85%]",
+                    "flex flex-col space-y-1 max-w-[95%]",
                     m.role === "user" ? "items-end" : "items-start",
                   )}
                 >
@@ -93,7 +93,7 @@ export function ChatPanel({
                         ? "bg-zinc-700/35 text-zinc-100 rounded-tr-none border border-zinc-600/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] font-medium"
                         : m.type === "plan"
                           ? "bg-amber-950/50 border border-amber-700/30 text-amber-200/90 rounded-tl-none font-mono text-xs shadow-sm"
-                          : "text-foreground/90 px-1",
+                          : "bg-secondary/40 text-foreground/90 rounded-tl-none border border-border/50",
                     )}
                   >
                     {m.role === "user" ? (
