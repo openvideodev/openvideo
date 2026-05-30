@@ -2,6 +2,7 @@ import { z } from "zod";
 import { eq, and, desc } from "drizzle-orm";
 import { getDB, asset, assetIndexingStatus } from "@openvideo/db";
 import { router, protectedProcedure } from "../trpc.js";
+import { tasks } from "@trigger.dev/sdk/v3";
 
 const db = getDB();
 
@@ -46,6 +47,13 @@ export const assetRouter = router({
             status: "pending",
           })
           .onConflictDoNothing();
+
+        // Trigger the actual indexing task
+        try {
+          await tasks.trigger("index-asset", { spaceId: input.spaceId, assetId: id });
+        } catch (triggerErr) {
+          console.error("Failed to trigger indexing task:", triggerErr);
+        }
       }
 
       return newAsset[0];

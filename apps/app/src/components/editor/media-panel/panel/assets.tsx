@@ -21,7 +21,7 @@ import {
 import { storageService } from "@/lib/storage/storage-service";
 import type { MediaType } from "@/types/media";
 import { uploadFile } from "@/lib/upload-utils";
-import { getOpenVideoClient } from "@/lib/openvideo-client";
+import { trpc } from "@/lib/trpc";
 import Draggable from "@/components/shared/draggable";
 import { useGeneratorModalStore } from "@/stores/generator-modal-store";
 import {
@@ -295,14 +295,18 @@ export default function PanelAssets() {
     await storageService.getStorageStats();
   }, []);
 
-  const loadFiles = useCallback(async () => {
-    if (!spaceId) return;
-    try {
-      setAssetsStoreLoading(true);
-      const openVideo = getOpenVideoClient();
-      const assets = await openVideo.assets.list({ spaceId });
+  // tRPC asset queries and mutations
+  const { data: assetsData, refetch: refetchAssets } = trpc.asset.list.useQuery(
+    { spaceId: spaceId ?? "" },
+    { enabled: !!spaceId },
+  );
+  const createAsset = trpc.asset.create.useMutation();
+  const deleteAsset = trpc.asset.delete.useMutation();
 
-      const projectFiles: ProjectFile[] = assets.map((asset: any) => ({
+  // Load files when data changes
+  useEffect(() => {
+    if (assetsData) {
+      const projectFiles: ProjectFile[] = assetsData.map((asset: any) => ({
         id: asset.id,
         spaceId: asset.spaceId || spaceId,
         name: asset.name,
@@ -312,23 +316,22 @@ export default function PanelAssets() {
         size: asset.size,
         createdAt: asset.createdAt,
         updatedAt: asset.updatedAt,
-        indexingStatus: asset.indexing?.status ?? null,
+        indexingStatus: asset.indexingStatus?.status ?? null,
       }));
-
       setFiles(projectFiles);
-      await loadStorageStats();
-    } catch (error) {
-      console.error("Error loading files in PanelAssets:", error);
-    } finally {
+      loadStorageStats();
       setAssetsStoreLoading(false);
       setIsLoaded(true);
     }
-  }, [spaceId, setFiles, setAssetsStoreLoading, loadStorageStats]);
+  }, [assetsData, spaceId, setFiles, loadStorageStats, setAssetsStoreLoading]);
 
-  // Load uploads on mount and when spaceId becomes available
+  // Load uploads on mount
   useEffect(() => {
-    loadFiles();
-  }, [loadFiles]);
+    if (!spaceId) {
+      setAssetsStoreLoading(false);
+      setIsLoaded(true);
+    }
+  }, [spaceId, setAssetsStoreLoading]);
 
   // Real-time polling for indexing status of in-flight files
   useEffect(() => {
@@ -342,38 +345,34 @@ export default function PanelAssets() {
     const validFiles = inFlight.filter((f) => f.spaceId);
     if (validFiles.length === 0) return;
 
-    const openVideo = getOpenVideoClient();
     const timer = setTimeout(async () => {
       try {
-        const statuses = await Promise.all(
-          validFiles.map((f) =>
-            openVideo.assets
-              .getIndexStatus({ spaceId: f.spaceId, assetId: f.id })
-              .catch(() => null),
-          ),
-        );
-        validFiles.forEach((f, idx) => {
-          if (statuses[idx]?.status) {
-            updateFile(f.id, { indexingStatus: statuses[idx].status });
-          }
-        });
+        // Refetch all assets to get updated indexing status
+        const { data: freshAssets } = await refetchAssets();
+        if (freshAssets) {
+          freshAssets.forEach((asset: any) => {
+            if (asset.indexingStatus?.status) {
+              updateFile(asset.id, { indexingStatus: asset.indexingStatus.status });
+            }
+          });
+        }
       } catch {
         // silently skip — next tick will retry
       }
     }, 5000);
     return () => clearTimeout(timer);
-  }, [files, updateFile]);
+  }, [files, updateFile, refetchAssets]);
 
   // Listen to asset generation event to refresh list
   useEffect(() => {
     const handleAssetGenerated = () => {
-      loadFiles();
+      refetchAssets();
     };
     window.addEventListener("asset-generated", handleAssetGenerated);
     return () => {
       window.removeEventListener("asset-generated", handleAssetGenerated);
     };
-  }, [loadFiles]);
+  }, [refetchAssets]);
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -399,8 +398,6 @@ export default function PanelAssets() {
 
     addFiles(tempFiles);
 
-    const openVideo = getOpenVideoClient();
-
     try {
       const uploadPromises = fileArray.map(async (file, index) => {
         const tempId = tempFiles[index].id;
@@ -417,30 +414,27 @@ export default function PanelAssets() {
             await storageService.saveMediaFile({ projectId: spaceId, mediaItem: mediaFile });
           }
 
-          const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-          // 2. Register asset with OpenVideo using actual spaceId
+          // 2. Register asset with tRPC (returns generated id)
           if (uploadResult?.url) {
-            await openVideo.assets.register({
+            const newAsset = await createAsset.mutateAsync({
               spaceId,
-              id: fileId,
               name: file.name,
               type,
               src: uploadResult.url,
               duration,
               size: file.size,
             });
-          }
 
-          // 3. Update Zustand with real file
-          updateFile(tempId, {
-            id: fileId,
-            src,
-            duration,
-            indexingStatus: "pending" as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
+            // 3. Update Zustand with real file
+            updateFile(tempId, {
+              id: newAsset.id,
+              src,
+              duration,
+              indexingStatus: "pending" as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+          }
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error);
           updateFile(tempId, { indexingStatus: "failed" });
@@ -462,10 +456,9 @@ export default function PanelAssets() {
     if (!spaceId) return;
     try {
       const file = files.find((f) => f.id === id);
-      const openVideo = getOpenVideoClient();
 
       await Promise.all([
-        openVideo.assets.delete({ spaceId, assetId: id }),
+        deleteAsset.mutateAsync({ id, spaceId }),
         file?.src && !file.src.startsWith("blob:")
           ? fetch("/api/uploads", {
               method: "DELETE",

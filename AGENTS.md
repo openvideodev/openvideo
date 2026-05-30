@@ -6,65 +6,68 @@ Welcome to the OpenVideo monorepo! This document serves as the **source of truth
 
 ## 🏗️ Architectural Overview
 
-OpenVideo is designed around a **Unified API & Shared Database** pattern within a `pnpm` monorepo.
+OpenVideo is designed around a **Direct Client-to-Director** pattern within a `pnpm` monorepo.
 
-*   **`apps/app` (Next.js 15)**: The primary frontend client and API gateway. It serves pages to the user and acts as the **API Gateway** hosting the single-route tRPC server endpoint (`/api/trpc`).
-*   **`apps/director` (NestJS Fastify)**: A high-performance **background worker and real-time coordinator**. It does not host REST or client-facing API endpoints. Instead, it processes queues (BullMQ), acts as a WebSocket broadcaster (Socket.io), and schedules long-running Trigger.dev serverless tasks.
-*   **`packages/api` (tRPC)**: The type-safe communication layer. Contains all tRPC router definitions (procedures, inputs, validation). It acts as the source-of-truth for all client-server communication.
+*   **`apps/app` (Next.js 15)**: The primary frontend client. It serves pages to the user and hosts authentication endpoints. The frontend talks directly to the Director service for data and real-time operations.
+*   **`apps/director` (NestJS Fastify)**: The **primary API server and real-time coordinator**. It hosts REST endpoints (`/spaces`, `/auth`, `/assets`), WebSocket/Socket.io gateway, BullMQ background workers, and Trigger.dev serverless tasks. Runs on port 4000 with CORS enabled for browser clients.
+*   **`packages/api` (tRPC)**: The type-safe communication layer for internal use. Contains tRPC router definitions that can be used when type-safe server-to-server or internal Next.js API calls are needed.
 *   **`packages/db` (Drizzle ORM)**: The shared database schema and client. Both Next.js (`apps/app`) and NestJS (`apps/director`) import `@openvideo/db` directly to query a single, unified PostgreSQL instance.
-*   **`packages/auth` (Better Auth)**: Shared authentication layer, managing user registration, sessions, magic-links, and API tokens.
+*   **`packages/auth` (Better Auth)**: Shared authentication layer. Next.js handles session cookies; Director validates JWT tokens issued by the auth system.
 
 ### 🔄 Request & Execution Flows
 
-#### 1. Standard Client Action (Type-Safe Mutation/Query)
+#### 1. Standard Client Action (Direct REST API)
 ```mermaid
 sequenceDiagram
     participant Client as Next.js Client
-    participant NextServer as Next.js API Gateway (apps/app)
-    participant TRPC as @openvideo/api Router
+    participant Director as Director API (apps/director:4000)
     participant DB as PostgreSQL (@openvideo/db)
 
-    Client->>NextServer: tRPC Request (e.g. space.create)
-    NextServer->>TRPC: createTRPCContext() & run procedure
-    TRPC->>DB: query/mutation using getDB()
-    DB-->>TRPC: db row data
-    TRPC-->>NextServer: serialized JSON
-    NextServer-->>Client: type-safe response
+    Client->>Director: HTTP Request (e.g. GET /spaces)
+    Director->>Director: JWT Auth Guard validation
+    Director->>DB: query/mutation using getDB()
+    DB-->>Director: db row data
+    Director-->>Client: JSON response
 ```
 
 #### 2. Background Task Flow (BullMQ / Redis)
-For lightweight background processing (e.g. project-level structural indexing or quick updates):
+For lightweight background processing (e.g. asset indexing or quick updates):
 ```mermaid
 sequenceDiagram
-    participant NextServer as Next.js tRPC Procedure
+    participant Client as Next.js Client
+    participant Director as Director API (apps/director:4000)
     participant Redis as Redis (BullMQ Queue)
-    participant Director as NestJS Worker (apps/director)
+    participant Worker as NestJS Worker
     participant Socket as Socket.io Gateway
-    participant Client as Client Browser
 
-    NextServer->>Redis: projectIndexQueue.add("index", { spaceId })
-    Redis-->>NextServer: job queued
-    Director->>Redis: Polls queue & consumes job
-    Director->>Director: Run Project Indexer Service
-    Director->>Socket: Emit progress to broadcast service
-    Socket-->>Client: WebSocket update ("space:progress")
+    Client->>Director: POST /spaces/:id/sync (trigger indexing)
+    Director->>Redis: indexQueue.add("index", { spaceId })
+    Redis-->>Director: job queued
+    Director-->>Client: { status: "queued" }
+    Worker->>Redis: Polls queue & consumes job
+    Worker->>Worker: Run Indexer Service
+    Worker->>Socket: Emit progress
+    Socket-->>Client: WebSocket update ("indexing:progress")
 ```
 
 #### 3. Heavy/Serverless Task Flow (Trigger.dev v3)
 For highly intensive video rendering, asset transcribing, ElevenLabs sound generation, or heavy RAG workflows:
 ```mermaid
 sequenceDiagram
-    participant NextServer as Next.js tRPC Procedure
+    participant Client as Next.js Client
+    participant Director as Director API (apps/director:4000)
     participant Trigger as Trigger.dev Cloud / Runner
     participant DB as PostgreSQL
     participant R2 as Cloudflare R2
 
-    NextServer->>Trigger: tasks.trigger("index-asset", { assetId })
+    Client->>Director: POST /assets/:id/process (or similar trigger)
+    Director->>Trigger: tasks.trigger("index-asset", { assetId })
     Trigger->>Trigger: Boot serverless container (ffmpeg enabled)
     Trigger->>R2: Fetch asset / download video
     Trigger->>Trigger: Extract transcripts, compute vector embeddings
-    Trigger->>DB: Save to langchain_pg_embedding & assetTranscript
-    Trigger-->>NextServer: Webhook / polling completion
+    Trigger->>DB: Save to assetTranscript
+    Trigger-->>Director: Webhook / polling completion
+    Director-->>Client: Response via WebSocket or polling endpoint
 ```
 
 ---
@@ -76,12 +79,17 @@ Below is an annotated outline of the OpenVideo workspace:
 ```
 .
 ├── apps/
-│   ├── app/                    # Next.js 15 App Router app (Frontend, tRPC route handler, Next Pages)
-│   │   ├── src/app/            # Route groups: (auth), (home), (marketing), edit, editor, api/trpc/
-│   │   └── src/lib/trpc.ts     # Client tRPC configuration (uses SuperJSON transformer)
-│   ├── director/               # NestJS background worker, BullMQ consumer, and Socket.io gateway
+│   ├── app/                    # Next.js 15 App Router app (Frontend, auth routes)
+│   │   ├── src/app/            # Route groups: (auth), (home), (marketing), edit, editor
+│   │   ├── src/lib/trpc.ts     # Client tRPC configuration (for internal use if needed)
+│   │   └── src/lib/director.ts # Director API client configuration
+│   ├── director/               # NestJS API server, background worker, and Socket.io gateway
+│   │   ├── src/auth/           # JWT auth controller and guards
+│   │   ├── src/spaces/         # Spaces REST API controller and service
+│   │   ├── src/assets/         # Assets REST API controller and service
 │   │   ├── src/broadcast/      # Redis-backed Socket.io websocket adapter & gateway
 │   │   ├── src/indexing/       # NestJS services performing indexing, metadata updates, etc.
+│   │   ├── src/queue/          # BullMQ workers and queue configuration
 │   │   ├── src/main.ts         # Fastify-based NestJS bootstrapper (running on Port 4000)
 │   │   └── trigger/            # Trigger.dev v3 task handlers (elevenlabs, asset indexer, media gen)
 │   └── docs/                   # Documentation website

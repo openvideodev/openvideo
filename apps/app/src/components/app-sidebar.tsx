@@ -64,7 +64,7 @@ export function AppSidebar() {
   };
 
   const navItems = [
-    { id: "my-files", label: "My Files", icon: Folder, href: "/projects" },
+    { id: "my-files", label: "My Files", icon: Folder, href: "/spaces" },
     { id: "shared", label: "Shared with me", icon: Users, href: "/shared" },
     { id: "apps", label: "Apps", icon: Play, href: "/apps" },
     { id: "trash", label: "Trash", icon: Trash2, href: "/trash" },

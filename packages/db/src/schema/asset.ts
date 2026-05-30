@@ -154,7 +154,21 @@ export const assetRelations = relations(asset, ({ one, many }) => ({
   }),
   transcript: many(assetTranscript),
   visualTimeline: many(assetVisualTimeline),
-  indexingStatus: many(assetIndexingStatus),
+  indexingStatus: one(assetIndexingStatus, {
+    fields: [asset.id],
+    references: [assetIndexingStatus.assetId],
+  }),
+}));
+
+export const assetIndexingStatusRelations = relations(assetIndexingStatus, ({ one }) => ({
+  asset: one(asset, {
+    fields: [assetIndexingStatus.assetId],
+    references: [asset.id],
+  }),
+  space: one(space, {
+    fields: [assetIndexingStatus.spaceId],
+    references: [space.id],
+  }),
 }));
 
 export const assetTranscriptRelations = relations(assetTranscript, ({ one }) => ({
@@ -164,6 +178,17 @@ export const assetTranscriptRelations = relations(assetTranscript, ({ one }) => 
   }),
   space: one(space, {
     fields: [assetTranscript.spaceId],
+    references: [space.id],
+  }),
+}));
+
+export const assetVisualTimelineRelations = relations(assetVisualTimeline, ({ one }) => ({
+  asset: one(asset, {
+    fields: [assetVisualTimeline.assetId],
+    references: [asset.id],
+  }),
+  space: one(space, {
+    fields: [assetVisualTimeline.spaceId],
     references: [space.id],
   }),
 }));

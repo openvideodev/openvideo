@@ -1,5 +1,8 @@
 import { create } from "zustand";
-import type { Space } from "@/lib/spaces-api";
+import type { schema } from "@openvideo/db";
+
+// Infer Space type from the Drizzle schema (matches what tRPC returns)
+type Space = typeof schema.space.$inferSelect;
 
 interface ProjectsState {
   projects: Space[];
@@ -38,7 +41,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
   updateProject: (id, updates) =>
     set((state) => ({
       projects: state.projects.map((p) =>
-        p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p,
+        p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p,
       ),
     })),
 

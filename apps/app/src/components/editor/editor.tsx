@@ -15,8 +15,12 @@ import { AssetGeneratorModal } from "@/components/editor/media-panel/asset-gener
 import Assistant from "./assistant/assistant";
 import { core } from "@/lib/project";
 import { IProject } from "@openvideo/core";
-import { spacesAPI } from "@/lib/spaces-api";
+import { trpc } from "@/lib/trpc";
+import type { schema } from "@openvideo/db";
 import { useProjectStore } from "@/stores/project-store";
+
+// Infer Space type from the Drizzle schema (matches what tRPC returns)
+type Space = typeof schema.space.$inferSelect;
 
 export default function Editor({
   initialDesign,
@@ -52,27 +56,25 @@ export default function Editor({
     }
   }, [initialDesign]);
 
+  // tRPC query for project data
+  const { data: projectData } = trpc.space.getById.useQuery(
+    { id: projectId },
+    { enabled: !!projectId },
+  );
+
   useEffect(() => {
     if (!projectId) return;
-
     setProjectId(projectId);
+  }, [projectId, setProjectId]);
 
-    const loadProject = async () => {
-      try {
-        const projectData = await spacesAPI.get(projectId);
-        if (projectData) {
-          setSpaceId(projectData.id);
-          if (projectData.name) {
-            setProjectName(projectData.name);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading project in editor:", error);
+  useEffect(() => {
+    if (projectData) {
+      setSpaceId(projectData.id);
+      if (projectData.name) {
+        setProjectName(projectData.name);
       }
-    };
-
-    loadProject();
-  }, [projectId, setProjectId, setSpaceId, setProjectName]);
+    }
+  }, [projectData, setSpaceId, setProjectName]);
 
   useEffect(() => {
     const checkSupport = async () => {

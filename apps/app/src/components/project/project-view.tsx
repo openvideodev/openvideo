@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { spacesAPI, type Space } from "@/lib/spaces-api";
-import { getOpenVideoClient } from "@/lib/openvideo-client";
+import { trpc } from "@/lib/trpc";
+import type { schema } from "@openvideo/db";
+
+// Infer Space type from the Drizzle schema (matches what tRPC returns)
+type Space = typeof schema.space.$inferSelect;
 import {
   ArrowLeft,
   Upload,
@@ -16,10 +18,8 @@ import {
   Video,
   Image as ImageIcon,
   Music,
-  MessageSquare,
   Plus,
   Trash2,
-  Download,
   RefreshCw,
   MoreHorizontalIcon,
   Pencil,
@@ -50,11 +50,19 @@ import { useAssetsStore, type ProjectFile } from "@/stores/assets-store";
 export default function ProjectView({ projectId }: { projectId: string }) {
   const router = useRouter();
   const [project, setProject] = useState<Space | null>(null);
+  const [isLoadingProject, setIsLoadingProject] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+
+  // tRPC mutations
+  const deleteSpace = trpc.space.delete.useMutation();
+  const updateSpace = trpc.space.update.useMutation();
+  const createAsset = trpc.asset.create.useMutation();
+  const deleteAsset = trpc.asset.delete.useMutation();
+  const triggerAssetIndex = trpc.asset.triggerIndex.useMutation();
 
   const { messages: chatMessages, sendMessage, isThinking } = useDirector(project?.id ?? "");
 
@@ -66,70 +74,25 @@ export default function ProjectView({ projectId }: { projectId: string }) {
   const addFiles = useAssetsStore((state) => state.addFiles);
   const updateFile = useAssetsStore((state) => state.updateFile);
   const removeFile = useAssetsStore((state) => state.removeFile);
-  const setIsLoading = useAssetsStore((state) => state.setIsLoading);
   const setIsUploading = useAssetsStore((state) => state.setIsUploading);
 
-  useEffect(() => {
-    loadProject().then((projectData) => {
-      if (projectData?.id) loadFiles(projectData.id);
-    });
-  }, [projectId]);
+  // tRPC asset queries - poll every 2 seconds when uploading/indexing
+  const filesNeedUpdate = files.some(
+    (f) => f.indexingStatus === "pending" || f.indexingStatus === "processing" || isUploading,
+  );
+  const { data: assetsData, refetch: refetchAssets } = trpc.asset.list.useQuery(
+    { spaceId: project?.id ?? "" },
+    {
+      enabled: !!project?.id,
+      refetchInterval: filesNeedUpdate ? 2000 : false,
+    },
+  );
 
   useEffect(() => {
-    const inFlight = files.filter(
-      (f) =>
-        !f.id.startsWith("temp_") &&
-        (f.indexingStatus === "pending" || f.indexingStatus === "processing"),
-    );
-    if (inFlight.length === 0) return;
-
-    // Filter out files without spaceId
-    const validFiles = inFlight.filter((f) => f.spaceId);
-    if (validFiles.length === 0) return;
-
-    const openVideo = getOpenVideoClient();
-    const timer = setTimeout(async () => {
-      try {
-        const statuses = await Promise.all(
-          validFiles.map((f) =>
-            openVideo.assets
-              .getIndexStatus({ spaceId: f.spaceId, assetId: f.id })
-              .catch(() => null),
-          ),
-        );
-        validFiles.forEach((f, idx) => {
-          if (statuses[idx]?.status) {
-            updateFile(f.id, { indexingStatus: statuses[idx].status });
-          }
-        });
-      } catch {
-        // silently skip — next tick will retry
-      }
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [files, updateFile]);
-
-  const loadProject = async () => {
-    try {
-      const projectData = await spacesAPI.get(projectId);
-      setProject(projectData);
-      return projectData;
-    } catch (error) {
-      console.error("Error loading project:", error);
-      toast.error("Failed to load project");
-      return null;
-    }
-  };
-
-  const loadFiles = async (spaceId: string) => {
-    try {
-      setIsLoading(true);
-      const openVideo = getOpenVideoClient();
-      const assets = await openVideo.assets.list({ spaceId });
-
-      const projectFiles: ProjectFile[] = assets.map((asset: any) => ({
+    if (assetsData) {
+      const projectFiles: ProjectFile[] = assetsData.map((asset: any) => ({
         id: asset.id,
-        spaceId: asset.spaceId || spaceId, // Fallback to requested spaceId if not in response
+        spaceId: asset.spaceId,
         name: asset.name,
         type: asset.type,
         src: asset.src,
@@ -137,19 +100,27 @@ export default function ProjectView({ projectId }: { projectId: string }) {
         size: asset.size,
         createdAt: asset.createdAt,
         updatedAt: asset.updatedAt,
-        indexingStatus: asset.indexing?.status ?? null,
+        indexingStatus: asset.indexingStatus?.status ?? null,
       }));
-
       setFiles(projectFiles);
-      return projectFiles;
-    } catch (error) {
-      console.error("Error loading files:", error);
-      toast.error("Failed to load files");
-      return [];
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [assetsData, setFiles]);
+
+  const { data: projectData, isLoading: isQueryLoading } = trpc.space.getById.useQuery(
+    { id: projectId },
+    { enabled: !!projectId },
+  );
+
+  useEffect(() => {
+    if (projectData) {
+      setProject(projectData);
+      setIsLoadingProject(false);
+    }
+  }, [projectData]);
+
+  useEffect(() => {
+    setIsLoadingProject(isQueryLoading);
+  }, [isQueryLoading]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = event.target.files;
@@ -182,8 +153,6 @@ export default function ProjectView({ projectId }: { projectId: string }) {
     addFiles(tempFiles);
     setIsUploading(true);
 
-    const openVideo = getOpenVideoClient();
-
     // Upload files in parallel, updating status individually
     const uploadPromises = fileArray.map(async (file, index) => {
       const tempId = tempFiles[index].id;
@@ -207,10 +176,8 @@ export default function ProjectView({ projectId }: { projectId: string }) {
         });
         if (!uploadRes.ok) throw new Error(`Failed to upload ${file.name}`);
 
-        // 3. Register asset
-        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        await openVideo.assets.register({
-          id: fileId,
+        // 3. Register asset via tRPC (returns generated id)
+        const newAsset = await createAsset.mutateAsync({
           spaceId,
           name: file.name,
           type: tempFiles[index].type,
@@ -221,7 +188,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
         // 4. Indexing is already triggered by Director on asset registration
         // Replace temp file with real file (Director starts indexing automatically)
         updateFile(tempId, {
-          id: fileId,
+          id: newAsset.id,
           spaceId, // Ensure spaceId is preserved
           src: url,
           indexingStatus: "pending" as const,
@@ -247,10 +214,9 @@ export default function ProjectView({ projectId }: { projectId: string }) {
     try {
       if (!project?.id) return;
       const file = files.find((f) => f.id === fileId);
-      const openVideo = getOpenVideoClient();
 
       await Promise.all([
-        openVideo.assets.delete({ spaceId: project.id, assetId: fileId }),
+        deleteAsset.mutateAsync({ id: fileId, spaceId: project.id }),
         file?.src
           ? fetch("/api/uploads", {
               method: "DELETE",
@@ -271,8 +237,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
   const handleResyncFile = async (fileId: string) => {
     if (!project?.id) return;
     try {
-      const openVideo = getOpenVideoClient();
-      await openVideo.assets.reindex({ spaceId: project.id, assetId: fileId });
+      await triggerAssetIndex.mutateAsync({ id: fileId, spaceId: project.id });
       toast.success("Resyncing file...");
       updateFile(fileId, { indexingStatus: "pending" });
     } catch (error) {
@@ -482,7 +447,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-6 opacity-0 group-hover:opacity-100 transition-opacity absolute top-1.5 right-1.5 bg-black/50 hover:bg-black/70 text-white border-0"
+                                  className="size-6 opacity-0 group-hover:opacity-100 transition-opacity absolute top-1.5 right-1.5 bg-black/50 hover:bg-black/70 text-white border-0 z-30"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <MoreHorizontalIcon className="size-3" />
@@ -564,7 +529,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
                 if (!project) return;
                 setIsDeleting(true);
                 try {
-                  await spacesAPI.delete(project.id);
+                  await deleteSpace.mutateAsync({ id: project.id });
                   toast.success("Project deleted");
                   router.push("/home");
                 } catch {
@@ -600,7 +565,8 @@ export default function ProjectView({ projectId }: { projectId: string }) {
               onClick={async () => {
                 if (!project || !renameValue.trim()) return;
                 try {
-                  const updated = await spacesAPI.update(project.id, {
+                  const updated = await updateSpace.mutateAsync({
+                    id: project.id,
                     name: renameValue.trim(),
                   });
                   setProject(updated);

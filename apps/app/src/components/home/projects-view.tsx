@@ -6,10 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { Plus, MoreHorizontal, Trash2, Folder } from "lucide-react";
 import { useState, useEffect } from "react";
-import type { Space } from "@/lib/spaces-api";
 import { toast } from "sonner";
-import { spacesAPI } from "@/lib/spaces-api";
+import { trpc } from "@/lib/trpc";
 import { useProjectsStore } from "@/stores/projects-store";
+import type { schema } from "@openvideo/db";
+
+// Infer Space type from the Drizzle schema (matches what tRPC returns)
+type Space = typeof schema.space.$inferSelect;
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +40,7 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const router = useRouter();
 
   const handleOpen = () => {
-    router.push(`/projects/${project.id}`);
+    router.push(`/spaces/${project.id}`);
   };
 
   const formatDate = (date: string | Date) => {
@@ -105,40 +108,44 @@ export default function ProjectsView() {
   const addProject = useProjectsStore((state) => state.addProject);
   const removeProject = useProjectsStore((state) => state.removeProject);
 
-  const loadProjects = async () => {
-    try {
-      setIsLoading(true);
-      const spacesData = await spacesAPI.list();
+  const { data: spacesData, isLoading: isLoadingSpaces } = trpc.space.list.useQuery();
+
+  useEffect(() => {
+    if (spacesData) {
       setProjects(spacesData);
-    } catch {
-      toast.error("Failed to load projects");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [spacesData, setProjects]);
+
+  useEffect(() => {
+    setIsLoading(isLoadingSpaces);
+  }, [isLoadingSpaces, setIsLoading]);
 
   const handleCreateClick = () => {
     setNewProjectName("");
     setCreateDialogOpen(true);
   };
 
-  const confirmCreate = async () => {
-    if (isCreating || !newProjectName.trim()) return;
-    setIsCreating(true);
-    try {
-      const newSpace = await spacesAPI.create({
-        name: newProjectName.trim(),
-        description: "",
-      });
+  const createSpace = trpc.space.create.useMutation({
+    onSuccess: (newSpace) => {
       addProject(newSpace);
       toast.success("Project created");
       setCreateDialogOpen(false);
       setNewProjectName("");
-    } catch {
-      toast.error("Failed to create project");
-    } finally {
       setIsCreating(false);
-    }
+    },
+    onError: () => {
+      toast.error("Failed to create project");
+      setIsCreating(false);
+    },
+  });
+
+  const confirmCreate = async () => {
+    if (isCreating || !newProjectName.trim()) return;
+    setIsCreating(true);
+    createSpace.mutate({
+      name: newProjectName.trim(),
+      description: "",
+    });
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -146,23 +153,26 @@ export default function ProjectsView() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!projectToDelete) return;
-    try {
-      await spacesAPI.delete(projectToDelete);
-      removeProject(projectToDelete);
-      toast.success("Project deleted");
-    } catch {
-      toast.error("Failed to delete project");
-    } finally {
+  const deleteSpace = trpc.space.delete.useMutation({
+    onSuccess: () => {
+      if (projectToDelete) {
+        removeProject(projectToDelete);
+        toast.success("Project deleted");
+      }
       setDeleteDialogOpen(false);
       setProjectToDelete(null);
-    }
-  };
+    },
+    onError: () => {
+      toast.error("Failed to delete project");
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    },
+  });
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
+    deleteSpace.mutate({ id: projectToDelete });
+  };
 
   return (
     <>

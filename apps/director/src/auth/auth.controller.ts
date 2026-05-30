@@ -10,6 +10,7 @@ import {
   Body,
   Param,
   Headers,
+  Req,
   UnauthorizedException,
   ConflictException,
 } from "@nestjs/common";
@@ -162,6 +163,35 @@ export class AuthController {
         createdAt: user.createdAt,
       },
     };
+  }
+
+  /**
+   * Generate WebSocket token for real-time connection
+   * POST /auth/token
+   */
+  @Post("token")
+  async getToken(
+    @Body() body: { userId: string; spaceId?: string },
+    @Ctx() ctx: RequestContext,
+    @Req() req: any,
+  ) {
+    // Verify the requesting user matches the authenticated user
+    if (body.userId !== ctx.userId) {
+      throw new UnauthorizedException("User ID mismatch");
+    }
+
+    // Get user info from JWT payload
+    const user = req.user;
+
+    // Generate JWT for WebSocket connection
+    const token = this.jwtService.sign({
+      sub: ctx.userId,
+      email: user?.email,
+      name: user?.name,
+      spaceId: body.spaceId,
+    });
+
+    return { token };
   }
 
   /**
