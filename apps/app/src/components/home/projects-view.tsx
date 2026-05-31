@@ -49,7 +49,7 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
 
   return (
     <div
-      className="group relative rounded-lg border border-border/40 bg-card/50 overflow-hidden hover:border-border hover:bg-card transition-all cursor-pointer"
+      className="group relative rounded-lg border border-border/50 bg-card overflow-hidden hover:border-border transition-all cursor-pointer"
       onClick={handleOpen}
     >
       {/* Thumbnail area - square like asset grid */}
@@ -81,7 +81,7 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-2.5 border-t border-border/40">
+      <div className="p-2.5 border-t border-border/50">
         <h3 className="font-medium text-sm truncate">{project.name}</h3>
         <p className="text-xs text-muted-foreground mt-0.5">{formatDate(project.updatedAt)}</p>
       </div>

@@ -31,7 +31,7 @@ export default function PanelElements() {
     <div className="h-full flex flex-col">
       {/* Grid - matching assets panel auto-fill grid */}
       <div className="flex-1 overflow-auto p-4">
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-3">
           {ELEMENTS.map((element) => (
             <button
               key={element.id}
