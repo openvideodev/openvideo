@@ -21,7 +21,7 @@ const Navbar = () => {
       className="border-b w-full bg-card/80 backdrop-blur-md sticky top-0 z-50 px-4"
       aria-label="Main"
     >
-      <div className="max-w-6xl mx-auto h-16 flex items-center">
+      <div className="max-w-7xl mx-auto h-16 flex items-center">
         {/* Desktop Navigation */}
         <div className="hidden md:grid grid-cols-3 w-full items-center">
           {/* Left: Logo */}

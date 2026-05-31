@@ -47,7 +47,7 @@
   --radius-4xl: calc(var(--radius) + 16px);
   --font-heading: var(--font-sans);
 
-  --color-cossistant-orange: var(--cossistant-orange);
+  --color-openvideo-gray: var(--openvideo-gray);
 }
 
 :root {
@@ -86,7 +86,7 @@
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
 
-  --cossistant-orange: hsla(156, 86%, 40%, 1);
+  --openvideo-gray: rgb(227, 219, 211);
 }
 
 .dark {
@@ -233,60 +233,10 @@
   background: repeating-linear-gradient(45deg, transparent 0 4px, var(--border-light) 4px 6px);
 }
 
-/* Fake Browser Wrapper - responsive scaling for marketing page */
-@media (max-width: 767px) {
-  .fake-browser-wrapper {
-    width: 1280px !important;
-    height: 720px !important;
-    transform: scale(0.5) !important;
-    transform-origin: center center !important;
-    max-width: none !important;
-  }
-
-  .fake-browser-wrapper > div {
-    height: 720px !important;
-    min-height: 720px !important;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .fake-browser-wrapper {
-    width: 1280px !important;
-    height: 720px !important;
-    max-width: calc(100% / 0.65) !important;
-    max-height: calc(100% / 0.65) !important;
-    transform: scale(0.65) !important;
-    transform-origin: center center !important;
-  }
-
-  .fake-browser-wrapper > div {
-    height: 720px !important;
-    min-height: 720px !important;
-  }
-}
-
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .fake-browser-wrapper {
-    width: 1280px !important;
-    height: 720px !important;
-    max-width: calc(100% / 0.75) !important;
-    max-height: calc(100% / 0.75) !important;
-    transform: scale(0.75) !important;
-    transform-origin: center center !important;
-  }
-
-  .fake-browser-wrapper > div {
-    height: 720px !important;
-    min-height: 720px !important;
-  }
-}
-
-@media (min-width: 1280px) {
-  .fake-browser-wrapper {
-    width: 100% !important;
-    max-width: min(1450px, calc(100% / 0.9)) !important;
-    height: 100%;
-    transform: scale(0.9) !important;
-    transform-origin: center !important;
-  }
+.fake-browser-wrapper {
+  width: 100% !important;
+  max-width: min(1450px, calc(100% / 0.9)) !important;
+  height: 100%;
+  transform: scale(0.9) !important;
+  transform-origin: center !important;
 }

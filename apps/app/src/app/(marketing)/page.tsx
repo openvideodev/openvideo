@@ -13,7 +13,7 @@ export default function HomePage() {
       <DiagonalStripes />
 
       <Hero />
-      <div className="relative hidden w-full md:block h-[900px]">
+      <div className="relative  w-full h-[600px] md:h-[700px] lg:h-[850px]">
         <FullWidthBorder className="top-0" />
         <BrowserWithBackground containerClassName="h-full w-full">
           <FakeEditor />
