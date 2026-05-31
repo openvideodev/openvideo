@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { DotOrbit } from "@paper-design/shaders-react";
 import { Sparkles, Play } from "lucide-react";
 
 const Hero = () => {
@@ -43,7 +42,11 @@ const Hero = () => {
             size="lg"
             className="h-11 px-5 font-medium border-border/50 hover:border-border hover:bg-muted/50 transition-all duration-200"
           >
-            <Link href="#features" className="text-sm">
+            <Link
+              href="https://docs.openvideo.dev/core/00-getting-started"
+              target="_blank"
+              className="text-sm"
+            >
               Learn More
             </Link>
           </Button>

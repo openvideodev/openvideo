@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
 const navLinks = [
-  { name: "Changelog", href: "/changelog", external: false },
+  {
+    name: "Changelog",
+    href: "https://docs.openvideo.dev/core/00-getting-started",
+    external: false,
+  },
   { name: "Discord", href: "https://discord.gg/SCfMrQx8kr", external: true },
   { name: "GitHub", href: "https://github.com/openvideodev/openvideo", external: true },
 ];
