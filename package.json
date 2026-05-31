@@ -37,7 +37,8 @@
   "pnpm": {
     "overrides": {
       "@types/react": "19.2.8",
-      "@types/react-dom": "19.2.3"
+      "@types/react-dom": "19.2.3",
+      "canvas": "3.2.3"
     }
   }
 }
