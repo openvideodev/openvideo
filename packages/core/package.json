@@ -33,9 +33,9 @@
     "tag": "latest"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "test": "vitest"
+    "dev": "pnpm exec vite",
+    "build": "pnpm exec tsc && pnpm exec vite build",
+    "test": "pnpm exec vitest"
   },
   "dependencies": {
     "lodash-es": "^4.17.21",

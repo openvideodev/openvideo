@@ -23,13 +23,13 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "pnpm exec tsc",
+    "dev": "pnpm exec tsc --watch",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "check-types": "tsc --noEmit"
+    "check-types": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

@@ -33,9 +33,9 @@
     "tag": "latest"
   },
   "scripts": {
-    "test": "vitest",
-    "test:browser": "vitest run --project unit-chromium",
-    "build": "vite build"
+    "test": "pnpm exec vitest",
+    "test:browser": "pnpm exec vitest run --project unit-chromium",
+    "build": "pnpm exec vite build"
   },
   "dependencies": {
     "@openvideo/core": "workspace:*",

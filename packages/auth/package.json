@@ -23,9 +23,9 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "check-types": "tsc --noEmit"
+    "build": "pnpm exec tsc",
+    "dev": "pnpm exec tsc --watch",
+    "check-types": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.11",

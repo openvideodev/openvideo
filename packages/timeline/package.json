@@ -31,10 +31,10 @@
     "tag": "latest"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --max-warnings 0",
-    "format": "prettier --write ."
+    "dev": "pnpm exec vite",
+    "build": "pnpm exec tsc && pnpm exec vite build",
+    "lint": "pnpm exec eslint . --max-warnings 0",
+    "format": "pnpm exec prettier --write ."
   },
   "dependencies": {
     "@openvideo/core": "workspace:*",

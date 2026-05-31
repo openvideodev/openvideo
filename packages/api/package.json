@@ -23,9 +23,9 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "check-types": "tsc --noEmit"
+    "build": "pnpm exec tsc",
+    "dev": "pnpm exec tsc --watch",
+    "check-types": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^1.51.0",

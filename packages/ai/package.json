@@ -31,10 +31,10 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-    "lint": "tsc --noEmit",
-    "test": "vitest"
+    "build": "pnpm exec tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "pnpm exec tsup src/index.ts --format esm,cjs --dts --watch",
+    "lint": "pnpm exec tsc --noEmit",
+    "test": "pnpm exec vitest"
   },
   "dependencies": {
     "socket.io-client": "^4.8.3",
