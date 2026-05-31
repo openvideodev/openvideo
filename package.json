@@ -9,7 +9,6 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "check-types": "turbo run check-types",
-    "prepare": "husky",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "turbo run build --filter=\"@openvideo/*\" && changeset publish",
