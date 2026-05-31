@@ -37,6 +37,7 @@ export function UserAuthForm({ className, kind, ...props }: UserAuthFormProps) {
   const authWithMaginLink = async (event: React.SyntheticEvent) => {
     event.preventDefault();
     setIsLoading(true);
+    console.log("[AUTH-CLIENT] Starting magic link sign-in for:", email);
 
     await authClient.signIn.magicLink(
       {
@@ -46,12 +47,14 @@ export function UserAuthForm({ className, kind, ...props }: UserAuthFormProps) {
 
       {
         onSuccess: (ctx) => {
+          console.log("[AUTH-CLIENT] Magic link sign-in success:", ctx);
           setIsLoading(false);
           if (router) {
             router.push("/confirm"); // Navigate to /confirm
           }
         },
         onError: (ctx) => {
+          console.error("[AUTH-CLIENT] Magic link sign-in error:", ctx);
           setIsLoading(false);
         },
       },
