@@ -1,28 +1,53 @@
+import { getDB, schema, eq, and } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
 import { BaseMessage, HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
+import { nanoid } from "nanoid";
 
 @Injectable()
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
 
-  constructor(private db: DrizzleService) {}
-
   async getOrCreateSession(projectId: string, userId: string): Promise<string> {
-    let session = await this.db.findSession(projectId, userId);
+    // Try to find existing session for this space+user
+    const [existing] = await db
+      .select()
+      .from(schema.directorSession)
+      .where(
+        and(
+          eq(schema.directorSession.spaceId, projectId),
+          eq(schema.directorSession.userId, userId),
+        ),
+      )
+      .limit(1);
 
-    if (!session) {
-      session = await this.db.createSession(projectId, userId);
-      this.logger.log(
-        `Created new session ${session.id} for user ${userId} in project ${projectId}`,
-      );
-    }
+    if (existing) return existing.id;
 
-    return session.id;
+    // Create new session
+    const [created] = await db
+      .insert(schema.directorSession)
+      .values({
+        id: nanoid(),
+        spaceId: projectId,
+        userId,
+        historyJson: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    this.logger.log(`Created new session ${created.id} for user ${userId} in project ${projectId}`);
+    return created.id;
   }
 
   async getHistory(sessionId: string): Promise<BaseMessage[]> {
-    const session = await this.db.findSessionById(sessionId);
+    const [session] = await db
+      .select()
+      .from(schema.directorSession)
+      .where(eq(schema.directorSession.id, sessionId))
+      .limit(1);
+
     if (!session?.historyJson) return [];
 
     const rawHistory = session.historyJson as any[];
@@ -35,7 +60,12 @@ export class SessionService {
   }
 
   async appendMessages(sessionId: string, messages: BaseMessage[]): Promise<void> {
-    const session = await this.db.findSessionById(sessionId);
+    const [session] = await db
+      .select()
+      .from(schema.directorSession)
+      .where(eq(schema.directorSession.id, sessionId))
+      .limit(1);
+
     if (!session) return;
 
     const currentHistory = (session.historyJson as any[]) || [];
@@ -44,6 +74,9 @@ export class SessionService {
       content: m.content,
     }));
 
-    await this.db.updateSessionHistory(sessionId, [...currentHistory, ...newMessages]);
+    await db
+      .update(schema.directorSession)
+      .set({ historyJson: [...currentHistory, ...newMessages], updatedAt: new Date() })
+      .where(eq(schema.directorSession.id, sessionId));
   }
 }

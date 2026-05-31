@@ -5,8 +5,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { Log } from "@openvideo/engine-pixi";
 import { ExportModal } from "./export-modal";
 import Link from "next/link";
-import { Icons } from "../shared/icons";
-import { Keyboard, ChevronLeft } from "lucide-react";
+import { Keyboard, ChevronLeft, PenLine, Bot, Play, Undo2, Redo2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { ShortcutsModal } from "./shortcuts-modal";
 import { useEffect } from "react";
@@ -15,6 +14,8 @@ import AutosizeInput from "../ui/autosize-input";
 import { authClient } from "@/lib/auth-client";
 import { core, projectStore } from "@/lib/project";
 import { useStore } from "zustand";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePanelStore } from "@/stores/panel-store";
 
 export default function Header() {
   const { aspectRatio, setCanvasSize } = useProjectStore();
@@ -28,6 +29,7 @@ export default function Header() {
   const { projectName, setProjectName } = useProjectStore();
   const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState(projectName || "Untitled video");
+  const { editorMode, setEditorMode } = usePanelStore();
 
   // Sync title with store when project name changes externally (like on initial load)
   useEffect(() => {
@@ -55,79 +57,7 @@ export default function Header() {
   const canUndo = useStore(projectStore, (s) => s.history.length > 0);
   const canRedo = useStore(projectStore, (s) => s.future.length > 0);
 
-  // NOTE: canUndo/canRedo state now sourced from core.store — no studio history listener needed.
-
-  // const handleSave = async (showToast = true) => {
-  //   if (!studio || !projectId) return;
-
-  //   setIsSaving(true);
-  //   let toastId;
-  //   if (showToast) {
-  //     toastId = toast.loading('Saving project...');
-  //   }
-
-  //   try {
-  //     const studioJSON = studio.exportToJSON();
-  //     await storageService.saveProjectFull(projectId, studioJSON);
-  //     console.log('Project saved', studioJSON);
-  //     if (showToast) {
-  //       toast.success('Project saved', { id: toastId });
-  //     }
-  //   } catch (error) {
-  //     console.error('Failed to save project', error);
-  //     if (showToast) {
-  //       toast.error('Failed to save project', { id: toastId });
-  //     }
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-  // Auto-save on studio changes (with debounce)
-  // useEffect(() => {
-  //   if (!studio || !projectId) return;
-
-  //   let timeoutId: NodeJS.Timeout;
-
-  //   const onStudioChange = () => {
-  //     clearTimeout(timeoutId);
-  //     timeoutId = setTimeout(() => {
-  //       handleSave(false); // Silent save
-  //     }, 1000); // 1 second debounce
-  //   };
-  //   const eventsToListen = [
-  //     'history:changed',
-  //     'clip:added',
-  //     'clip:removed',
-  //     'clip:updated',
-  //     'clip:moved',
-  //     'track:added',
-  //     'track:removed',
-  //     'clips:removed',
-  //     'clip:replaced',
-  //     'clip:propsChange',
-  //     'propsChange',
-  //   ];
-
-  //   eventsToListen.forEach((event) => {
-  //     studio.on(event, onStudioChange);
-  //   });
-
-  //   return () => {
-  //     eventsToListen.forEach((event) => {
-  //       studio.off(event, onStudioChange);
-  //     });
-  //     clearTimeout(timeoutId);
-  //   };
-  // }, [studio, projectId]);
-
-  const handleNew = () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to start a new project? Unsaved changes will be lost.",
-    );
-    if (confirmed) {
-      core.project.new();
-    }
-  };
+  // NOTE: canUndo/canRedo state now sourced from core.store
 
   const handleExportJSON = () => {
     try {
@@ -192,79 +122,100 @@ export default function Header() {
     setTitle(e.target.value);
   };
 
-  const handleLoadFromJson = async () => {
-    // const fontsInTemplate = template.clips.map((clip) => clip.style.fontUrl);
-    // await fontManager.loadFonts({
-    //   name: DEFAULT_FONT.postScriptName,
-    //   src: DEFAULT_FONT.src
-    // })
-    // // const loadedFonts = await Promise.all(fontsInTemplate.map((url) => core.fontManager.load(url)));
-    // core.project.import(template);
-  };
-
   return (
-    <header className="relative flex h-[52px] w-full shrink-0 items-center justify-between px-4 bg-card z-10 border-b">
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="icon" asChild className="h-8 w-8 shrink-0">
-          <Link href="/home">
-            <ChevronLeft className="h-5 w-5 text-muted-foreground" />
-          </Link>
-        </Button>
-        {/* <Button
-          onClick={() => {
-            console.log(core.project.export());
-          }}
+    <header className="flex h-12 w-full shrink-0 items-center px-4 bg-card z-10 border-b">
+      {/* Left: Project Navigation */}
+      <div className="flex items-center gap-4 w-[280px]">
+        <button
+          onClick={() => router.push("/spaces")}
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
         >
-          Debug
-        </Button> */}
-        <div className="pointer-events-auto flex h-10 items-center gap-2 rounded-md">
-          <AutosizeInput
-            name="title"
-            value={title}
-            onChange={handleTitleChange}
-            width={150}
-            inputClassName="border-none outline-none px-1 text-sm font-medium"
-          />
-        </div>
+          <ChevronLeft className="h-4 w-4" />
+          <span className="text-sm font-medium">Projects</span>
+        </button>
+
+        <div className="w-px h-4 bg-border" />
+
+        <AutosizeInput
+          name="title"
+          value={title}
+          onChange={handleTitleChange}
+          width={140}
+          inputClassName="border-none bg-transparent px-0 py-1 text-sm font-semibold text-foreground focus:outline-none"
+        />
       </div>
 
-      {/* Right Section */}
-      <div className="flex items-center gap-4 pr-4">
-        <div className="flex items-center">
-          <Button
+      {/* Center: Mode Switcher */}
+      <div className="flex-1 flex justify-center">
+        <Tabs
+          value={editorMode}
+          onValueChange={(v) => setEditorMode(v as "editor" | "agent" | "playground")}
+        >
+          <TabsList className="h-8 bg-muted/50 border-0">
+            <TabsTrigger
+              value="editor"
+              className="text-xs gap-1.5 px-3 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <PenLine className="h-3.5 w-3.5" />
+              Editor
+            </TabsTrigger>
+            <TabsTrigger
+              value="agent"
+              className="text-xs gap-1.5 px-3 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              Agent
+            </TabsTrigger>
+            <TabsTrigger
+              value="playground"
+              className="text-xs gap-1.5 px-3 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Playground
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Right: Actions */}
+      <div className="flex items-center justify-end gap-3 w-[280px]">
+        {/* History Controls */}
+        <div className="flex items-center gap-1">
+          <button
             onClick={() => core.undo()}
             disabled={!canUndo}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors disabled:opacity-30"
           >
-            <Icons.undo className="size-4.5" />
-          </Button>
-          <Button
+            <Undo2 className="h-4 w-4" />
+          </button>
+          <button
             onClick={() => core.redo()}
             disabled={!canRedo}
-            className="text-muted-foreground h-8 w-8"
-            variant="ghost"
-            size="icon"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors disabled:opacity-30"
           >
-            <Icons.redo className="size-4.5" />
-          </Button>
+            <Redo2 className="h-4 w-4" />
+          </button>
         </div>
 
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        <div className="w-px h-4 bg-border" />
+
+        {/* Help & Export */}
+        <div className="flex items-center gap-1">
+          <button
             onClick={() => setIsShortcutsModalOpen(true)}
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
           >
-            <Keyboard className="size-5" />
-          </Button>
-        </div>
+            <Keyboard className="h-4 w-4" />
+          </button>
 
-        <Button size="sm" className="gap-2 h-8 px-4" onClick={() => setIsExportModalOpen(true)}>
-          Download
-        </Button>
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-foreground text-background text-xs font-medium rounded-md hover:bg-foreground/90 transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </button>
+        </div>
 
         <ExportModal open={isExportModalOpen} onOpenChange={setIsExportModalOpen} />
         <ShortcutsModal open={isShortcutsModalOpen} onOpenChange={setIsShortcutsModalOpen} />

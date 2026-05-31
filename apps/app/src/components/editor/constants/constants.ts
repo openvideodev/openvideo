@@ -17,3 +17,8 @@ export const SMALL_FONT_SIZE = 12;
 // Dynamic timeline offset values
 export const TIMELINE_OFFSET_X_SMALL = 8;
 export const TIMELINE_OFFSET_X_LARGE = 16;
+
+// Timeline item selection styling
+export const TIMELINE_SELECTED_BORDER_COLOR = "rgba(255, 255, 255, 0.65)";
+export const TIMELINE_UNSELECTED_BORDER_COLOR = "rgba(255, 255, 255, 0.05)";
+export const TIMELINE_BORDER_WIDTH = 1.5;

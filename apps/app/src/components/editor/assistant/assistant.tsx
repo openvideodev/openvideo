@@ -42,7 +42,14 @@ export default function Assistant() {
         onInputChange={setInput}
         onSend={handleSubmit}
         placeholder="How can I help you edit?"
-        emptyState={emptyState}
+        emptyState={
+          <div className="p-6">
+            <div className="max-w-lg font-regular text-sm">
+              Fresh project — describe what you want to see, or let&apos;s brainstorm about where to
+              start.
+            </div>
+          </div>
+        }
         className="flex-1 min-h-0"
       />
     </div>

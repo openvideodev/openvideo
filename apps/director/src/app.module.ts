@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module";
-import { DbModule } from "./db/db.module";
 import { CoreModule } from "./core/core.module";
 import { GatewayModule } from "./gateway/gateway.module";
 import { RagModule } from "./rag/rag.module";
@@ -10,7 +9,6 @@ import { PlannerModule } from "./planner/planner.module";
 import { ExecutorModule } from "./executor/executor.module";
 import { QueueModule } from "./queue/queue.module";
 import { AssetsModule } from "./assets/assets.module";
-import { ProjectModule } from "./project/project.module";
 import { SessionModule } from "./session/session.module";
 import { DirectorModule } from "./director/director.module";
 import { HealthController } from "./health/health.controller";
@@ -28,7 +26,6 @@ import { ChatModule } from "./chat/chat.module";
     }),
     CommonModule,
     AuthModule,
-    DbModule,
     CoreModule,
     GatewayModule,
     RagModule,
@@ -37,7 +34,6 @@ import { ChatModule } from "./chat/chat.module";
     ExecutorModule,
     QueueModule,
     AssetsModule,
-    ProjectModule,
     SessionModule,
     DirectorModule,
     TriggerModule,

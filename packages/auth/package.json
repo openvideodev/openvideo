@@ -1,0 +1,39 @@
+{
+  "name": "@openvideo/auth",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared authentication utilities for OpenVideo",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./session": {
+      "types": "./dist/session.d.ts",
+      "import": "./dist/session.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.6.11",
+    "@openvideo/db": "workspace:*",
+    "better-auth": "^1.6.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "~5.9.2"
+  }
+}

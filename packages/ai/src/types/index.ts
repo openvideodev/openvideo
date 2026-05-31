@@ -30,7 +30,17 @@ export interface Space {
   id: string;
   name: string;
   userId: string;
-  data: SpaceData;
+  description?: string | null;
+  thumbnail?: string | null;
+  width: number;
+  height: number;
+  fps: number;
+  scene: {
+    tracks: any[];
+    clips: Record<string, any>;
+    settings?: any;
+  };
+  data?: any;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,12 +75,24 @@ export interface Clip {
 
 export interface CreateSpaceRequest {
   name: string;
-  data?: SpaceData;
+  description?: string;
+  thumbnail?: string;
+  width?: number;
+  height?: number;
+  fps?: number;
+  scene?: any;
+  data?: any;
 }
 
 export interface UpdateSpaceRequest {
   name?: string;
-  data?: SpaceData;
+  description?: string | null;
+  thumbnail?: string | null;
+  width?: number;
+  height?: number;
+  fps?: number;
+  scene?: any;
+  data?: any;
 }
 
 // ----------------------------------------------------------------------------

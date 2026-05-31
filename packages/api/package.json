@@ -1,0 +1,46 @@
+{
+  "name": "@openvideo/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "tRPC API for OpenVideo - type-safe backend API",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./router": {
+      "types": "./dist/root.d.ts",
+      "import": "./dist/root.js"
+    },
+    "./trpc": {
+      "types": "./dist/trpc.d.ts",
+      "import": "./dist/trpc.js"
+    },
+    "./handler": {
+      "types": "./dist/handler.d.ts",
+      "import": "./dist/handler.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^1.51.0",
+    "@openvideo/auth": "workspace:*",
+    "@openvideo/db": "workspace:*",
+    "@trigger.dev/sdk": "^4.4.5",
+    "@trpc/server": "^11.0.0",
+    "bullmq": "^5.51.0",
+    "drizzle-orm": "^0.45.2",
+    "jose": "^6.2.3",
+    "superjson": "^2.2.2",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "~5.9.2"
+  }
+}

@@ -3,7 +3,7 @@
 // ============================================================================
 
 import type { HttpClient } from "../client.js";
-import type { Space, CreateSpaceRequest } from "../types/index.js";
+import type { Space, CreateSpaceRequest, UpdateSpaceRequest } from "../types/index.js";
 
 export class SpacesResource {
   constructor(private client: HttpClient) {}
@@ -35,7 +35,7 @@ export class SpacesResource {
   /**
    * Update a space
    */
-  async update(params: { id: string; name?: string; data?: any }): Promise<Space> {
+  async update(params: { id: string } & UpdateSpaceRequest): Promise<Space> {
     const { id, ...body } = params;
     const response = await this.client.patch<Space>(`/spaces/${id}`, body);
     return response;

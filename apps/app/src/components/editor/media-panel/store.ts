@@ -2,9 +2,9 @@ import { Icons } from "@/components/shared/icons";
 import {
   IconLetterT,
   IconSubtitles,
-  IconSparkles,
   IconPhoto,
   type IconProps,
+  IconSparkle2,
 } from "@tabler/icons-react";
 import { ShapesIcon } from "lucide-react";
 import { create } from "zustand";
@@ -31,7 +31,7 @@ export const tabs: {
     label: "Transitions",
   },
   effects: {
-    icon: IconSparkles,
+    icon: IconSparkle2,
     label: "Effects",
   },
   elements: {

@@ -1,7 +1,7 @@
+import { getDB, schema, eq, and } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
-import * as schema from "../db/schema";
-import { eq, and } from "drizzle-orm";
 import { RequestContext } from "../common/request-context";
 import { IndexingStatusService } from "../rag/indexing-status.service";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -13,7 +13,6 @@ export class IndexingService {
   private readonly logger = new Logger(IndexingService.name);
 
   constructor(
-    private db: DrizzleService,
     private indexingStatus: IndexingStatusService,
     private triggerService: TriggerService,
     @InjectQueue("index-project") private projectIndexQueue: Queue,
@@ -39,7 +38,7 @@ export class IndexingService {
       where = and(where, eq(schema.asset.orgId, ctx.orgId));
     }
 
-    const assets = await this.db.db.select({ id: schema.asset.id }).from(schema.asset).where(where);
+    const assets = await db.select({ id: schema.asset.id }).from(schema.asset).where(where);
 
     // Queue indexing for each asset
     const jobIds: string[] = [];
@@ -125,7 +124,7 @@ export class IndexingService {
       where = and(where, eq(schema.asset.orgId, ctx.orgId));
     }
 
-    const assets = await this.db.db
+    const assets = await db
       .select({
         id: schema.asset.id,
         name: schema.asset.name,
@@ -135,11 +134,13 @@ export class IndexingService {
       .where(where);
 
     // Get indexing statuses
-    const statuses = await Promise.all(assets.map((a) => this.indexingStatus.getStatus(a.id, ctx)));
+    const statuses = await Promise.all(
+      assets.map((a: any) => this.indexingStatus.getStatus(a.id, ctx)),
+    );
 
     return {
       spaceId,
-      assets: assets.map((asset, i) => {
+      assets: assets.map((asset: any, i: number) => {
         const status = statuses[i];
         return {
           id: asset.id,
@@ -171,10 +172,7 @@ export class IndexingService {
       where = and(where, eq(schema.space.userId, ctx.userId));
     }
 
-    const [space] = await this.db.db
-      .select({ id: schema.space.id })
-      .from(schema.space)
-      .where(where);
+    const [space] = await db.select({ id: schema.space.id }).from(schema.space).where(where);
 
     if (!space) {
       throw new NotFoundException(`Space ${spaceId} not found`);

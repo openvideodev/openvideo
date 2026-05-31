@@ -9,10 +9,7 @@
     "build": "pnpm run build:app && pnpm rebuild",
     "start": "node dist/src/main.js",
     "dev": "nest start --watch",
-    "test": "vitest",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "test": "vitest"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
@@ -30,7 +27,10 @@
     "@nestjs/platform-fastify": "^10.4.15",
     "@nestjs/platform-socket.io": "^10.4.22",
     "@nestjs/websockets": "^10.4.15",
+    "@openvideo/api": "workspace:*",
+    "@openvideo/auth": "workspace:*",
     "@openvideo/core": "workspace:*",
+    "@openvideo/db": "workspace:*",
     "@socket.io/redis-adapter": "^8.3.0",
     "@trigger.dev/sdk": "^4.4.5",
     "bcrypt": "^5.1.1",

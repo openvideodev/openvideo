@@ -1,11 +1,10 @@
 import { Module, OnModuleInit } from "@nestjs/common";
 import { CoreRegistryService } from "./core-registry.service";
-import { DbModule } from "../db/db.module";
 import { NodeMetadataProvider } from "./node-metadata-provider";
 import { CoreConfig } from "@openvideo/core";
 
 @Module({
-  imports: [DbModule],
+  imports: [],
   providers: [CoreRegistryService, NodeMetadataProvider],
   exports: [CoreRegistryService],
 })

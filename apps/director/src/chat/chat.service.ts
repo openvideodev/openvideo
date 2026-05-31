@@ -1,12 +1,18 @@
+import { getDB, schema, eq, and } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
-import * as schema from "../db/schema";
-import { eq, and } from "drizzle-orm";
 import { RequestContext } from "../common/request-context";
 import { VectorStoreService } from "../rag/vector-store.service";
 import { ConfigService } from "@nestjs/config";
 import { GoogleGenAI } from "@google/genai";
-import { ChatMessageDto } from "./chat.controller";
+
+export interface ChatMessageDto {
+  message: string;
+  context?: {
+    limit?: number;
+  };
+}
 
 export interface ChatResponse {
   message: string;
@@ -28,7 +34,6 @@ export class ChatService {
   private ai: GoogleGenAI;
 
   constructor(
-    private db: DrizzleService,
     private vectorStore: VectorStoreService,
     private configService: ConfigService,
   ) {
@@ -107,10 +112,7 @@ Provide a helpful, concise answer. Reference specific assets and timestamps when
       where = and(where, eq(schema.space.userId, ctx.userId));
     }
 
-    const [space] = await this.db.db
-      .select({ id: schema.space.id })
-      .from(schema.space)
-      .where(where);
+    const [space] = await db.select({ id: schema.space.id }).from(schema.space).where(where);
 
     if (!space) {
       throw new NotFoundException(`Space ${spaceId} not found`);

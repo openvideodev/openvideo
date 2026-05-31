@@ -1,5 +1,7 @@
+import { getDB, schema, eq } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
 import { ServerCore } from "./server-core";
 import { IProject } from "@openvideo/core";
 
@@ -8,30 +10,37 @@ export class CoreRegistryService {
   private cores = new Map<string, ServerCore>();
   private readonly logger = new Logger(CoreRegistryService.name);
 
-  constructor(private db: DrizzleService) {}
-
   async get(projectId: string): Promise<ServerCore> {
     if (this.cores.has(projectId)) {
       return this.cores.get(projectId)!;
     }
 
-    this.logger.log(`Loading project ${projectId} from database into memory`);
-    const snapshot = await this.db.loadSpaceSnapshot(projectId);
+    this.logger.log(`Loading space ${projectId} from database into memory`);
 
-    // If no snapshot exists, load project dimensions from project table
-    let initialState = snapshot;
-    if (!snapshot) {
-      const projectData = await this.db.loadProjectData(projectId);
-      if (projectData) {
+    const [spaceRow] = await db
+      .select()
+      .from(schema.space)
+      .where(eq(schema.space.id, projectId))
+      .limit(1);
+
+    let initialState: any = null;
+
+    if (spaceRow) {
+      // Prefer the scene field (unified schema), fall back to data field for legacy records
+      if (spaceRow.scene && (spaceRow.scene as any).tracks) {
+        initialState = spaceRow.scene;
+      } else if (spaceRow.data && (spaceRow.data as any).tracks) {
+        initialState = spaceRow.data;
+      } else {
         initialState = {
           settings: {
-            width: projectData.width,
-            height: projectData.height,
-            fps: projectData.fps,
+            width: spaceRow.width,
+            height: spaceRow.height,
+            fps: spaceRow.fps,
             duration: 30_000_000,
           },
-          tracks: projectData.data?.tracks || [],
-          clips: projectData.data?.clips || {},
+          tracks: [],
+          clips: {},
         };
       }
     }
@@ -45,13 +54,18 @@ export class CoreRegistryService {
   async persist(projectId: string): Promise<void> {
     const core = this.cores.get(projectId);
     if (!core) {
-      this.logger.warn(`Cannot persist project ${projectId}: not found in memory`);
+      this.logger.warn(`Cannot persist space ${projectId}: not found in memory`);
       return;
     }
 
     const snapshot = core.getSnapshot();
-    await this.db.saveSpaceSnapshot(projectId, snapshot);
-    this.logger.log(`Persisted project ${projectId} snapshot to database`);
+
+    await db
+      .update(schema.space)
+      .set({ scene: snapshot, updatedAt: new Date() })
+      .where(eq(schema.space.id, projectId));
+
+    this.logger.log(`Persisted space ${projectId} snapshot to database`);
   }
 
   unload(projectId: string) {
@@ -59,7 +73,7 @@ export class CoreRegistryService {
     if (core) {
       core.destroy();
       this.cores.delete(projectId);
-      this.logger.log(`Unloaded project ${projectId} from memory`);
+      this.logger.log(`Unloaded space ${projectId} from memory`);
     }
   }
 }

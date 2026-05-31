@@ -1,7 +1,7 @@
+import { getDB, schema, eq, and, isNull, gt } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
-import * as schema from "../db/schema";
-import { eq, and, isNull, gt } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import * as crypto from "crypto";
 
@@ -39,8 +39,6 @@ export class ApiTokenService {
   private readonly TOKEN_PREFIX = "ov_live_";
   private readonly TOKEN_LENGTH = 24;
 
-  constructor(private db: DrizzleService) {}
-
   /**
    * Generate a new API token
    * Format: ov_live_xxxxxxxxxxxxxxxxxxxxxxxx (32 chars total)
@@ -58,7 +56,7 @@ export class ApiTokenService {
     // Hint for display (last 4 chars)
     const tokenHint = `...${randomPart.slice(-4)}`;
 
-    const [row] = await this.db.db
+    const [row] = await db
       .insert(schema.apiToken)
       .values({
         id,
@@ -101,7 +99,7 @@ export class ApiTokenService {
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
     // Look up in database
-    const [record] = await this.db.db
+    const [record] = await db
       .select()
       .from(schema.apiToken)
       .where(eq(schema.apiToken.tokenHash, tokenHash))
@@ -117,7 +115,7 @@ export class ApiTokenService {
     }
 
     // Update last used
-    await this.db.db
+    await db
       .update(schema.apiToken)
       .set({ lastUsed: new Date() })
       .where(eq(schema.apiToken.id, record.id));
@@ -133,7 +131,7 @@ export class ApiTokenService {
    * List all tokens for a user (without full tokens)
    */
   async listTokens(userId: string): Promise<TokenResponse[]> {
-    const rows = await this.db.db
+    const rows = await db
       .select({
         id: schema.apiToken.id,
         name: schema.apiToken.name,
@@ -163,11 +161,12 @@ export class ApiTokenService {
    * Delete/revoke a token
    */
   async deleteToken(tokenId: string, userId: string): Promise<void> {
-    const result = await this.db.db
+    const result = await db
       .delete(schema.apiToken)
-      .where(and(eq(schema.apiToken.id, tokenId), eq(schema.apiToken.userId, userId)));
+      .where(and(eq(schema.apiToken.id, tokenId), eq(schema.apiToken.userId, userId)))
+      .returning();
 
-    if (result.count === 0) {
+    if (result.length === 0) {
       throw new Error("Token not found or not owned by user");
     }
 
@@ -178,12 +177,13 @@ export class ApiTokenService {
    * Update token name
    */
   async updateToken(tokenId: string, userId: string, updates: { name?: string }): Promise<void> {
-    const result = await this.db.db
+    const result = await db
       .update(schema.apiToken)
       .set({ name: updates.name })
-      .where(and(eq(schema.apiToken.id, tokenId), eq(schema.apiToken.userId, userId)));
+      .where(and(eq(schema.apiToken.id, tokenId), eq(schema.apiToken.userId, userId)))
+      .returning();
 
-    if (result.count === 0) {
+    if (result.length === 0) {
       throw new Error("Token not found or not owned by user");
     }
   }

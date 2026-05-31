@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useGeneratorModalStore } from "@/stores/generator-modal-store";
@@ -14,23 +13,13 @@ import {
   IconLoader2,
   IconVideo,
   IconPhoto,
-  IconSquareRoundedLetterM,
-  IconArrowsMaximize,
   IconUser,
   IconMicrophone,
   IconMusic,
   IconWaveSine,
-  IconChevronDown,
-  IconBox,
-  IconLayoutGrid,
-  IconScale,
-  IconClock,
   IconPlus,
   IconMinus,
   IconCoin,
-  IconStack,
-  IconArrowUp,
-  IconSparkles,
   IconDeviceMobile,
   IconCheck,
 } from "@tabler/icons-react";

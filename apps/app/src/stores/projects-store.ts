@@ -1,21 +1,24 @@
 import { create } from "zustand";
-import type { Project } from "@/lib/projects-storage";
+import type { schema } from "@openvideo/db";
+
+// Infer Space type from the Drizzle schema (matches what tRPC returns)
+type Space = typeof schema.space.$inferSelect;
 
 interface ProjectsState {
-  projects: Project[];
+  projects: Space[];
   isLoading: boolean;
   isCreating: boolean;
 
   // Actions
-  setProjects: (projects: Project[]) => void;
-  addProject: (project: Project) => void;
+  setProjects: (projects: Space[]) => void;
+  addProject: (project: Space) => void;
   removeProject: (id: string) => void;
-  updateProject: (id: string, updates: Partial<Pick<Project, "name" | "description">>) => void;
+  updateProject: (id: string, updates: Partial<Pick<Space, "name" | "description">>) => void;
   setIsLoading: (loading: boolean) => void;
   setIsCreating: (creating: boolean) => void;
 
   // Getters
-  getProjectById: (id: string) => Project | undefined;
+  getProjectById: (id: string) => Space | undefined;
 }
 
 export const useProjectsStore = create<ProjectsState>((set, get) => ({

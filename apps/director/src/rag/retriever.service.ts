@@ -1,17 +1,14 @@
+import { getDB, schema, eq } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger } from "@nestjs/common";
 import { VectorStoreService } from "./vector-store.service";
-import { DrizzleService } from "../db/drizzle.service";
-import * as schema from "../db/schema";
-import { eq } from "drizzle-orm";
 
 @Injectable()
 export class RetrieverService {
   private readonly logger = new Logger(RetrieverService.name);
 
-  constructor(
-    private vectorStore: VectorStoreService,
-    private db: DrizzleService,
-  ) {}
+  constructor(private vectorStore: VectorStoreService) {}
 
   /**
    * Searches the vector store across both 'metadata' and 'transcript' layers.
@@ -24,7 +21,7 @@ export class RetrieverService {
   async searchWords(spaceId: string, phrase: string): Promise<string> {
     this.logger.debug(`Word search for "${phrase}" in space ${spaceId}`);
 
-    const rows = await this.db.db
+    const rows = await db
       .select()
       .from(schema.assetTranscript)
       .where(eq(schema.assetTranscript.spaceId, spaceId));

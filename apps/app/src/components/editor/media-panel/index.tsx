@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { useStudioStore } from "@/stores/studio-store";
 
 const viewMap: Record<Tab, React.ReactNode> = {
-  assets: <PanelAssets />,
+  assets: <PanelAssets showHeader={false} />,
   text: <PanelText />,
   captions: <PanelCaptions />,
   transitions: <PanelTransition />,
@@ -24,7 +24,7 @@ const viewMap: Record<Tab, React.ReactNode> = {
 
 export function MediaPanel() {
   const { activeTab } = useMediaPanelStore();
-  const { studio, selectedClips } = useStudioStore();
+  const { selectedClips } = useStudioStore();
   const [showProperties, setShowProperties] = useState(false);
 
   // Show properties panel when a clip is selected, unless we're on a specific tab that should stay visible

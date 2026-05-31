@@ -109,7 +109,7 @@ class ProxySpacesResource {
   list = () => this.client.exec("spaces:list", {});
   get = (params: { id: string }) => this.client.exec("spaces:get", params);
   create = (data: any) => this.client.exec("spaces:create", data);
-  update = (params: { id: string; name?: string; data?: any }) =>
+  update = (params: { id: string } & UpdateSpaceRequest) =>
     this.client.exec("spaces:update", params);
   delete = (params: { id: string }) => this.client.exec("spaces:delete", params);
   sync = (params: { id: string }) => this.client.exec("spaces:sync", params);
@@ -215,7 +215,7 @@ import { AssetsResource } from "./resources/assets.js";
 import { ChatResource } from "./resources/chat.js";
 import { TokensResource } from "./resources/tokens.js";
 import { SpaceConnection } from "./realtime/space-connection.js";
-import type { OpenVideoConfig } from "./types/index.js";
+import type { OpenVideoConfig, UpdateSpaceRequest } from "./types/index.js";
 
 function detectMode(config: OpenVideoConfig): "direct" | "proxy" {
   // Default to direct mode; "auto" resolves to "direct"

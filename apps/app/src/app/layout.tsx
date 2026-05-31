@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { TRPCProvider } from "@/components/providers/trpc-provider";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -94,7 +95,9 @@ export default function RootLayout({
     >
       <head />
       <body className={`antialiased dark`}>
-        <TooltipProvider>{children}</TooltipProvider>
+        <TRPCProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </TRPCProvider>
         <Toaster />
         <Analytics />
       </body>

@@ -21,9 +21,10 @@ import {
 import { storageService } from "@/lib/storage/storage-service";
 import type { MediaType } from "@/types/media";
 import { uploadFile } from "@/lib/upload-utils";
-import { getOpenVideoClient } from "@/lib/openvideo-client";
+import { trpc } from "@/lib/trpc";
 import Draggable from "@/components/shared/draggable";
 import { useGeneratorModalStore } from "@/stores/generator-modal-store";
+import { AssetGeneratorExpandable } from "../asset-generator-expandable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -274,7 +275,12 @@ function AssetCard({
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 
-export default function PanelAssets() {
+interface PanelAssetsProps {
+  showHeader?: boolean;
+  showGenerator?: boolean;
+}
+
+export default function PanelAssets({ showHeader = true, showGenerator = true }: PanelAssetsProps) {
   const spaceId = useProjectStore((state) => state.spaceId);
   const files = useAssetsStore((state) => state.files);
   const setFiles = useAssetsStore((state) => state.setFiles);
@@ -295,14 +301,18 @@ export default function PanelAssets() {
     await storageService.getStorageStats();
   }, []);
 
-  const loadFiles = useCallback(async () => {
-    if (!spaceId) return;
-    try {
-      setAssetsStoreLoading(true);
-      const openVideo = getOpenVideoClient();
-      const assets = await openVideo.assets.list({ spaceId });
+  // tRPC asset queries and mutations
+  const { data: assetsData, refetch: refetchAssets } = trpc.asset.list.useQuery(
+    { spaceId: spaceId ?? "" },
+    { enabled: !!spaceId },
+  );
+  const createAsset = trpc.asset.create.useMutation();
+  const deleteAsset = trpc.asset.delete.useMutation();
 
-      const projectFiles: ProjectFile[] = assets.map((asset: any) => ({
+  // Load files when data changes
+  useEffect(() => {
+    if (assetsData) {
+      const projectFiles: ProjectFile[] = assetsData.map((asset: any) => ({
         id: asset.id,
         spaceId: asset.spaceId || spaceId,
         name: asset.name,
@@ -312,23 +322,22 @@ export default function PanelAssets() {
         size: asset.size,
         createdAt: asset.createdAt,
         updatedAt: asset.updatedAt,
-        indexingStatus: asset.indexing?.status ?? null,
+        indexingStatus: asset.indexingStatus?.status ?? null,
       }));
-
       setFiles(projectFiles);
-      await loadStorageStats();
-    } catch (error) {
-      console.error("Error loading files in PanelAssets:", error);
-    } finally {
+      loadStorageStats();
       setAssetsStoreLoading(false);
       setIsLoaded(true);
     }
-  }, [spaceId, setFiles, setAssetsStoreLoading, loadStorageStats]);
+  }, [assetsData, spaceId, setFiles, loadStorageStats, setAssetsStoreLoading]);
 
-  // Load uploads on mount and when spaceId becomes available
+  // Load uploads on mount
   useEffect(() => {
-    loadFiles();
-  }, [loadFiles]);
+    if (!spaceId) {
+      setAssetsStoreLoading(false);
+      setIsLoaded(true);
+    }
+  }, [spaceId, setAssetsStoreLoading]);
 
   // Real-time polling for indexing status of in-flight files
   useEffect(() => {
@@ -342,38 +351,34 @@ export default function PanelAssets() {
     const validFiles = inFlight.filter((f) => f.spaceId);
     if (validFiles.length === 0) return;
 
-    const openVideo = getOpenVideoClient();
     const timer = setTimeout(async () => {
       try {
-        const statuses = await Promise.all(
-          validFiles.map((f) =>
-            openVideo.assets
-              .getIndexStatus({ spaceId: f.spaceId, assetId: f.id })
-              .catch(() => null),
-          ),
-        );
-        validFiles.forEach((f, idx) => {
-          if (statuses[idx]?.status) {
-            updateFile(f.id, { indexingStatus: statuses[idx].status });
-          }
-        });
+        // Refetch all assets to get updated indexing status
+        const { data: freshAssets } = await refetchAssets();
+        if (freshAssets) {
+          freshAssets.forEach((asset: any) => {
+            if (asset.indexingStatus?.status) {
+              updateFile(asset.id, { indexingStatus: asset.indexingStatus.status });
+            }
+          });
+        }
       } catch {
         // silently skip — next tick will retry
       }
     }, 5000);
     return () => clearTimeout(timer);
-  }, [files, updateFile]);
+  }, [files, updateFile, refetchAssets]);
 
   // Listen to asset generation event to refresh list
   useEffect(() => {
     const handleAssetGenerated = () => {
-      loadFiles();
+      refetchAssets();
     };
     window.addEventListener("asset-generated", handleAssetGenerated);
     return () => {
       window.removeEventListener("asset-generated", handleAssetGenerated);
     };
-  }, [loadFiles]);
+  }, [refetchAssets]);
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -399,8 +404,6 @@ export default function PanelAssets() {
 
     addFiles(tempFiles);
 
-    const openVideo = getOpenVideoClient();
-
     try {
       const uploadPromises = fileArray.map(async (file, index) => {
         const tempId = tempFiles[index].id;
@@ -417,30 +420,27 @@ export default function PanelAssets() {
             await storageService.saveMediaFile({ projectId: spaceId, mediaItem: mediaFile });
           }
 
-          const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-          // 2. Register asset with OpenVideo using actual spaceId
+          // 2. Register asset with tRPC (returns generated id)
           if (uploadResult?.url) {
-            await openVideo.assets.register({
+            const newAsset = await createAsset.mutateAsync({
               spaceId,
-              id: fileId,
               name: file.name,
               type,
               src: uploadResult.url,
               duration,
               size: file.size,
             });
-          }
 
-          // 3. Update Zustand with real file
-          updateFile(tempId, {
-            id: fileId,
-            src,
-            duration,
-            indexingStatus: "pending" as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
+            // 3. Update Zustand with real file
+            updateFile(tempId, {
+              id: newAsset.id,
+              src,
+              duration,
+              indexingStatus: "pending" as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+          }
         } catch (error) {
           console.error(`Error uploading ${file.name}:`, error);
           updateFile(tempId, { indexingStatus: "failed" });
@@ -462,10 +462,9 @@ export default function PanelAssets() {
     if (!spaceId) return;
     try {
       const file = files.find((f) => f.id === id);
-      const openVideo = getOpenVideoClient();
 
       await Promise.all([
-        openVideo.assets.delete({ spaceId, assetId: id }),
+        deleteAsset.mutateAsync({ id, spaceId }),
         file?.src && !file.src.startsWith("blob:")
           ? fetch("/api/uploads", {
               method: "DELETE",
@@ -524,7 +523,7 @@ export default function PanelAssets() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       <input
         type="file"
         ref={fileInputRef}
@@ -546,110 +545,59 @@ export default function PanelAssets() {
             <p className="text-sm text-muted-foreground leading-relaxed max-w-[210px] mb-5">
               Get started by uploading your own files or generating new ones using AI.
             </p>
-            <div className="flex flex-col w-full max-w-[200px] gap-2">
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full justify-center h-10 bg-secondary/30 hover:bg-secondary/60 text-foreground text-[13px] font-medium rounded-xl border-0 shadow-none transition-colors"
-              >
-                Upload a file
-              </Button>
-              <Button
-                onClick={() => openGenerator()}
-                className="w-full justify-center h-10 bg-secondary/30 hover:bg-secondary/60 text-foreground text-[13px] font-medium rounded-xl border-0 shadow-none transition-colors"
-              >
-                Generate with AI
-              </Button>
-            </div>
           </div>
         ) : (
           /* With assets: search + grid */
           <>
-            <div className="px-4 pt-3 pb-3">
-              <div className="flex items-center gap-2 w-full">
-                {/* Plus Menu (Upload & Generate) */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="h-8 w-8 p-0 shrink-0 bg-transparent hover:bg-secondary/50 border-border text-foreground rounded-xl transition-colors flex items-center justify-center"
-                    >
-                      {isUploading ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Plus size={16} strokeWidth={2.5} />
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="bg-popover text-popover-foreground border-border rounded-xl w-40"
-                  >
-                    <DropdownMenuItem
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="gap-2 px-3 py-2 text-[13px] font-medium hover:bg-secondary/50 rounded-lg cursor-pointer"
-                    >
-                      <Upload size={14} />
-                      <span>Upload a file</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => openGenerator()}
-                      className="gap-2 px-3 py-2 text-[13px] font-medium hover:bg-secondary/50 rounded-lg cursor-pointer text-primary"
-                    >
-                      <Sparkles size={14} />
-                      <span>Generate with AI</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Search Input */}
-                <div className="relative flex-1 min-w-0">
-                  <Search
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <input
-                    placeholder="Search..."
-                    className="w-full h-8 pl-9 pr-3 text-[13px] bg-secondary/30 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border transition-all"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                {/* Filter Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="h-8 w-8 p-0 shrink-0 bg-secondary/30 hover:bg-secondary/60 border-border text-foreground flex items-center justify-center rounded-xl transition-colors"
-                    >
-                      <ListFilter size={15} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="border-border bg-popover text-popover-foreground rounded-xl w-36"
-                  >
-                    {[
-                      { value: "all", label: "All Assets" },
-                      { value: "image", label: "Images" },
-                      { value: "video", label: "Videos" },
-                      { value: "audio", label: "Audio" },
-                    ].map((option) => (
-                      <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => setFilterType(option.value as any)}
-                        className="flex items-center justify-between px-3 py-2 text-[13px] font-medium hover:bg-secondary/50 rounded-lg cursor-pointer"
-                      >
-                        <span>{option.label}</span>
-                        {filterType === option.value && (
-                          <div className="size-1.5 rounded-full bg-foreground" />
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            {/* Search and Filter Row */}
+            <div className="flex items-center gap-2 w-full px-4 py-3">
+              {/* Search Input */}
+              <div className="relative flex-1 min-w-0">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                  placeholder="Search assets..."
+                  className="w-full h-9 pl-9 pr-3 text-[13px] bg-secondary/50 border border-border/60 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border focus:bg-background transition-all"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
+
+              {/* Filter Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-9 w-9 p-0 shrink-0 bg-secondary/50 hover:bg-secondary border-border/60 text-foreground flex items-center justify-center rounded-lg transition-colors"
+                  >
+                    <ListFilter size={15} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="border-border bg-popover text-popover-foreground rounded-xl w-36"
+                >
+                  {[
+                    { value: "all", label: "All Assets" },
+                    { value: "image", label: "Images" },
+                    { value: "video", label: "Videos" },
+                    { value: "audio", label: "Audio" },
+                  ].map((option) => (
+                    <DropdownMenuItem
+                      key={option.value}
+                      onClick={() => setFilterType(option.value as any)}
+                      className="flex items-center justify-between px-3 py-2 text-[13px] font-medium hover:bg-secondary/50 rounded-lg cursor-pointer"
+                    >
+                      <span>{option.label}</span>
+                      {filterType === option.value && (
+                        <div className="size-1.5 rounded-full bg-foreground" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <ScrollArea className="flex-1 px-4">
@@ -674,6 +622,15 @@ export default function PanelAssets() {
           </>
         )}
       </div>
+      {showGenerator && (
+        <div className="absolute bottom-4 left-4 right-4 max-w-[600px] mx-auto">
+          <AssetGeneratorExpandable
+            onUploadClick={() => fileInputRef.current?.click()}
+            isUploading={isUploading}
+            floating
+          />
+        </div>
+      )}
     </div>
   );
 }

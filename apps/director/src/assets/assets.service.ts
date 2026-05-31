@@ -1,14 +1,12 @@
+import { getDB, schema, eq, and } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
-import * as schema from "../db/schema";
-import { eq, and } from "drizzle-orm";
 import { RequestContext } from "../common/request-context";
 
 @Injectable()
 export class AssetsService {
   private readonly logger = new Logger(AssetsService.name);
-
-  constructor(private db: DrizzleService) {}
 
   async findAssetById(assetId: string, ctx?: RequestContext) {
     // Build where clause - optionally scope by orgId for multi-tenancy
@@ -17,7 +15,7 @@ export class AssetsService {
       where = and(where, eq(schema.asset.orgId, ctx.orgId))!;
     }
 
-    const [row] = await this.db.db.select().from(schema.asset).where(where);
+    const [row] = await db.select().from(schema.asset).where(where);
     return row ?? null;
   }
 
@@ -28,19 +26,20 @@ export class AssetsService {
       where = and(where, eq(schema.asset.orgId, ctx.orgId))!;
     }
 
-    return this.db.db.select().from(schema.asset).where(where);
+    return db.select().from(schema.asset).where(where);
   }
 
   async registerAsset(data: {
     id: string;
     spaceId: string;
     name: string;
-    type: string;
+    type: "image" | "video" | "audio" | "other";
     src: string;
     duration?: number;
     size?: number;
+    userId: string;
   }) {
-    const [row] = await this.db.db.insert(schema.asset).values(data).returning();
+    const [row] = await db.insert(schema.asset).values(data).returning();
     return row;
   }
 }

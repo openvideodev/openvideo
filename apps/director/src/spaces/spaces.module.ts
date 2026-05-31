@@ -1,10 +1,14 @@
 import { Module } from "@nestjs/common";
-import { SpacesController } from "./spaces.controller";
+import { BullModule } from "@nestjs/bullmq";
 import { SpacesService } from "./spaces.service";
-import { DbModule } from "../db/db.module";
+import { SpacesController } from "./spaces.controller";
 
 @Module({
-  imports: [DbModule],
+  imports: [
+    BullModule.registerQueue({
+      name: "index-project",
+    }),
+  ],
   controllers: [SpacesController],
   providers: [SpacesService],
   exports: [SpacesService],

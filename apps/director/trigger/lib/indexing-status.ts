@@ -1,5 +1,4 @@
-import { eq } from "drizzle-orm";
-import { getDb, schema } from "./db";
+import { getDb, schema, eq } from "./db";
 
 export type IndexingStage = "downloading" | "transcribing" | "analyzing" | "embedding" | "storing";
 

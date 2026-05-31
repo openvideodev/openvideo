@@ -34,40 +34,44 @@ export class DirectorGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   private async extractUserFromSocket(
     client: Socket,
   ): Promise<{ userId: string; orgId?: string } | null> {
-    // Development bypass - allow connection without token
+    const token = (client.handshake.query.token as string) || client.handshake.auth?.token;
+
+    // If token provided, always validate it (even in dev)
+    if (token) {
+      // API token (ov_live_*)
+      if (token.startsWith("ov_live_")) {
+        const result = await this.apiTokenService.validateToken(token);
+        if (result.valid && result.userId) {
+          return { userId: result.userId };
+        }
+        this.logger.warn(`Invalid API token for WS connection`);
+        return null;
+      }
+
+      // JWT
+      try {
+        const payload = this.jwtService.verify(token) as any;
+        return {
+          userId: payload.sub || payload.userId,
+          orgId: payload.orgId,
+        };
+      } catch (err: any) {
+        this.logger.warn(`Invalid WebSocket token: ${err.message}`);
+        return null;
+      }
+    }
+
+    // Development bypass - only when no token provided
     if (process.env.NODE_ENV !== "production") {
       const devUserId = client.handshake.query.userId as string;
       if (devUserId) {
         return { userId: devUserId, orgId: client.handshake.query.orgId as string };
       }
-      // Default dev user
+      // Default dev user - create if not exists handled elsewhere
       return { userId: "dev_user_1" };
     }
 
-    const token = (client.handshake.query.token as string) || client.handshake.auth?.token;
-    if (!token) return null;
-
-    // API token (ov_live_*)
-    if (token.startsWith("ov_live_")) {
-      const result = await this.apiTokenService.validateToken(token);
-      if (result.valid && result.userId) {
-        return { userId: result.userId };
-      }
-      this.logger.warn(`Invalid API token for WS connection`);
-      return null;
-    }
-
-    // JWT
-    try {
-      const payload = this.jwtService.verify(token) as any;
-      return {
-        userId: payload.sub || payload.userId,
-        orgId: payload.orgId,
-      };
-    } catch (err: any) {
-      this.logger.warn(`Invalid WebSocket token: ${err.message}`);
-      return null;
-    }
+    return null;
   }
 
   afterInit(server: Server) {

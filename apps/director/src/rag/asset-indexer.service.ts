@@ -1,10 +1,10 @@
+import { getDB, schema, eq, sql } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { DrizzleService } from "../db/drizzle.service";
 import { VectorStoreService } from "./vector-store.service";
 import { IndexingStatusService } from "./indexing-status.service";
-import * as schema from "../db/schema";
-import { eq, sql } from "drizzle-orm";
 import { GoogleGenAI } from "@google/genai";
 import { Document } from "@langchain/core/documents";
 import * as fs from "fs";
@@ -29,7 +29,6 @@ export class AssetIndexerService {
   private ai: GoogleGenAI;
 
   constructor(
-    private db: DrizzleService,
     private vectorStore: VectorStoreService,
     private configService: ConfigService,
     private indexingStatus: IndexingStatusService,
@@ -42,11 +41,11 @@ export class AssetIndexerService {
     this.logger.log(`Indexing asset: ${assetId} for project: ${spaceId}`);
 
     // 1. Fetch asset from DB
-    const asset = await this.db.db
+    const asset = await db
       .select()
       .from(schema.asset)
       .where(eq(schema.asset.id, assetId))
-      .then((rows) => rows[0]);
+      .then((rows: any[]) => rows[0]);
 
     if (!asset) {
       this.logger.error(`Asset ${assetId} not found in database.`);
@@ -78,7 +77,7 @@ export class AssetIndexerService {
 
   private async deleteVectorsForAsset(assetId: string): Promise<void> {
     try {
-      await this.db.db.execute(
+      await db.execute(
         sql`DELETE FROM langchain_pg_embedding WHERE cmetadata->>'assetId' = ${assetId}`,
       );
       this.logger.debug(`Cleared existing vector store records for asset: ${assetId}`);
@@ -143,7 +142,7 @@ export class AssetIndexerService {
     const segments = await this.transcribeMediaWithDeepgram(asset.src);
 
     // Save transcripts to DB for fast lookup
-    await this.db.db
+    await db
       .insert(schema.assetTranscript)
       .values({
         id: nanoid(),
@@ -230,7 +229,7 @@ export class AssetIndexerService {
       const segments = await transcriptPromise;
 
       // Save visual timeline to DB
-      await this.db.db
+      await db
         .insert(schema.assetVisualTimeline)
         .values({
           id: nanoid(),
@@ -331,7 +330,7 @@ export class AssetIndexerService {
     let segments: any[] = [];
     try {
       segments = await this.transcribeMediaWithDeepgram(asset.src);
-      await this.db.db
+      await db
         .insert(schema.assetTranscript)
         .values({
           id: nanoid(),

@@ -4,7 +4,7 @@ import { CircleOff, XIcon } from "lucide-react";
 import useLayoutStore from "../store/use-layout-store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ICaptionsControlProps } from "../interface/captions";
-import { NONE_PRESET, CAPTION_PRESETS } from "../constant/caption";
+import { NONE_PRESET, CAPTION_PRESETS } from "../constants/caption";
 
 import { useStudioStore } from "@/stores/studio-store";
 import { fontManager } from "@openvideo/engine-pixi";

@@ -6,11 +6,10 @@ import { CoreModule } from "../core/core.module";
 import { SkillsModule } from "../skills/skills.module";
 import { BroadcastModule } from "../broadcast/broadcast.module";
 import { QueueModule } from "../queue/queue.module";
-import { DbModule } from "../db/db.module";
 import { TriggerModule } from "../trigger/trigger.module";
 
 @Module({
-  imports: [CoreModule, SkillsModule, BroadcastModule, QueueModule, DbModule, TriggerModule],
+  imports: [CoreModule, SkillsModule, BroadcastModule, QueueModule, TriggerModule],
   providers: [ExecutorService, CommandBuilderService, ConfirmationGateService],
   exports: [ExecutorService, ConfirmationGateService],
 })

@@ -1,4 +1,9 @@
 import { Resizable, ResizableProps } from "@openvideo/timeline";
+import {
+  TIMELINE_SELECTED_BORDER_COLOR,
+  TIMELINE_UNSELECTED_BORDER_COLOR,
+  TIMELINE_BORDER_WIDTH,
+} from "../../constants/constants";
 
 interface HillAudioBarsProps extends ResizableProps {
   src: string;
@@ -23,8 +28,10 @@ class HillAudioBars extends Resizable {
   }
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected ? "rgba(255, 255, 255,1.0)" : "rgba(255, 255, 255,0.1)";
-    const borderWidth = 2;
+    const borderColor = this.isSelected
+      ? TIMELINE_SELECTED_BORDER_COLOR
+      : TIMELINE_UNSELECTED_BORDER_COLOR;
+    const borderWidth = TIMELINE_BORDER_WIDTH;
     const innerRadius = 4;
 
     ctx.save();

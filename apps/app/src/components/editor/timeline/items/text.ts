@@ -1,7 +1,12 @@
 import { Control, Resizable, ResizableProps } from "@openvideo/timeline";
 import { IDisplay } from "@openvideo/timeline";
 import { createResizeControls } from "../controls";
-import { SECONDARY_FONT } from "../../constants/constants";
+import {
+  SECONDARY_FONT,
+  TIMELINE_SELECTED_BORDER_COLOR,
+  TIMELINE_UNSELECTED_BORDER_COLOR,
+  TIMELINE_BORDER_WIDTH,
+} from "../../constants/constants";
 
 interface TextProps extends ResizableProps {
   text: string;
@@ -56,8 +61,10 @@ class Text extends Resizable {
   }
 
   public updateSelected(ctx: CanvasRenderingContext2D) {
-    const borderColor = this.isSelected ? "rgba(255, 255, 255,1.0)" : "rgba(255, 255, 255,0.05)";
-    const borderWidth = 1.5;
+    const borderColor = this.isSelected
+      ? TIMELINE_SELECTED_BORDER_COLOR
+      : TIMELINE_UNSELECTED_BORDER_COLOR;
+    const borderWidth = TIMELINE_BORDER_WIDTH;
     const innerRadius = 0;
 
     ctx.save();

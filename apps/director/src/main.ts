@@ -1,3 +1,5 @@
+import "dotenv/config"; // Load env vars before any other imports
+
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { RedisIoAdapter } from "./broadcast/redis-io.adapter";

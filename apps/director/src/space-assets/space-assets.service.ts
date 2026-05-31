@@ -1,7 +1,7 @@
+import { getDB, schema, eq, and, desc, sql } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
-import * as schema from "../db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { RequestContext } from "../common/request-context";
 import { IndexingStatusService } from "../rag/indexing-status.service";
@@ -40,7 +40,6 @@ export class SpaceAssetsService {
   private readonly logger = new Logger(SpaceAssetsService.name);
 
   constructor(
-    private db: DrizzleService,
     private indexingStatus: IndexingStatusService,
     private triggerService: TriggerService,
   ) {}
@@ -68,7 +67,7 @@ export class SpaceAssetsService {
       values.orgId = ctx.orgId;
     }
 
-    const [row] = await this.db.db
+    const [row] = await db
       .insert(schema.asset)
       .values(values)
       .onConflictDoUpdate({
@@ -105,7 +104,7 @@ export class SpaceAssetsService {
       where = and(where, eq(schema.asset.orgId, ctx.orgId));
     }
 
-    const rows = await this.db.db
+    const rows = await db
       .select()
       .from(schema.asset)
       .where(where)
@@ -132,7 +131,7 @@ export class SpaceAssetsService {
       where = and(where, eq(schema.asset.orgId, ctx.orgId));
     }
 
-    const [row] = await this.db.db.select().from(schema.asset).where(where);
+    const [row] = await db.select().from(schema.asset).where(where);
 
     if (!row) return null;
 
@@ -153,11 +152,9 @@ export class SpaceAssetsService {
     await this.getOne(spaceId, assetId, ctx);
 
     await Promise.all([
-      this.db.db.delete(schema.asset).where(eq(schema.asset.id, assetId)),
-      this.db.db
-        .delete(schema.assetIndexingStatus)
-        .where(eq(schema.assetIndexingStatus.assetId, assetId)),
-      this.db.db
+      db.delete(schema.asset).where(eq(schema.asset.id, assetId)),
+      db.delete(schema.assetIndexingStatus).where(eq(schema.assetIndexingStatus.assetId, assetId)),
+      db
         .execute(sql`DELETE FROM langchain_pg_embedding WHERE cmetadata->>'assetId' = ${assetId}`)
         .catch((err: Error) => {
           this.logger.warn(`Could not delete vectors for asset ${assetId}: ${err.message}`);
@@ -206,10 +203,7 @@ export class SpaceAssetsService {
       where = and(where, eq(schema.space.userId, ctx.userId));
     }
 
-    const [space] = await this.db.db
-      .select({ id: schema.space.id })
-      .from(schema.space)
-      .where(where);
+    const [space] = await db.select({ id: schema.space.id }).from(schema.space).where(where);
 
     if (!space) {
       throw new NotFoundException(`Space ${spaceId} not found`);

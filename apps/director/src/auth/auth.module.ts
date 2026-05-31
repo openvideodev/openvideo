@@ -7,7 +7,6 @@ import { JwtStrategy } from "./jwt.strategy";
 import { AuthController } from "./auth.controller";
 import { ApiTokenService } from "./api-token.service";
 import { JwtGuard } from "./jwt.guard";
-import { DrizzleService } from "../db/drizzle.service";
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { DrizzleService } from "../db/drizzle.service";
   providers: [
     JwtStrategy,
     JwtGuard,
-    DrizzleService,
     ApiTokenService,
     {
       provide: APP_GUARD,

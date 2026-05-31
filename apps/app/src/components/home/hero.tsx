@@ -24,7 +24,7 @@ const Hero = () => {
             className="h-10 md:h-12 px-4 md:px-6 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
             size="lg"
           >
-            <Link href="/projects" className="font-normal text-sm">
+            <Link href="/spaces" className="font-normal text-sm">
               Start Creating
             </Link>
           </Button>

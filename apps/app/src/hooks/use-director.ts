@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { OpenVideo, type SpaceConnection } from "@openvideo/ai";
 import { core } from "@/lib/project";
 import { directorConfig } from "@/lib/director-config";
+import { trpc } from "@/lib/trpc";
 
 export interface Message {
   id: string;
@@ -15,20 +16,6 @@ export interface Message {
 
 const ov = new OpenVideo({ wsURL: directorConfig.wsUrl, mode: "proxy" });
 
-let cachedToken: string | undefined;
-async function getDirectorToken(): Promise<string | undefined> {
-  if (cachedToken) return cachedToken;
-  try {
-    const res = await fetch("/api/director/token", { method: "POST" });
-    if (res.ok) {
-      const data = await res.json();
-      cachedToken = data.token as string;
-      return cachedToken;
-    }
-  } catch {}
-  return undefined;
-}
-
 export function useDirector(spaceId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -36,18 +23,18 @@ export function useDirector(spaceId: string) {
   const connRef = useRef<SpaceConnection | null>(null);
   const isApplyingRemotePatch = useRef(false);
 
+  const { data: tokenData } = trpc.session.getToken.useQuery({ spaceId }, { enabled: !!spaceId });
+
   useEffect(() => {
-    if (!spaceId) return;
+    if (!spaceId || !tokenData?.token) return;
 
     let conn: SpaceConnection | undefined;
     let cancelled = false;
 
     (async () => {
-      const token = await getDirectorToken();
-
       if (cancelled) return;
 
-      conn = ov.connect(spaceId, token);
+      conn = ov.connect(spaceId, tokenData.token);
       connRef.current = conn;
 
       conn.on("connect", () => {
@@ -60,7 +47,6 @@ export function useDirector(spaceId: string) {
       });
 
       conn.on("init", ({ state }) => {
-        console.log({ state });
         core.reset(state);
       });
 
@@ -132,7 +118,6 @@ export function useDirector(spaceId: string) {
       };
 
       core.on("change", handler);
-      // store handler for cleanup
       (conn as any).__coreHandler = handler;
     })();
 
@@ -144,7 +129,7 @@ export function useDirector(spaceId: string) {
         conn.disconnect();
       }
     };
-  }, [spaceId]);
+  }, [spaceId, tokenData]);
 
   const sendMessage = useCallback((text: string) => {
     if (connRef.current?.connected) {

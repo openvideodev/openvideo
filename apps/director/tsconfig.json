@@ -17,7 +17,7 @@
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
-    "moduleResolution": "NodeNext",
-    "esModuleInterop": true
-  }
+    "moduleResolution": "NodeNext"
+  },
+  "exclude": ["node_modules", "dist", "scratch"]
 }

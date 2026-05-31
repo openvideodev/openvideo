@@ -17,6 +17,7 @@ const Playhead = ({ scrollLeft, scale }: { scrollLeft: number; scale: ITimelineS
 
   // Local state for optimistic UI updates (smooth dragging)
   const [localTimeUs, setLocalTimeUs] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Determine which time to use for visual positioning
   const displayTimeUs = localTimeUs !== null ? localTimeUs : currentTimeUs;
@@ -55,6 +56,7 @@ const Playhead = ({ scrollLeft, scale }: { scrollLeft: number; scale: ITimelineS
   const handleMouseUp = useCallback(() => {
     if (dragRef.current.isDragging) {
       dragRef.current.isDragging = false;
+      setIsDragging(false);
       setLocalTimeUs(null);
 
       document.removeEventListener("mousemove", handleMouseMove);
@@ -77,6 +79,7 @@ const Playhead = ({ scrollLeft, scale }: { scrollLeft: number; scale: ITimelineS
       startTimeUs: startTimeUs,
     };
 
+    setIsDragging(true);
     setLocalTimeUs(startTimeUs);
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -106,7 +109,7 @@ const Playhead = ({ scrollLeft, scale }: { scrollLeft: number; scale: ITimelineS
         top: 50,
         width: 1,
         height: "calc(100% - 50px)",
-        zIndex: 100,
+        zIndex: 10,
         cursor: "ew-resize",
         touchAction: "none",
       }}
@@ -115,23 +118,17 @@ const Playhead = ({ scrollLeft, scale }: { scrollLeft: number; scale: ITimelineS
       <div
         style={{
           borderRadius: "0 0 4px 4px",
-          backgroundColor: color,
+          backgroundColor: isDragging ? "#ffffff" : "#000000",
           height: "16px",
-          width: "12px",
+          width: "10px",
           transform: "translateX(-50%)",
-          cursor: "grab",
+          cursor: isDragging ? "grabbing" : "grab",
+          borderColor: "#ffffff",
+          borderWidth: 1,
+          zIndex: 20,
         }}
-        className="absolute top-0 flex items-center justify-center shadow-lg border border-black/10"
-      >
-        <div
-          style={{
-            width: 1,
-            height: 8,
-            backgroundColor: "#000",
-            opacity: 0.5,
-          }}
-        />
-      </div>
+        className="absolute top-0 flex items-center justify-center shadow-lg"
+      ></div>
 
       {/* Line */}
       <div className="relative h-full pointer-events-none">

@@ -1,7 +1,7 @@
+import { getDB, schema, eq, and } from "@openvideo/db";
+const db = getDB();
+
 import { Injectable, Logger } from "@nestjs/common";
-import { DrizzleService } from "../db/drizzle.service";
-import * as schema from "../db/schema";
-import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { RequestContext } from "../common/request-context";
 
@@ -26,8 +26,6 @@ export interface IndexingStatusResponse {
 export class IndexingStatusService {
   private readonly logger = new Logger(IndexingStatusService.name);
 
-  constructor(private db: DrizzleService) {}
-
   /**
    * Create initial pending status record when asset is registered
    */
@@ -51,7 +49,7 @@ export class IndexingStatusService {
       values.orgId = ctx.orgId;
     }
 
-    const [row] = await this.db.db
+    const [row] = await db
       .insert(schema.assetIndexingStatus)
       .values(values)
       .onConflictDoUpdate({
@@ -76,7 +74,7 @@ export class IndexingStatusService {
    * Mark indexing as started (when worker picks up job)
    */
   async markStarted(assetId: string, jobId: string): Promise<void> {
-    await this.db.db
+    await db
       .update(schema.assetIndexingStatus)
       .set({
         status: "processing",
@@ -99,7 +97,7 @@ export class IndexingStatusService {
     };
     if (stage) updates.stage = stage;
 
-    await this.db.db
+    await db
       .update(schema.assetIndexingStatus)
       .set(updates)
       .where(eq(schema.assetIndexingStatus.assetId, assetId));
@@ -109,7 +107,7 @@ export class IndexingStatusService {
    * Mark indexing as completed
    */
   async markCompleted(assetId: string): Promise<void> {
-    await this.db.db
+    await db
       .update(schema.assetIndexingStatus)
       .set({
         status: "completed",
@@ -126,7 +124,7 @@ export class IndexingStatusService {
    * Mark indexing as failed
    */
   async markFailed(assetId: string, error: string): Promise<void> {
-    await this.db.db
+    await db
       .update(schema.assetIndexingStatus)
       .set({
         status: "failed",
@@ -149,7 +147,7 @@ export class IndexingStatusService {
       where = and(where, eq(schema.assetIndexingStatus.orgId, ctx.orgId))!;
     }
 
-    const [row] = await this.db.db.select().from(schema.assetIndexingStatus).where(where);
+    const [row] = await db.select().from(schema.assetIndexingStatus).where(where);
 
     return row ? this.toResponse(row) : null;
   }
@@ -167,7 +165,7 @@ export class IndexingStatusService {
       where = and(where, eq(schema.assetIndexingStatus.orgId, ctx.orgId))!;
     }
 
-    const rows = await this.db.db
+    const rows = await db
       .select()
       .from(schema.assetIndexingStatus)
       .where(where)
@@ -186,7 +184,7 @@ export class IndexingStatusService {
     completed: number;
     failed: number;
   }> {
-    const rows = await this.db.db
+    const rows = await db
       .select({ status: schema.assetIndexingStatus.status })
       .from(schema.assetIndexingStatus)
       .where(eq(schema.assetIndexingStatus.spaceId, spaceId));

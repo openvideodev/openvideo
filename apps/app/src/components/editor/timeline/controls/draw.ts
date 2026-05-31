@@ -41,7 +41,7 @@ export function drawVerticalLeftIcon(
   styleOverride: any,
   fabricObject: FabricObject,
 ) {
-  const width = 6; // Handle width
+  const width = 2; // Handle width
   const height = fabricObject.height;
   const borderRadius = 2;
 
@@ -58,7 +58,7 @@ export function drawVerticalLeftIcon(
 
   // Draw centered vertical line
   const lineWidth = 2;
-  const lineHeight = 14;
+  const lineHeight = 8;
   ctx.fillStyle = "white";
   ctx.beginPath();
   ctx.roundRect(-lineWidth / 2, -lineHeight / 2, lineWidth, lineHeight, lineWidth / 2);
@@ -74,7 +74,7 @@ export function drawVerticalRightIcon(
   styleOverride: any,
   fabricObject: FabricObject,
 ) {
-  const width = 6; // Handle width
+  const width = 2; // Handle width
   const height = fabricObject.height;
   const borderRadius = 2;
 
@@ -91,7 +91,7 @@ export function drawVerticalRightIcon(
 
   // Draw centered vertical line
   const lineWidth = 2;
-  const lineHeight = 14;
+  const lineHeight = 8;
   ctx.fillStyle = "white";
   ctx.beginPath();
   ctx.roundRect(-lineWidth / 2, -lineHeight / 2, lineWidth, lineHeight, lineWidth / 2);

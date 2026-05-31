@@ -1,6 +1,7 @@
 import { Control, Resizable, ResizableProps } from "@openvideo/timeline";
 import { editorFont } from "@/components/editor/constants";
 import { createResizeControls } from "../controls";
+import { TIMELINE_SELECTED_BORDER_COLOR, TIMELINE_BORDER_WIDTH } from "../../constants/constants";
 
 interface EffectProps extends ResizableProps {
   name: string;
@@ -61,8 +62,8 @@ class Effect extends Resizable {
   public updateSelected(ctx: CanvasRenderingContext2D) {
     if (!this.isSelected) return;
 
-    const borderColor = "rgba(255, 255, 255, 1.0)";
-    const borderWidth = 1.5;
+    const borderColor = TIMELINE_SELECTED_BORDER_COLOR;
+    const borderWidth = TIMELINE_BORDER_WIDTH;
     const innerRadius = 0;
 
     ctx.save();
