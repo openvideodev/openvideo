@@ -31,7 +31,6 @@
     "@google/genai": "^1.51.0",
     "@openvideo/auth": "workspace:*",
     "@openvideo/db": "workspace:*",
-    "@trigger.dev/sdk": "^4.4.5",
     "@trpc/server": "^11.0.0",
     "@types/node": "^20",
     "bullmq": "^5.51.0",
@@ -39,6 +38,7 @@
     "jose": "^6.2.3",
     "superjson": "^2.2.2",
     "typescript": "~5.9.2",
+    "ioredis": "^5.4.1",
     "zod": "^4.1.13"
   },
   "devDependencies": {}

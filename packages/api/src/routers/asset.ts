@@ -2,9 +2,35 @@ import { z } from "zod";
 import { eq, and, desc } from "drizzle-orm";
 import { getDB, asset, assetIndexingStatus } from "@openvideo/db";
 import { router, protectedProcedure } from "../trpc.js";
-import { tasks } from "@trigger.dev/sdk/v3";
 
 const db = getDB();
+
+async function startWorkflow(workflow: string, payload: any): Promise<any> {
+  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const url = `${appUrl}/api/workflows/start`;
+
+  console.log(`[DEBUG] Starting workflow: ${workflow}`, { payload, url });
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ workflow, payload }),
+  });
+
+  console.log(`[DEBUG] Workflow start response: ${response.status}`);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[DEBUG] Workflow start failed: ${response.status} - ${errorText}`);
+    throw new Error(`Workflow start failed: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log(`[DEBUG] Workflow started successfully:`, result);
+  return result;
+}
 
 export const assetRouter = router({
   // Create an asset (and optionally set to pending for indexing)
@@ -48,11 +74,18 @@ export const assetRouter = router({
           })
           .onConflictDoNothing();
 
-        // Trigger the actual indexing task
+        // Trigger the actual indexing workflow
+        console.log(
+          `[DEBUG] Triggering index-asset workflow for asset ${id} in space ${input.spaceId}`,
+        );
         try {
-          await tasks.trigger("index-asset", { spaceId: input.spaceId, assetId: id });
+          const result = await startWorkflow("index-asset", {
+            spaceId: input.spaceId,
+            assetId: id,
+          });
+          console.log(`[DEBUG] index-asset workflow triggered successfully:`, result);
         } catch (triggerErr) {
-          console.error("Failed to trigger indexing task:", triggerErr);
+          console.error(`[DEBUG] Failed to trigger indexing workflow for asset ${id}:`, triggerErr);
         }
       }
 
@@ -141,6 +174,19 @@ export const assetRouter = router({
             updatedAt: new Date(),
           },
         });
+
+      // Actually trigger the workflow
+      console.log(`[DEBUG] triggerIndex: Starting index-asset workflow for asset ${input.id}`);
+      try {
+        const result = await startWorkflow("index-asset", {
+          spaceId: input.spaceId,
+          assetId: input.id,
+        });
+        console.log(`[DEBUG] triggerIndex: Workflow started successfully:`, result);
+      } catch (err) {
+        console.error(`[DEBUG] triggerIndex: Failed to start workflow:`, err);
+        throw err;
+      }
 
       return { success: true, status: "queued" };
     }),
