@@ -34,7 +34,7 @@ class PostgreSQLClient(DatabaseClient):
                 with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                     cursor.execute(
                         """
-                        SELECT id, name, type, src, space_id, user_id, duration, size, width, height
+                        SELECT id, name, type, src, "spaceId", "userId", duration, size, width, height
                         FROM asset
                         WHERE id = %s
                         """,
@@ -50,8 +50,8 @@ class PostgreSQLClient(DatabaseClient):
                         name=row["name"],
                         type=row["type"],
                         src=row["src"],
-                        space_id=row["space_id"],
-                        user_id=row["user_id"],
+                        space_id=row["spaceId"],
+                        user_id=row["userId"],
                         duration=row["duration"],
                         size=row["size"],
                         dimensions={"width": row["width"], "height": row["height"]}
@@ -80,26 +80,26 @@ class PostgreSQLClient(DatabaseClient):
                         for seg in segments
                     ]
                     
-                    # Get space_id from asset
+                    # Get spaceId from asset
                     cursor.execute(
-                        "SELECT space_id FROM asset WHERE id = %s",
+                        'SELECT "spaceId" FROM asset WHERE id = %s',
                         (asset_id,)
                     )
                     space_row = cursor.fetchone()
                     if not space_row:
                         raise DatabaseError(f"Asset {asset_id} not found")
-                    
+
                     space_id = space_row[0]
-                    
+
                     # Upsert transcript - delete existing then insert
                     cursor.execute(
-                        "DELETE FROM asset_transcript WHERE asset_id = %s",
+                        'DELETE FROM asset_transcript WHERE "assetId" = %s',
                         (asset_id,)
                     )
                     cursor.execute(
                         """
-                        INSERT INTO asset_transcript 
-                        (id, asset_id, space_id, segments)
+                        INSERT INTO asset_transcript
+                        (id, "assetId", "spaceId", segments)
                         VALUES (%s, %s, %s, %s)
                         """,
                         (
@@ -146,26 +146,26 @@ class PostgreSQLClient(DatabaseClient):
                                 "keywords": getattr(scene, 'keywords', [])
                             })
                     
-                    # Get space_id from asset
+                    # Get spaceId from asset
                     cursor.execute(
-                        "SELECT space_id FROM asset WHERE id = %s",
+                        'SELECT "spaceId" FROM asset WHERE id = %s',
                         (asset_id,)
                     )
                     space_row = cursor.fetchone()
                     if not space_row:
                         raise DatabaseError(f"Asset {asset_id} not found")
-                    
+
                     space_id = space_row[0]
-                    
+
                     # Upsert visual timeline - delete existing then insert
                     cursor.execute(
-                        "DELETE FROM asset_visual_timeline WHERE asset_id = %s",
+                        'DELETE FROM asset_visual_timeline WHERE "assetId" = %s',
                         (asset_id,)
                     )
                     cursor.execute(
                         """
-                        INSERT INTO asset_visual_timeline 
-                        (id, asset_id, space_id, scenes)
+                        INSERT INTO asset_visual_timeline
+                        (id, "assetId", "spaceId", scenes)
                         VALUES (%s, %s, %s, %s)
                         """,
                         (
@@ -191,10 +191,10 @@ class PostgreSQLClient(DatabaseClient):
                 with conn.cursor() as cursor:
                     cursor.execute(
                         """
-                        INSERT INTO asset_indexing_status 
-                        (id, asset_id, space_id, status, progress, stage, error, updated_at, created_at)
+                        INSERT INTO asset_indexing_status
+                        (id, "assetId", "spaceId", status, progress, stage, error, "updatedAt", "createdAt")
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (asset_id) DO NOTHING
+                        ON CONFLICT ("assetId") DO NOTHING
                         """,
                         (
                             f"status_{asset_id}",

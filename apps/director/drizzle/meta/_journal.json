@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1777773398739,
-      "tag": "0000_dusty_maginty",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1777773823498,
-      "tag": "0001_messy_wild_child",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1779330192285,
-      "tag": "0002_fine_anita_blake",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1779482411226,
-      "tag": "0003_shiny_nova",
+      "when": 1780347465944,
+      "tag": "0000_glamorous_sheva_callister",
       "breakpoints": true
     }
   ]

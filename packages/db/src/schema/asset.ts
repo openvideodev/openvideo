@@ -7,10 +7,10 @@ export const asset = pgTable(
   "asset",
   {
     id: text("id").primaryKey(),
-    spaceId: text("space_id")
+    spaceId: text("spaceId")
       .notNull()
       .references(() => space.id, { onDelete: "cascade" }),
-    orgId: text("org_id"),
+    orgId: text("orgId"),
     name: text("name").notNull(),
     type: text("type").notNull(), // 'image' | 'video' | 'audio'
     src: text("src").notNull(),
@@ -19,11 +19,11 @@ export const asset = pgTable(
     width: integer("width"),
     height: integer("height"),
     source: text("source").notNull().default("upload"), // 'upload' | 'ai_generated'
-    userId: text("user_id")
+    userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
   (t) => [
     index("asset_spaceId_idx").on(t.spaceId),
@@ -36,16 +36,16 @@ export const assetTranscript = pgTable(
   "asset_transcript",
   {
     id: text("id").primaryKey(),
-    assetId: text("asset_id")
+    assetId: text("assetId")
       .notNull()
       .unique()
       .references(() => asset.id, { onDelete: "cascade" }),
-    spaceId: text("space_id")
+    spaceId: text("spaceId")
       .notNull()
       .references(() => space.id, { onDelete: "cascade" }),
-    orgId: text("org_id"),
+    orgId: text("orgId"),
     segments: json("segments").$type<any[]>().notNull(), // cached transcript segments {text, startMs, endMs}
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   (t) => [
     index("asset_transcript_assetId_idx").on(t.assetId),
@@ -58,16 +58,16 @@ export const assetVisualTimeline = pgTable(
   "asset_visual_timeline",
   {
     id: text("id").primaryKey(),
-    assetId: text("asset_id")
+    assetId: text("assetId")
       .notNull()
       .unique()
       .references(() => asset.id, { onDelete: "cascade" }),
-    spaceId: text("space_id")
+    spaceId: text("spaceId")
       .notNull()
       .references(() => space.id, { onDelete: "cascade" }),
-    orgId: text("org_id"),
+    orgId: text("orgId"),
     scenes: json("scenes").$type<any[]>().notNull(), // cached visual scenes {description, startMs, endMs}
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   (t) => [
     index("asset_visual_timeline_assetId_idx").on(t.assetId),
@@ -80,23 +80,23 @@ export const assetIndexingStatus = pgTable(
   "asset_indexing_status",
   {
     id: text("id").primaryKey(),
-    assetId: text("asset_id")
+    assetId: text("assetId")
       .notNull()
       .unique()
       .references(() => asset.id, { onDelete: "cascade" }),
-    spaceId: text("space_id")
+    spaceId: text("spaceId")
       .notNull()
       .references(() => space.id, { onDelete: "cascade" }),
-    orgId: text("org_id"),
+    orgId: text("orgId"),
     status: text("status").notNull().default("pending"), // 'pending' | 'processing' | 'completed' | 'failed'
     progress: integer("progress").default(0), // 0-100 percentage
     stage: text("stage"), // 'downloading' | 'transcribing' | 'embedding' | 'storing'
     error: text("error"), // Error message if failed
-    jobId: text("job_id"), // BullMQ job ID for tracking
-    startedAt: timestamp("started_at"),
-    completedAt: timestamp("completed_at"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    jobId: text("jobId"), // BullMQ job ID for tracking
+    startedAt: timestamp("startedAt"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
   (t) => [
     index("asset_indexing_status_assetId_idx").on(t.assetId),
@@ -110,13 +110,13 @@ export const clipTranscript = pgTable(
   "clip_transcript",
   {
     id: text("id").primaryKey(),
-    clipId: text("clip_id").notNull().unique(),
-    spaceId: text("space_id")
+    clipId: text("clipId").notNull().unique(),
+    spaceId: text("spaceId")
       .notNull()
       .references(() => space.id, { onDelete: "cascade" }),
-    orgId: text("org_id"),
+    orgId: text("orgId"),
     segments: json("segments").$type<any[]>().notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   (t) => [
     index("clip_transcript_clipId_idx").on(t.clipId),
@@ -136,11 +136,11 @@ export const upload = pgTable(
     duration: integer("duration"), // seconds for video/audio
     width: integer("width"),
     height: integer("height"),
-    userId: text("user_id")
+    userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
   (t) => [index("upload_userId_idx").on(t.userId)],
 );

@@ -45,7 +45,9 @@ class PGVectorStore(VectorStore):
         self.vector_store = PGVector(
             connection=self.connection_string,
             embeddings=self.embeddings,
-            collection_name=self.collection_name
+            collection_name=self.collection_name,
+            use_jsonb=True,  # Use JSONB for metadata
+            create_extension=True,  # Create pgvector extension if not exists
         )
     
     async def upsert_documents(self, documents: List[Any]) -> None:

@@ -51,8 +51,7 @@ volume = modal.Volume.from_name("openvideo-temp", create_if_missing=True)
     image=image,
     volumes={"/data": volume},
     timeout=1800,  # 30 minutes
-    memory=8192,   # 8GB RAM
-    gpu="T4",      # GPU for video processing
+    memory=8192,   # 8GB RAM (CPU only since we use external APIs)
     secrets=[
         modal.Secret.from_name("openvideo-db"),
         modal.Secret.from_name("openvideo-ai"),
@@ -113,6 +112,28 @@ async def index_asset(asset_id: str) -> Dict[str, Any]:
             "timestamp": datetime.utcnow().isoformat()
         }
 
+
+@app.function(
+    image=image,
+    timeout=60,
+    memory=512,
+    secrets=[
+        modal.Secret.from_name("openvideo-db")
+    ]
+)
+async def fix_db() -> Dict[str, Any]:
+    """Fix database schema by dropping old LangChain tables."""
+    import psycopg2
+    try:
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+        with conn.cursor() as cursor:
+            cursor.execute("DROP TABLE IF EXISTS langchain_pg_embedding CASCADE;")
+            cursor.execute("DROP TABLE IF EXISTS langchain_pg_collection CASCADE;")
+            conn.commit()
+        conn.close()
+        return {"success": True, "message": "Dropped old LangChain tables"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.function(
     image=image,

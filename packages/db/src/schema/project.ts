@@ -3,7 +3,7 @@ import { pgTable, text, timestamp, integer, json, index } from "drizzle-orm/pg-c
 import { user } from "./auth.js";
 
 export const space = pgTable(
-  "spaces",
+  "space",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
@@ -20,13 +20,13 @@ export const space = pgTable(
       }>()
       .notNull()
       .default({ tracks: [], clips: {}, settings: {} }),
-    userId: text("user_id")
+    userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    orgId: text("org_id"), // Optional: for future multi-tenancy
+    orgId: text("orgId"), // Optional: for future multi-tenancy
     data: json("data").$type<any>(), // Stores any extra metadata
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
   (t) => [index("space_userId_idx").on(t.userId), index("space_orgId_idx").on(t.orgId)],
 );
@@ -35,18 +35,18 @@ export const directorSession = pgTable(
   "director_session",
   {
     id: text("id").primaryKey(),
-    spaceId: text("space_id")
+    spaceId: text("spaceId")
       .notNull()
       .references(() => space.id, { onDelete: "cascade" }),
-    userId: text("user_id")
+    userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    orgId: text("org_id"),
-    historyJson: json("history_json").$type<any[]>().notNull().default([]),
-    pendingPlan: json("pending_plan").$type<any>(),
-    activePlanId: text("active_plan_id"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    orgId: text("orgId"),
+    historyJson: json("historyJson").$type<any[]>().notNull().default([]),
+    pendingPlan: json("pendingPlan").$type<any>(),
+    activePlanId: text("activePlanId"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
   (t) => [
     index("director_session_spaceId_userId_idx").on(t.spaceId, t.userId),

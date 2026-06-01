@@ -50,7 +50,7 @@ export const tokenRouter = router({
           tokenHint,
           userId: ctx.user.id,
           name: input.name || null,
-          scopes: input.scopes,
+          scopes: input.scopes.join(","),
           expiresAt,
         })
         .returning();
@@ -59,7 +59,7 @@ export const tokenRouter = router({
         id: rows[0].id,
         name: rows[0].name,
         tokenHint: rows[0].tokenHint,
-        scopes: rows[0].scopes,
+        scopes: rows[0].scopes ? rows[0].scopes.split(",") : [],
         expiresAt: rows[0].expiresAt,
         createdAt: rows[0].createdAt,
         token: fullToken, // returned once
@@ -88,7 +88,7 @@ export const tokenRouter = router({
 
     return rows.map((r) => ({
       ...r,
-      scopes: r.scopes as string[],
+      scopes: r.scopes ? r.scopes.split(",") : [],
     }));
   }),
 

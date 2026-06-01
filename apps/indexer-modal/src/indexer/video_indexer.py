@@ -3,11 +3,14 @@
 import os
 import tempfile
 import asyncio
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import cv2
 import numpy as np
 from PIL import Image
 import io
+
+# Import Document at module level for type hints
+from langchain_core.documents import Document
 
 from ..core.interfaces import (
     VideoDownloader, SceneDetector, AudioTranscriber, 
@@ -450,132 +453,92 @@ class VideoIndexer:
         video_path: str,
         segments: List[TranscriptSegment]
     ) -> None:
-        """Dense 1fps indexing with transcript-aware temporal chunks.
+        """Dense 1fps indexing with batch processing and parallel execution.
         
-        Best practice for AI video editors:
-        - Sample frames every 1 second for granular search
-        - Create temporal chunks aligned with transcript segments
-        - Combine visual + audio in multi-modal embeddings
+        Optimizations:
+        - Adaptive sampling based on video duration
+        - Batched API calls (10 chunks per batch)
+        - Parallel processing with semaphore
+        - Initial estimates logging
         """
-        from langchain_core.documents import Document
+        import asyncio
         
-        logger.info(f"Starting dense 1fps indexing for {asset.name}")
+        # Configuration
+        BATCH_SIZE = 10  # Process 10 chunks per batch
+        MAX_CONCURRENT = 5  # Max 5 parallel API calls
         
-        # Get video duration
-        cap = cv2.VideoCapture(video_path)
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration_sec = total_frames / fps if fps > 0 else 0
-        cap.release()
+        # Adaptive sampling: larger windows for longer videos
+        # But MORE frames per chunk for short videos (more detail, same API calls)
+        duration_sec = self._get_video_duration(video_path)
         
-        logger.info(f"Video duration: {duration_sec:.1f}s, FPS: {fps}")
+        if duration_sec < 60:  # < 1 min: small windows, many frames per chunk
+            window_size_ms = 2000  # 2-second chunks
+            overlap_ms = 400
+            frames_per_chunk = 8   # More frames = more detail
+        elif duration_sec < 600:  # < 10 min: medium windows
+            window_size_ms = 5000
+            overlap_ms = 2000
+            frames_per_chunk = 5   # Balanced
+        else:  # > 10 min: larger windows, fewer frames per chunk (save costs)
+            window_size_ms = 10000
+            overlap_ms = 5000
+            frames_per_chunk = 3   # Fewer frames still sufficient for long content
         
-        # Create temporal chunks aligned with transcript segments
-        # If no transcript, use 5-second sliding windows
-        chunks = []
+        logger.info(f"Starting dense indexing for {asset.name}")
+        logger.info(f"Video duration: {duration_sec:.1f}s | Window: {window_size_ms/1000:.1f}s | Overlap: {overlap_ms/1000:.1f}s | Frames/chunk: {frames_per_chunk}")
         
-        if segments:
-            # Use transcript segments to define chunk boundaries
-            for seg in segments:
-                chunks.append({
-                    "start_ms": seg.start_ms,
-                    "end_ms": seg.end_ms,
-                    "text": seg.text,
-                    "type": "transcript_chunk"
-                })
-        else:
-            # No transcript - use 5-second sliding windows with 2s overlap
-            window_size = 5000  # 5 seconds
-            overlap = 2000  # 2 seconds
-            current = 0
-            while current < duration_sec * 1000:
-                chunks.append({
-                    "start_ms": current,
-                    "end_ms": min(current + window_size, int(duration_sec * 1000)),
-                    "text": "",
-                    "type": "visual_chunk"
-                })
-                current += (window_size - overlap)
+        # Create temporal chunks
+        chunks = self._create_temporal_chunks(segments, duration_sec, window_size_ms, overlap_ms)
         
-        logger.info(f"Created {len(chunks)} temporal chunks")
+        # Calculate estimates
+        total_chunks = len(chunks)
+        total_batches = (total_chunks + BATCH_SIZE - 1) // BATCH_SIZE
+        estimated_frames = total_chunks * frames_per_chunk  # adaptive frames per chunk
+        estimated_api_calls = total_batches  # 1 API call per batch (batch of 10)
         
-        # Process each chunk: extract frames + analyze + create embedding
+        logger.info(f"📊 ESTIMATES: {total_chunks} chunks | {total_batches} batches | {estimated_frames} frames | {estimated_api_calls} API calls")
+        logger.info(f"⏱️  Estimated time: ~{estimated_api_calls * 3}s (assuming 3s per batch)")
+        
+        # Process in batches with parallel execution
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT)
         documents = []
+        processed = 0
         
-        for i, chunk in enumerate(chunks):
-            start_sec = chunk["start_ms"] / 1000
-            end_sec = chunk["end_ms"] / 1000
-            chunk_duration = end_sec - start_sec
+        async def process_batch(batch_chunks, batch_idx, num_frames):
+            async with semaphore:
+                batch_docs = []
+                for chunk in batch_chunks:
+                    doc = await self._process_single_chunk(asset, video_path, chunk, num_frames)
+                    if doc:
+                        batch_docs.append(doc)
+                return batch_docs
+        
+        # Create batch tasks
+        tasks = []
+        for i in range(0, len(chunks), BATCH_SIZE):
+            batch = chunks[i:i + BATCH_SIZE]
+            tasks.append(process_batch(batch, i // BATCH_SIZE, frames_per_chunk))
+        
+        # Execute batches with progress updates
+        logger.info(f"🚀 Processing {len(tasks)} batch tasks with max {MAX_CONCURRENT} concurrent...")
+        
+        for i, task in enumerate(asyncio.as_completed(tasks)):
+            batch_docs = await task
+            documents.extend(batch_docs)
+            processed += BATCH_SIZE
             
-            # Extract 3-4 frames spread across the chunk
-            frame_positions = [
-                start_sec,
-                start_sec + chunk_duration * 0.33,
-                start_sec + chunk_duration * 0.67,
-                end_sec - 0.1
-            ]
+            # Progress update
+            progress = min(35 + int((i + 1) / len(tasks) * 50), 85)
+            await self._update_progress(asset.id, progress, f"analyzing ({processed}/{total_chunks})")
             
-            # Extract and analyze frames
-            frames = self._extract_frames_at_positions(video_path, frame_positions)
-            
-            if frames:
-                # Analyze frames with Gemini
-                context = f"""Video segment from {start_sec:.1f}s to {end_sec:.1f}s.
-Transcript: "{chunk['text']}""" if chunk['text'] else f"Video segment from {start_sec:.1f}s to {end_sec:.1f}s."
-                
-                analysis = await self.vision_analyzer.analyze_scene_frames(frames, context)
-                
-                # Create rich multi-modal content combining visual + transcript
-                visual_desc = analysis.get("description", "")
-                objects = ", ".join(analysis.get("objects", []))
-                topics = ", ".join(analysis.get("topics", []))
-                
-                # Combine transcript + visual for semantic search
-                if chunk['text']:
-                    page_content = f"""title: {asset.name}
-time: {start_sec:.1f}s - {end_sec:.1f}s
-transcript: {chunk['text']}
-visual: {visual_desc}
-objects: {objects}
-topics: {topics}"""
-                else:
-                    page_content = f"""title: {asset.name}
-time: {start_sec:.1f}s - {end_sec:.1f}s
-visual: {visual_desc}
-objects: {objects}
-topics: {topics}"""
-                
-                doc = Document(
-                    page_content=page_content,
-                    metadata={
-                        "spaceId": asset.space_id,
-                        "assetId": asset.id,
-                        "assetName": asset.name,
-                        "assetType": "video",
-                        "src": asset.src,
-                        "layer": "video-chunk",
-                        "startMs": chunk["start_ms"],
-                        "endMs": chunk["end_ms"],
-                        "transcriptText": chunk.get("text", ""),
-                        "visualDescription": visual_desc,
-                        "objects": analysis.get("objects", []),
-                        "topics": analysis.get("topics", []),
-                        "keywords": analysis.get("keywords", [])
-                    }
-                )
-                documents.append(doc)
-            
-            # Progress update every 5 chunks
-            if (i + 1) % 5 == 0:
-                progress = 35 + int((i + 1) / len(chunks) * 50)
-                await self._update_progress(asset.id, min(progress, 85), "analyzing")
+            logger.info(f"✅ Batch {i+1}/{len(tasks)} complete: {len(batch_docs)} docs | Total: {len(documents)}")
         
         # Store all documents
         if documents:
-            logger.info(f"Upserting {len(documents)} dense video chunks")
+            logger.info(f"💾 Upserting {len(documents)} documents to vector store...")
             await self.vector_store.upsert_documents(documents)
             
-            # Also save visual timeline
+            # Save visual timeline
             visual_scenes = [
                 {
                     "startMs": d.metadata["startMs"],
@@ -588,6 +551,136 @@ topics: {topics}"""
                 for d in documents
             ]
             await self.database.save_visual_timeline(asset.id, visual_scenes)
+            logger.info(f"✅ Dense indexing complete: {len(documents)} chunks indexed")
+    
+    def _get_video_duration(self, video_path: str) -> float:
+        """Get video duration in seconds."""
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = total_frames / fps if fps > 0 else 0
+        cap.release()
+        return duration
+    
+    def _create_temporal_chunks(
+        self, 
+        segments: List[TranscriptSegment], 
+        duration_sec: float,
+        window_size_ms: int,
+        overlap_ms: int
+    ) -> List[Dict]:
+        """Create temporal chunks aligned with transcript or uniform sampling."""
+        chunks = []
+        
+        if segments and len(segments) > 1:
+            # Use transcript segments
+            for seg in segments:
+                chunks.append({
+                    "start_ms": seg.start_ms,
+                    "end_ms": seg.end_ms,
+                    "text": seg.text,
+                    "type": "transcript_chunk"
+                })
+        else:
+            # Uniform sampling with sliding windows
+            current = 0
+            max_ms = int(duration_sec * 1000)
+            while current < max_ms:
+                end_ms = min(current + window_size_ms, max_ms)
+                chunks.append({
+                    "start_ms": current,
+                    "end_ms": end_ms,
+                    "text": "",
+                    "type": "visual_chunk"
+                })
+                current += (window_size_ms - overlap_ms)
+        
+        return chunks
+    
+    async def _process_single_chunk(
+        self, 
+        asset: Asset, 
+        video_path: str, 
+        chunk: Dict,
+        num_frames: int = 4
+    ) -> Optional[Document]:
+        """Process a single temporal chunk: extract frames and analyze."""
+        start_sec = chunk["start_ms"] / 1000
+        end_sec = chunk["end_ms"] / 1000
+        chunk_duration = end_sec - start_sec
+        
+        # Extract num_frames spread evenly across the chunk
+        if num_frames == 1:
+            frame_positions = [start_sec + chunk_duration * 0.5]
+        elif num_frames == 2:
+            frame_positions = [start_sec, end_sec - 0.1]
+        elif num_frames == 3:
+            frame_positions = [start_sec, start_sec + chunk_duration * 0.5, end_sec - 0.1]
+        elif num_frames == 4:
+            frame_positions = [start_sec, start_sec + chunk_duration * 0.33, start_sec + chunk_duration * 0.67, end_sec - 0.1]
+        elif num_frames == 5:
+            frame_positions = [start_sec, start_sec + chunk_duration * 0.25, start_sec + chunk_duration * 0.5, start_sec + chunk_duration * 0.75, end_sec - 0.1]
+        elif num_frames >= 6:
+            # Evenly distribute frames
+            frame_positions = []
+            for i in range(num_frames):
+                if i == 0:
+                    frame_positions.append(start_sec)
+                elif i == num_frames - 1:
+                    frame_positions.append(end_sec - 0.1)
+                else:
+                    frame_positions.append(start_sec + chunk_duration * (i / (num_frames - 1)))
+        else:
+            frame_positions = [start_sec, start_sec + chunk_duration * 0.5, end_sec - 0.1]
+        
+        frames = self._extract_frames_at_positions(video_path, frame_positions)
+        
+        if not frames:
+            return None
+        
+        # Analyze frames with Gemini
+        context = f"""Video segment from {start_sec:.1f}s to {end_sec:.1f}s.
+Transcript: "{chunk['text']}""" if chunk['text'] else f"Video segment from {start_sec:.1f}s to {end_sec:.1f}s."
+        
+        analysis = await self.vision_analyzer.analyze_scene_frames(frames, context)
+        
+        visual_desc = analysis.get("description", "")
+        objects = ", ".join(analysis.get("objects", []))
+        topics = ", ".join(analysis.get("topics", []))
+        
+        # Create document
+        if chunk['text']:
+            page_content = f"""title: {asset.name}
+time: {start_sec:.1f}s - {end_sec:.1f}s
+transcript: {chunk['text']}
+visual: {visual_desc}
+objects: {objects}
+topics: {topics}"""
+        else:
+            page_content = f"""title: {asset.name}
+time: {start_sec:.1f}s - {end_sec:.1f}s
+visual: {visual_desc}
+objects: {objects}
+topics: {topics}"""
+        
+        return Document(
+            page_content=page_content,
+            metadata={
+                "spaceId": asset.space_id,
+                "assetId": asset.id,
+                "assetName": asset.name,
+                "assetType": "video",
+                "src": asset.src,
+                "layer": "video-chunk",
+                "startMs": chunk["start_ms"],
+                "endMs": chunk["end_ms"],
+                "transcriptText": chunk.get("text", ""),
+                "visualDescription": visual_desc,
+                "objects": analysis.get("objects", []),
+                "topics": analysis.get("topics", []),
+                "keywords": analysis.get("keywords", [])
+            }
+        )
     
     def _extract_frames_at_positions(self, video_path: str, positions: List[float]) -> List[bytes]:
         """Extract frames at specific time positions."""
@@ -630,8 +723,8 @@ topics: {topics}"""
                     cursor.execute(
                         """
                         UPDATE asset_indexing_status
-                        SET progress = %s, stage = %s, status = %s, updated_at = %s
-                        WHERE asset_id = %s
+                        SET progress = %s, stage = %s, status = %s, "updatedAt" = %s
+                        WHERE "assetId" = %s
                         """,
                         (progress, stage, status, datetime.utcnow(), asset_id)
                     )

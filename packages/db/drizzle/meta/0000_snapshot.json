@@ -1,5 +1,5 @@
 {
-  "id": "42794ad4-2c38-4689-ab65-a88daae794c4",
+  "id": "1559d361-2a06-4120-a794-8704496c4c6b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -14,50 +14,50 @@
           "primaryKey": true,
           "notNull": true
         },
-        "account_id": {
-          "name": "account_id",
+        "accountId": {
+          "name": "accountId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "provider_id": {
-          "name": "provider_id",
+        "providerId": {
+          "name": "providerId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "access_token": {
-          "name": "access_token",
+        "accessToken": {
+          "name": "accessToken",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "refresh_token": {
-          "name": "refresh_token",
+        "refreshToken": {
+          "name": "refreshToken",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "id_token": {
-          "name": "id_token",
+        "idToken": {
+          "name": "idToken",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "access_token_expires_at": {
-          "name": "access_token_expires_at",
+        "accessTokenExpiresAt": {
+          "name": "accessTokenExpiresAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "refresh_token_expires_at": {
-          "name": "refresh_token_expires_at",
+        "refreshTokenExpiresAt": {
+          "name": "refreshTokenExpiresAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
@@ -74,15 +74,15 @@
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
@@ -93,7 +93,7 @@
           "name": "account_userId_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -106,12 +106,16 @@
         }
       },
       "foreignKeys": {
-        "account_user_id_user_id_fk": {
-          "name": "account_user_id_user_id_fk",
+        "account_userId_user_id_fk": {
+          "name": "account_userId_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -132,20 +136,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "token_hash": {
-          "name": "token_hash",
+        "tokenHash": {
+          "name": "tokenHash",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "token_hint": {
-          "name": "token_hint",
+        "tokenHint": {
+          "name": "tokenHint",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -158,25 +162,25 @@
         },
         "scopes": {
           "name": "scopes",
-          "type": "text[]",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{\"all\"}'"
+          "default": "'all'"
         },
-        "last_used": {
-          "name": "last_used",
+        "lastUsed": {
+          "name": "lastUsed",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "expires_at": {
-          "name": "expires_at",
+        "expiresAt": {
+          "name": "expiresAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -188,7 +192,7 @@
           "name": "api_token_userId_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -203,7 +207,7 @@
           "name": "api_token_hash_idx",
           "columns": [
             {
-              "expression": "token_hash",
+              "expression": "tokenHash",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -216,22 +220,28 @@
         }
       },
       "foreignKeys": {
-        "api_token_user_id_user_id_fk": {
-          "name": "api_token_user_id_user_id_fk",
+        "api_token_userId_user_id_fk": {
+          "name": "api_token_userId_user_id_fk",
           "tableFrom": "api_token",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "api_token_token_hash_unique": {
-          "name": "api_token_token_hash_unique",
+        "api_token_tokenHash_unique": {
+          "name": "api_token_tokenHash_unique",
           "nullsNotDistinct": false,
-          "columns": ["token_hash"]
+          "columns": [
+            "tokenHash"
+          ]
         }
       },
       "policies": {},
@@ -248,8 +258,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "expires_at": {
-          "name": "expires_at",
+        "expiresAt": {
+          "name": "expiresAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
@@ -260,33 +270,33 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
-        "ip_address": {
-          "name": "ip_address",
+        "ipAddress": {
+          "name": "ipAddress",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "user_agent": {
-          "name": "user_agent",
+        "userAgent": {
+          "name": "userAgent",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -297,7 +307,7 @@
           "name": "session_userId_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -310,12 +320,16 @@
         }
       },
       "foreignKeys": {
-        "session_user_id_user_id_fk": {
-          "name": "session_user_id_user_id_fk",
+        "session_userId_user_id_fk": {
+          "name": "session_userId_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -325,7 +339,9 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": ["token"]
+          "columns": [
+            "token"
+          ]
         }
       },
       "policies": {},
@@ -354,8 +370,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "email_verified": {
-          "name": "email_verified",
+        "emailVerified": {
+          "name": "emailVerified",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -367,15 +383,15 @@
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -389,7 +405,9 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -418,21 +436,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "expires_at": {
-          "name": "expires_at",
+        "expiresAt": {
+          "name": "expiresAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -473,52 +491,52 @@
           "primaryKey": true,
           "notNull": true
         },
-        "space_id": {
-          "name": "space_id",
+        "spaceId": {
+          "name": "spaceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "org_id": {
-          "name": "org_id",
+        "orgId": {
+          "name": "orgId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "history_json": {
-          "name": "history_json",
+        "historyJson": {
+          "name": "historyJson",
           "type": "json",
           "primaryKey": false,
           "notNull": true,
           "default": "'[]'::json"
         },
-        "pending_plan": {
-          "name": "pending_plan",
+        "pendingPlan": {
+          "name": "pendingPlan",
           "type": "json",
           "primaryKey": false,
           "notNull": false
         },
-        "active_plan_id": {
-          "name": "active_plan_id",
+        "activePlanId": {
+          "name": "activePlanId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -530,13 +548,13 @@
           "name": "director_session_spaceId_userId_idx",
           "columns": [
             {
-              "expression": "space_id",
+              "expression": "spaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -551,7 +569,7 @@
           "name": "director_session_orgId_idx",
           "columns": [
             {
-              "expression": "org_id",
+              "expression": "orgId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -564,21 +582,29 @@
         }
       },
       "foreignKeys": {
-        "director_session_space_id_spaces_id_fk": {
-          "name": "director_session_space_id_spaces_id_fk",
+        "director_session_spaceId_space_id_fk": {
+          "name": "director_session_spaceId_space_id_fk",
           "tableFrom": "director_session",
-          "tableTo": "spaces",
-          "columnsFrom": ["space_id"],
-          "columnsTo": ["id"],
+          "tableTo": "space",
+          "columnsFrom": [
+            "spaceId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "director_session_user_id_user_id_fk": {
-          "name": "director_session_user_id_user_id_fk",
+        "director_session_userId_user_id_fk": {
+          "name": "director_session_userId_user_id_fk",
           "tableFrom": "director_session",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -589,8 +615,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.spaces": {
-      "name": "spaces",
+    "public.space": {
+      "name": "space",
       "schema": "",
       "columns": {
         "id": {
@@ -645,14 +671,14 @@
           "notNull": true,
           "default": "'{\"tracks\":[],\"clips\":{},\"settings\":{}}'::json"
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "org_id": {
-          "name": "org_id",
+        "orgId": {
+          "name": "orgId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -663,15 +689,15 @@
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -683,7 +709,7 @@
           "name": "space_userId_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -698,7 +724,7 @@
           "name": "space_orgId_idx",
           "columns": [
             {
-              "expression": "org_id",
+              "expression": "orgId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -711,12 +737,16 @@
         }
       },
       "foreignKeys": {
-        "spaces_user_id_user_id_fk": {
-          "name": "spaces_user_id_user_id_fk",
-          "tableFrom": "spaces",
+        "space_userId_user_id_fk": {
+          "name": "space_userId_user_id_fk",
+          "tableFrom": "space",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -737,14 +767,14 @@
           "primaryKey": true,
           "notNull": true
         },
-        "space_id": {
-          "name": "space_id",
+        "spaceId": {
+          "name": "spaceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "org_id": {
-          "name": "org_id",
+        "orgId": {
+          "name": "orgId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -798,21 +828,21 @@
           "notNull": true,
           "default": "'upload'"
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -824,7 +854,7 @@
           "name": "asset_spaceId_idx",
           "columns": [
             {
-              "expression": "space_id",
+              "expression": "spaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -839,7 +869,7 @@
           "name": "asset_orgId_idx",
           "columns": [
             {
-              "expression": "org_id",
+              "expression": "orgId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -854,7 +884,7 @@
           "name": "asset_userId_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -867,21 +897,29 @@
         }
       },
       "foreignKeys": {
-        "asset_space_id_spaces_id_fk": {
-          "name": "asset_space_id_spaces_id_fk",
+        "asset_spaceId_space_id_fk": {
+          "name": "asset_spaceId_space_id_fk",
           "tableFrom": "asset",
-          "tableTo": "spaces",
-          "columnsFrom": ["space_id"],
-          "columnsTo": ["id"],
+          "tableTo": "space",
+          "columnsFrom": [
+            "spaceId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "asset_user_id_user_id_fk": {
-          "name": "asset_user_id_user_id_fk",
+        "asset_userId_user_id_fk": {
+          "name": "asset_userId_user_id_fk",
           "tableFrom": "asset",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -902,20 +940,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "asset_id": {
-          "name": "asset_id",
+        "assetId": {
+          "name": "assetId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "space_id": {
-          "name": "space_id",
+        "spaceId": {
+          "name": "spaceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "org_id": {
-          "name": "org_id",
+        "orgId": {
+          "name": "orgId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -946,33 +984,33 @@
           "primaryKey": false,
           "notNull": false
         },
-        "job_id": {
-          "name": "job_id",
+        "jobId": {
+          "name": "jobId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "started_at": {
-          "name": "started_at",
+        "startedAt": {
+          "name": "startedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "completed_at": {
-          "name": "completed_at",
+        "completedAt": {
+          "name": "completedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -984,7 +1022,7 @@
           "name": "asset_indexing_status_assetId_idx",
           "columns": [
             {
-              "expression": "asset_id",
+              "expression": "assetId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -999,7 +1037,7 @@
           "name": "asset_indexing_status_spaceId_idx",
           "columns": [
             {
-              "expression": "space_id",
+              "expression": "spaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1029,7 +1067,7 @@
           "name": "asset_indexing_status_orgId_idx",
           "columns": [
             {
-              "expression": "org_id",
+              "expression": "orgId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1042,31 +1080,41 @@
         }
       },
       "foreignKeys": {
-        "asset_indexing_status_asset_id_asset_id_fk": {
-          "name": "asset_indexing_status_asset_id_asset_id_fk",
+        "asset_indexing_status_assetId_asset_id_fk": {
+          "name": "asset_indexing_status_assetId_asset_id_fk",
           "tableFrom": "asset_indexing_status",
           "tableTo": "asset",
-          "columnsFrom": ["asset_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "assetId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "asset_indexing_status_space_id_spaces_id_fk": {
-          "name": "asset_indexing_status_space_id_spaces_id_fk",
+        "asset_indexing_status_spaceId_space_id_fk": {
+          "name": "asset_indexing_status_spaceId_space_id_fk",
           "tableFrom": "asset_indexing_status",
-          "tableTo": "spaces",
-          "columnsFrom": ["space_id"],
-          "columnsTo": ["id"],
+          "tableTo": "space",
+          "columnsFrom": [
+            "spaceId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "asset_indexing_status_asset_id_unique": {
-          "name": "asset_indexing_status_asset_id_unique",
+        "asset_indexing_status_assetId_unique": {
+          "name": "asset_indexing_status_assetId_unique",
           "nullsNotDistinct": false,
-          "columns": ["asset_id"]
+          "columns": [
+            "assetId"
+          ]
         }
       },
       "policies": {},
@@ -1083,20 +1131,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "asset_id": {
-          "name": "asset_id",
+        "assetId": {
+          "name": "assetId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "space_id": {
-          "name": "space_id",
+        "spaceId": {
+          "name": "spaceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "org_id": {
-          "name": "org_id",
+        "orgId": {
+          "name": "orgId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1107,8 +1155,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -1120,7 +1168,7 @@
           "name": "asset_transcript_assetId_idx",
           "columns": [
             {
-              "expression": "asset_id",
+              "expression": "assetId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1135,7 +1183,7 @@
           "name": "asset_transcript_spaceId_idx",
           "columns": [
             {
-              "expression": "space_id",
+              "expression": "spaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1150,7 +1198,7 @@
           "name": "asset_transcript_orgId_idx",
           "columns": [
             {
-              "expression": "org_id",
+              "expression": "orgId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1163,27 +1211,43 @@
         }
       },
       "foreignKeys": {
-        "asset_transcript_asset_id_asset_id_fk": {
-          "name": "asset_transcript_asset_id_asset_id_fk",
+        "asset_transcript_assetId_asset_id_fk": {
+          "name": "asset_transcript_assetId_asset_id_fk",
           "tableFrom": "asset_transcript",
           "tableTo": "asset",
-          "columnsFrom": ["asset_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "assetId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "asset_transcript_space_id_spaces_id_fk": {
-          "name": "asset_transcript_space_id_spaces_id_fk",
+        "asset_transcript_spaceId_space_id_fk": {
+          "name": "asset_transcript_spaceId_space_id_fk",
           "tableFrom": "asset_transcript",
-          "tableTo": "spaces",
-          "columnsFrom": ["space_id"],
-          "columnsTo": ["id"],
+          "tableTo": "space",
+          "columnsFrom": [
+            "spaceId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "asset_transcript_assetId_unique": {
+          "name": "asset_transcript_assetId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "assetId"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1198,20 +1262,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "asset_id": {
-          "name": "asset_id",
+        "assetId": {
+          "name": "assetId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "space_id": {
-          "name": "space_id",
+        "spaceId": {
+          "name": "spaceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "org_id": {
-          "name": "org_id",
+        "orgId": {
+          "name": "orgId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1222,8 +1286,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -1235,7 +1299,7 @@
           "name": "asset_visual_timeline_assetId_idx",
           "columns": [
             {
-              "expression": "asset_id",
+              "expression": "assetId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1250,7 +1314,7 @@
           "name": "asset_visual_timeline_spaceId_idx",
           "columns": [
             {
-              "expression": "space_id",
+              "expression": "spaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1265,7 +1329,7 @@
           "name": "asset_visual_timeline_orgId_idx",
           "columns": [
             {
-              "expression": "org_id",
+              "expression": "orgId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1278,27 +1342,43 @@
         }
       },
       "foreignKeys": {
-        "asset_visual_timeline_asset_id_asset_id_fk": {
-          "name": "asset_visual_timeline_asset_id_asset_id_fk",
+        "asset_visual_timeline_assetId_asset_id_fk": {
+          "name": "asset_visual_timeline_assetId_asset_id_fk",
           "tableFrom": "asset_visual_timeline",
           "tableTo": "asset",
-          "columnsFrom": ["asset_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "assetId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "asset_visual_timeline_space_id_spaces_id_fk": {
-          "name": "asset_visual_timeline_space_id_spaces_id_fk",
+        "asset_visual_timeline_spaceId_space_id_fk": {
+          "name": "asset_visual_timeline_spaceId_space_id_fk",
           "tableFrom": "asset_visual_timeline",
-          "tableTo": "spaces",
-          "columnsFrom": ["space_id"],
-          "columnsTo": ["id"],
+          "tableTo": "space",
+          "columnsFrom": [
+            "spaceId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "asset_visual_timeline_assetId_unique": {
+          "name": "asset_visual_timeline_assetId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "assetId"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1313,20 +1393,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "clip_id": {
-          "name": "clip_id",
+        "clipId": {
+          "name": "clipId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "space_id": {
-          "name": "space_id",
+        "spaceId": {
+          "name": "spaceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "org_id": {
-          "name": "org_id",
+        "orgId": {
+          "name": "orgId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1337,8 +1417,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -1350,7 +1430,7 @@
           "name": "clip_transcript_clipId_idx",
           "columns": [
             {
-              "expression": "clip_id",
+              "expression": "clipId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1365,7 +1445,7 @@
           "name": "clip_transcript_spaceId_idx",
           "columns": [
             {
-              "expression": "space_id",
+              "expression": "spaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1380,7 +1460,7 @@
           "name": "clip_transcript_orgId_idx",
           "columns": [
             {
-              "expression": "org_id",
+              "expression": "orgId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1393,22 +1473,28 @@
         }
       },
       "foreignKeys": {
-        "clip_transcript_space_id_spaces_id_fk": {
-          "name": "clip_transcript_space_id_spaces_id_fk",
+        "clip_transcript_spaceId_space_id_fk": {
+          "name": "clip_transcript_spaceId_space_id_fk",
           "tableFrom": "clip_transcript",
-          "tableTo": "spaces",
-          "columnsFrom": ["space_id"],
-          "columnsTo": ["id"],
+          "tableTo": "space",
+          "columnsFrom": [
+            "spaceId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "clip_transcript_clip_id_unique": {
-          "name": "clip_transcript_clip_id_unique",
+        "clip_transcript_clipId_unique": {
+          "name": "clip_transcript_clipId_unique",
           "nullsNotDistinct": false,
-          "columns": ["clip_id"]
+          "columns": [
+            "clipId"
+          ]
         }
       },
       "policies": {},
@@ -1467,21 +1553,21 @@
           "primaryKey": false,
           "notNull": false
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -1493,7 +1579,7 @@
           "name": "upload_userId_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1506,12 +1592,16 @@
         }
       },
       "foreignKeys": {
-        "upload_user_id_user_id_fk": {
-          "name": "upload_user_id_user_id_fk",
+        "upload_userId_user_id_fk": {
+          "name": "upload_userId_user_id_fk",
           "tableFrom": "upload",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
