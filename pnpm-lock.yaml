@@ -52,12 +52,6 @@ importers:
       '@deepgram/sdk':
         specifier: ^4.11.2
         version: 4.11.3
-      '@hugeicons/core-free-icons':
-        specifier: ^4.1.1
-        version: 4.2.0
-      '@hugeicons/react':
-        specifier: ^1.1.6
-        version: 1.1.6(react@19.2.0)
       '@openvideo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -160,9 +154,6 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@opentelemetry/api@1.9.0)(@types/pg@8.20.0)(gel@2.2.0)(kysely@0.28.17)(pg@8.21.0)(postgres@3.4.9)
-      fabric:
-        specifier: ^6.9.0
-        version: 6.9.1
       framer-motion:
         specifier: ^12.38.0
         version: 12.40.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -178,9 +169,6 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.18.1
-      lucide-react:
-        specifier: ^0.555.0
-        version: 0.555.0(react@19.2.0)
       mediabunny:
         specifier: ^1.26.0
         version: 1.45.4
@@ -2139,14 +2127,6 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
-
-  '@hugeicons/core-free-icons@4.2.0':
-    resolution: {integrity: sha512-V1G/Ph9TbmEow+pKnupZRWQjdORR/TGGr3JVRZOWkomdJ/5N6GgLuKPgBDs7G0kZ0//9LL34AGOUzWe3K+umNA==}
-
-  '@hugeicons/react@1.1.6':
-    resolution: {integrity: sha512-c2LhXJMAW5wN1pC/smBXG0YPqUON6ceR/ZdXHCjEI9KvB+hjtqYjmzIxok5hAQOeXGz0WtORgCQMzqewFKAZwg==}
-    peerDependencies:
-      react: '>=16.0.0'
 
   '@ibm-cloud/watsonx-ai@1.7.13':
     resolution: {integrity: sha512-xduIj2subUermAwmz3mz5LXlLfUVyN+NwzswsIkl5EmU4t4VJ/040gtdbsjmwWrwKBA6xPxTt3i1NAEaFVvahA==}
@@ -7779,11 +7759,6 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.555.0:
-    resolution: {integrity: sha512-D8FvHUGbxWBRQM90NZeIyhAvkFfsh3u9ekrMvJ30Z6gnpBHS6HC6ldLg7tL45hwiIz/u66eKDtdA23gwwGsAHA==}
-    peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   lucide-react@1.17.0:
     resolution: {integrity: sha512-9FA9evdox/JQL5PT57fdA1x/yg8T7knJ98+zjTL3UfKza6pflQUUh3XtaQIHKvnsJw1lmsEyHVlt5jchYxOQ5w==}
     peerDependencies:
@@ -11727,12 +11702,6 @@ snapshots:
   '@hono/node-server@1.19.14(hono@4.12.23)':
     dependencies:
       hono: 4.12.23
-
-  '@hugeicons/core-free-icons@4.2.0': {}
-
-  '@hugeicons/react@1.1.6(react@19.2.0)':
-    dependencies:
-      react: 19.2.0
 
   '@ibm-cloud/watsonx-ai@1.7.13':
     dependencies:
@@ -17737,10 +17706,6 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
-
-  lucide-react@0.555.0(react@19.2.0):
-    dependencies:
-      react: 19.2.0
 
   lucide-react@1.17.0(react@19.2.6):
     dependencies:
