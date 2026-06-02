@@ -112,10 +112,6 @@ export class RetrieverService {
     return lines.join("\n");
   }
 
-  /**
-   * Exact word/phrase search against stored transcript words[].
-   * Returns word-level timestamps with ~100ms precision.
-   */
   async searchWords(spaceId: string, phrase: string): Promise<string> {
     this.logger.debug(`Word search for "${phrase}" in space ${spaceId}`);
 
@@ -126,7 +122,15 @@ export class RetrieverService {
 
     if (rows.length === 0) return "No transcripts found for this space.";
 
-    const needle = phrase.toLowerCase().trim();
+    const clean = (text: string) =>
+      text
+        .toLowerCase()
+        .replace(/[^\w\s]/g, "")
+        .trim();
+    const needle = clean(phrase);
+    if (!needle) return `No exact matches found for "${phrase}".`;
+
+    const phraseWords = needle.split(/\s+/);
     const results: string[] = [];
 
     for (const row of rows) {
@@ -135,13 +139,20 @@ export class RetrieverService {
         const words: any[] = seg.words || [];
         if (words.length === 0) continue;
 
-        const phraseWords = needle.split(/\s+/);
         for (let i = 0; i <= words.length - phraseWords.length; i++) {
           const window = words.slice(i, i + phraseWords.length);
-          const match = phraseWords.every((pw, j) => window[j]?.word?.toLowerCase().includes(pw));
+          const match = phraseWords.every((pw, j) => {
+            const wText = clean(window[j]?.word ?? "");
+            return wText.includes(pw);
+          });
+
           if (match) {
-            const startMs = window[0].startMs;
-            const endMs = window[window.length - 1].endMs;
+            const firstWord = window[0];
+            const lastWord = window[window.length - 1];
+            const startMs =
+              firstWord.startMs !== undefined ? firstWord.startMs : firstWord.start_ms;
+            const endMs = lastWord.endMs !== undefined ? lastWord.endMs : lastWord.end_ms;
+
             results.push(
               `Asset ID: ${row.assetId} | Phrase: "${window.map((w) => w.word).join(" ")}" | Time: ${startMs}ms (${(startMs / 1000).toFixed(1)}s) – ${endMs}ms (${(endMs / 1000).toFixed(1)}s)`,
             );

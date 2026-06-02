@@ -650,11 +650,14 @@ class VideoIndexer:
                 # AI provides START and END quotes for word-level timestamp accuracy
                 chapters_prompt = f"""You are analyzing a {asset_type_label} asset named "{asset.name}" for an AI video editor.
 
-Given the following transcript segments (each prefixed with its timestamp), identify distinct chapters or sections.
-For each chapter you MUST provide TWO short verbatim phrases (3–8 words each):
-
-1. "startQuote" - the exact phrase spoken right at the START of this chapter
-2. "endQuote" - the exact phrase spoken right at the END of this chapter (when the topic concludes)
+Given the following transcript segments (each prefixed with its timestamp in seconds), identify distinct chapters or sections.
+For each chapter you MUST provide:
+1. "title" - Chapter title
+2. "description" - One-sentence description of what this chapter covers
+3. "approximateStartMs" - The approximate start timestamp of the chapter in milliseconds (based on the segment prefix)
+4. "approximateEndMs" - The approximate end timestamp of the chapter in milliseconds (based on the segment prefix)
+5. "startQuote" - The exact phrase spoken right at the START of this chapter (verbatim, 3-8 words)
+6. "endQuote" - The exact phrase spoken right at the END of this chapter (verbatim, 3-8 words)
 
 Both quotes must appear word-for-word in the transcript. These will be used to locate precise word-level timestamps.
 
@@ -663,7 +666,9 @@ Return a JSON object:
   "chapters": [
     {{
       "title": "Chapter title",
-      "description": "One-sentence description of what this chapter covers",
+      "description": "One-sentence description",
+      "approximateStartMs": 185000,
+      "approximateEndMs": 280000,
       "startQuote": "exact phrase at chapter start",
       "endQuote": "exact phrase at chapter end",
       "keywords": ["keyword1", "keyword2"]
@@ -974,11 +979,13 @@ topics: {topics}"""
         """Align AI-generated chapters to word-level transcript timestamps.
 
         The AI provides `startQuote` and `endQuote` — short verbatim phrases from
-        the transcript. We search at WORD LEVEL to find the exact timestamps:
+        the transcript. It also provides `approximateStartMs` and `approximateEndMs`
+        to anchor the search around the correct chronological neighbourhood, solving
+        the teaser hook duplicate matching problem.
+
+        We search at WORD LEVEL using SequenceMatcher to find the exact timestamps:
         - startMs = timestamp of first word matching startQuote
         - endMs = timestamp of last word matching endQuote
-
-        This provides word-level accuracy (typically within 0.1-0.5s precision).
         """
         if not segments or not chapters:
             return chapters
@@ -986,88 +993,192 @@ topics: {topics}"""
         # Build flat list of all words with their timestamps
         all_words: List[Dict] = []
         for seg in segments:
-            if seg.words:
-                for w in seg.words:
+            # Generate pseudo-words if segment.words is empty
+            seg_words = seg.words
+            if not seg_words and seg.text:
+                words_list = seg.text.split()
+                if words_list:
+                    duration = seg.end_ms - seg.start_ms
+                    word_duration = duration / len(words_list)
+                    seg_words = []
+                    for idx, w in enumerate(words_list):
+                        w_start = int(seg.start_ms + idx * word_duration)
+                        w_end = int(seg.start_ms + (idx + 1) * word_duration)
+                        seg_words.append({
+                            "word": w,
+                            "start_ms": w_start,
+                            "end_ms": w_end
+                        })
+
+            if seg_words:
+                for w in seg_words:
+                    word_text = w.get("word", "")
+                    # Support both snake_case and camelCase safely
+                    start_ms = w.get("start_ms") if w.get("start_ms") is not None else w.get("startMs", 0)
+                    end_ms = w.get("end_ms") if w.get("end_ms") is not None else w.get("endMs", 0)
                     all_words.append({
-                        "word": w.get("word", ""),
-                        "start_ms": w.get("start_ms", 0),
-                        "end_ms": w.get("end_ms", 0),
-                        "segment_text": seg.text  # for context
+                        "word": word_text,
+                        "cleaned": re.sub(r'[^a-z0-9]', '', word_text.lower()),
+                        "start_ms": start_ms,
+                        "end_ms": end_ms,
                     })
 
         if not all_words:
-            # Fallback to segment-level if no word data
-            return self._align_chapters_to_segments_fallback(chapters, segments)
+            return chapters
 
-        def _normalise(text: str) -> str:
-            return re.sub(r'\s+', ' ', text.lower().strip())
+        def _clean_quote(quote: str) -> List[str]:
+            words = quote.lower().split()
+            cleaned = []
+            for w in words:
+                cleaned_w = re.sub(r'[^a-z0-9]', '', w)
+                if cleaned_w:
+                    cleaned.append(cleaned_w)
+            return cleaned
 
-        def _find_quote_timestamps(quote: str) -> tuple[int, int]:
-            """Find the exact word-level timestamps for a quote.
-            Returns (start_ms, end_ms) of the matching phrase.
+        import difflib
+
+        def _find_quote_timestamps(quote: str, target_ms: Optional[int], fallback_idx: int) -> tuple[int, int, int]:
+            """Find exact word timestamps for a quote.
+            Anchors search near target_ms if available (+/- 30s neighbourhood).
+            Falls back to searching sequentially from fallback_idx.
+            Returns (start_ms, end_ms, matched_end_idx).
             """
             if not quote:
-                return (0, 0)
+                return (0, 0, fallback_idx)
 
-            norm_quote = _normalise(quote)
-            quote_words = norm_quote.split()
+            quote_words = _clean_quote(quote)
             quote_len = len(quote_words)
-
             if quote_len == 0:
-                return (0, 0)
+                return (0, 0, fallback_idx)
 
-            best_match_start_idx = -1
-            best_match_score = 0
+            # 1. Determine the search range index in all_words
+            start_idx = 0
+            end_idx = len(all_words)
 
-            # Slide window over all words to find best match
-            for i in range(len(all_words) - quote_len + 1):
-                window_words = [_normalise(all_words[i + j]["word"]) for j in range(quote_len)]
+            if target_ms is not None and target_ms > 0:
+                # Find the index of the word closest to target_ms
+                target_idx = -1
+                min_diff = float('inf')
+                for idx, w in enumerate(all_words):
+                    diff = abs(w["start_ms"] - target_ms)
+                    if diff < min_diff:
+                        min_diff = diff
+                        target_idx = idx
 
-                # Count matching words
-                matches = sum(1 for j in range(quote_len) if window_words[j] == quote_words[j])
+                if target_idx != -1:
+                    # Define +/- 30 seconds neighbourhood around target_idx
+                    # At average speaking rate of 150 words per minute, 30s is ~75 words
+                    WINDOW_WORDS = 100
+                    start_idx = max(0, target_idx - WINDOW_WORDS)
+                    end_idx = min(len(all_words), target_idx + WINDOW_WORDS)
 
-                # Require at least 60% match
-                if matches >= quote_len * 0.6 and matches > best_match_score:
-                    best_match_score = matches
-                    best_match_start_idx = i
+            # If sequential search is forced or target search fails, ensure we start at least from fallback_idx
+            if target_ms is None or start_idx < fallback_idx:
+                start_idx = max(start_idx, fallback_idx)
 
-            if best_match_start_idx < 0:
-                # No good match found - try fuzzy substring search on full text
-                norm_all_text = _normalise(" ".join([w["word"] for w in all_words]))
-                if norm_quote in norm_all_text:
-                    # Find approximate position
-                    idx_in_text = norm_all_text.find(norm_quote)
-                    # Estimate word position
-                    words_before = norm_all_text[:idx_in_text].count(" ")
-                    best_match_start_idx = max(0, min(words_before, len(all_words) - quote_len))
-                else:
-                    return (0, 0)
+            # Helper to search in a given range of all_words
+            def search_in_range(start: int, end: int) -> tuple[int, int, int]:
+                best_score = 0
+                best_match_idx = -1
+                best_w_len = -1
 
-            # Get timestamps
-            start_word = all_words[best_match_start_idx]
-            end_word = all_words[min(best_match_start_idx + quote_len - 1, len(all_words) - 1)]
+                # Slide window over the specified range
+                for i in range(start, max(start + 1, end - quote_len + 1)):
+                    if i + quote_len > len(all_words):
+                        break
+                    
+                    # Try window lengths from max(1, quote_len - 2) to quote_len + 2
+                    for w_len in range(max(1, quote_len - 2), quote_len + 3):
+                        if i + w_len > len(all_words):
+                            continue
+                        window_words = [all_words[i + j]["cleaned"] for j in range(w_len)]
+                        
+                        ratio = difflib.SequenceMatcher(None, quote_words, window_words).ratio()
+                        
+                        # Require at least 60% match
+                        if ratio >= 0.6 and ratio > best_score:
+                            best_score = ratio
+                            best_match_idx = i
+                            best_w_len = w_len
+                            if ratio == 1.0:
+                                break
+                    if best_score == 1.0:
+                        break
 
-            return (start_word["start_ms"], end_word["end_ms"])
+                if best_match_idx >= 0:
+                    start_word = all_words[best_match_idx]
+                    end_word = all_words[min(best_match_idx + best_w_len - 1, len(all_words) - 1)]
+                    return (start_word["start_ms"], end_word["end_ms"], best_match_idx + best_w_len)
+                return (0, 0, -1)
 
-        # ---- Process each chapter with word-level timestamps ----
+            # 1. Search in local neighbourhood or sequential starting range
+            s_ms, e_ms, match_end_idx = search_in_range(start_idx, end_idx)
+            if match_end_idx != -1:
+                return (s_ms, e_ms, match_end_idx)
+
+            # 2. Sequential fallback: if neighbourhood search failed, try searching the rest of the file from fallback_idx
+            if target_ms is not None:
+                s_ms, e_ms, match_end_idx = search_in_range(fallback_idx, len(all_words))
+                if match_end_idx != -1:
+                    return (s_ms, e_ms, match_end_idx)
+
+            # 3. Global fallback: try searching from 0
+            if fallback_idx > 0:
+                s_ms, e_ms, match_end_idx = search_in_range(0, len(all_words))
+                if match_end_idx != -1:
+                    return (s_ms, e_ms, match_end_idx)
+
+            # 4. Deep fallback: exact substring match
+            flat_cleaned_words = [w["cleaned"] for w in all_words]
+            flat_text = " ".join(flat_cleaned_words)
+            quote_str = " ".join(quote_words)
+            if quote_str in flat_text:
+                char_idx = flat_text.find(quote_str)
+                word_idx = flat_text[:char_idx].count(" ")
+                word_idx = max(0, min(word_idx, len(all_words) - quote_len))
+                start_word = all_words[word_idx]
+                end_word = all_words[min(word_idx + quote_len - 1, len(all_words) - 1)]
+                return (start_word["start_ms"], end_word["end_ms"], word_idx + quote_len)
+
+            return (0, 0, fallback_idx)
+
+        # ---- Process each chapter with targeted fuzzy sequential timestamps ----
         placed: List[Dict] = []
+        last_match_idx = 0
+
         for ch in chapters:
             start_quote = ch.get("startQuote", "")
             end_quote = ch.get("endQuote", "")
+            approx_start_ms = ch.get("approximateStartMs")
+            approx_end_ms = ch.get("approximateEndMs")
 
-            start_ms, _ = _find_quote_timestamps(start_quote) if start_quote else (0, 0)
-            _, end_ms = _find_quote_timestamps(end_quote) if end_quote else (0, 0)
+            start_ms, _, start_match_end_idx = _find_quote_timestamps(start_quote, approx_start_ms, last_match_idx) if start_quote else (0, 0, last_match_idx)
+            
+            # Search after the start of this chapter
+            search_after = max(last_match_idx, start_match_end_idx)
+            _, end_ms, end_match_end_idx = _find_quote_timestamps(end_quote, approx_end_ms, search_after) if end_quote else (0, 0, search_after)
 
             if start_ms == 0 and end_ms == 0:
-                logger.warning(
-                    f"Chapter '{ch.get('title')}': could not match quotes "
-                    f"start='{start_quote}' end='{end_quote}' — skipping"
-                )
-                continue
+                # If both failed, use approximate values directly as fallback
+                if approx_start_ms is not None:
+                    start_ms = approx_start_ms
+                    end_ms = approx_end_ms if approx_end_ms is not None else approx_start_ms + 60000
+                else:
+                    logger.warning(f"Chapter '{ch.get('title')}': could not match quotes and no approximate timestamps — skipping")
+                    continue
 
-            # If only start found, estimate end from next chapter or default duration
+            # Handle defaults if one quote is missing or invalid
             if end_ms == 0 or end_ms <= start_ms:
-                end_ms = start_ms + 60000  # Default 1 min if no end quote
+                if approx_end_ms is not None and approx_end_ms > start_ms:
+                    end_ms = approx_end_ms
+                else:
+                    end_ms = start_ms + 60000  # Default 1 min if no end quote
+
+            # Update the last_match_idx to keep forward progression
+            if end_match_end_idx > last_match_idx:
+                last_match_idx = end_match_end_idx
+            elif start_match_end_idx > last_match_idx:
+                last_match_idx = start_match_end_idx
 
             placed.append({
                 "title": ch.get("title", ""),
@@ -1080,16 +1191,10 @@ topics: {topics}"""
                 "endQuote": end_quote
             })
 
-            logger.debug(
-                f"Chapter '{ch['title']}': word-level {start_ms}ms → {end_ms}ms"
-            )
-
-        if not placed:
-            return []
+            logger.debug(f"Aligned Chapter '{ch['title']}': precise {start_ms}ms → {end_ms}ms")
 
         # Sort by start time
         placed.sort(key=lambda c: c["startMs"])
-
         return placed
 
     def _align_chapters_to_segments_fallback(
@@ -1098,49 +1203,7 @@ topics: {topics}"""
         segments: List[TranscriptSegment]
     ) -> List[Dict]:
         """Fallback segment-level alignment when word data unavailable."""
-        sorted_segments = sorted(segments, key=lambda s: s.start_ms)
-        last_seg = sorted_segments[-1] if sorted_segments else None
-
-        def _normalise(text: str) -> str:
-            return re.sub(r'\s+', ' ', text.lower().strip())
-
-        placed: List[Dict] = []
-        for ch in chapters:
-            start_quote = ch.get("startQuote", "")
-            if not start_quote:
-                continue
-
-            norm_quote = _normalise(start_quote)
-            best_seg = None
-
-            for seg in sorted_segments:
-                if norm_quote in _normalise(seg.text):
-                    best_seg = seg
-                    break
-
-            if not best_seg:
-                continue
-
-            placed.append({
-                "title": ch.get("title", ""),
-                "description": ch.get("description", ""),
-                "keywords": ch.get("keywords", []),
-                "startMs": best_seg.start_ms,
-                "endMs": best_seg.end_ms,
-                "alignedToSegment": True
-            })
-
-        if not placed:
-            return []
-
-        placed.sort(key=lambda c: c["startMs"])
-        for i, ch in enumerate(placed):
-            if i + 1 < len(placed):
-                ch["endMs"] = placed[i + 1]["startMs"]
-            elif last_seg:
-                ch["endMs"] = last_seg.end_ms
-
-        return placed
+        return self._align_chapters_to_segments(chapters, segments)
     
     def _align_chapters_to_visuals(
         self, 

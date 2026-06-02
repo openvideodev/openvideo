@@ -95,7 +95,9 @@ class DeepgramTranscriber(AudioTranscriber):
                             {
                                 "word": w.get("word", ""),
                                 "start_ms": int(w.get("start", 0) * 1000),
-                                "end_ms": int(w.get("end", 0) * 1000)
+                                "end_ms": int(w.get("end", 0) * 1000),
+                                "startMs": int(w.get("start", 0) * 1000),
+                                "endMs": int(w.get("end", 0) * 1000)
                             }
                             for w in all_words
                             if w.get("start", 0) >= paragraph.get("start", 0) 
@@ -149,7 +151,9 @@ class DeepgramTranscriber(AudioTranscriber):
                         {
                             "word": w.get("word", ""),
                             "start_ms": int(w.get("start", 0) * 1000),
-                            "end_ms": int(w.get("end", 0) * 1000)
+                            "end_ms": int(w.get("end", 0) * 1000),
+                            "startMs": int(w.get("start", 0) * 1000),
+                            "endMs": int(w.get("end", 0) * 1000)
                         }
                         for w in chunk_words
                     ]
@@ -172,7 +176,9 @@ class DeepgramTranscriber(AudioTranscriber):
                     {
                         "word": w.get("word", ""),
                         "start_ms": int(w.get("start", 0) * 1000),
-                        "end_ms": int(w.get("end", 0) * 1000)
+                        "end_ms": int(w.get("end", 0) * 1000),
+                        "startMs": int(w.get("start", 0) * 1000),
+                        "endMs": int(w.get("end", 0) * 1000)
                     }
                     for w in chunk_words
                 ]
