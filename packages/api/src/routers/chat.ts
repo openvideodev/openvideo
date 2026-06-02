@@ -32,7 +32,7 @@ export const chatRouter = router({
       }
       const ai = new GoogleGenAI({ apiKey });
 
-      // 3. Generate Embedding for the query (asymmetric search format)
+      // 3. Generate Embedding for the query
       const formattedQuery = `task: search result | query: ${input.message}`;
       const embedResponse = await ai.models.embedContent({
         model: "gemini-embedding-2",
@@ -48,10 +48,10 @@ export const chatRouter = router({
 
       // 4. Similarity search via pgvector
       const docs = (await db.execute(sql`
-        SELECT document, cmetadata 
-        FROM langchain_pg_embedding 
-        WHERE cmetadata->>'spaceId' = ${input.spaceId} 
-        ORDER BY embedding <=> ${vectorStr}::vector 
+        SELECT document, cmetadata
+        FROM langchain_pg_embedding
+        WHERE cmetadata->>'spaceId' = ${input.spaceId}
+        ORDER BY embedding <=> ${vectorStr}::vector
         LIMIT ${input.limit}
       `)) as unknown as Array<{ document: string; cmetadata: any }>;
 

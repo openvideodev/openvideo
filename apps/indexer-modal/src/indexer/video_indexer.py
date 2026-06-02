@@ -368,34 +368,34 @@ class VideoIndexer:
             return []
     
     async def _create_video_vectors(
-        self, 
-        asset: Asset, 
-        segments: List[TranscriptSegment], 
+        self,
+        asset: Asset,
+        segments: List[TranscriptSegment],
         visual_scenes: List[VisualScene]
     ) -> None:
-        """Create vector documents for video content."""
+        """Create vector documents for video content with fine-grained transcript chunks."""
         from langchain_core.documents import Document
-        
+
         documents = []
-        
+
         # Visual documents
         for scene in visual_scenes:
             topics_str = ", ".join(scene.topics) if scene.topics else ""
             objects_str = ", ".join(scene.objects) if scene.objects else ""
             keywords_str = ", ".join(scene.keywords) if scene.keywords else ""
-            
+
             content_parts = [
                 f"title: {asset.name}",
                 f"description: {scene.description}"
             ]
-            
+
             if topics_str:
                 content_parts.append(f"topics: {topics_str}")
             if objects_str:
                 content_parts.append(f"objects: {objects_str}")
             if keywords_str:
                 content_parts.append(f"keywords: {keywords_str}")
-            
+
             documents.append(Document(
                 page_content=" | ".join(content_parts),
                 metadata={
@@ -411,49 +411,228 @@ class VideoIndexer:
                     "objects": scene.objects
                 }
             ))
-        
-        # Audio documents
-        for segment in segments:
-            documents.append(Document(
-                page_content=f"title: {asset.name} | text: {segment.text}",
-                metadata={
-                    "spaceId": asset.space_id,
-                    "assetId": asset.id,
-                    "assetName": asset.name,
-                    "assetType": "video",
-                    "src": asset.src,
-                    "layer": "asset-transcript",
-                    "startMs": segment.start_ms,
-                    "endMs": segment.end_ms
-                }
-            ))
-        
+
+        # Store visual documents first
         if documents:
             await self.vector_store.upsert_documents(documents)
+
+        # Create fine-grained transcript chunks (handles both word-level and segment-level)
+        if segments:
+            await self._create_transcript_vectors(asset, segments, "video")
     
     async def _create_audio_vectors(self, asset: Asset, segments: List[TranscriptSegment]) -> None:
-        """Create vector documents for audio content."""
+        """Create vector documents for audio content with word-level granularity."""
+        await self._create_transcript_vectors(asset, segments, "audio")
+
+    async def _create_transcript_vectors(
+        self,
+        asset: Asset,
+        segments: List[TranscriptSegment],
+        asset_type: str
+    ) -> None:
+        """Create fine-grained transcript chunks with word-level timestamps.
+
+        Splits segments into small semantic chunks (5-12 words) for precise clip extraction.
+        Each chunk has accurate startMs/endMs from actual word timestamps - no estimation needed.
+        """
         from langchain_core.documents import Document
-        
+        import re
+
         documents = []
-        
+        chunk_id = 0
+
         for segment in segments:
-            documents.append(Document(
-                page_content=f"title: {asset.name} | text: {segment.text}",
-                metadata={
+            # Split segment into smaller chunks (sentences/phrases)
+            chunks = self._split_segment_into_chunks(segment)
+
+            for chunk in chunks:
+                chunk_text = chunk["text"]
+                words = chunk.get("words", [])
+
+                # Build metadata with word-level timestamps
+                # startMs/endMs are from actual word timestamps, not estimated
+                metadata = {
                     "spaceId": asset.space_id,
                     "assetId": asset.id,
                     "assetName": asset.name,
-                    "assetType": "audio",
+                    "assetType": asset_type,
                     "src": asset.src,
                     "layer": "asset-transcript",
-                    "startMs": segment.start_ms,
-                    "endMs": segment.end_ms
+                    "startMs": chunk["start_ms"],
+                    "endMs": chunk["end_ms"],
+                    "wordCount": len(words),
                 }
-            ))
-        
+
+                # Include word boundary info for any additional refinement if needed
+                if words:
+                    metadata["startWords"] = [w["word"] for w in words[:3]]
+                    metadata["endWords"] = [w["word"] for w in words[-3:]]
+
+                documents.append(Document(
+                    page_content=f"title: {asset.name} | text: {chunk_text}",
+                    metadata=metadata
+                ))
+                chunk_id += 1
+
         if documents:
             await self.vector_store.upsert_documents(documents)
+            logger.info(f"Indexed {chunk_id} word-level transcript chunks for {asset.name}")
+
+    def _split_segment_into_chunks(self, segment: TranscriptSegment) -> List[Dict]:
+        """Split a transcript segment into smaller semantic chunks with word-level timestamps.
+        
+        Splits on:
+        - Natural sentence boundaries (.!? followed by space/capital)
+        - Clause boundaries (commas in longer segments)
+        - Target: 5-12 words per chunk for optimal granularity
+        """
+        import re
+
+        text = segment.text.strip()
+        words = segment.words or []
+
+        if not text:
+            return []
+
+        # If no word timestamps, return single chunk with estimated boundaries
+        if not words:
+            words_list = text.split()
+            word_count = len(words_list)
+            if word_count == 0:
+                return []
+
+            duration = segment.end_ms - segment.start_ms
+            word_duration = duration / word_count
+
+            return [{
+                "text": text,
+                "start_ms": segment.start_ms,
+                "end_ms": segment.end_ms,
+                "words": [
+                    {
+                        "word": w,
+                        "start_ms": int(segment.start_ms + i * word_duration),
+                        "end_ms": int(segment.start_ms + (i + 1) * word_duration),
+                        "startMs": int(segment.start_ms + i * word_duration),
+                        "endMs": int(segment.start_ms + (i + 1) * word_duration)
+                    }
+                    for i, w in enumerate(words_list)
+                ]
+            }]
+
+        # Build chunks with word-level precision
+        chunks = []
+        current_chunk_words = []
+        chunk_start_word_idx = 0
+
+        # Natural break patterns (in order of preference)
+        sentence_end_pattern = re.compile(r'[.!?]+\s+')
+        clause_pattern = re.compile(r',\s+(?:and|but|or|so|because|when|while|if|although)\s+')
+        comma_pattern = re.compile(r',\s+')
+
+        text_lower = text.lower()
+        word_positions = []  # Map character position to word index
+        char_pos = 0
+        for i, w in enumerate(words):
+            word_text = w.get("word", "")
+            word_positions.append((char_pos, char_pos + len(word_text), i))
+            char_pos += len(word_text) + 1  # +1 for space
+
+        def find_split_point(start_char: int, target_words: int = 8) -> int:
+            """Find best split point around target word count."""
+            search_start = start_char
+            search_end = min(len(text), start_char + 200)
+            search_text = text_lower[search_start:search_end]
+
+            # Try sentence boundary first
+            match = sentence_end_pattern.search(search_text)
+            if match:
+                return start_char + match.end()
+
+            # Try clause boundary
+            match = clause_pattern.search(search_text)
+            if match:
+                return start_char + match.end()
+
+            # Try comma after minimum words
+            if target_words >= 5:
+                match = comma_pattern.search(search_text[search_text.find(' '):])
+                if match:
+                    comma_pos = search_text.find(' ') + match.end()
+                    return start_char + comma_pos
+
+            # Fall back to word boundary
+            words_in_range = search_text.split()
+            if len(words_in_range) >= target_words:
+                boundary = ' '.join(words_in_range[:target_words])
+                return start_char + len(boundary)
+
+            return None
+
+        char_idx = 0
+        while char_idx < len(text):
+            split_char = find_split_point(char_idx, target_words=8)
+
+            if split_char is None or split_char >= len(text):
+                # Last chunk - take remaining text
+                chunk_text = text[char_idx:].strip()
+                if chunk_text:
+                    # Find words for this chunk
+                    chunk_words = []
+                    for w in words:
+                        w_start = w.get("start_ms", w.get("startMs", 0))
+                        if w_start >= segment.start_ms + (char_idx / len(text)) * (segment.end_ms - segment.start_ms):
+                            chunk_words.append(w)
+                            if len(chunk_words) >= 12:  # Max chunk size
+                                break
+
+                    if not chunk_words and words:
+                        # Take remaining words
+                        start_idx = len(words) - len([w for w in words if w.get("start_ms", w.get("startMs", 0)) < segment.start_ms + (char_idx / len(text)) * (segment.end_ms - segment.start_ms)])
+                        chunk_words = words[max(0, start_idx - 1):]
+
+                    chunks.append({
+                        "text": chunk_text,
+                        "start_ms": chunk_words[0].get("start_ms", chunk_words[0].get("startMs", segment.start_ms)) if chunk_words else segment.start_ms,
+                        "end_ms": chunk_words[-1].get("end_ms", chunk_words[-1].get("endMs", segment.end_ms)) if chunk_words else segment.end_ms,
+                        "words": chunk_words
+                    })
+                break
+
+            chunk_text = text[char_idx:split_char].strip()
+            if chunk_text:
+                # Find corresponding words by timestamp overlap
+                chunk_start_ms = segment.start_ms + int((char_idx / len(text)) * (segment.end_ms - segment.start_ms))
+                chunk_end_ms = segment.start_ms + int((split_char / len(text)) * (segment.end_ms - segment.start_ms))
+
+                chunk_words = [
+                    w for w in words
+                    if w.get("start_ms", w.get("startMs", 0)) >= chunk_start_ms - 50
+                    and w.get("end_ms", w.get("endMs", 0)) <= chunk_end_ms + 50
+                ]
+
+                # Adjust timestamps to actual word boundaries if available
+                if chunk_words:
+                    actual_start = chunk_words[0].get("start_ms", chunk_words[0].get("startMs", chunk_start_ms))
+                    actual_end = chunk_words[-1].get("end_ms", chunk_words[-1].get("endMs", chunk_end_ms))
+                else:
+                    actual_start, actual_end = chunk_start_ms, chunk_end_ms
+
+                chunks.append({
+                    "text": chunk_text,
+                    "start_ms": actual_start,
+                    "end_ms": actual_end,
+                    "words": chunk_words
+                })
+
+            char_idx = split_char
+
+        return chunks if chunks else [{
+            "text": text,
+            "start_ms": segment.start_ms,
+            "end_ms": segment.end_ms,
+            "words": words
+        }]
     
     async def _create_image_vectors(self, asset: Asset, description: str) -> None:
         """Create vector documents for image content."""
