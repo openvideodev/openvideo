@@ -64,7 +64,7 @@ export class ApiTokenService {
         tokenHint,
         userId: dto.userId,
         name: dto.name || null,
-        scopes: dto.scopes || ["all"],
+        scopes: dto.scopes ? dto.scopes.join(",") : "all",
         expiresAt: dto.expiresAt || null,
       })
       .returning({
@@ -81,7 +81,7 @@ export class ApiTokenService {
 
     return {
       ...row,
-      scopes: row.scopes as string[],
+      scopes: row.scopes ? row.scopes.split(",") : [],
       fullToken, // Only returned once!
     };
   }
@@ -123,7 +123,7 @@ export class ApiTokenService {
     return {
       valid: true,
       userId: record.userId,
-      scopes: record.scopes as string[],
+      scopes: record.scopes ? record.scopes.split(",") : [],
     };
   }
 
@@ -153,7 +153,7 @@ export class ApiTokenService {
 
     return rows.map((r) => ({
       ...r,
-      scopes: r.scopes as string[],
+      scopes: r.scopes ? r.scopes.split(",") : [],
     }));
   }
 

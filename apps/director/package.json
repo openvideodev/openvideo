@@ -32,7 +32,6 @@
     "@openvideo/core": "workspace:*",
     "@openvideo/db": "workspace:*",
     "@socket.io/redis-adapter": "^8.3.0",
-    "@trigger.dev/sdk": "^4.4.5",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.51.0",
     "canvas": "^3.2.3",
@@ -41,6 +40,7 @@
     "fastify": "^4.29.0",
     "ioredis": "^5.4.1",
     "langchain": "^0.3.21",
+    "modal": "^0.7.6",
     "nanoid": "^5.1.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -54,7 +54,6 @@
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",
     "@nestjs/testing": "^10.4.15",
-    "@trigger.dev/build": "^4.4.6",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.14.1",
     "@types/passport-jwt": "^4.0.1",

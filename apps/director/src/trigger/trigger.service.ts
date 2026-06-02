@@ -1,12 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { tasks } from "@trigger.dev/sdk/v3";
-import type { generateImageTask, generateVideoTask } from "../../trigger/media-generation";
-import type { indexAssetTask } from "../../trigger/index-asset";
-import type {
-  generateElevenLabsAudioTask,
-  ElevenLabsAudioPayload,
-} from "../../trigger/elevenlabs-audio";
+import { ModalClient } from "modal";
+
+export type ElevenLabsAudioType = "background-music" | "sound-effect";
 
 @Injectable()
 export class TriggerService {
@@ -15,13 +11,23 @@ export class TriggerService {
   constructor(private configService: ConfigService) {}
 
   async generateImage(spaceId: string, stepId: string, prompt: string): Promise<any> {
-    this.logger.log(`Triggering image generation for space ${spaceId}, step ${stepId}`);
+    this.logger.log(`Triggering Modal image generation for space ${spaceId}, step ${stepId}`);
 
-    return await tasks.trigger<typeof generateImageTask>("generate-image", {
-      spaceId,
-      stepId,
-      prompt,
-    });
+    try {
+      // Call Modal function using JS SDK
+      const modal = new ModalClient();
+      const generateImage = await modal.functions.fromName(
+        "openvideo-media-generator",
+        "generate_image",
+      );
+
+      const result = await generateImage.remote([spaceId, stepId, prompt]);
+      this.logger.log(`Modal image generation triggered successfully`);
+      return result;
+    } catch (error: any) {
+      this.logger.error(`Failed to trigger Modal image generation:`, error.message);
+      throw error;
+    }
   }
 
   async generateVideo(
@@ -30,14 +36,23 @@ export class TriggerService {
     imageUrl: string,
     prompt: string,
   ): Promise<any> {
-    this.logger.log(`Triggering video generation for space ${spaceId}, step ${stepId}`);
+    this.logger.log(`Triggering Modal video generation for space ${spaceId}, step ${stepId}`);
 
-    return await tasks.trigger<typeof generateVideoTask>("generate-video", {
-      spaceId,
-      stepId,
-      imageUrl,
-      prompt,
-    });
+    try {
+      // Call Modal function using JS SDK
+      const modal = new ModalClient();
+      const generateVideo = await modal.functions.fromName(
+        "openvideo-media-generator",
+        "generate_video",
+      );
+
+      const result = await generateVideo.remote([spaceId, stepId, imageUrl, prompt]);
+      this.logger.log(`Modal video generation triggered successfully`);
+      return result;
+    } catch (error: any) {
+      this.logger.error(`Failed to trigger Modal video generation:`, error.message);
+      throw error;
+    }
   }
 
   async generateElevenLabsAudio(
@@ -45,24 +60,52 @@ export class TriggerService {
     stepId: string,
     prompt: string,
     durationSeconds: number,
-    audioType: ElevenLabsAudioPayload["audioType"],
+    audioType: ElevenLabsAudioType,
   ): Promise<any> {
     this.logger.log(
-      `Triggering ElevenLabs audio (${audioType}) for space ${spaceId}, step ${stepId}`,
+      `Triggering Modal ElevenLabs audio (${audioType}) for space ${spaceId}, step ${stepId}`,
     );
 
-    return await tasks.trigger<typeof generateElevenLabsAudioTask>("generate-elevenlabs-audio", {
-      spaceId,
-      stepId,
-      prompt,
-      durationSeconds,
-      audioType,
-    });
+    try {
+      // Call Modal function using JS SDK
+      const modal = new ModalClient();
+      const generateAudio = await modal.functions.fromName(
+        "openvideo-media-generator",
+        "generate_elevenlabs_audio",
+      );
+
+      const result = await generateAudio.remote([
+        spaceId,
+        stepId,
+        prompt,
+        durationSeconds,
+        audioType,
+      ]);
+      this.logger.log(`Modal audio generation triggered successfully`);
+      return result;
+    } catch (error: any) {
+      this.logger.error(`Failed to trigger Modal audio generation:`, error.message);
+      throw error;
+    }
   }
 
   async triggerIndexAsset(spaceId: string, assetId: string): Promise<string> {
-    this.logger.log(`Triggering asset indexing for asset ${assetId} in space ${spaceId}`);
-    const handle = await tasks.trigger<typeof indexAssetTask>("index-asset", { spaceId, assetId });
-    return handle.id;
+    this.logger.log(`Triggering Modal asset indexing for asset ${assetId} in space ${spaceId}`);
+
+    try {
+      // Call Modal function using JS SDK
+      this.logger.log(`Calling Modal function for asset indexing: ${assetId}`);
+
+      const modal = new ModalClient();
+      const indexAsset = await modal.functions.fromName("openvideo-indexer", "index_asset");
+
+      const result = await indexAsset.remote([assetId]);
+      this.logger.log(`Modal asset indexing triggered successfully:`, result);
+      return "success";
+    } catch (error: any) {
+      this.logger.error(`Failed to trigger Modal asset indexing:`, error.message);
+      this.logger.error(`Error stack:`, error.stack);
+      throw error;
+    }
   }
 }

@@ -29,6 +29,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:fix": "node -e \"require('pg').Client.prototype.query.apply(new (require('pg').Client)({connectionString: process.env.DATABASE_URL}), ['DROP TABLE IF EXISTS langchain_pg_embedding CASCADE; DROP TABLE IF EXISTS langchain_pg_collection CASCADE;']).then(() => console.log('✅ Dropped old LangChain tables')).catch(e => console.error(e))\"",
     "check-types": "pnpm exec tsc --noEmit"
   },
   "dependencies": {

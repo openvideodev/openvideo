@@ -5,6 +5,7 @@ import { chatRouter } from "./routers/chat.js";
 import { indexingRouter } from "./routers/indexing.js";
 import { tokenRouter } from "./routers/token.js";
 import { sessionRouter } from "./routers/session.js";
+import { mediaRouter } from "./routers/media.js";
 
 /**
  * Main application router
@@ -17,6 +18,7 @@ export const appRouter = router({
   indexing: indexingRouter,
   token: tokenRouter,
   session: sessionRouter,
+  media: mediaRouter,
 });
 
 // Export type definition for the API

@@ -2,9 +2,36 @@ import { z } from "zod";
 import { eq, and, desc } from "drizzle-orm";
 import { getDB, asset, assetIndexingStatus } from "@openvideo/db";
 import { router, protectedProcedure } from "../trpc.js";
-import { tasks } from "@trigger.dev/sdk/v3";
+import { ModalClient } from "modal";
 
 const db = getDB();
+
+async function startWorkflow(workflow: string, payload: any): Promise<any> {
+  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const url = `${appUrl}/api/workflows/start`;
+
+  console.log(`[DEBUG] Starting workflow: ${workflow}`, { payload, url });
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ workflow, payload }),
+  });
+
+  console.log(`[DEBUG] Workflow start response: ${response.status}`);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[DEBUG] Workflow start failed: ${response.status} - ${errorText}`);
+    throw new Error(`Workflow start failed: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log(`[DEBUG] Workflow started successfully:`, result);
+  return result;
+}
 
 export const assetRouter = router({
   // Create an asset (and optionally set to pending for indexing)
@@ -48,11 +75,24 @@ export const assetRouter = router({
           })
           .onConflictDoNothing();
 
-        // Trigger the actual indexing task
+        // Trigger the actual indexing workflow using Modal
+        console.log(`[DEBUG] Triggering Modal indexing for asset ${id} in space ${input.spaceId}`);
         try {
-          await tasks.trigger("index-asset", { spaceId: input.spaceId, assetId: id });
+          // Call Modal function using JS SDK
+          console.log(`[DEBUG] Calling Modal function for asset ${id}`);
+
+          const modal = new ModalClient();
+          const indexAsset = await modal.functions.fromName("openvideo-indexer", "index_asset");
+
+          // Call the function - Modal spawns it and returns handle immediately
+          const result = await indexAsset.remote([id]);
+          console.log(`[DEBUG] Modal indexing triggered successfully:`, result);
         } catch (triggerErr) {
-          console.error("Failed to trigger indexing task:", triggerErr);
+          console.error(`[DEBUG] Failed to trigger Modal indexing for asset ${id}:`, triggerErr);
+          console.error(
+            `[DEBUG] Error stack:`,
+            triggerErr instanceof Error ? triggerErr.stack : "N/A",
+          );
         }
       }
 
@@ -141,6 +181,68 @@ export const assetRouter = router({
             updatedAt: new Date(),
           },
         });
+
+      // Actually trigger the Modal indexing
+      console.log(`[DEBUG] triggerIndex: Starting Modal indexing for asset ${input.id}`);
+      try {
+        // Call Modal function using HTTP API
+        console.log(`[DEBUG] triggerIndex: Making Modal API call for asset ${input.id}`);
+        const requestBody = JSON.stringify({ args: [input.id] });
+        console.log(`[DEBUG] triggerIndex: Request body:`, requestBody);
+
+        const response = await fetch(
+          "https://api.modal.com/v1/functions/openvideo-indexer/index_asset/calls",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.MODAL_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+            body: requestBody,
+          },
+        );
+
+        console.log(
+          `[DEBUG] triggerIndex: Modal API response status: ${response.status} ${response.statusText}`,
+        );
+        console.log(
+          `[DEBUG] triggerIndex: Modal API response headers:`,
+          Object.fromEntries(response.headers.entries()),
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[DEBUG] triggerIndex: Modal API error response:`, errorText);
+          throw new Error(
+            `Modal function call failed: ${response.status} ${response.statusText} - ${errorText}`,
+          );
+        }
+
+        const responseText = await response.text();
+        console.log(`[DEBUG] triggerIndex: Modal API raw response:`, responseText);
+
+        if (!responseText.trim()) {
+          console.error(`[DEBUG] triggerIndex: Modal API returned empty response`);
+          throw new Error("Modal API returned empty response");
+        }
+
+        let result;
+        try {
+          result = JSON.parse(responseText);
+          console.log(`[DEBUG] triggerIndex: Modal indexing started successfully:`, result);
+        } catch (parseErr) {
+          console.error(
+            `[DEBUG] triggerIndex: Failed to parse Modal API response as JSON:`,
+            parseErr,
+          );
+          console.error(`[DEBUG] triggerIndex: Response text that failed to parse:`, responseText);
+          throw new Error(`Invalid JSON response from Modal: ${responseText}`);
+        }
+      } catch (err: any) {
+        console.error(`[DEBUG] triggerIndex: Failed to start Modal indexing:`, err);
+        console.error(`[DEBUG] triggerIndex: Error stack:`, err.stack);
+        throw err;
+      }
 
       return { success: true, status: "queued" };
     }),

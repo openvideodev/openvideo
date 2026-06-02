@@ -12,6 +12,45 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  // Map Better Auth's default snake_case fields to our camelCase columns
+  user: {
+    fields: {
+      emailVerified: "emailVerified",
+      createdAt: "createdAt",
+      updatedAt: "updatedAt",
+    },
+  },
+  session: {
+    fields: {
+      expiresAt: "expiresAt",
+      createdAt: "createdAt",
+      updatedAt: "updatedAt",
+      ipAddress: "ipAddress",
+      userAgent: "userAgent",
+      userId: "userId",
+    },
+  },
+  account: {
+    fields: {
+      accountId: "accountId",
+      providerId: "providerId",
+      userId: "userId",
+      accessToken: "accessToken",
+      refreshToken: "refreshToken",
+      idToken: "idToken",
+      accessTokenExpiresAt: "accessTokenExpiresAt",
+      refreshTokenExpiresAt: "refreshTokenExpiresAt",
+      createdAt: "createdAt",
+      updatedAt: "updatedAt",
+    },
+  },
+  verification: {
+    fields: {
+      expiresAt: "expiresAt",
+      createdAt: "createdAt",
+      updatedAt: "updatedAt",
+    },
+  },
   plugins: [
     magicLink({
       expiresIn: 60 * 60,
@@ -32,7 +71,8 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     },
   },
-  experimental: {
-    joins: true,
-  },
+  // Note: joins disabled to avoid snake_case column name issues
+  // experimental: {
+  //   joins: true,
+  // },
 });

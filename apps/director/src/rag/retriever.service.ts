@@ -11,13 +11,107 @@ export class RetrieverService {
   constructor(private vectorStore: VectorStoreService) {}
 
   /**
-   * Searches the vector store across both 'metadata' and 'transcript' layers.
-   * Formats the results into a string block suitable for the system prompt.
+   * Human-readable label for each known layer type.
+   * Unknown layers fall back to the raw layer string — zero maintenance needed
+   * when the Python indexer adds new layer types.
    */
+  private static readonly LAYER_LABELS: Record<string, string> = {
+    "asset-transcript": "Asset Voice/Transcript Segment",
+    "asset-visual-description": "Asset Visual/Scene Segment",
+    "asset-description": "Asset Image Description",
+    "video-chunk": "Video Segment",
+    "asset-chapters": "Video Chapter",
+    "asset-topics": "Asset Topics & Themes",
+    "asset-summary": "Asset Summary",
+    transcript: "Clip Transcript Segment",
+  };
+
   /**
-   * Exact word/phrase search against stored transcript words[].
-   * Returns word-level timestamps with ~100ms precision.
+   * Metadata fields that are internal/redundant and should be omitted from output.
+   * `spaceId` is already implied by context; `layer` is shown as the label.
    */
+  private static readonly SKIP_FIELDS = new Set(["spaceId", "layer"]);
+
+  /**
+   * Fields holding millisecond timestamps — rendered as both ms and seconds
+   * so the LLM can reason about them in either unit.
+   */
+  private static readonly MS_FIELDS = new Set(["startMs", "endMs"]);
+
+  /**
+   * Pretty-print a single metadata field value.
+   *   - Arrays        → comma-joined string
+   *   - MS timestamps → "Xms (Y.Ys)"
+   *   - Everything else → toString()
+   * Returns null if the value is empty / meaningless.
+   */
+  private formatMetaValue(key: string, value: unknown): string | null {
+    if (value === undefined || value === null || value === "") return null;
+
+    if (RetrieverService.MS_FIELDS.has(key) && typeof value === "number") {
+      return `${value}ms (${(value / 1000).toFixed(1)}s)`;
+    }
+
+    if (Array.isArray(value)) {
+      const filtered = value.filter(Boolean);
+      return filtered.length > 0 ? filtered.join(", ") : null;
+    }
+
+    return String(value);
+  }
+
+  /**
+   * Convert camelCase / lowercase keys to human-readable "Title Case" labels.
+   * e.g. "assetName" → "Asset Name",  "primaryTheme" → "Primary Theme"
+   */
+  private keyToLabel(key: string): string {
+    return key
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^./, (c) => c.toUpperCase())
+      .trim();
+  }
+
+  /**
+   * Serialize a single retrieval result into a human-readable text block
+   * for the LLM context window.
+   *
+   * All metadata fields are emitted generically — new fields added by the
+   * Python indexer appear automatically without any code changes here.
+   * Only `SKIP_FIELDS` are suppressed; `startMs`+`endMs` are merged into
+   * a single "Time Range" line.
+   */
+  private formatDoc(doc: any, index: number): string {
+    const layer: string = doc.metadata?.layer ?? "unknown";
+    const label = RetrieverService.LAYER_LABELS[layer] ?? layer;
+
+    const lines: string[] = [`${index + 1}. [${label}]`, doc.pageContent ?? ""];
+
+    for (const [key, value] of Object.entries(doc.metadata ?? {})) {
+      if (RetrieverService.SKIP_FIELDS.has(key)) continue;
+      if (key === "layer") continue; // already shown as label
+
+      // Merge startMs + endMs into one "Time Range" line
+      if (key === "startMs") {
+        const endMs = doc.metadata.endMs;
+        if (endMs !== undefined) {
+          lines.push(
+            `Time Range: ${this.formatMetaValue("startMs", value)} → ${this.formatMetaValue("endMs", endMs)}`,
+          );
+        } else {
+          const formatted = this.formatMetaValue(key, value);
+          if (formatted !== null) lines.push(`Start: ${formatted}`);
+        }
+        continue;
+      }
+      if (key === "endMs") continue; // consumed above
+
+      const formatted = this.formatMetaValue(key, value);
+      if (formatted !== null) lines.push(`${this.keyToLabel(key)}: ${formatted}`);
+    }
+
+    return lines.join("\n");
+  }
+
   async searchWords(spaceId: string, phrase: string): Promise<string> {
     this.logger.debug(`Word search for "${phrase}" in space ${spaceId}`);
 
@@ -28,7 +122,15 @@ export class RetrieverService {
 
     if (rows.length === 0) return "No transcripts found for this space.";
 
-    const needle = phrase.toLowerCase().trim();
+    const clean = (text: string) =>
+      text
+        .toLowerCase()
+        .replace(/[^\w\s]/g, "")
+        .trim();
+    const needle = clean(phrase);
+    if (!needle) return `No exact matches found for "${phrase}".`;
+
+    const phraseWords = needle.split(/\s+/);
     const results: string[] = [];
 
     for (const row of rows) {
@@ -37,16 +139,22 @@ export class RetrieverService {
         const words: any[] = seg.words || [];
         if (words.length === 0) continue;
 
-        // Build sliding window over words to find the phrase
-        const phraseWords = needle.split(/\s+/);
         for (let i = 0; i <= words.length - phraseWords.length; i++) {
           const window = words.slice(i, i + phraseWords.length);
-          const match = phraseWords.every((pw, j) => window[j]?.word?.toLowerCase().includes(pw));
+          const match = phraseWords.every((pw, j) => {
+            const wText = clean(window[j]?.word ?? "");
+            return wText.includes(pw);
+          });
+
           if (match) {
-            const startMs = window[0].startMs;
-            const endMs = window[window.length - 1].endMs;
+            const firstWord = window[0];
+            const lastWord = window[window.length - 1];
+            const startMs =
+              firstWord.startMs !== undefined ? firstWord.startMs : firstWord.start_ms;
+            const endMs = lastWord.endMs !== undefined ? lastWord.endMs : lastWord.end_ms;
+
             results.push(
-              `Asset ID: ${row.assetId} | Phrase: "${window.map((w) => w.word).join(" ")}" | Time: ${startMs}ms–${endMs}ms`,
+              `Asset ID: ${row.assetId} | Phrase: "${window.map((w) => w.word).join(" ")}" | Time: ${startMs}ms (${(startMs / 1000).toFixed(1)}s) – ${endMs}ms (${(endMs / 1000).toFixed(1)}s)`,
             );
           }
         }
@@ -58,7 +166,7 @@ export class RetrieverService {
   }
 
   /**
-   * Broad cross-asset search with higher topK, results grouped by asset.
+   * Broad cross-asset search with higher topK.
    * Use for general questions spanning all indexed content in a space.
    */
   async searchAll(spaceId: string, query: string): Promise<string> {
@@ -81,56 +189,7 @@ export class RetrieverService {
       return "No relevant project context found.";
     }
 
-    let contextString = "--- RELEVANT PROJECT CONTEXT ---\n\n";
-
-    docs.forEach((doc, index) => {
-      const layer = doc.metadata.layer;
-      const isAssetTranscript = layer === "asset-transcript";
-      const isAssetVisual = layer === "asset-visual-description";
-      const isAssetImage = layer === "asset-description";
-      const isClipTranscript = layer === "transcript";
-
-      if (isAssetTranscript || isAssetVisual || isAssetImage) {
-        let label = "";
-        if (isAssetTranscript) label = "[Asset Voice/Transcript Segment]";
-        else if (isAssetVisual) label = "[Asset Visual/Scene Segment]";
-        else label = "[Asset Image Description]";
-
-        contextString += `${index + 1}. ${label}\n`;
-        contextString += `${doc.pageContent}\n`;
-        contextString += `Asset Name: ${doc.metadata.assetName}\n`;
-        contextString += `Asset ID: ${doc.metadata.assetId}\n`;
-        contextString += `Asset Type: ${doc.metadata.assetType}\n`;
-        contextString += `Source URL: ${doc.metadata.src}\n`;
-        if (doc.metadata.startMs !== undefined && doc.metadata.endMs !== undefined) {
-          contextString += `Time Range: ${doc.metadata.startMs}ms - ${doc.metadata.endMs}ms\n`;
-        }
-        if (Array.isArray(doc.metadata.topics) && doc.metadata.topics.length > 0) {
-          contextString += `Topics: ${doc.metadata.topics.join(", ")}\n`;
-        }
-        if (Array.isArray(doc.metadata.objects) && doc.metadata.objects.length > 0) {
-          contextString += `Objects/Entities: ${doc.metadata.objects.join(", ")}\n`;
-        }
-      } else {
-        const label = isClipTranscript ? "[Transcript Segment]" : "[Structural Metadata]";
-        contextString += `${index + 1}. ${label}\n`;
-        contextString += `${doc.pageContent}\n`;
-
-        if (
-          isClipTranscript &&
-          doc.metadata.startMs !== undefined &&
-          doc.metadata.endMs !== undefined
-        ) {
-          contextString += `Time Range: ${doc.metadata.startMs}ms - ${doc.metadata.endMs}ms\n`;
-          contextString += `Clip ID: ${doc.metadata.clipId}\n`;
-        } else {
-          contextString += `Entity ID: ${doc.metadata.entityId} (${doc.metadata.entityType})\n`;
-        }
-      }
-
-      contextString += "\n";
-    });
-
-    return contextString;
+    const blocks = docs.map((doc, i) => this.formatDoc(doc, i));
+    return "--- RELEVANT PROJECT CONTEXT ---\n\n" + blocks.join("\n\n") + "\n";
   }
 }

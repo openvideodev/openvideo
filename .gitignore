@@ -37,4 +37,4 @@ yarn-error.log*
 .DS_Store
 *.pem
 .trigger
-# editor
+__pycache__
