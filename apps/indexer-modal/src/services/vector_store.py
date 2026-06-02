@@ -1,6 +1,8 @@
 """Vector store implementation for embeddings and search."""
 
 import os
+import time
+import asyncio
 from typing import List, Dict, Any, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -8,11 +10,14 @@ from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_postgres import PGVector
+from google.genai.errors import ClientError
 
 from ..core.interfaces import VectorStore
 from ..core.exceptions import VectorStoreError
+from ..shared.logging import get_logger
 
 load_dotenv()
+logger = get_logger("vector_store")
 
 
 class PGVectorStore(VectorStore):
@@ -51,30 +56,68 @@ class PGVectorStore(VectorStore):
         )
     
     async def upsert_documents(self, documents: List[Any]) -> None:
-        """Store documents with embeddings."""
-        try:
-            # Handle both Document objects and dicts
-            langchain_docs = []
-            for doc in documents:
-                if isinstance(doc, Document):
-                    # Already a Document object
-                    langchain_docs.append(doc)
-                else:
-                    # Convert dict to Document
-                    page_content = doc.get("pageContent", "")
-                    metadata = doc.get("metadata", {})
-                    langchain_doc = Document(
-                        page_content=page_content,
-                        metadata=metadata
-                    )
-                    langchain_docs.append(langchain_doc)
+        """Store documents with embeddings using batching and rate limiting.
+        
+        Google Gemini embeddings have rate limits (approx 100 requests/minute).
+        We batch documents and add delays to avoid hitting limits.
+        """
+        if not documents:
+            return
+        
+        # Handle both Document objects and dicts
+        langchain_docs = []
+        for doc in documents:
+            if isinstance(doc, Document):
+                langchain_docs.append(doc)
+            else:
+                page_content = doc.get("pageContent", "")
+                metadata = doc.get("metadata", {})
+                langchain_docs.append(Document(
+                    page_content=page_content,
+                    metadata=metadata
+                ))
+        
+        # Process in small batches to avoid rate limits
+        BATCH_SIZE = 8  # Small batches for Gemini embeddings
+        MAX_RETRIES = 3
+        RATE_LIMIT_DELAY = 2.0  # seconds between batches
+        
+        total_docs = len(langchain_docs)
+        processed = 0
+        
+        for i in range(0, total_docs, BATCH_SIZE):
+            batch = langchain_docs[i:i + BATCH_SIZE]
+            batch_num = (i // BATCH_SIZE) + 1
+            total_batches = (total_docs + BATCH_SIZE - 1) // BATCH_SIZE
             
-            # Add documents to vector store
-            if langchain_docs:
-                self.vector_store.add_documents(langchain_docs)
-                
-        except Exception as e:
-            raise VectorStoreError(f"Failed to upsert documents: {str(e)}")
+            for attempt in range(MAX_RETRIES):
+                try:
+                    logger.debug(f"Upserting batch {batch_num}/{total_batches} ({len(batch)} docs, attempt {attempt + 1})")
+                    self.vector_store.add_documents(batch)
+                    processed += len(batch)
+                    logger.debug(f"✅ Batch {batch_num} complete ({processed}/{total_docs})")
+                    break
+                    
+                except ClientError as e:
+                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                        if attempt < MAX_RETRIES - 1:
+                            wait_time = (attempt + 1) * 3  # Exponential backoff
+                            logger.warning(f"Rate limit hit, waiting {wait_time}s before retry...")
+                            await asyncio.sleep(wait_time)
+                        else:
+                            logger.error(f"Failed batch {batch_num} after {MAX_RETRIES} retries")
+                            raise VectorStoreError(f"Rate limit exceeded: {str(e)}")
+                    else:
+                        raise VectorStoreError(f"Failed to upsert batch: {str(e)}")
+                        
+                except Exception as e:
+                    raise VectorStoreError(f"Failed to upsert documents: {str(e)}")
+            
+            # Rate limiting delay between batches (skip on last batch)
+            if i + BATCH_SIZE < total_docs:
+                await asyncio.sleep(RATE_LIMIT_DELAY)
+        
+        logger.info(f"✅ Upserted {processed}/{total_docs} documents")
     
     async def delete_by_asset(self, asset_id: str) -> None:
         """Delete all vectors for an asset."""

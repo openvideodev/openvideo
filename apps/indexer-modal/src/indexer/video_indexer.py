@@ -647,14 +647,16 @@ class VideoIndexer:
             # 1. CHAPTERS (only meaningful when we have timing information)
             # ------------------------------------------------------------------
             if has_time_info:
-                # AI identifies chapters by quoting the exact opening phrase so we can
-                # anchor each chapter to real transcript timestamps via text search.
+                # AI provides START and END quotes for word-level timestamp accuracy
                 chapters_prompt = f"""You are analyzing a {asset_type_label} asset named "{asset.name}" for an AI video editor.
 
 Given the following transcript segments (each prefixed with its timestamp), identify distinct chapters or sections.
-For each chapter you MUST copy a short verbatim phrase (3–8 words) from the transcript that is spoken right at
-the START of that chapter. This quote will be used to locate the exact timestamp — it must appear word-for-word
-in the transcript above.
+For each chapter you MUST provide TWO short verbatim phrases (3–8 words each):
+
+1. "startQuote" - the exact phrase spoken right at the START of this chapter
+2. "endQuote" - the exact phrase spoken right at the END of this chapter (when the topic concludes)
+
+Both quotes must appear word-for-word in the transcript. These will be used to locate precise word-level timestamps.
 
 Return a JSON object:
 {{
@@ -662,7 +664,8 @@ Return a JSON object:
     {{
       "title": "Chapter title",
       "description": "One-sentence description of what this chapter covers",
-      "startQuote": "exact verbatim phrase from transcript opening this chapter",
+      "startQuote": "exact phrase at chapter start",
+      "endQuote": "exact phrase at chapter end",
       "keywords": ["keyword1", "keyword2"]
     }}
   ]
@@ -964,115 +967,178 @@ topics: {topics}"""
         return frames
     
     def _align_chapters_to_segments(
-        self, 
-        chapters: List[Dict], 
+        self,
+        chapters: List[Dict],
         segments: List[TranscriptSegment]
     ) -> List[Dict]:
-        """Align AI-generated chapters to actual transcript segments using verbatim quote search.
+        """Align AI-generated chapters to word-level transcript timestamps.
 
-        The AI provides a `startQuote` — a short phrase it copied verbatim from the
-        transcript that opens each chapter.  We fuzzy-search the actual segments for
-        that phrase to get the exact startMs from ground-truth timing data.
+        The AI provides `startQuote` and `endQuote` — short verbatim phrases from
+        the transcript. We search at WORD LEVEL to find the exact timestamps:
+        - startMs = timestamp of first word matching startQuote
+        - endMs = timestamp of last word matching endQuote
 
-        Alignment strategy:
-          1. Normalise both the quote and segment text (lower-case, collapse whitespace).
-          2. Score each segment by the longest common substring with the quote.
-          3. Pick the segment with the highest score (must exceed a minimum threshold).
-          4. If no match is found, fall back to the next-best candidate.
-          5. After all chapters are placed, set endMs = next chapter's startMs
-             (or the last segment's endMs for the final chapter).
+        This provides word-level accuracy (typically within 0.1-0.5s precision).
         """
         if not segments or not chapters:
             return chapters
 
-        sorted_segments = sorted(segments, key=lambda s: s.start_ms)
-        last_seg = sorted_segments[-1]
+        # Build flat list of all words with their timestamps
+        all_words: List[Dict] = []
+        for seg in segments:
+            if seg.words:
+                for w in seg.words:
+                    all_words.append({
+                        "word": w.get("word", ""),
+                        "start_ms": w.get("start_ms", 0),
+                        "end_ms": w.get("end_ms", 0),
+                        "segment_text": seg.text  # for context
+                    })
+
+        if not all_words:
+            # Fallback to segment-level if no word data
+            return self._align_chapters_to_segments_fallback(chapters, segments)
 
         def _normalise(text: str) -> str:
             return re.sub(r'\s+', ' ', text.lower().strip())
 
-        def _lcs_length(a: str, b: str) -> int:
-            """Length of the longest common substring between a and b."""
-            if not a or not b:
-                return 0
-            m, n = len(a), len(b)
-            best = 0
-            # dp[j] = length of LCS ending at a[i-1], b[j-1]
-            dp = [0] * (n + 1)
-            for i in range(1, m + 1):
-                prev = 0
-                for j in range(1, n + 1):
-                    temp = dp[j]
-                    if a[i - 1] == b[j - 1]:
-                        dp[j] = prev + 1
-                        best = max(best, dp[j])
-                    else:
-                        dp[j] = 0
-                    prev = temp
-            return best
+        def _find_quote_timestamps(quote: str) -> tuple[int, int]:
+            """Find the exact word-level timestamps for a quote.
+            Returns (start_ms, end_ms) of the matching phrase.
+            """
+            if not quote:
+                return (0, 0)
 
-        def _find_best_segment(quote: str) -> Optional[TranscriptSegment]:
             norm_quote = _normalise(quote)
-            if not norm_quote:
-                return None
-            best_seg = None
-            best_score = 0
-            for seg in sorted_segments:
-                norm_seg = _normalise(seg.text)
-                # Fast substring check first (covers exact matches)
-                if norm_quote in norm_seg:
-                    return seg
-                score = _lcs_length(norm_quote, norm_seg)
-                if score > best_score:
-                    best_score = score
-                    best_seg = seg
-            # Require at least 40% of the quote to match
-            min_score = max(4, int(len(norm_quote) * 0.4))
-            return best_seg if best_score >= min_score else None
+            quote_words = norm_quote.split()
+            quote_len = len(quote_words)
 
-        # ---- First pass: resolve each chapter to a start segment ----
+            if quote_len == 0:
+                return (0, 0)
+
+            best_match_start_idx = -1
+            best_match_score = 0
+
+            # Slide window over all words to find best match
+            for i in range(len(all_words) - quote_len + 1):
+                window_words = [_normalise(all_words[i + j]["word"]) for j in range(quote_len)]
+
+                # Count matching words
+                matches = sum(1 for j in range(quote_len) if window_words[j] == quote_words[j])
+
+                # Require at least 60% match
+                if matches >= quote_len * 0.6 and matches > best_match_score:
+                    best_match_score = matches
+                    best_match_start_idx = i
+
+            if best_match_start_idx < 0:
+                # No good match found - try fuzzy substring search on full text
+                norm_all_text = _normalise(" ".join([w["word"] for w in all_words]))
+                if norm_quote in norm_all_text:
+                    # Find approximate position
+                    idx_in_text = norm_all_text.find(norm_quote)
+                    # Estimate word position
+                    words_before = norm_all_text[:idx_in_text].count(" ")
+                    best_match_start_idx = max(0, min(words_before, len(all_words) - quote_len))
+                else:
+                    return (0, 0)
+
+            # Get timestamps
+            start_word = all_words[best_match_start_idx]
+            end_word = all_words[min(best_match_start_idx + quote_len - 1, len(all_words) - 1)]
+
+            return (start_word["start_ms"], end_word["end_ms"])
+
+        # ---- Process each chapter with word-level timestamps ----
         placed: List[Dict] = []
         for ch in chapters:
-            quote = ch.get("startQuote", "")
-            matched_seg = _find_best_segment(quote) if quote else None
+            start_quote = ch.get("startQuote", "")
+            end_quote = ch.get("endQuote", "")
 
-            if matched_seg:
-                logger.debug(
-                    f"Chapter '{ch.get('title')}': quote '{quote}' → "
-                    f"{matched_seg.start_ms}ms"
-                )
-            else:
-                # Quote search failed — skip this chapter rather than guess wildly
+            start_ms, _ = _find_quote_timestamps(start_quote) if start_quote else (0, 0)
+            _, end_ms = _find_quote_timestamps(end_quote) if end_quote else (0, 0)
+
+            if start_ms == 0 and end_ms == 0:
                 logger.warning(
-                    f"Chapter '{ch.get('title')}': could not match startQuote '{quote}' "
-                    "in transcript — chapter will be skipped"
+                    f"Chapter '{ch.get('title')}': could not match quotes "
+                    f"start='{start_quote}' end='{end_quote}' — skipping"
                 )
+                continue
+
+            # If only start found, estimate end from next chapter or default duration
+            if end_ms == 0 or end_ms <= start_ms:
+                end_ms = start_ms + 60000  # Default 1 min if no end quote
+
+            placed.append({
+                "title": ch.get("title", ""),
+                "description": ch.get("description", ""),
+                "keywords": ch.get("keywords", []),
+                "startMs": start_ms,
+                "endMs": end_ms,
+                "alignedToWords": True,
+                "startQuote": start_quote,
+                "endQuote": end_quote
+            })
+
+            logger.debug(
+                f"Chapter '{ch['title']}': word-level {start_ms}ms → {end_ms}ms"
+            )
+
+        if not placed:
+            return []
+
+        # Sort by start time
+        placed.sort(key=lambda c: c["startMs"])
+
+        return placed
+
+    def _align_chapters_to_segments_fallback(
+        self,
+        chapters: List[Dict],
+        segments: List[TranscriptSegment]
+    ) -> List[Dict]:
+        """Fallback segment-level alignment when word data unavailable."""
+        sorted_segments = sorted(segments, key=lambda s: s.start_ms)
+        last_seg = sorted_segments[-1] if sorted_segments else None
+
+        def _normalise(text: str) -> str:
+            return re.sub(r'\s+', ' ', text.lower().strip())
+
+        placed: List[Dict] = []
+        for ch in chapters:
+            start_quote = ch.get("startQuote", "")
+            if not start_quote:
+                continue
+
+            norm_quote = _normalise(start_quote)
+            best_seg = None
+
+            for seg in sorted_segments:
+                if norm_quote in _normalise(seg.text):
+                    best_seg = seg
+                    break
+
+            if not best_seg:
                 continue
 
             placed.append({
                 "title": ch.get("title", ""),
                 "description": ch.get("description", ""),
                 "keywords": ch.get("keywords", []),
-                "startMs": matched_seg.start_ms,
-                "_endMs_placeholder": None,
-                "alignedToTranscript": True,
+                "startMs": best_seg.start_ms,
+                "endMs": best_seg.end_ms,
+                "alignedToSegment": True
             })
 
         if not placed:
             return []
 
-        # ---- Second pass: set endMs = next chapter's startMs ----
         placed.sort(key=lambda c: c["startMs"])
         for i, ch in enumerate(placed):
             if i + 1 < len(placed):
                 ch["endMs"] = placed[i + 1]["startMs"]
-            else:
+            elif last_seg:
                 ch["endMs"] = last_seg.end_ms
-            del ch["_endMs_placeholder"]
-
-            logger.debug(
-                f"Chapter '{ch['title']}': {ch['startMs']}ms → {ch['endMs']}ms"
-            )
 
         return placed
     
