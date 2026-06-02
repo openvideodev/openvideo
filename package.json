@@ -12,7 +12,9 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "turbo run build --filter=\"@openvideo/*\" && changeset publish",
-    "build:packages": "NODE_OPTIONS='--max-old-space-size=4096' turbo run build --filter=\"@openvideo/*\" --concurrency=1"
+    "build:packages": "NODE_OPTIONS='--max-old-space-size=4096' turbo run build --filter='@openvideo/*' --concurrency=1",
+    "build:editor-packages": "NODE_OPTIONS='--max-old-space-size=4096' turbo run build --filter='@openvideo/timeline' --filter='@openvideo/engine-pixi' --filter='@openvideo/ai' --filter='@openvideo/core' --concurrency=1",
+    "publish:editor-packages": "pnpm build:editor-packages && changeset publish"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",

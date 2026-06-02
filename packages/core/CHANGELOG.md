@@ -1,5 +1,11 @@
 # @openvideo/core
 
+## 1.1.3
+
+### Patch Changes
+
+- fixed initial aspect ratio
+
 ## 1.1.2
 
 ### Patch Changes
