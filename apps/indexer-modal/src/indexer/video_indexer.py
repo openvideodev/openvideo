@@ -1,6 +1,7 @@
 """Main video indexer orchestrator following SOLID principles."""
 
 import os
+import re
 import tempfile
 import asyncio
 from typing import List, Optional, Dict, Any
@@ -646,10 +647,14 @@ class VideoIndexer:
             # 1. CHAPTERS (only meaningful when we have timing information)
             # ------------------------------------------------------------------
             if has_time_info:
+                # AI identifies chapters by quoting the exact opening phrase so we can
+                # anchor each chapter to real transcript timestamps via text search.
                 chapters_prompt = f"""You are analyzing a {asset_type_label} asset named "{asset.name}" for an AI video editor.
 
-Given the following content, identify distinct chapters or sections of this {asset_type_label}.
-For each chapter provide a title, a one-sentence description, and the approximate start/end timestamps.
+Given the following transcript segments (each prefixed with its timestamp), identify distinct chapters or sections.
+For each chapter you MUST copy a short verbatim phrase (3–8 words) from the transcript that is spoken right at
+the START of that chapter. This quote will be used to locate the exact timestamp — it must appear word-for-word
+in the transcript above.
 
 Return a JSON object:
 {{
@@ -657,18 +662,20 @@ Return a JSON object:
     {{
       "title": "Chapter title",
       "description": "One-sentence description of what this chapter covers",
-      "startMs": <integer milliseconds>,
-      "endMs": <integer milliseconds>,
+      "startQuote": "exact verbatim phrase from transcript opening this chapter",
       "keywords": ["keyword1", "keyword2"]
     }}
   ]
 }}"""
                 try:
                     chapters_result = await self.vision_analyzer.analyze_text(combined_content, chapters_prompt)
-                    chapters = chapters_result.get("chapters", [])
-                    if chapters:
+                    raw_chapters = chapters_result.get("chapters", [])
+                    if raw_chapters and segments:
+                        # Align chapters to actual transcript segments for precise timestamps
+                        aligned_chapters = self._align_chapters_to_segments(raw_chapters, segments)
+                        
                         chapter_docs = []
-                        for ch in chapters:
+                        for ch in aligned_chapters:
                             content_str = (
                                 f"title: {asset.name} | "
                                 f"chapter: {ch.get('title', '')} | "
@@ -691,7 +698,36 @@ Return a JSON object:
                                 }
                             ))
                         await self.vector_store.upsert_documents(chapter_docs)
-                        logger.info(f"✅ Indexed {len(chapter_docs)} chapter(s) for {asset.name}")
+                        logger.info(f"✅ Indexed {len(chapter_docs)} chapter(s) with transcript-aligned timestamps for {asset.name}")
+                    elif raw_chapters and visual_descriptions:
+                        # Fallback: align to visual scenes if no transcript
+                        aligned_chapters = self._align_chapters_to_visuals(raw_chapters, visual_descriptions)
+                        
+                        chapter_docs = []
+                        for ch in aligned_chapters:
+                            content_str = (
+                                f"title: {asset.name} | "
+                                f"chapter: {ch.get('title', '')} | "
+                                f"description: {ch.get('description', '')} | "
+                                f"keywords: {', '.join(ch.get('keywords', []))}"
+                            )
+                            chapter_docs.append(Document(
+                                page_content=content_str,
+                                metadata={
+                                    "spaceId": asset.space_id,
+                                    "assetId": asset.id,
+                                    "assetName": asset.name,
+                                    "assetType": asset.type,
+                                    "src": asset.src,
+                                    "layer": "asset-chapters",
+                                    "chapterTitle": ch.get("title", ""),
+                                    "startMs": ch.get("startMs", 0),
+                                    "endMs": ch.get("endMs", 0),
+                                    "keywords": ch.get("keywords", [])
+                                }
+                            ))
+                        await self.vector_store.upsert_documents(chapter_docs)
+                        logger.info(f"✅ Indexed {len(chapter_docs)} chapter(s) with visual-aligned timestamps for {asset.name}")
                 except Exception as e:
                     logger.warning(f"Chapter generation failed for {asset.name}: {e}")
 
@@ -926,6 +962,187 @@ topics: {topics}"""
         
         cap.release()
         return frames
+    
+    def _align_chapters_to_segments(
+        self, 
+        chapters: List[Dict], 
+        segments: List[TranscriptSegment]
+    ) -> List[Dict]:
+        """Align AI-generated chapters to actual transcript segments using verbatim quote search.
+
+        The AI provides a `startQuote` — a short phrase it copied verbatim from the
+        transcript that opens each chapter.  We fuzzy-search the actual segments for
+        that phrase to get the exact startMs from ground-truth timing data.
+
+        Alignment strategy:
+          1. Normalise both the quote and segment text (lower-case, collapse whitespace).
+          2. Score each segment by the longest common substring with the quote.
+          3. Pick the segment with the highest score (must exceed a minimum threshold).
+          4. If no match is found, fall back to the next-best candidate.
+          5. After all chapters are placed, set endMs = next chapter's startMs
+             (or the last segment's endMs for the final chapter).
+        """
+        if not segments or not chapters:
+            return chapters
+
+        sorted_segments = sorted(segments, key=lambda s: s.start_ms)
+        last_seg = sorted_segments[-1]
+
+        def _normalise(text: str) -> str:
+            return re.sub(r'\s+', ' ', text.lower().strip())
+
+        def _lcs_length(a: str, b: str) -> int:
+            """Length of the longest common substring between a and b."""
+            if not a or not b:
+                return 0
+            m, n = len(a), len(b)
+            best = 0
+            # dp[j] = length of LCS ending at a[i-1], b[j-1]
+            dp = [0] * (n + 1)
+            for i in range(1, m + 1):
+                prev = 0
+                for j in range(1, n + 1):
+                    temp = dp[j]
+                    if a[i - 1] == b[j - 1]:
+                        dp[j] = prev + 1
+                        best = max(best, dp[j])
+                    else:
+                        dp[j] = 0
+                    prev = temp
+            return best
+
+        def _find_best_segment(quote: str) -> Optional[TranscriptSegment]:
+            norm_quote = _normalise(quote)
+            if not norm_quote:
+                return None
+            best_seg = None
+            best_score = 0
+            for seg in sorted_segments:
+                norm_seg = _normalise(seg.text)
+                # Fast substring check first (covers exact matches)
+                if norm_quote in norm_seg:
+                    return seg
+                score = _lcs_length(norm_quote, norm_seg)
+                if score > best_score:
+                    best_score = score
+                    best_seg = seg
+            # Require at least 40% of the quote to match
+            min_score = max(4, int(len(norm_quote) * 0.4))
+            return best_seg if best_score >= min_score else None
+
+        # ---- First pass: resolve each chapter to a start segment ----
+        placed: List[Dict] = []
+        for ch in chapters:
+            quote = ch.get("startQuote", "")
+            matched_seg = _find_best_segment(quote) if quote else None
+
+            if matched_seg:
+                logger.debug(
+                    f"Chapter '{ch.get('title')}': quote '{quote}' → "
+                    f"{matched_seg.start_ms}ms"
+                )
+            else:
+                # Quote search failed — skip this chapter rather than guess wildly
+                logger.warning(
+                    f"Chapter '{ch.get('title')}': could not match startQuote '{quote}' "
+                    "in transcript — chapter will be skipped"
+                )
+                continue
+
+            placed.append({
+                "title": ch.get("title", ""),
+                "description": ch.get("description", ""),
+                "keywords": ch.get("keywords", []),
+                "startMs": matched_seg.start_ms,
+                "_endMs_placeholder": None,
+                "alignedToTranscript": True,
+            })
+
+        if not placed:
+            return []
+
+        # ---- Second pass: set endMs = next chapter's startMs ----
+        placed.sort(key=lambda c: c["startMs"])
+        for i, ch in enumerate(placed):
+            if i + 1 < len(placed):
+                ch["endMs"] = placed[i + 1]["startMs"]
+            else:
+                ch["endMs"] = last_seg.end_ms
+            del ch["_endMs_placeholder"]
+
+            logger.debug(
+                f"Chapter '{ch['title']}': {ch['startMs']}ms → {ch['endMs']}ms"
+            )
+
+        return placed
+    
+    def _align_chapters_to_visuals(
+        self, 
+        chapters: List[Dict], 
+        visual_descriptions: List[Dict]
+    ) -> List[Dict]:
+        """Align AI-generated chapters to visual scene descriptions for timestamps.
+        
+        Fallback when no transcript is available. Uses visual scene timestamps.
+        """
+        if not visual_descriptions or not chapters:
+            return chapters
+        
+        # Parse visual descriptions to extract timestamps
+        # Format: "[start_s – end_s] description"
+        scenes = []
+        for desc in visual_descriptions:
+            match = re.match(r"\[(\d+\.?\d*)s\s*–\s*(\d+\.?\d*)s\]\s*(.+)", desc)
+            if match:
+                start_s = float(match.group(1))
+                end_s = float(match.group(2))
+                scenes.append({
+                    "startMs": int(start_s * 1000),
+                    "endMs": int(end_s * 1000),
+                    "description": match.group(3)
+                })
+        
+        if not scenes:
+            # If parsing fails, distribute evenly across video duration
+            total_scenes = len(visual_descriptions)
+            # Assume 30 min max if we can't determine duration
+            assumed_duration_ms = 30 * 60 * 1000
+            scenes = [
+                {"startMs": int((i / total_scenes) * assumed_duration_ms), 
+                 "endMs": int(((i + 1) / total_scenes) * assumed_duration_ms)}
+                for i in range(total_scenes)
+            ]
+        
+        scenes = sorted(scenes, key=lambda s: s["startMs"])
+        total_scenes = len(scenes)
+        
+        aligned = []
+        for ch in chapters:
+            position = ch.get("position", 5)
+            normalized_pos = (position - 1) / 9.0 if position else 0.5
+            
+            scene_idx = int(normalized_pos * total_scenes)
+            scene_idx = max(0, min(scene_idx, total_scenes - 1))
+            
+            start_idx = max(0, scene_idx - 1)
+            end_idx = min(total_scenes - 1, scene_idx + 2)
+            
+            start_scene = scenes[start_idx]
+            end_scene = scenes[end_idx]
+            
+            aligned_ch = {
+                "title": ch.get("title", ""),
+                "description": ch.get("description", ""),
+                "keywords": ch.get("keywords", []),
+                "startMs": start_scene["startMs"],
+                "endMs": end_scene["endMs"],
+                "alignedToVisual": True
+            }
+            aligned.append(aligned_ch)
+            
+            logger.debug(f"Aligned chapter '{ch.get('title')}' to visual: {start_scene['startMs']}ms - {end_scene['endMs']}ms")
+        
+        return aligned
     
     async def _update_progress(self, asset_id: str, progress: int, stage: str) -> None:
         """Update progress tracking."""

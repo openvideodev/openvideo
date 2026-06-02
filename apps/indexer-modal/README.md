@@ -200,6 +200,57 @@ High-level modules depend on abstractions:
 - `VideoIndexer` depends on interfaces, not concrete classes
 - Dependencies are injected via constructor
 
+## Deployment
+
+### Deploying to Modal.com
+
+The indexer runs as a serverless function on Modal.com. To deploy changes:
+
+```bash
+# Navigate to the indexer directory
+cd apps/indexer-modal
+
+# Install Modal CLI (if not already installed)
+pip install modal
+
+# Deploy the application
+python3 -m modal deploy -m src.api.main
+```
+
+**Important:** Use module mode (`-m src.api.main`) not script mode, because the codebase uses Python package imports.
+
+### Verifying Deployment
+
+After deployment, verify the functions are live:
+
+```bash
+# List deployed functions
+modal function list openvideo-indexer
+
+# Check application status
+modal app list
+```
+
+### Redeploying After Code Changes
+
+Whenever you modify the indexer code (e.g., `video_indexer.py`, services, etc.), redeploy:
+
+```bash
+cd apps/indexer-modal
+python3 -m modal deploy -m src.api.main
+```
+
+Modal will automatically:
+- Build a new container image if dependencies changed
+- Update the deployed functions
+- Route new requests to the updated version
+
+### View Deployment Logs
+
+Monitor function executions in the Modal dashboard:
+- URL: `https://modal.com/apps/[username]/main/deployed/openvideo-indexer`
+- Or via CLI: `modal app logs openvideo-indexer`
+
 ## Development
 
 ### Local Testing
