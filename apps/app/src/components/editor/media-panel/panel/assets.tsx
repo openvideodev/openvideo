@@ -14,6 +14,11 @@ import {
   IconInfoCircle,
   IconFilter,
   IconVideo,
+  IconPlus,
+  IconFile,
+  IconClock,
+  IconLink,
+  IconRefresh,
 } from "@tabler/icons-react";
 import { storageService } from "@/lib/storage/storage-service";
 import type { MediaType } from "@/types/media";
@@ -32,6 +37,17 @@ import { useProjectStore } from "@/stores/project-store";
 import { useAssetsStore, type ProjectFile } from "@/stores/assets-store";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,6 +84,15 @@ function formatDuration(seconds?: number) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatBytes(bytes?: number) {
+  if (bytes === undefined || bytes === null || isNaN(bytes)) return "Unknown size";
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 async function getMediaDuration(file: File): Promise<number | undefined> {
@@ -112,10 +137,12 @@ function buildDraggableData(asset: VisualAsset) {
 function AssetCard({
   asset,
   onAdd,
+  onSelect,
   onDelete,
 }: {
   asset: VisualAsset;
   onAdd: (asset: VisualAsset) => void;
+  onSelect: (asset: VisualAsset) => void;
   onDelete: (id: string) => void;
 }) {
   const { studio } = useStudioStore();
@@ -158,7 +185,7 @@ function AssetCard({
     <Draggable data={draggableData} renderCustomPreview={preview}>
       <div
         className="flex flex-col gap-1.5 group cursor-pointer"
-        onClick={() => !isTemp && onAdd(asset)}
+        onClick={() => !isTemp && onSelect(asset)}
       >
         <div className="relative aspect-square rounded-xl overflow-hidden bg-secondary/30 border border-border/40 group-hover:border-border transition-all flex items-center justify-center select-none shadow-sm">
           {/* Media Type Icon (Top Left) */}
@@ -364,21 +391,37 @@ function AssetCard({
             </div>
           )}
 
+          {/* Hover Action Buttons */}
           {!isTemp && (
-            <button
-              type="button"
-              className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-background/80 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground z-20"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(asset.id);
-              }}
-            >
-              <IconTrash size={12} className="text-foreground" />
-            </button>
+            <>
+              {/* Delete Button (Top Right) */}
+              <button
+                type="button"
+                className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-background/80 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground z-20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(asset.id);
+                }}
+              >
+                <IconTrash size={12} className="text-foreground" />
+              </button>
+
+              {/* Add/Plus Button (Bottom Right) */}
+              <button
+                type="button"
+                className="absolute bottom-1.5 right-1.5 p-1.5 rounded-md bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/90 z-20 shadow-md flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdd(asset);
+                }}
+              >
+                <IconPlus size={11} strokeWidth={3} />
+              </button>
+            </>
           )}
         </div>
         {/* Visual label for asset names below cards */}
-        <div className="px-1 truncate text-[11px] text-muted-foreground group-hover:text-foreground transition-colors font-medium text-center">
+        <div className="px-1 truncate text-[11px] text-muted-foreground group-hover:text-foreground transition-colors font-medium text-center font-sans">
           {asset.name}
         </div>
       </div>
@@ -407,6 +450,7 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
   const [filterType, setFilterType] = useState<"all" | "image" | "video" | "audio">("all");
   const [isUploading, setIsUploading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const openGenerator = useGeneratorModalStore((state) => state.open);
 
@@ -664,6 +708,8 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
     uploadProgress: f.uploadProgress,
   }));
 
+  const selectedAsset = mappedAssets.find((a) => a.id === selectedAssetId) || null;
+
   const filteredAssets = mappedAssets.filter((a) => {
     const matchesSearch = a.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterType === "all" || a.type === filterType;
@@ -769,6 +815,7 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
                       key={asset.id}
                       asset={asset}
                       onAdd={addItemToCanvas}
+                      onSelect={(asset) => setSelectedAssetId(asset.id)}
                       onDelete={handleDelete}
                     />
                   ))}
@@ -787,6 +834,229 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
           />
         </div>
       )}
+
+      {/* Asset Preview & Details Dialog Modal */}
+      <Dialog
+        open={selectedAssetId !== null}
+        onOpenChange={(open) => !open && setSelectedAssetId(null)}
+      >
+        <DialogContent className="sm:max-w-[720px] p-0 overflow-hidden bg-popover">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Asset Preview: {selectedAsset?.name}</DialogTitle>
+            <DialogDescription>Preview and manage asset details</DialogDescription>
+          </DialogHeader>
+
+          {selectedAsset && (
+            <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] min-h-[480px] max-h-[680px]">
+              {/* Left Column: Preview */}
+              <div className="bg-black/40 flex items-center justify-center p-6 min-h-[420px] max-h-[500px]">
+                {selectedAsset.type === "image" && (
+                  <img
+                    src={selectedAsset.src}
+                    alt={selectedAsset.name}
+                    className="max-w-full max-h-[420px] object-contain rounded-md shadow-xl"
+                  />
+                )}
+                {selectedAsset.type === "video" && (
+                  <video
+                    src={selectedAsset.src}
+                    controls
+                    className="max-w-full max-h-[420px] object-contain rounded-md shadow-xl"
+                  />
+                )}
+                {selectedAsset.type === "audio" && (
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconMusic size={28} className="text-primary" />
+                    </div>
+                    <audio src={selectedAsset.src} controls className="w-48" />
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Details & Actions */}
+              <div className="p-5 flex flex-col gap-4 border-l border-border">
+                {/* Header */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-[10px] uppercase font-semibold">
+                      {selectedAsset.type}
+                    </Badge>
+                    {selectedAsset.indexingStatus === "completed" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                      >
+                        Ready
+                      </Badge>
+                    )}
+                    {selectedAsset.indexingStatus === "failed" && (
+                      <Badge variant="destructive" className="text-[10px]">
+                        Failed
+                      </Badge>
+                    )}
+                    {(selectedAsset.indexingStatus === "pending" ||
+                      selectedAsset.indexingStatus === "processing") && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      >
+                        {selectedAsset.indexingStatus === "pending" ? "Queued" : "Processing"}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <h2 className="text-lg font-semibold break-all leading-tight">
+                    {selectedAsset.name}
+                  </h2>
+                </div>
+
+                <Separator />
+
+                {/* Metadata */}
+                <div className="flex flex-col gap-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <IconFile size={14} />
+                      File Size
+                    </span>
+                    <span className="font-medium font-mono">{formatBytes(selectedAsset.size)}</span>
+                  </div>
+
+                  {selectedAsset.duration && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <IconClock size={14} />
+                        Duration
+                      </span>
+                      <span className="font-medium font-mono">
+                        {formatDuration(selectedAsset.duration)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <IconLink size={14} />
+                      Source
+                    </span>
+                    <a
+                      href={selectedAsset.src}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:underline text-xs font-mono truncate max-w-[140px]"
+                    >
+                      Open Link
+                    </a>
+                  </div>
+                </div>
+
+                {/* Status */}
+                {selectedAsset.indexingStatus !== "completed" && (
+                  <Alert
+                    variant={selectedAsset.indexingStatus === "failed" ? "destructive" : "default"}
+                    className={
+                      selectedAsset.indexingStatus === "failed"
+                        ? ""
+                        : "border-amber-500/20 bg-amber-500/5"
+                    }
+                  >
+                    <AlertTitle className="text-xs flex items-center gap-2">
+                      {selectedAsset.indexingStatus === "failed" ? (
+                        <>
+                          <IconInfoCircle size={12} />
+                          Indexing Failed
+                        </>
+                      ) : (
+                        <>
+                          <IconLoader2 size={12} className="animate-spin" />
+                          Indexing
+                        </>
+                      )}
+                    </AlertTitle>
+                    <AlertDescription className="text-[11px] mt-1">
+                      {selectedAsset.indexingStatus === "failed" ? (
+                        <span>
+                          {selectedAsset.indexingError || "An error occurred during processing."}
+                        </span>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <span>
+                            {selectedAsset.indexingStatus === "pending"
+                              ? "Queued for indexing"
+                              : selectedAsset.indexingStage
+                                ? selectedAsset.indexingStage
+                                    .replace(/[_-]/g, " ")
+                                    .replace(/\b\w/g, (c) => c.toUpperCase())
+                                : "Processing..."}
+                          </span>
+                          {selectedAsset.indexingProgress !== null &&
+                            selectedAsset.indexingProgress !== undefined &&
+                            selectedAsset.indexingProgress > 0 && (
+                              <Progress value={selectedAsset.indexingProgress} className="h-1" />
+                            )}
+                        </div>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button
+                    className="w-full"
+                    onClick={async () => {
+                      await addItemToCanvas(selectedAsset);
+                      setSelectedAssetId(null);
+                    }}
+                  >
+                    <IconPlus data-icon="inline-start" />
+                    Add to Timeline
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        triggerIndex
+                          .mutateAsync({ id: selectedAsset.id, spaceId: spaceId || "" })
+                          .then(() => updateFile(selectedAsset.id, { indexingStatus: "pending" }))
+                          .catch((err) => console.error("Failed to re-index:", err));
+                      }}
+                      disabled={
+                        selectedAsset.indexingStatus === "pending" ||
+                        selectedAsset.indexingStatus === "processing"
+                      }
+                    >
+                      <IconRefresh
+                        data-icon="inline-start"
+                        className={
+                          selectedAsset.indexingStatus === "processing" ? "animate-spin" : ""
+                        }
+                      />
+                      Re-index
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={async () => {
+                        await handleDelete(selectedAsset.id);
+                        setSelectedAssetId(null);
+                      }}
+                    >
+                      <IconTrash data-icon="inline-start" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

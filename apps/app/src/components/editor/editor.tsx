@@ -89,6 +89,13 @@ export default function Editor({
     checkSupport();
   }, []);
 
+  // Clear loading screen for non-editor modes (CanvasPanel doesn't mount, onReady never fires)
+  useEffect(() => {
+    if (editorMode !== "editor") {
+      setIsReady(true);
+    }
+  }, [editorMode]);
+
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
       {!isReady && (

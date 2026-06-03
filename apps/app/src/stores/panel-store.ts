@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 type EditorMode = "editor" | "agent" | "playground";
 
@@ -23,29 +22,22 @@ interface PanelState {
   setEditorMode: (mode: EditorMode) => void;
 }
 
-export const usePanelStore = create<PanelState>()(
-  persist(
-    (set) => ({
-      toolsPanel: 30,
-      copilotPanel: 25,
-      previewPanel: 50,
-      propertiesPanel: 25,
-      mainContent: 70,
-      timeline: 30,
-      isCopilotVisible: true,
-      editorMode: "editor",
+export const usePanelStore = create<PanelState>((set) => ({
+  toolsPanel: 30,
+  copilotPanel: 25,
+  previewPanel: 50,
+  propertiesPanel: 25,
+  mainContent: 70,
+  timeline: 30,
+  isCopilotVisible: true,
+  editorMode: "editor",
 
-      setToolsPanel: (size) => set({ toolsPanel: size }),
-      setPreviewPanel: (size) => set({ previewPanel: size }),
-      setPropertiesPanel: (size) => set({ propertiesPanel: size }),
-      setMainContent: (size) => set({ mainContent: size }),
-      setTimeline: (size) => set({ timeline: size }),
-      setCopilotPanel: (size) => set({ copilotPanel: size }),
-      toggleCopilot: () => set((state) => ({ isCopilotVisible: !state.isCopilotVisible })),
-      setEditorMode: (mode) => set({ editorMode: mode }),
-    }),
-    {
-      name: "panel-sizes",
-    },
-  ),
-);
+  setToolsPanel: (size) => set({ toolsPanel: size }),
+  setPreviewPanel: (size) => set({ previewPanel: size }),
+  setPropertiesPanel: (size) => set({ propertiesPanel: size }),
+  setMainContent: (size) => set({ mainContent: size }),
+  setTimeline: (size) => set({ timeline: size }),
+  setCopilotPanel: (size) => set({ copilotPanel: size }),
+  toggleCopilot: () => set((state) => ({ isCopilotVisible: !state.isCopilotVisible })),
+  setEditorMode: (mode) => set({ editorMode: mode }),
+}));
