@@ -117,7 +117,7 @@ const DraggableTransitionItem = ({
         <div className="relative w-full aspect-video rounded-md bg-input/30 border overflow-hidden">
           {!isReady && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <Loader2 className="animate-spin text-muted-foreground" />
+              <IconLoader2 className="animate-spin text-muted-foreground" />
             </div>
           )}
 
@@ -370,7 +370,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
         </label>
         <div className="flex gap-2">
           <div className="flex items-center gap-4 flex-1">
-            <Timer className="size-4 text-muted-foreground" />
+            <IconClock className="size-4 text-muted-foreground" />
             <Slider
               value={[localDuration]}
               onValueChange={(v) => setLocalDuration(v[0])}
@@ -437,7 +437,7 @@ export function TransitionProperties({ clip }: TransitionPropertiesProps) {
           <ScrollArea className="h-full">
             {presetsLoading ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
-                <Loader2 className="size-5 animate-spin" />
+                <IconLoader2 className="size-5 animate-spin" />
                 <span className="text-xs">Loading custom transitions…</span>
               </div>
             ) : presetsError ? (

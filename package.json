@@ -2,7 +2,7 @@
   "name": "combo",
   "private": true,
   "scripts": {
-    "build": "NODE_OPTIONS='--max-old-space-size=4096' turbo run build --concurrency=1",
+    "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
@@ -12,8 +12,8 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "turbo run build --filter=\"@openvideo/*\" && changeset publish",
-    "build:packages": "NODE_OPTIONS='--max-old-space-size=4096' turbo run build --filter='@openvideo/*' --concurrency=1",
-    "build:editor-packages": "NODE_OPTIONS='--max-old-space-size=4096' turbo run build --filter='@openvideo/timeline' --filter='@openvideo/engine-pixi' --filter='@openvideo/ai' --filter='@openvideo/core' --concurrency=1",
+    "build:packages": "turbo run build --filter='@openvideo/*'",
+    "build:editor-packages": "turbo run build --filter='@openvideo/timeline' --filter='@openvideo/engine-pixi' --filter='@openvideo/ai' --filter='@openvideo/core'",
     "publish:editor-packages": "pnpm build:editor-packages && changeset publish"
   },
   "devDependencies": {

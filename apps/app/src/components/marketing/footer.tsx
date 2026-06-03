@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { IconVideo } from "@tabler/icons-react";
 
 const Footer = () => {
   return (

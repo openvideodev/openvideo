@@ -25,6 +25,7 @@ import {
   IconCircle,
   IconMovie,
   IconEdit,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import {
@@ -41,7 +42,6 @@ import { getGroupedFonts, getFontByPostScriptName } from "@/utils/font-utils";
 
 import useLayoutStore from "../store/use-layout-store";
 import { Button } from "@/components/ui/button";
-import { IconChevronDown } from "@tabler/icons-react";
 import { NumberInput } from "@/components/ui/number-input";
 import { useStore } from "zustand";
 import { useEphemeralClip } from "@/hooks/use-ephemeral-clip";
@@ -480,7 +480,7 @@ export function CaptionProperties({ clip }: CaptionPropertiesProps) {
             <div className="w-full text-left">
               <p className="truncate">None</p>
             </div>
-            <ChevronDown className="text-muted-foreground" size={14} />
+            <IconChevronDown className="text-muted-foreground" size={14} />
           </Button>
         </div>
       </div>

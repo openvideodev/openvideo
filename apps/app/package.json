@@ -18,7 +18,6 @@
     "@aws-sdk/s3-request-presigner": "^3.946.0",
     "@better-auth/drizzle-adapter": "^1.6.11",
     "@deepgram/sdk": "^4.11.2",
-    "@openvideo/ai": "workspace:*",
     "@openvideo/api": "workspace:*",
     "@openvideo/auth": "workspace:*",
     "@openvideo/core": "workspace:*",

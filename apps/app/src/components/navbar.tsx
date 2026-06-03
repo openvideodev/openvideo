@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogoIcons } from "@/components/shared/logos";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { FullWidthBorder } from "./full-width-border";
 
 const navLinks = [
   {
@@ -22,16 +23,16 @@ const Navbar = () => {
   return (
     <header
       id="nd-nav"
-      className="border-b w-full bg-card/80 backdrop-blur-md sticky top-0 z-50 px-4"
+      className="w-full sticky top-0 z-50 bg-card/60 backdrop-blur-sm"
       aria-label="Main"
     >
-      <div className="max-w-7xl mx-auto h-16 flex items-center">
+      <div className="max-w-7xl border-x border-dashed px-4 mx-auto h-14 flex items-center">
         {/* Desktop Navigation */}
         <div className="hidden md:grid grid-cols-3 w-full items-center">
           {/* Left: Logo */}
           <div className="flex justify-start">
             <Link
-              className="inline-flex items-center gap-2.5 font-bold tracking-tight shrink-0"
+              className="inline-flex items-center gap-2.5 font-semi tracking-tight shrink-0"
               href="/"
             >
               <LogoIcons.scenify className="size-5" />
@@ -85,6 +86,9 @@ const Navbar = () => {
             </Button>
           )}
         </div>
+      </div>
+      <div className="w-full h-px relative">
+        <FullWidthBorder className="top-0" />
       </div>
     </header>
   );

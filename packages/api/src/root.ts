@@ -1,4 +1,5 @@
 import { router } from "./trpc.js";
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { spaceRouter } from "./routers/space.js";
 import { assetRouter } from "./routers/asset.js";
 import { chatRouter } from "./routers/chat.js";
@@ -23,3 +24,7 @@ export const appRouter = router({
 
 // Export type definition for the API
 export type AppRouter = typeof appRouter;
+
+// Export input/output type helpers
+export type RouterInputs = inferRouterInputs<AppRouter>;
+export type RouterOutputs = inferRouterOutputs<AppRouter>;

@@ -1,0 +1,187 @@
+
+> @openvideo/director@0.1.1 dev /Users/dev/Repos/openvideo/o3/apps/director
+> nest start --watch
+
+[2J[3J[H[[90m10:33:26 PM[0m] Starting compilation in watch mode...
+
+[[90m10:33:35 PM[0m] Found 0 errors. Watching for file changes.
+
+(node:82002) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +32ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAssetsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[R2Service] [39m[32mR2 Service initialized[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: cinematic[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: auto-caption[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: basic-editing[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: media-generation[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: transition-editing[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: effect-editing[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: project-settings[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: animation-editing[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: composition[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStorageModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTriggerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBroadcastModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSkillsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSpaceAssetsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mChatModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPlannerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSpacesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRagModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mIndexingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mExecutorModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDirectorModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGatewayModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[DirectorGateway] [39m[32mSocket.io gateway initialised[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "chat" message[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "plan.confirm" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "plan.reject" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "patch" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/sign-up, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/sign-in, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/token, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/token/exchange, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens/:id, PATCH} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSpacesController {/spaces}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id/sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:39 PM [32m    LOG[39m [38;5;3m[VectorStoreService] [39m[32mInitializing PGVector store...[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [32m    LOG[39m [38;5;3m[RedisPubSubService] [39m[32mRedis Pub/Sub listener initialized[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: cinematic[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: auto-caption[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: basic-editing[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: media-generation[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: transition-editing[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: effect-editing[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: project-settings[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: animation-editing[39m
+[95m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: composition[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:42 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+{"level":30,"time":1780457622078,"pid":82026,"hostname":"Danys-MacBook-Pro.local","msg":"Server listening at http://0.0.0.0:4000"}
+Director service is running on: http://localhost:4000
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:43 PM [32m    LOG[39m [38;5;3m[DirectorGateway] [39m[32mClient OUx_nmWntBDdZX4TAAAB (user: gwViwfoFZJpMHDwsdUjoqmTSkLczU7Wf) connected to space 4b093b9b-5c03-40f9-ac6b-50d9496e26d6[39m
+[32m[Nest] 82026  - [39m06/02/2026, 10:33:43 PM [32m    LOG[39m [38;5;3m[CoreRegistryService] [39m[32mLoading space 4b093b9b-5c03-40f9-ac6b-50d9496e26d6 from database into memory[39m
+[2J[3J[H[[90m10:34:04 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m10:34:06 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +34ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAssetsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[R2Service] [39m[32mR2 Service initialized[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: cinematic[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: auto-caption[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: basic-editing[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: media-generation[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: transition-editing[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: effect-editing[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: project-settings[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: animation-editing[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[SkillRegistryService] [39m[32mRegistered skill: composition[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStorageModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTriggerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBroadcastModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSkillsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSpaceAssetsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mChatModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPlannerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSpacesModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRagModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mIndexingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mExecutorModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDirectorModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGatewayModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[DirectorGateway] [39m[32mSocket.io gateway initialised[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "chat" message[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "plan.confirm" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "plan.reject" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mDirectorGateway subscribed to the "patch" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/sign-up, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/sign-in, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/token, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/token/exchange, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/tokens/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSpacesController {/spaces}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/spaces/:id/sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:11 PM [32m    LOG[39m [38;5;3m[VectorStoreService] [39m[32mInitializing PGVector store...[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [32m    LOG[39m [38;5;3m[RedisPubSubService] [39m[32mRedis Pub/Sub listener initialized[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: cinematic[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: auto-caption[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: basic-editing[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: media-generation[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: transition-editing[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: effect-editing[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: project-settings[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: animation-editing[39m
+[95m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [95m  DEBUG[39m [38;5;3m[SkillRegistryService] [39m[95mLoaded documentation for skill: composition[39m
+[32m[Nest] 82190  - [39m06/02/2026, 10:34:13 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m
+{"level":30,"time":1780457653890,"pid":82190,"hostname":"Danys-MacBook-Pro.local","msg":"Server listening at http://0.0.0.0:4000"}
+Director service is running on: http://localhost:4000
+ ELIFECYCLE  Command failed.

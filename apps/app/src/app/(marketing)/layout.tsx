@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Navbar from "@/components/navbar";
+import { FullWidthBorder } from "@/components/full-width-border";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (

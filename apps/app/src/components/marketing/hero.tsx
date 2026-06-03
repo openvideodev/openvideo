@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { IconSparkles, IconPlayerPlay } from "@tabler/icons-react";
 
 const Hero = () => {
@@ -31,7 +31,7 @@ const Hero = () => {
             className="h-11 px-5 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
             size="lg"
           >
-            <Link href="/spaces" className="flex items-center gap-2 text-sm">
+            <Link href="/signin" className="flex items-center gap-2 text-sm">
               <IconPlayerPlay className="w-4 h-4" />
               Start Creating
             </Link>

@@ -374,7 +374,7 @@ function FakeCanvasPanel() {
   );
 }
 
-function FakeAssistantPanel() {
+export function FakeAssistantPanel() {
   return (
     <div className="w-72 hidden lg:flex border-l border-border/30 flex-col bg-card/20 shrink-0">
       {/* Header */}

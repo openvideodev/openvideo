@@ -56,6 +56,7 @@ export const auth = betterAuth({
       expiresIn: 60 * 60,
       sendMagicLink: async ({ email, token, url }) => {
         const magicLink = `${url}?token=${token}`;
+        console.log(magicLink);
         await resend.emails.send({
           from: `"Login" <account@openvideo.dev>`,
           to: email,

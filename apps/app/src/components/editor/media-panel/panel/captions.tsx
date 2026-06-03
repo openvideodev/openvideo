@@ -9,7 +9,7 @@ import {
   IconTrash,
   IconClock,
   IconSparkles,
-  IconMessage,
+  IconMessageCircle,
   IconChevronRight,
 } from "@tabler/icons-react";
 import { fontManager, Log } from "@openvideo/engine-pixi";
@@ -392,7 +392,7 @@ export default function PanelCaptions() {
         {mediaItems.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center text-center p-8 gap-4 select-none">
             <div className="p-4 rounded-full bg-secondary/15 border border-white/[0.04] text-muted-foreground/50 animate-pulse">
-              <Sparkles className="size-8 text-white/60" />
+              <IconSparkles className="size-8 text-white/60" />
             </div>
             <div className="space-y-1.5 max-w-[240px]">
               <h4 className="text-sm font-medium text-foreground">No media detected</h4>
@@ -425,7 +425,7 @@ export default function PanelCaptions() {
             <div className="relative group">
               <div className="absolute -inset-1.5 rounded-full bg-linear-to-r from-primary/30 to-violet-500/30 blur-md opacity-75 group-hover:opacity-100 transition duration-500" />
               <div className="relative p-5 rounded-full bg-card border border-white/[0.08] text-white flex items-center justify-center">
-                <MessageSquareQuote className="size-8 text-primary" />
+                <IconMessageCircle className="size-8 text-primary" />
               </div>
             </div>
 
@@ -451,13 +451,13 @@ export default function PanelCaptions() {
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  <IconLoader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                   Transcribing...
                 </>
               ) : (
                 <>
                   Generate Captions
-                  <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                  <IconChevronRight className="ml-1 h-3.5 w-3.5" />
                 </>
               )}
             </Button>
@@ -565,7 +565,7 @@ function CaptionItem({
             onSeek();
           }}
         >
-          <Play className="h-3 w-3" />
+          <IconPlayerPlay className="h-3 w-3" />
         </Button>
         <Button
           variant="ghost"
@@ -576,7 +576,7 @@ function CaptionItem({
             onDelete();
           }}
         >
-          <Trash2 className="h-3 w-3" />
+          <IconTrash className="h-3 w-3" />
         </Button>
       </div>
     </div>

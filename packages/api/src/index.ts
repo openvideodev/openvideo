@@ -7,3 +7,6 @@ export {
   createTRPCContext,
   type CreateContextOptions,
 } from "./trpc.js";
+
+// Re-export types from root for convenience
+export type { RouterInputs, RouterOutputs } from "./root.js";
