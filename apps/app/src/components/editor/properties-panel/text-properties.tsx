@@ -469,7 +469,9 @@ export function TextProperties({ clip }: TextPropertiesProps) {
         <div className="flex items-center gap-4">
           <IconCircle className="size-4 text-muted-foreground" />
           <Slider
-            value={[Math.round((coreClip.opacity ?? 1) * 100)]}
+            value={[
+              Math.round((Number(coreClip.transform?.opacity ?? coreClip.opacity) || 1) * 100),
+            ]}
             onValueChange={(v) => handleUpdate({ opacity: v[0] / 100 })}
             max={100}
             step={1}
@@ -477,7 +479,9 @@ export function TextProperties({ clip }: TextPropertiesProps) {
           />
           <InputGroup className="w-20">
             <NumberInput
-              value={Math.round((coreClip.opacity ?? 1) * 100)}
+              value={Math.round(
+                (Number(coreClip.transform?.opacity ?? coreClip.opacity) || 1) * 100,
+              )}
               onChange={(val) => handleUpdate({ opacity: val / 100 })}
               className="p-0 text-center"
             />
