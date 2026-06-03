@@ -235,8 +235,8 @@ export class Core extends EventEmitter {
     new: () => {
       this.store.getState().reset({
         settings: {
-          width: 1920,
-          height: 1080,
+          width: 1080,
+          height: 1920,
           fps: 30,
           duration: 30_000_000,
         },
