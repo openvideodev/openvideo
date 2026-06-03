@@ -25,7 +25,7 @@ export function useDirector(spaceId: string) {
 
   useEffect(() => {
     if (!spaceId || !tokenData?.token) return;
-
+    console.log("token", { token: tokenData.token }, { spaceId });
     // Create direct Socket.io connection to Director
     const socket = io(directorConfig.wsUrl, {
       path: "/ws",

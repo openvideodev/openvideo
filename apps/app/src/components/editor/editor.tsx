@@ -34,6 +34,7 @@ export default function Editor({
   const setProjectId = useProjectStore((state) => state.setProjectId);
   const setSpaceId = useProjectStore((state) => state.setSpaceId);
   const setProjectName = useProjectStore((state) => state.setProjectName);
+  const resetProject = useProjectStore((state) => state.resetProject);
 
   const {
     toolsPanel,
@@ -66,6 +67,12 @@ export default function Editor({
     { id: projectId },
     { enabled: !!projectId },
   );
+
+  // Reset store + canvas engine on every route entry / project switch
+  useEffect(() => {
+    resetProject();
+    core.project.new();
+  }, [projectId]); // intentionally only depends on projectId — runs on mount and when switching projects
 
   useEffect(() => {
     if (!projectId) return;
