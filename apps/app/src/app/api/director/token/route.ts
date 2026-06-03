@@ -1,32 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { serverOpenVideo } from "@/lib/server/openvideo";
+import { appRouter, createCallerFactory, createTRPCContext } from "@openvideo/api";
+
+const createCaller = createCallerFactory(appRouter);
 
 /**
  * POST /api/director/token
  *
  * Exchanges the user's browser session for a short-lived Director JWT.
- * The API key never leaves the server.
  */
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // 1. Get spaceId from JSON body or URL query params (if any)
+  let spaceId: string | undefined = undefined;
+  try {
+    const body = await request.clone().json();
+    spaceId = body.spaceId;
+  } catch {
+    // request body might be empty or not json, which is fine
   }
 
-  const apiKey = process.env.OPENVIDEO_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+  if (!spaceId) {
+    const { searchParams } = new URL(request.url);
+    spaceId = searchParams.get("spaceId") || undefined;
   }
 
   try {
-    const { token } = await serverOpenVideo.tokens.exchange({ apiKey });
+    // 2. Create the tRPC context using the request headers and our auth instance
+    const ctx = await createTRPCContext({
+      auth,
+      req: request,
+    });
+
+    // 3. Create the type-safe server caller
+    const caller = createCaller(ctx);
+
+    // 4. Call the getToken query procedure in sessionRouter
+    const { token } = await caller.session.getToken({ spaceId });
+
     return NextResponse.json({ token });
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Token exchange failed" },
-      { status: error.status || 500 },
-    );
+    console.error("[Token Route] Error generating JWT token:", error);
+
+    // Check if it's a tRPC UNAUTHORIZED error
+    const isUnauthorized =
+      error?.code === "UNAUTHORIZED" || error?.message?.includes("UNAUTHORIZED");
+    const status = isUnauthorized ? 401 : 500;
+
+    return NextResponse.json({ error: error.message || "Token creation failed" }, { status });
   }
 }

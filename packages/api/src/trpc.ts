@@ -24,6 +24,7 @@ const t = initTRPC.context<CreateContextOptions>().create({
 export const router = t.router;
 export const mergeRouters = t.mergeRouters;
 export const publicProcedure = t.procedure;
+export const createCallerFactory = t.createCallerFactory;
 
 /**
  * Reusable middleware that enforces users are logged in before running the procedure

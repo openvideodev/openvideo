@@ -5,6 +5,7 @@ export {
   publicProcedure,
   protectedProcedure,
   createTRPCContext,
+  createCallerFactory,
   type CreateContextOptions,
 } from "./trpc.js";
 

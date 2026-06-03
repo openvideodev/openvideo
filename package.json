@@ -13,7 +13,7 @@
     "version": "changeset version",
     "release": "turbo run build --filter=\"@openvideo/*\" && changeset publish",
     "build:packages": "turbo run build --filter='@openvideo/*'",
-    "build:editor-packages": "turbo run build --filter='@openvideo/timeline' --filter='@openvideo/engine-pixi' --filter='@openvideo/ai' --filter='@openvideo/core'",
+    "build:editor-packages": "turbo run build --filter='@openvideo/timeline' --filter='@openvideo/engine-pixi' --filter='@openvideo/core'",
     "publish:editor-packages": "pnpm build:editor-packages && changeset publish"
   },
   "devDependencies": {
