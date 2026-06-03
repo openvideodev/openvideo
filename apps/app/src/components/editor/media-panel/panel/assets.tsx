@@ -43,8 +43,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -837,219 +840,191 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
         open={selectedAssetId !== null}
         onOpenChange={(open) => !open && setSelectedAssetId(null)}
       >
-        <DialogContent className="sm:max-w-2xl bg-popover text-popover-foreground rounded-xl border border-border p-0 overflow-hidden shadow-2xl">
+        <DialogContent className="sm:max-w-[720px] p-0 overflow-hidden bg-popover">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Asset Preview: {selectedAsset?.name}</DialogTitle>
+            <DialogDescription>Preview and manage asset details</DialogDescription>
+          </DialogHeader>
+
           {selectedAsset && (
-            <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] h-[480px]">
+            <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] min-h-[480px] max-h-[680px]">
               {/* Left Column: Preview */}
-              <div className="bg-muted/10 p-6 flex flex-col items-center justify-center border-r border-border min-h-0 relative">
-                <div className="w-full flex-1 flex items-center justify-center min-h-0">
-                  <div className="border border-border/40 bg-zinc-950 rounded-xl shadow-2xl overflow-hidden aspect-video flex items-center justify-center p-1 w-full max-w-sm">
-                    {selectedAsset.type === "image" && (
-                      <img
-                        src={selectedAsset.src}
-                        alt={selectedAsset.name}
-                        className="max-h-full max-w-full object-contain rounded-lg"
-                      />
-                    )}
-                    {selectedAsset.type === "video" && (
-                      <video
-                        src={selectedAsset.src}
-                        controls
-                        className="max-h-full max-w-full object-contain rounded-lg"
-                      />
-                    )}
-                    {selectedAsset.type === "audio" && (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-zinc-950/80 p-4">
-                        <div className="w-16 h-16 rounded-full bg-secondary/80 flex items-center justify-center shadow-inner border border-border/60">
-                          <IconMusic size={28} className="text-primary animate-pulse" />
-                        </div>
-                        <audio src={selectedAsset.src} controls className="w-full px-2" />
-                      </div>
-                    )}
+              <div className="bg-black/40 flex items-center justify-center p-6 min-h-[420px] max-h-[500px]">
+                {selectedAsset.type === "image" && (
+                  <img
+                    src={selectedAsset.src}
+                    alt={selectedAsset.name}
+                    className="max-w-full max-h-[420px] object-contain rounded-md shadow-xl"
+                  />
+                )}
+                {selectedAsset.type === "video" && (
+                  <video
+                    src={selectedAsset.src}
+                    controls
+                    className="max-w-full max-h-[420px] object-contain rounded-md shadow-xl"
+                  />
+                )}
+                {selectedAsset.type === "audio" && (
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconMusic size={28} className="text-primary" />
+                    </div>
+                    <audio src={selectedAsset.src} controls className="w-48" />
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Right Column: Details & Status & Actions */}
-              <div className="p-6 flex flex-col justify-between min-h-0">
-                <div className="space-y-5 overflow-y-auto pr-1">
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+              {/* Right Column: Details & Actions */}
+              <div className="p-5 flex flex-col gap-4 border-l border-border">
+                {/* Header */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-[10px] uppercase font-semibold">
+                      {selectedAsset.type}
+                    </Badge>
+                    {selectedAsset.indexingStatus === "completed" && (
                       <Badge
                         variant="outline"
-                        className="text-[10px] uppercase font-semibold tracking-wider font-mono px-2 py-0.5"
+                        className="text-[10px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                       >
-                        {selectedAsset.type}
+                        Ready
                       </Badge>
-                      {selectedAsset.indexingStatus === "completed" && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/20 font-semibold font-mono px-2 py-0.5"
-                        >
-                          Ready
-                        </Badge>
-                      )}
-                      {selectedAsset.indexingStatus === "failed" && (
-                        <Badge
-                          variant="destructive"
-                          className="text-[10px] font-semibold font-mono px-2 py-0.5"
-                        >
-                          Failed
-                        </Badge>
-                      )}
-                      {(selectedAsset.indexingStatus === "pending" ||
-                        selectedAsset.indexingStatus === "processing") && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/20 font-semibold animate-pulse font-mono px-2 py-0.5"
-                        >
-                          {selectedAsset.indexingStatus === "pending" ? "Queued" : "Processing"}
-                        </Badge>
-                      )}
-                    </div>
-                    <DialogTitle className="font-heading text-base font-bold leading-snug break-all text-foreground">
-                      {selectedAsset.name}
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">
-                      Preview and details for {selectedAsset.name}
-                    </DialogDescription>
-                  </div>
-
-                  {/* Metadata fields (Shadcn Pills) */}
-                  <div className="space-y-2 pt-1">
-                    <div className="flex justify-between items-center py-2 px-3 bg-muted/40 border border-border/20 rounded-lg text-xs hover:bg-muted/65 transition-colors">
-                      <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                        <IconFile size={13} className="opacity-70 text-foreground" />
-                        File Size
-                      </span>
-                      <span className="text-foreground font-semibold font-mono">
-                        {formatBytes(selectedAsset.size)}
-                      </span>
-                    </div>
-                    {selectedAsset.duration && (
-                      <div className="flex justify-between items-center py-2 px-3 bg-muted/40 border border-border/20 rounded-lg text-xs hover:bg-muted/65 transition-colors">
-                        <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                          <IconClock size={13} className="opacity-70 text-foreground" />
-                          Duration
-                        </span>
-                        <span className="text-foreground font-semibold font-mono">
-                          {formatDuration(selectedAsset.duration)}
-                        </span>
-                      </div>
                     )}
-                    <div className="flex justify-between items-center py-2 px-3 bg-muted/40 border border-border/20 rounded-lg text-xs hover:bg-muted/65 transition-colors">
-                      <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                        <IconLink size={13} className="opacity-70 text-foreground" />
-                        Source
-                      </span>
-                      <a
-                        href={selectedAsset.src}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary hover:underline font-mono text-[11px] truncate max-w-[140px] flex items-center gap-0.5"
-                        title={selectedAsset.src}
+                    {selectedAsset.indexingStatus === "failed" && (
+                      <Badge variant="destructive" className="text-[10px]">
+                        Failed
+                      </Badge>
+                    )}
+                    {(selectedAsset.indexingStatus === "pending" ||
+                      selectedAsset.indexingStatus === "processing") && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/20"
                       >
-                        Open Link
-                        <IconLink size={10} className="opacity-60" />
-                      </a>
-                    </div>
+                        {selectedAsset.indexingStatus === "pending" ? "Queued" : "Processing"}
+                      </Badge>
+                    )}
                   </div>
 
-                  {/* Upload/Indexing Status details */}
-                  {selectedAsset.indexingStatus !== "completed" && (
-                    <div className="bg-secondary/15 rounded-xl p-4 border border-border/40 space-y-3">
-                      <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                        {selectedAsset.indexingStatus === "failed" ? (
-                          <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        )}
-                        Indexing Pipeline Status
-                      </h4>
-
-                      {selectedAsset.indexingStatus === "failed" && (
-                        <p className="text-[11px] text-destructive leading-normal font-medium bg-destructive/5 p-2 rounded border border-destructive/10">
-                          {selectedAsset.indexingError ||
-                            "An error occurred during video indexing pipeline processing."}
-                        </p>
-                      )}
-
-                      {(selectedAsset.indexingStatus === "pending" ||
-                        selectedAsset.indexingStatus === "processing") && (
-                        <div className="space-y-2.5">
-                          <div className="flex justify-between items-center text-[11px] font-semibold">
-                            <span className="text-muted-foreground">
-                              {selectedAsset.indexingStatus === "pending"
-                                ? "Queued for Indexing"
-                                : "Running indexing pipeline"}
-                            </span>
-                            {selectedAsset.indexingProgress !== null &&
-                              selectedAsset.indexingProgress !== undefined && (
-                                <span className="text-amber-500 font-mono">
-                                  {selectedAsset.indexingProgress}%
-                                </span>
-                              )}
-                          </div>
-
-                          {selectedAsset.indexingStage && (
-                            <div className="text-[10px] font-medium text-amber-500/90 font-mono bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10 inline-block">
-                              Stage:{" "}
-                              {selectedAsset.indexingStage
-                                .replace(/[_-]/g, " ")
-                                .replace(/\b\w/g, (c) => c.toUpperCase())}
-                            </div>
-                          )}
-
-                          {selectedAsset.indexingProgress !== null &&
-                          selectedAsset.indexingProgress !== undefined &&
-                          selectedAsset.indexingProgress > 0 ? (
-                            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-amber-500 transition-all duration-300"
-                                style={{ width: `${selectedAsset.indexingProgress}%` }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden relative">
-                              <div
-                                className="absolute inset-y-0 bg-amber-500/60 animate-pulse w-1/2 rounded-full"
-                                style={{ animationDuration: "1.5s" }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <h2 className="text-lg font-semibold break-all leading-tight">
+                    {selectedAsset.name}
+                  </h2>
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="flex flex-col gap-2 pt-4 border-t border-border/60">
+                <Separator />
+
+                {/* Metadata */}
+                <div className="flex flex-col gap-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <IconFile size={14} />
+                      File Size
+                    </span>
+                    <span className="font-medium font-mono">{formatBytes(selectedAsset.size)}</span>
+                  </div>
+
+                  {selectedAsset.duration && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <IconClock size={14} />
+                        Duration
+                      </span>
+                      <span className="font-medium font-mono">
+                        {formatDuration(selectedAsset.duration)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <IconLink size={14} />
+                      Source
+                    </span>
+                    <a
+                      href={selectedAsset.src}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:underline text-xs font-mono truncate max-w-[140px]"
+                    >
+                      Open Link
+                    </a>
+                  </div>
+                </div>
+
+                {/* Status */}
+                {selectedAsset.indexingStatus !== "completed" && (
+                  <Alert
+                    variant={selectedAsset.indexingStatus === "failed" ? "destructive" : "default"}
+                    className={
+                      selectedAsset.indexingStatus === "failed"
+                        ? ""
+                        : "border-amber-500/20 bg-amber-500/5"
+                    }
+                  >
+                    <AlertTitle className="text-xs flex items-center gap-2">
+                      {selectedAsset.indexingStatus === "failed" ? (
+                        <>
+                          <IconInfoCircle size={12} />
+                          Indexing Failed
+                        </>
+                      ) : (
+                        <>
+                          <IconLoader2 size={12} className="animate-spin" />
+                          Indexing
+                        </>
+                      )}
+                    </AlertTitle>
+                    <AlertDescription className="text-[11px] mt-1">
+                      {selectedAsset.indexingStatus === "failed" ? (
+                        <span>
+                          {selectedAsset.indexingError || "An error occurred during processing."}
+                        </span>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <span>
+                            {selectedAsset.indexingStatus === "pending"
+                              ? "Queued for indexing"
+                              : selectedAsset.indexingStage
+                                ? selectedAsset.indexingStage
+                                    .replace(/[_-]/g, " ")
+                                    .replace(/\b\w/g, (c) => c.toUpperCase())
+                                : "Processing..."}
+                          </span>
+                          {selectedAsset.indexingProgress !== null &&
+                            selectedAsset.indexingProgress !== undefined &&
+                            selectedAsset.indexingProgress > 0 && (
+                              <Progress value={selectedAsset.indexingProgress} className="h-1" />
+                            )}
+                        </div>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2 pt-2">
                   <Button
-                    className="w-full h-10 font-semibold gap-2 shadow-sm"
+                    className="w-full"
                     onClick={async () => {
                       await addItemToCanvas(selectedAsset);
                       setSelectedAssetId(null);
                     }}
                   >
-                    <IconPlus size={16} strokeWidth={2.5} />
+                    <IconPlus data-icon="inline-start" />
                     Add to Timeline
                   </Button>
-
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs h-9 font-medium gap-1.5"
+                      className="flex-1"
                       onClick={() => {
                         triggerIndex
                           .mutateAsync({ id: selectedAsset.id, spaceId: spaceId || "" })
-                          .then(() => {
-                            updateFile(selectedAsset.id, { indexingStatus: "pending" });
-                          })
-                          .catch((err) => {
-                            console.error("Failed to re-index:", err);
-                          });
+                          .then(() => updateFile(selectedAsset.id, { indexingStatus: "pending" }))
+                          .catch((err) => console.error("Failed to re-index:", err));
                       }}
                       disabled={
                         selectedAsset.indexingStatus === "pending" ||
@@ -1057,24 +1032,22 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
                       }
                     >
                       <IconRefresh
-                        size={14}
+                        data-icon="inline-start"
                         className={
                           selectedAsset.indexingStatus === "processing" ? "animate-spin" : ""
                         }
                       />
                       Re-index
                     </Button>
-
                     <Button
                       variant="destructive"
-                      size="sm"
-                      className="flex-1 text-xs h-9 font-medium gap-1.5"
+                      className="flex-1"
                       onClick={async () => {
                         await handleDelete(selectedAsset.id);
                         setSelectedAssetId(null);
                       }}
                     >
-                      <IconTrash size={14} />
+                      <IconTrash data-icon="inline-start" />
                       Delete
                     </Button>
                   </div>
