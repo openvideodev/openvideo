@@ -14,6 +14,7 @@ export const asset = pgTable(
     name: text("name").notNull(),
     type: text("type").notNull(), // 'image' | 'video' | 'audio'
     src: text("src").notNull(),
+    thumbnailSrc: text("thumbnailSrc"),
     duration: real("duration"), // duration in seconds
     size: integer("size"), // size in bytes
     width: integer("width"),

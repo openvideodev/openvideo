@@ -6,6 +6,7 @@ export interface ProjectFile {
   name: string;
   type: "image" | "video" | "audio";
   src: string;
+  thumbnailSrc?: string | null;
   duration?: number;
   size?: number;
   createdAt: string;

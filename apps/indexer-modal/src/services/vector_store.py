@@ -79,7 +79,7 @@ class PGVectorStore(VectorStore):
         
         # Process in small batches to avoid rate limits
         BATCH_SIZE = 8  # Small batches for Gemini embeddings
-        MAX_RETRIES = 3
+        MAX_RETRIES = 5
         RATE_LIMIT_DELAY = 2.0  # seconds between batches
         
         total_docs = len(langchain_docs)
@@ -98,20 +98,18 @@ class PGVectorStore(VectorStore):
                     logger.debug(f"✅ Batch {batch_num} complete ({processed}/{total_docs})")
                     break
                     
-                except ClientError as e:
-                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                except Exception as e:
+                    err_str = str(e)
+                    if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "rate limit" in err_str.lower():
                         if attempt < MAX_RETRIES - 1:
-                            wait_time = (attempt + 1) * 3  # Exponential backoff
-                            logger.warning(f"Rate limit hit, waiting {wait_time}s before retry...")
+                            wait_time = (attempt + 1) * 3  # Exponential backoff: 3s, 6s, 9s, 12s
+                            logger.warning(f"Rate limit hit during batch {batch_num}, waiting {wait_time}s before retry: {err_str}")
                             await asyncio.sleep(wait_time)
                         else:
-                            logger.error(f"Failed batch {batch_num} after {MAX_RETRIES} retries")
-                            raise VectorStoreError(f"Rate limit exceeded: {str(e)}")
+                            logger.error(f"Failed batch {batch_num} after {MAX_RETRIES} retries due to rate limit")
+                            raise VectorStoreError(f"Rate limit exceeded: {err_str}")
                     else:
-                        raise VectorStoreError(f"Failed to upsert batch: {str(e)}")
-                        
-                except Exception as e:
-                    raise VectorStoreError(f"Failed to upsert documents: {str(e)}")
+                        raise VectorStoreError(f"Failed to upsert documents: {err_str}")
             
             # Rate limiting delay between batches (skip on last batch)
             if i + BATCH_SIZE < total_docs:
