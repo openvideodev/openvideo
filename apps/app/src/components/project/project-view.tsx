@@ -47,6 +47,7 @@ import { ChatPanel } from "@/components/shared/chat-panel";
 import { ChatHeader } from "@/components/shared/chat-header";
 import { useAssetsStore, type ProjectFile } from "@/stores/assets-store";
 import { getPresignedConfig, uploadFileWithConfig } from "@/lib/upload-utils";
+import { generateThumbnail } from "@/lib/thumbnail-generator";
 
 export default function ProjectView({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -97,6 +98,7 @@ export default function ProjectView({ projectId }: { projectId: string }) {
         name: asset.name,
         type: asset.type,
         src: asset.src,
+        thumbnailSrc: asset.thumbnailSrc ?? null,
         duration: asset.duration,
         size: asset.size,
         createdAt: asset.createdAt,
@@ -164,26 +166,39 @@ export default function ProjectView({ projectId }: { projectId: string }) {
       let currentId = tempId;
 
       try {
-        // 1. Get presigned R2 config — ONE call, reused for both DB registration and upload
-        const uploadConfig = await getPresignedConfig(file.name);
+        // 1. Generate thumbnail + presign main URL in parallel
+        const [thumbnailBlob, uploadConfig] = await Promise.all([
+          generateThumbnail(file).catch(() => null),
+          getPresignedConfig(file.name),
+        ]);
         const { url } = uploadConfig;
 
-        // 2. Register asset via tRPC immediately with autoIndex: false (instant)
+        // 2. If we have a thumbnail blob, presign a second URL for it
+        let thumbnailUploadConfig: Awaited<ReturnType<typeof getPresignedConfig>> | null = null;
+        if (thumbnailBlob) {
+          const thumbName = `thumb_${file.name.replace(/\.[^.]+$/, "")}.webp`;
+          thumbnailUploadConfig = await getPresignedConfig(thumbName).catch(() => null);
+        }
+        const thumbnailSrc = thumbnailUploadConfig?.url ?? undefined;
+
+        // 3. Register asset via tRPC immediately with autoIndex: false (instant)
         const newAsset = await createAsset.mutateAsync({
           spaceId,
           name: file.name,
           type: tempFiles[index].type,
           src: url,
+          thumbnailSrc,
           size: file.size,
           autoIndex: false,
         });
 
-        // 3. Replace temp placeholder with real asset ID, show uploading state
+        // 4. Replace temp placeholder with real asset ID, show uploading state
         currentId = newAsset.id;
         updateFile(tempId, {
           id: newAsset.id,
           spaceId,
           src: url,
+          thumbnailSrc: thumbnailSrc ?? null,
           uploadProgress: 0,
           indexingStatus: null,
           indexingProgress: null,
@@ -193,18 +208,26 @@ export default function ProjectView({ projectId }: { projectId: string }) {
           updatedAt: new Date().toISOString(),
         });
 
-        // 4. Upload bytes to R2 using the SAME presigned config — no second presign!
-        await uploadFileWithConfig(file, uploadConfig, (progress) => {
-          updateFile(newAsset.id, { uploadProgress: progress });
-        });
+        // 5. Upload original + thumbnail to R2 in parallel
+        await Promise.all([
+          uploadFileWithConfig(file, uploadConfig, (progress) => {
+            updateFile(newAsset.id, { uploadProgress: progress });
+          }),
+          thumbnailBlob && thumbnailUploadConfig
+            ? uploadFileWithConfig(
+                new File([thumbnailBlob], "thumbnail.webp", { type: "image/webp" }),
+                thumbnailUploadConfig,
+              ).catch(() => null)
+            : Promise.resolve(),
+        ]);
 
-        // 5. Upload done — clear progress bar, set indexing pending
+        // 6. Upload done — clear progress bar, set indexing pending
         updateFile(newAsset.id, {
           uploadProgress: null,
           indexingStatus: "pending" as const,
         });
 
-        // 6. Trigger indexing in the background (non-blocking)
+        // 7. Trigger indexing in the background (non-blocking)
         triggerAssetIndex
           .mutateAsync({
             id: newAsset.id,
@@ -380,7 +403,14 @@ export default function ProjectView({ projectId }: { projectId: string }) {
                           {showPreview ? (
                             isImage ? (
                               <img
-                                src={file.src}
+                                src={file.thumbnailSrc || file.src}
+                                alt={file.name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : file.thumbnailSrc ? (
+                              <img
+                                src={file.thumbnailSrc}
                                 alt={file.name}
                                 className="w-full h-full object-cover"
                                 loading="lazy"

@@ -23,6 +23,7 @@ import {
 import { storageService } from "@/lib/storage/storage-service";
 import type { MediaType } from "@/types/media";
 import { getPresignedConfig, uploadFileWithConfig } from "@/lib/upload-utils";
+import { generateThumbnail } from "@/lib/thumbnail-generator";
 import { trpc } from "@/lib/trpc";
 import Draggable from "@/components/shared/draggable";
 import { useGeneratorModalStore } from "@/stores/generator-modal-store";
@@ -55,6 +56,7 @@ interface VisualAsset {
   id: string;
   type: MediaType;
   src: string;
+  thumbnailSrc?: string | null;
   name: string;
   width?: number;
   height?: number;
@@ -129,6 +131,12 @@ function buildDraggableData(asset: VisualAsset) {
     ...(asset.width && { width: asset.width }),
     ...(asset.height && { height: asset.height }),
     ...(asset.duration && { duration: asset.duration * 1e6 }),
+    ...(asset.type === "video" &&
+      asset.thumbnailSrc && {
+        metadata: {
+          previewUrl: asset.thumbnailSrc,
+        },
+      }),
   };
 }
 
@@ -152,11 +160,15 @@ function AssetCard({
   const preview =
     asset.type === "image" ? (
       <div className="w-20 aspect-square rounded-md overflow-hidden shadow-xl border-2 border-primary">
-        <img src={asset.src} className="w-full h-full object-cover" />
+        <img src={asset.thumbnailSrc || asset.src} className="w-full h-full object-cover" />
       </div>
     ) : asset.type === "video" ? (
       <div className="w-20 aspect-video rounded-md overflow-hidden shadow-xl border-2 border-primary bg-background">
-        <video src={asset.src} className="w-full h-full object-cover" muted />
+        {asset.thumbnailSrc ? (
+          <img src={asset.thumbnailSrc} className="w-full h-full object-cover" />
+        ) : (
+          <video src={asset.src} className="w-full h-full object-cover" muted />
+        )}
       </div>
     ) : (
       <div className="w-20 aspect-square rounded-md overflow-hidden shadow-xl border-2 border-primary bg-secondary flex items-center justify-center">
@@ -204,19 +216,31 @@ function AssetCard({
 
           {showPreview ? (
             asset.type === "image" ? (
-              <img src={asset.src} alt={asset.name} className="w-full h-full object-cover" />
+              <img
+                src={asset.thumbnailSrc || asset.src}
+                alt={asset.name}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-background/60">
-                <video
-                  src={asset.src}
-                  className="w-full h-full object-cover pointer-events-none"
-                  muted
-                  onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play()}
-                  onMouseOut={(e) => {
-                    (e.currentTarget as HTMLVideoElement).pause();
-                    (e.currentTarget as HTMLVideoElement).currentTime = 0;
-                  }}
-                />
+                {asset.thumbnailSrc ? (
+                  <img
+                    src={asset.thumbnailSrc}
+                    alt={asset.name}
+                    className="w-full h-full object-cover pointer-events-none"
+                  />
+                ) : (
+                  <video
+                    src={asset.src}
+                    className="w-full h-full object-cover pointer-events-none"
+                    muted
+                    onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play()}
+                    onMouseOut={(e) => {
+                      (e.currentTarget as HTMLVideoElement).pause();
+                      (e.currentTarget as HTMLVideoElement).currentTime = 0;
+                    }}
+                  />
+                )}
               </div>
             )
           ) : (
@@ -476,6 +500,7 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
         name: asset.name,
         type: asset.type as any,
         src: asset.src,
+        thumbnailSrc: asset.thumbnailSrc ?? null,
         duration: asset.duration,
         size: asset.size,
         createdAt: asset.createdAt,
@@ -585,27 +610,40 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
         let currentId = tempId;
 
         try {
-          // 1. Get presigned R2 config — ONE call, reused for both DB registration and upload
-          const uploadConfig = await getPresignedConfig(file.name);
+          // 1. Generate thumbnail + presign main URL in parallel
+          const [thumbnailBlob, uploadConfig, duration] = await Promise.all([
+            generateThumbnail(file).catch(() => null),
+            getPresignedConfig(file.name),
+            getMediaDuration(file),
+          ]);
           const src = uploadConfig.url; // final public R2 URL
-          const duration = await getMediaDuration(file);
 
-          // 2. Register asset in DB with autoIndex: false so we get a real ID immediately
+          // 2. If we have a thumbnail blob, presign a second URL for it
+          let thumbnailUploadConfig: Awaited<ReturnType<typeof getPresignedConfig>> | null = null;
+          if (thumbnailBlob) {
+            const thumbName = `thumb_${file.name.replace(/\.[^.]+$/, "")}.webp`;
+            thumbnailUploadConfig = await getPresignedConfig(thumbName).catch(() => null);
+          }
+          const thumbnailSrc = thumbnailUploadConfig?.url ?? undefined;
+
+          // 3. Register asset in DB with autoIndex: false so we get a real ID immediately
           const newAsset = await createAsset.mutateAsync({
             spaceId,
             name: file.name,
             type,
             src,
+            thumbnailSrc,
             duration,
             size: file.size,
             autoIndex: false,
           });
 
-          // 3. Replace temp placeholder with real asset ID and show uploading state
+          // 4. Replace temp placeholder with real asset ID and show uploading state
           currentId = newAsset.id;
           updateFile(tempId, {
             id: newAsset.id,
             src,
+            thumbnailSrc: thumbnailSrc ?? null,
             duration,
             uploadProgress: 0,
             indexingStatus: null,
@@ -621,18 +659,26 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
             await storageService.saveMediaFile({ projectId: spaceId, mediaItem: mediaFile });
           }
 
-          // 4. Upload bytes to R2 using the SAME presigned config — no second presign!
-          await uploadFileWithConfig(file, uploadConfig, (progress) => {
-            updateFile(newAsset.id, { uploadProgress: progress });
-          });
+          // 5. Upload original file + thumbnail to R2 in parallel
+          await Promise.all([
+            uploadFileWithConfig(file, uploadConfig, (progress) => {
+              updateFile(newAsset.id, { uploadProgress: progress });
+            }),
+            thumbnailBlob && thumbnailUploadConfig
+              ? uploadFileWithConfig(
+                  new File([thumbnailBlob], "thumbnail.webp", { type: "image/webp" }),
+                  thumbnailUploadConfig,
+                ).catch(() => null)
+              : Promise.resolve(),
+          ]);
 
-          // 5. Upload done — clear progress bar, set indexing pending state
+          // 6. Upload done — clear progress bar, set indexing pending state
           updateFile(newAsset.id, {
             uploadProgress: null,
             indexingStatus: "pending" as const,
           });
 
-          // 6. Kick off indexing in the background (non-blocking)
+          // 7. Kick off indexing in the background (non-blocking)
           triggerIndex.mutateAsync({ id: newAsset.id, spaceId }).catch((err) => {
             console.error(`Failed to trigger index for ${file.name}:`, err);
             updateFile(newAsset.id, { indexingStatus: "failed" });
@@ -684,10 +730,19 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
   const addItemToCanvas = async (asset: VisualAsset) => {
     try {
       const typeMap: Record<MediaType, string> = { image: "Image", video: "Video", audio: "Audio" };
-      await core.clip.add(
-        { type: typeMap[asset.type] as any, src: asset.src, name: asset.name },
-        { objectFit: "contain" },
-      );
+      const clipData: any = {
+        type: typeMap[asset.type] as any,
+        src: asset.src,
+        name: asset.name,
+      };
+
+      if (asset.type === "video" && asset.thumbnailSrc) {
+        clipData.metadata = {
+          previewUrl: asset.thumbnailSrc,
+        };
+      }
+
+      await core.clip.add(clipData, { objectFit: "contain" });
     } catch (error) {
       console.error("Failed to add clip:", error);
     }
@@ -698,6 +753,7 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
     id: f.id,
     type: f.type,
     src: f.src,
+    thumbnailSrc: f.thumbnailSrc,
     name: f.name,
     duration: f.duration,
     size: f.size,
