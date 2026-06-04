@@ -1,5 +1,11 @@
 # @openvideo/core
 
+## 1.1.4
+
+### Patch Changes
+
+- Patch release for core, engine-pixi and timeline.
+
 ## 1.1.3
 
 ### Patch Changes
