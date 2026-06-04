@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import hotkeys from "hotkeys-js";
 import { useStore } from "zustand";
 import { projectStore, core } from "@/lib/project";
-import { useStudioStore } from "@/stores/studio-store";
 import CanvasTimeline from "@/components/editor/timeline/items/timeline";
 import { nanoid, AnyClip } from "@openvideo/core";
 
@@ -19,7 +18,6 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
   const isPlaying = useStore(projectStore, (s) => s.isPlaying);
   const selectedIds = useStore(projectStore, (s) => s.selectedIds);
   const fps = useStore(projectStore, (s) => s.settings.fps);
-  const { studio } = useStudioStore();
 
   useEffect(() => {
     // Play/Pause
@@ -154,7 +152,15 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
-      studio?.selection.move(0, -step);
+      const { clips, selectedIds } = projectStore.getState();
+      selectedIds.forEach((id) => {
+        const clip = clips[id];
+        if (clip) {
+          core.clip.update(id, {
+            transform: { ...clip.transform, y: clip.transform.y - step },
+          });
+        }
+      });
     });
 
     // Move Down
@@ -163,7 +169,15 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
-      studio?.selection.move(0, step);
+      const { clips, selectedIds } = projectStore.getState();
+      selectedIds.forEach((id) => {
+        const clip = clips[id];
+        if (clip) {
+          core.clip.update(id, {
+            transform: { ...clip.transform, y: clip.transform.y + step },
+          });
+        }
+      });
     });
 
     // Move Left
@@ -172,7 +186,15 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
-      studio?.selection.move(-step, 0);
+      const { clips, selectedIds } = projectStore.getState();
+      selectedIds.forEach((id) => {
+        const clip = clips[id];
+        if (clip) {
+          core.clip.update(id, {
+            transform: { ...clip.transform, x: clip.transform.x - step },
+          });
+        }
+      });
     });
 
     // Move Right
@@ -181,7 +203,15 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       if (activeTag === "input" || activeTag === "textarea") return;
       event.preventDefault();
       const step = event.shiftKey ? 5 : 1;
-      studio?.selection.move(step, 0);
+      const { clips, selectedIds } = projectStore.getState();
+      selectedIds.forEach((id) => {
+        const clip = clips[id];
+        if (clip) {
+          core.clip.update(id, {
+            transform: { ...clip.transform, x: clip.transform.x + step },
+          });
+        }
+      });
     });
 
     // Last Frame
@@ -217,5 +247,5 @@ export function useEditorHotkeys({ timelineCanvas, setZoomLevel }: UseEditorHotk
       hotkeys.unbind("command+left, ctrl+left");
       hotkeys.unbind("command+right, ctrl+right");
     };
-  }, [isPlaying, timelineCanvas, currentTimeUs, selectedIds, fps, setZoomLevel, studio]);
+  }, [isPlaying, timelineCanvas, currentTimeUs, selectedIds, fps, setZoomLevel]);
 }
