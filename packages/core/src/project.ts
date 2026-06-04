@@ -99,15 +99,19 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         return;
       }
 
-      const state = get();
-      const patches = handler(state, command);
-      const inversePatches = invertPatches(patches);
+      let patches: Patch[] = [];
 
-      // Apply patches to local state
       set((state) => {
+        patches = handler(state, command);
         const nextState = { ...state };
         applyPatches(nextState, patches);
 
+        const bypassHistory = ["project.select", "project.deselect"].includes(command.type);
+        if (bypassHistory) {
+          return nextState;
+        }
+
+        const inversePatches = invertPatches(patches);
         return {
           ...nextState,
           history: [...state.history, { command, patches, inversePatches }],
@@ -115,20 +119,16 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
         };
       });
 
-      // Resolve TODO: emit patches for collaborators/engines
       emitPatches(patches);
       get().recalculateDuration();
     },
 
     batch: (commands) => {
-      // For batching, we wrap multiple commands into a single history entry if needed,
-      // or just execute them sequentially. Requirement says "emits ONE change event".
-      const allPatches: Patch[] = [];
-      const allInversePatches: Patch[] = [];
-      const commandLogs: Command[] = [];
+      let allPatches: Patch[] = [];
 
       set((currentState) => {
         const nextState = { ...currentState };
+        const commandLogs: Command[] = [];
 
         commands.forEach((command) => {
           const handler = commandRegistry.get(command.type);
@@ -136,7 +136,6 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
             const patches = handler(nextState, command);
             applyPatches(nextState, patches);
             allPatches.push(...patches);
-            allInversePatches.push(...invertPatches(patches));
             commandLogs.push(command);
           } else {
             console.warn(`[Core.batch] No handler registered for command: ${command.type}`);
@@ -154,7 +153,7 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
                 payload: commandLogs,
               },
               patches: allPatches,
-              inversePatches: allInversePatches.reverse(),
+              inversePatches: invertPatches(allPatches),
             },
           ],
           future: [],
@@ -166,43 +165,51 @@ export const createProjectStore = (initialState?: Partial<IProject>) => {
     },
 
     undo: () => {
-      const { history } = get();
-      if (history.length === 0) return;
-
-      const entry = history[history.length - 1];
-      const nextHistory = history.slice(0, -1);
+      let undoneEntry: HistoryEntry | undefined;
 
       set((state) => {
+        if (state.history.length === 0) return state;
+
+        undoneEntry = state.history[state.history.length - 1];
+        const nextHistory = state.history.slice(0, -1);
         const nextState = { ...state };
-        applyPatches(nextState, entry.inversePatches);
+        applyPatches(nextState, undoneEntry.inversePatches);
+
         return {
           ...nextState,
           history: nextHistory,
-          future: [entry, ...state.future],
+          future: [undoneEntry, ...state.future],
         };
       });
-      emitPatches(entry.inversePatches);
-      get().recalculateDuration();
+
+      if (undoneEntry) {
+        emitPatches(undoneEntry.inversePatches);
+        get().recalculateDuration();
+      }
     },
 
     redo: () => {
-      const { future } = get();
-      if (future.length === 0) return;
-
-      const entry = future[0];
-      const nextFuture = future.slice(1);
+      let redoneEntry: HistoryEntry | undefined;
 
       set((state) => {
+        if (state.future.length === 0) return state;
+
+        redoneEntry = state.future[0];
+        const nextFuture = state.future.slice(1);
         const nextState = { ...state };
-        applyPatches(nextState, entry.patches);
+        applyPatches(nextState, redoneEntry.patches);
+
         return {
           ...nextState,
-          history: [...state.history, entry],
+          history: [...state.history, redoneEntry],
           future: nextFuture,
         };
       });
-      emitPatches(entry.patches);
-      get().recalculateDuration();
+
+      if (redoneEntry) {
+        emitPatches(redoneEntry.patches);
+        get().recalculateDuration();
+      }
     },
 
     // Patch stream

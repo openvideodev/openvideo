@@ -42,12 +42,29 @@ export class Core extends EventEmitter {
   }
 
   private handleStateChange(state: ProjectStore, prevState: ProjectStore) {
-    // 1. Emit patches for the latest command if any
-    const latestHistory = state.history[state.history.length - 1];
+    // 1. Emit patches for the latest command, redo, or undo
     const prevHistoryLength = prevState?.history?.length || 0;
 
-    if (state.history.length > prevHistoryLength && latestHistory) {
-      this.emit("change", latestHistory.patches);
+    if (state.history.length > prevHistoryLength) {
+      const latestHistory = state.history[state.history.length - 1];
+      if (latestHistory) {
+        this.emit("change", latestHistory.patches);
+      }
+    } else if (state.history.length < prevHistoryLength) {
+      const undoneEntry = prevState.history[prevState.history.length - 1];
+      if (undoneEntry) {
+        this.emit("change", undoneEntry.inversePatches);
+      }
+    } else if (state.selectedIds !== prevState.selectedIds) {
+      // Emit selection patch for history-bypassed commands
+      this.emit("change", [
+        {
+          op: "update",
+          path: "/selectedIds",
+          value: state.selectedIds,
+          oldValue: prevState.selectedIds,
+        },
+      ]);
     }
 
     // 2. Playback & Time events

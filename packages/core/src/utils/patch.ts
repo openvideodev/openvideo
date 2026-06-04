@@ -7,17 +7,42 @@ import { set, unset } from "lodash-es";
  * but uses lodash for path support.
  */
 export const applyPatches = (state: any, patches: Patch[]) => {
+  let clonedClips = false;
+  let clonedTracks = false;
+  let clonedSettings = false;
+  let clonedSelectedIds = false;
+
   patches.forEach((patch) => {
     // Remove leading slash if present for lodash path compatibility
-    const path = patch.path.startsWith("/") ? patch.path.slice(1).replace(/\//g, ".") : patch.path;
+    const cleanPath = patch.path.startsWith("/") ? patch.path.slice(1) : patch.path;
+    const firstSegment = cleanPath.split("/")[0];
+
+    if (firstSegment === "clips" && !clonedClips && state.clips) {
+      state.clips = { ...state.clips };
+      clonedClips = true;
+    }
+    if (firstSegment === "tracks" && !clonedTracks && state.tracks) {
+      state.tracks = [...state.tracks];
+      clonedTracks = true;
+    }
+    if (firstSegment === "settings" && !clonedSettings && state.settings) {
+      state.settings = { ...state.settings };
+      clonedSettings = true;
+    }
+    if (firstSegment === "selectedIds" && !clonedSelectedIds && state.selectedIds) {
+      state.selectedIds = [...state.selectedIds];
+      clonedSelectedIds = true;
+    }
+
+    const lodashPath = cleanPath.replace(/\//g, ".");
 
     switch (patch.op) {
       case "add":
       case "update":
-        set(state, path, patch.value);
+        set(state, lodashPath, patch.value);
         break;
       case "remove":
-        unset(state, path);
+        unset(state, lodashPath);
         break;
     }
   });
