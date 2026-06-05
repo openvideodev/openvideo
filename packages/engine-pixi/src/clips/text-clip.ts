@@ -10,7 +10,7 @@ import {
   Graphics,
   CanvasTextMetrics,
 } from "pixi.js";
-import { CartoonTextFilter } from "../filters/cartoon-filter/cartooontextfilter";
+import { OutlineFilter } from "../filters/cartoon-filter/outline-filter";
 import { Log } from "../utils/log";
 import { BaseClip } from "./base-clip";
 import type { IClip } from "./iclip";
@@ -330,7 +330,7 @@ export class Text extends BaseClip<ITextEvents> {
   private textStyle: TextStyle;
   private textStyleBase: TextStyle;
   private renderTexture: RenderTexture | null = null;
-  private cartoonTextFilter: CartoonTextFilter | null = null;
+  private outlineFilter: OutlineFilter | null = null;
   // External renderer (preferred) - provided via constructor or setRenderer()
   // If not provided, Text will create its own minimal renderer as fallback
   private externalRenderer: Application["renderer"] | null = null;
@@ -751,8 +751,9 @@ export class Text extends BaseClip<ITextEvents> {
       return wordText;
     });
 
-    // Apply CartoonTextFilter for stroke effect
+    // Apply OutlineFilter for outline effect only
     const strokeOpt = this.originalOpts.stroke;
+
     // Check for width in stroke object or as separate strokeWidth property
     const strokeWidth =
       (typeof strokeOpt === "object" && "width" in strokeOpt ? strokeOpt.width : undefined) ??
@@ -771,33 +772,29 @@ export class Text extends BaseClip<ITextEvents> {
         if (parsed !== undefined) strokeColor = parsed;
       }
 
-      // Create or update CartoonTextFilter
-      if (this.cartoonTextFilter) {
-        this.cartoonTextFilter.thickness = strokeWidth;
-        // Update border color by accessing uniforms
-        const uniforms = this.cartoonTextFilter.resources.cartoonTextUniforms.uniforms;
+      // Create or update OutlineFilter for outline
+      if (this.outlineFilter) {
+        this.outlineFilter.thickness = strokeWidth;
+        const uniforms = this.outlineFilter.resources.outlineUniforms.uniforms;
         uniforms.uBorderColor = new Color(strokeColor);
       } else {
-        this.cartoonTextFilter = new CartoonTextFilter({
+        this.outlineFilter = new OutlineFilter({
           thickness: strokeWidth,
           borderColor: strokeColor,
-          // Use text fill color for gradient to maintain text appearance
-          topColor: typeof style.fill === "number" ? style.fill : 0xffffff,
-          bottomColor: typeof style.fill === "number" ? style.fill : 0xffffff,
         });
       }
 
       // Apply filter to all word texts
       this.wordTexts.forEach((wordText) => {
-        wordText.filters = [this.cartoonTextFilter!];
+        wordText.filters = [this.outlineFilter!];
       });
     } else {
       // Remove filter if no stroke
-      if (this.cartoonTextFilter) {
+      if (this.outlineFilter) {
         this.wordTexts.forEach((wordText) => {
           wordText.filters = [];
         });
-        this.cartoonTextFilter = null;
+        this.outlineFilter = null;
       }
     }
 
@@ -1040,10 +1037,10 @@ export class Text extends BaseClip<ITextEvents> {
       }
     }
 
-    // Handle stroke - using CartoonTextFilter instead of native PixiJS stroke
+    // Handle stroke - using OutlineFilter instead of native PixiJS stroke
     // Native stroke is skipped here; filter is applied in refreshText()
 
-    // Only add dropShadow if provided
+    // Add dropShadow if provided (using native PixiJS dropShadow)
     if (opts.shadow) {
       const shadowColor = parseColor(opts.shadow.color);
       if (shadowColor !== undefined) {
