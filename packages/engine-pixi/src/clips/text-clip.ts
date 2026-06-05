@@ -804,9 +804,15 @@ export class Text extends BaseClip<ITextEvents> {
       const offsetX = shadowOpt.offsetX ?? 0;
       const offsetY = shadowOpt.offsetY ?? 0;
       const shadowColor = parseColor(shadowOpt.color ?? "#000000");
-      const shadowAlpha = shadowOpt.alpha ?? 0.5;
+      const shadowAlpha = shadowOpt.alpha ?? 1;
       const shadowBlur = shadowOpt.blur ?? 4;
-
+      console.log({
+        shadowColor,
+        shadowAlpha,
+        shadowBlur,
+        offsetX,
+        offsetY,
+      });
       if (shadowColor !== undefined) {
         if (this.dropShadowFilter) {
           this.dropShadowFilter.color = shadowColor;

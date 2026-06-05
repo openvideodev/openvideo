@@ -189,28 +189,36 @@ export function TextProperties({ clip }: TextPropertiesProps) {
   };
 
   const handleBlurUpdate = (blurUpdates: any) => {
-    const currentShadow = style.dropShadow || {
+    const currentShadow = style.shadow || {
       color: "#000000",
       alpha: 1,
       blur: 0,
-      distance: 0,
-      angle: 0,
+      offsetX: 0,
+      offsetY: 0,
     };
 
     const finalUpdates: any = { ...blurUpdates };
 
-    if (blurUpdates.angle !== undefined) {
-      finalUpdates.angle = (parseFloat(blurUpdates.angle) * Math.PI) / 180;
+    if (blurUpdates.offsetX !== undefined) {
+      finalUpdates.offsetX = parseFloat(blurUpdates.offsetX) || 0;
     }
 
-    if (blurUpdates.distance !== undefined) {
-      finalUpdates.distance = parseFloat(blurUpdates.distance) || 0;
+    if (blurUpdates.offsetY !== undefined) {
+      finalUpdates.offsetY = parseFloat(blurUpdates.offsetY) || 0;
+    }
+
+    if (blurUpdates.blur !== undefined) {
+      finalUpdates.blur = parseFloat(blurUpdates.blur) || 0;
+    }
+
+    if (blurUpdates.alpha !== undefined) {
+      finalUpdates.alpha = parseFloat(blurUpdates.alpha) || 0.5;
     }
 
     handleUpdate({
       style: {
         ...style,
-        dropShadow: {
+        shadow: {
           ...currentShadow,
           ...finalUpdates,
         },
@@ -647,18 +655,18 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               <IconRuler2 className="size-3.5" />
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(style.dropShadow?.distance || 0)}
-              onChange={(val) => handleBlurUpdate({ distance: val })}
+              value={Math.round(style.shadow?.offsetX || 0)}
+              onChange={(val) => handleBlurUpdate({ offsetX: val })}
             />
           </InputGroup>
 
           <InputGroup>
             <InputGroupAddon align="inline-start">
-              <IconRotate className="size-3.5" />
+              <IconRuler2 className="size-3.5" />
             </InputGroupAddon>
             <NumberInput
-              value={Math.round(((style.dropShadow?.angle || 0) * 180) / Math.PI)}
-              onChange={(val) => handleBlurUpdate({ angle: val })}
+              value={Math.round(style.shadow?.offsetY || 0)}
+              onChange={(val) => handleBlurUpdate({ offsetY: val })}
             />
           </InputGroup>
         </div>
@@ -669,7 +677,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               <IconBlur className="size-3.5" />
             </InputGroupAddon>
             <NumberInput
-              value={style.dropShadow?.blur || 0}
+              value={style.shadow?.blur || 0}
               onChange={(val) => handleBlurUpdate({ blur: val })}
             />
           </InputGroup>
@@ -682,7 +690,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
                     <div
                       className="h-4 w-4 border border-white/10 shadow-sm"
                       style={{
-                        backgroundColor: style.dropShadow?.color || "#000000",
+                        backgroundColor: style.shadow?.color || "#000000",
                       }}
                     />
                   </InputGroupButton>
@@ -711,7 +719,7 @@ export function TextProperties({ clip }: TextPropertiesProps) {
               </Popover>
             </InputGroupAddon>
             <InputGroupInput
-              value={style.dropShadow?.color?.toUpperCase() || "#000000"}
+              value={style.shadow?.color?.toUpperCase() || "#000000"}
               onChange={(e) => handleBlurUpdate({ color: e.target.value })}
               className="text-sm p-0 text-[10px] font-mono"
             />
