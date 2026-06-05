@@ -318,6 +318,36 @@ describe("studio-core-functionality", () => {
     });
   });
 
+  describe("preview-scaling", () => {
+    it("should-initialize-with-preview-scale-and-apply-to-renderer", async () => {
+      const scaledStudio = new Studio({
+        canvas: document.createElement("canvas"),
+        width: 1280,
+        height: 720,
+        previewScale: 0.5,
+      });
+      await scaledStudio.ready;
+
+      expect(scaledStudio.opts.previewScale).toBe(0.5);
+      expect(scaledStudio.pixiApp?.renderer.resolution).toBe((window.devicePixelRatio || 1) * 0.5);
+
+      scaledStudio.destroy();
+    });
+
+    it("should-dynamically-update-preview-scale-via-setpreviewscale", async () => {
+      expect(studio.opts.previewScale).toBe(1);
+
+      studio.setPreviewScale(0.5);
+      expect(studio.opts.previewScale).toBe(0.5);
+      expect(studio.pixiApp?.renderer.resolution).toBe((window.devicePixelRatio || 1) * 0.5);
+
+      // Restore to 1
+      studio.setPreviewScale(1);
+      expect(studio.opts.previewScale).toBe(1);
+      expect(studio.pixiApp?.renderer.resolution).toBe(window.devicePixelRatio || 1);
+    });
+  });
+
   describe("studio-bridge-integration", () => {
     it("should-update-maxDuration-when-clip-timing-is-updated-in-core", async () => {
       const core = new Core({

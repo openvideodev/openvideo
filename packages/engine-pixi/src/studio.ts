@@ -48,6 +48,12 @@ export interface IStudioOpts {
   core?: Core;
   allowZoom?: boolean;
   allowPan?: boolean;
+  /**
+   * Internal rendering resolution multiplier for preview (0-1).
+   * e.g., 0.5 renders at half-resolution, improving playback performance.
+   * Default is 1.
+   */
+  previewScale?: number;
 }
 
 interface ActiveGlobalEffect {
@@ -281,6 +287,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       spacing: 0,
       allowZoom: false,
       allowPan: false,
+      previewScale: 1,
       ...opts,
     };
 
@@ -581,7 +588,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       // width/height are derived from resizeTo, so we don't set them explicitly for the renderer
       backgroundColor: this.hexToNumber(this.opts.backgroundColor),
       antialias: true,
-      resolution: window.devicePixelRatio || 1,
+      resolution: (window.devicePixelRatio || 1) * this.opts.previewScale,
       autoDensity: true,
       autoStart: false, // Prevent auto-rendering to avoid race conditions during async updates
     });
@@ -631,14 +638,7 @@ export class Studio extends EventEmitter<StudioEvents> {
     this.clipContainer.addChild(this.clipsNormalContainer);
 
     // Initialize Transition helper objects
-    this.transFromTexture = RenderTexture.create({
-      width: this.opts.width,
-      height: this.opts.height,
-    });
-    this.transToTexture = RenderTexture.create({
-      width: this.opts.width,
-      height: this.opts.height,
-    });
+    this.recreateTransitionTextures();
     this.transBgGraphics = new Graphics();
     this.transBgGraphics.rect(0, 0, this.opts.width, this.opts.height).fill({
       color: 0x000000,
@@ -677,6 +677,43 @@ export class Studio extends EventEmitter<StudioEvents> {
   }
 
   /**
+   * Set the preview resolution scale dynamically
+   * @param scale A multiplier between 0.1 and 1
+   */
+  public setPreviewScale(scale: number): void {
+    this.opts.previewScale = Math.max(0.1, Math.min(1, scale));
+    if (this.pixiApp) {
+      this.pixiApp.renderer.resolution = (window.devicePixelRatio || 1) * this.opts.previewScale;
+      this.pixiApp.resize();
+    }
+    this.recreateTransitionTextures();
+    this.updateArtboardLayout();
+    this.updateFrame(this.currentTime);
+  }
+
+  private recreateTransitionTextures(): void {
+    if (this.transFromTexture) {
+      this.transFromTexture.destroy(true);
+      this.transFromTexture = null;
+    }
+    if (this.transToTexture) {
+      this.transToTexture.destroy(true);
+      this.transToTexture = null;
+    }
+
+    this.transFromTexture = RenderTexture.create({
+      width: this.opts.width,
+      height: this.opts.height,
+      resolution: this.opts.previewScale,
+    });
+    this.transToTexture = RenderTexture.create({
+      width: this.opts.width,
+      height: this.opts.height,
+      resolution: this.opts.previewScale,
+    });
+  }
+
+  /**
    * Update the background color of the studio
    */
   public setBackgroundColor(color: string) {
@@ -702,12 +739,7 @@ export class Studio extends EventEmitter<StudioEvents> {
       this.artboardMask.clear().rect(0, 0, width, height).fill({ color: 0xffffff });
     }
 
-    if (this.transFromTexture) {
-      this.transFromTexture.resize(width, height);
-    }
-    if (this.transToTexture) {
-      this.transToTexture.resize(width, height);
-    }
+    this.recreateTransitionTextures();
     if (this.transBgGraphics) {
       this.transBgGraphics.clear().rect(0, 0, width, height).fill({ color: 0x000000, alpha: 0 });
     }
@@ -1688,17 +1720,8 @@ export class Studio extends EventEmitter<StudioEvents> {
         renderedTransitions.add(transKey);
 
         // Inicialización lazy de texturas
-        if (!this.transFromTexture) {
-          this.transFromTexture = RenderTexture.create({
-            width: this.opts.width,
-            height: this.opts.height,
-          });
-        }
-        if (!this.transToTexture) {
-          this.transToTexture = RenderTexture.create({
-            width: this.opts.width,
-            height: this.opts.height,
-          });
+        if (!this.transFromTexture || !this.transToTexture) {
+          this.recreateTransitionTextures();
         }
         if (!this.transBgGraphics) {
           this.transBgGraphics = new Graphics();
@@ -2516,7 +2539,11 @@ export class Studio extends EventEmitter<StudioEvents> {
         }
       }
 
-      const inputTexture = RenderTexture.create({ width, height });
+      const inputTexture = RenderTexture.create({
+        width,
+        height,
+        resolution: this.opts.previewScale,
+      });
       intermediateTextures.push(inputTexture);
 
       this.pixiApp.renderer.render({

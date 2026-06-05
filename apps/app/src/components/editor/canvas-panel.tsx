@@ -63,6 +63,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
       backgroundColor: "#111111",
       canvas: canvasRef.current,
       core: core,
+      previewScale: 0.75,
     });
 
     // Initialize fonts and notify when ready
