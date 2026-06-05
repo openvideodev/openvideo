@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { Compositor, Text } from "./index";
+import { Compositor, Text, Image } from "./index";
 
 describe("compositor-timing", () => {
   it("should calculate correct output duration based on display.to", async () => {
@@ -66,11 +66,13 @@ describe("compositor-timing", () => {
     const compositor = new Compositor({ width: 100, height: 100 });
     await compositor.initPixiApp();
 
-    const textClip = new Text("Hello");
-    textClip.display = { from: 1e6, to: 3e6 }; // 1s to 3s
-    textClip.duration = 5e6;
+    const canvas = new OffscreenCanvas(10, 10);
+    canvas.getContext("2d")?.fillRect(0, 0, 10, 10);
+    const imageClip = new Image(canvas.transferToImageBitmap());
+    imageClip.display = { from: 1e6, to: 3e6 }; // 1s to 3s
+    imageClip.duration = 5e6;
 
-    await compositor.addSprite(textClip);
+    await compositor.addSprite(imageClip);
 
     const clonedClip = (compositor as any).sprites[0];
     const getFrameSpy = vi.spyOn(clonedClip, "getFrame");
