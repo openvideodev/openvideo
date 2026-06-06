@@ -188,10 +188,15 @@ export function createSpritesRender(opts: ISpritesRenderOpts): ISpritesRenderRes
 
       // Apply audio fade using precise clip-relative timing known at compositor level
       if (audio && audio.length > 0 && (sprite.timing?.fadeIn || sprite.timing?.fadeOut)) {
-        const clipDurationMicro = sprite.trim.to - sprite.trim.from;
+        const clipDurationMicro =
+          sprite.duration && sprite.duration !== Infinity
+            ? sprite.duration
+            : sprite.display.to - sprite.display.from;
+        const audioDurationMicro = (audio[0].length / DEFAULT_AUDIO_CONF.sampleRate) * 1e6;
+        const endTimeMicro = relativeTime + audioDurationMicro;
         applyAudioFade(
           audio,
-          relativeTime, // clip-relative END time of this chunk
+          endTimeMicro, // clip-relative END time of this chunk
           clipDurationMicro,
           DEFAULT_AUDIO_CONF.sampleRate,
           sprite.timing?.fadeIn,

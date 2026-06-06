@@ -634,7 +634,10 @@ export class Video extends BaseClip implements IPlaybackCapable {
     timeSeconds: number,
   ): void {
     const video = element as HTMLVideoElement;
-    const clipDuration = (this.trim.to - this.trim.from) / 1e6;
+    const clipDuration =
+      this.duration && this.duration !== Infinity
+        ? this.duration / 1e6
+        : (this.display.to - this.display.from) / 1e6;
     const isWithinClip = timeSeconds >= 0 && timeSeconds < clipDuration;
 
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
@@ -654,7 +657,7 @@ export class Video extends BaseClip implements IPlaybackCapable {
     }
     if (this.timing.fadeOut && this.timing.fadeOut.duration > 0) {
       const fadeOutStartMs = clipDurationMs - this.timing.fadeOut.duration;
-      if (timeMs > fadeOutStartMs) {
+      if (timeMs >= fadeOutStartMs) {
         const t = 1.0 - (timeMs - fadeOutStartMs) / this.timing.fadeOut.duration;
         fadeMultiplier *= getEaseFactor(t, this.timing.fadeOut.curve);
       }

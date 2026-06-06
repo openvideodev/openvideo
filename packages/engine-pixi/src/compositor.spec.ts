@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { Compositor, Text, Image } from "./index";
+import { applyAudioFade } from "./utils";
 
 describe("compositor-timing", () => {
   it("should calculate correct output duration based on display.to", async () => {
@@ -89,5 +90,58 @@ describe("compositor-timing", () => {
     expect(getFrameSpy).not.toHaveBeenCalled();
 
     getFrameSpy.mockRestore();
+  });
+});
+
+describe("applyAudioFade", () => {
+  it("should apply fade-in multiplier based on sample clip time", () => {
+    const sampleRate = 48000;
+    const durationSec = 1.0;
+    const length = sampleRate * durationSec;
+    // Dual channel audio data filled with 1.0
+    const audio = [new Float32Array(length).fill(1.0), new Float32Array(length).fill(1.0)];
+
+    // We want a fade-in of 500ms (0.5s), curve "linear"
+    const fadeIn = { duration: 500, curve: "linear" as const };
+
+    // Chunk spans from 0 to 1s relative to clip start
+    const endTimeMicro = 1e6; // 1s
+    const clipDurationMicro = 1e6; // 1s
+
+    applyAudioFade(audio, endTimeMicro, clipDurationMicro, sampleRate, fadeIn);
+
+    // First sample (time = 0) should be 0
+    expect(audio[0][0]).toBe(0);
+    // Midpoint of fade-in (time = 0.25s) should be ~0.5
+    const midIndex = Math.floor(sampleRate * 0.25);
+    expect(audio[0][midIndex]).toBeCloseTo(0.5, 2);
+    // After fade-in (time = 0.6s) should be 1.0
+    const postFadeIndex = Math.floor(sampleRate * 0.6);
+    expect(audio[0][postFadeIndex]).toBe(1.0);
+  });
+
+  it("should apply fade-out multiplier based on sample clip time", () => {
+    const sampleRate = 48000;
+    const durationSec = 1.0;
+    const length = sampleRate * durationSec;
+    const audio = [new Float32Array(length).fill(1.0), new Float32Array(length).fill(1.0)];
+
+    // We want a fade-out of 500ms (0.5s), curve "linear"
+    const fadeOut = { duration: 500, curve: "linear" as const };
+
+    // Chunk spans from 0 to 1s relative to clip start
+    const endTimeMicro = 1e6; // 1s
+    const clipDurationMicro = 1e6; // 1s
+
+    applyAudioFade(audio, endTimeMicro, clipDurationMicro, sampleRate, undefined, fadeOut);
+
+    // Before fade-out starts (time = 0.4s) should be 1.0
+    const preFadeIndex = Math.floor(sampleRate * 0.4);
+    expect(audio[0][preFadeIndex]).toBe(1.0);
+    // Midpoint of fade-out (time = 0.75s) should be ~0.5
+    const midIndex = Math.floor(sampleRate * 0.75);
+    expect(audio[0][midIndex]).toBeCloseTo(0.5, 2);
+    // Last sample (time = 1.0s) should be 0
+    expect(audio[0][length - 1]).toBeCloseTo(0, 2);
   });
 });

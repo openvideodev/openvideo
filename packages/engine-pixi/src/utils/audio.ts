@@ -312,7 +312,7 @@ export function applyAudioFade(
 
       if (hasFadeOut) {
         const fadeOutStartTime = clipDurationMicro - fadeOutDurationMicro;
-        if (sampleClipTime > fadeOutStartTime) {
+        if (sampleClipTime >= fadeOutStartTime) {
           const timeInFadeOut = sampleClipTime - fadeOutStartTime;
           const t = 1.0 - timeInFadeOut / fadeOutDurationMicro;
           fadeMultiplier *= getEaseFactor(t, fadeOut!.curve);

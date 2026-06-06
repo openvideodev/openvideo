@@ -182,6 +182,12 @@ export class Audio extends BaseClip implements IPlaybackCapable {
       this.duration = this.duration === 0 ? clipMeta.duration : this.duration;
       // Update display.to when duration changes
       this.display.to = this.display.from + this.duration;
+
+      // Update trim.to if not set or exceeds meta duration
+      this.trim.to =
+        this.trim.to === 0 ? this._meta.duration : Math.min(this.trim.to, this._meta.duration);
+      this.trim.from = Math.min(this.trim.from, this.trim.to);
+
       return clipMeta;
     });
   }
@@ -314,6 +320,8 @@ export class Audio extends BaseClip implements IPlaybackCapable {
         },
         duration: this.timing.duration,
         playbackRate: this.timing.playbackRate,
+        fadeIn: this.timing.fadeIn,
+        fadeOut: this.timing.fadeOut,
       },
       loop: this.loop,
       volume: this.volume,
@@ -428,7 +436,10 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     timeSeconds: number,
   ): void {
     const audio = element as HTMLAudioElement;
-    const clipDuration = (this.trim.to - this.trim.from) / 1e6;
+    const clipDuration =
+      this.duration && this.duration !== Infinity
+        ? this.duration / 1e6
+        : (this.display.to - this.display.from) / 1e6;
     const isWithinClip = timeSeconds >= 0 && timeSeconds < clipDuration;
 
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
@@ -448,7 +459,7 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     }
     if (this.timing.fadeOut && this.timing.fadeOut.duration > 0) {
       const fadeOutStartMs = clipDurationMs - this.timing.fadeOut.duration;
-      if (timeMs > fadeOutStartMs) {
+      if (timeMs >= fadeOutStartMs) {
         const t = 1.0 - (timeMs - fadeOutStartMs) / this.timing.fadeOut.duration;
         fadeMultiplier *= getEaseFactor(t, this.timing.fadeOut.curve);
       }
