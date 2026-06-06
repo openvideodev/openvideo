@@ -170,7 +170,7 @@ export default function PanelText() {
           }
         >
           <div
-            className="w-full h-9 bg-primary text-primary-foreground flex items-center justify-center rounded-md text-sm font-medium cursor-pointer"
+            className="w-full h-9 bg-secondary hover:bg-secondary/80 text-secondary-foreground flex items-center justify-center rounded-md text-sm font-medium cursor-pointer transition-colors"
             onClick={() => handleAddText()}
           >
             Add Text

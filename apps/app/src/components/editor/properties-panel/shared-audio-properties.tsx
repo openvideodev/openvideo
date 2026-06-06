@@ -12,7 +12,6 @@ import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { NumberInput } from "@/components/ui/number-input";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useStore } from "zustand";
 import { projectStore, core } from "@/lib/project";
 
@@ -76,10 +75,12 @@ export function SharedAudioProperties({ clip }: SharedAudioPropertiesProps) {
   };
 
   return (
-    <FieldGroup className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       {/* Volume Section */}
-      <Field>
-        <FieldLabel>Volume</FieldLabel>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Volume
+        </label>
         <div className="flex items-center gap-4">
           <IconVolume className="size-4 text-muted-foreground flex-shrink-0" />
           <Slider
@@ -100,11 +101,13 @@ export function SharedAudioProperties({ clip }: SharedAudioPropertiesProps) {
             </InputGroupAddon>
           </InputGroup>
         </div>
-      </Field>
+      </div>
 
       {/* Fade In Section */}
-      <Field>
-        <FieldLabel>Fade In</FieldLabel>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Fade In
+        </label>
         <div className="flex items-center gap-4">
           <IconTrendingUp className="size-4 text-muted-foreground flex-shrink-0" />
           <Slider
@@ -126,11 +129,13 @@ export function SharedAudioProperties({ clip }: SharedAudioPropertiesProps) {
             </InputGroupAddon>
           </InputGroup>
         </div>
-      </Field>
+      </div>
 
       {/* Fade Out Section */}
-      <Field>
-        <FieldLabel>Fade Out</FieldLabel>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Fade Out
+        </label>
         <div className="flex items-center gap-4">
           <IconTrendingDown className="size-4 text-muted-foreground flex-shrink-0" />
           <Slider
@@ -152,65 +157,76 @@ export function SharedAudioProperties({ clip }: SharedAudioPropertiesProps) {
             </InputGroupAddon>
           </InputGroup>
         </div>
-      </Field>
+      </div>
 
-      {/* Audio Features Section */}
-      <FieldGroup>
-        <FieldLabel>Audio Features</FieldLabel>
-
-        {/* Noise Reduction */}
-        <Field>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconEar className="size-4 text-muted-foreground" />
-              <div className="flex flex-col">
-                <span className="text-xs font-medium">Noise Reduction</span>
-                <span className="text-[10px] text-muted-foreground">Reduce background noise</span>
+      {/* AI Tools Section */}
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          AI Tools
+        </label>
+        <div className="flex flex-col gap-2">
+          {/* Noise Reduction */}
+          <div className="p-3 rounded-lg bg-secondary/30 border border-border/40 hover:border-border/60 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-background/80">
+                  <IconEar className="size-4 text-foreground" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-foreground">Noise Reduction</span>
+                  <span className="text-[10px] text-muted-foreground">Reduce background noise</span>
+                </div>
               </div>
+              <Switch
+                checked={isNoiseReduction}
+                onCheckedChange={(checked) => toggleMetadata("noiseReduction", checked)}
+              />
             </div>
-            <Switch
-              checked={isNoiseReduction}
-              onCheckedChange={(checked) => toggleMetadata("noiseReduction", checked)}
-            />
           </div>
-        </Field>
 
-        {/* Enhance Voice */}
-        <Field>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconMicrophone className="size-4 text-muted-foreground" />
-              <div className="flex flex-col">
-                <span className="text-xs font-medium">Enhance Voice</span>
-                <span className="text-[10px] text-muted-foreground">
-                  Clarify spoken frequencies
-                </span>
+          {/* Enhance Voice */}
+          <div className="p-3 rounded-lg bg-secondary/30 border border-border/40 hover:border-border/60 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-background/80">
+                  <IconMicrophone className="size-4 text-foreground" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-foreground">Enhance Voice</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Clarify spoken frequencies
+                  </span>
+                </div>
               </div>
+              <Switch
+                checked={isEnhanceVoice}
+                onCheckedChange={(checked) => toggleMetadata("enhanceVoice", checked)}
+              />
             </div>
-            <Switch
-              checked={isEnhanceVoice}
-              onCheckedChange={(checked) => toggleMetadata("enhanceVoice", checked)}
-            />
           </div>
-        </Field>
 
-        {/* Beats Detection */}
-        <Field>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconActivity className="size-4 text-muted-foreground" />
-              <div className="flex flex-col">
-                <span className="text-xs font-medium">Beats Detection</span>
-                <span className="text-[10px] text-muted-foreground">Detect and snap to beats</span>
+          {/* Beats Detection */}
+          <div className="p-3 rounded-lg bg-secondary/30 border border-border/40 hover:border-border/60 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-background/80">
+                  <IconActivity className="size-4 text-foreground" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-foreground">Beats Detection</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Detect and snap to beats
+                  </span>
+                </div>
               </div>
+              <Switch
+                checked={isBeatsDetection}
+                onCheckedChange={(checked) => toggleMetadata("beatsDetection", checked)}
+              />
             </div>
-            <Switch
-              checked={isBeatsDetection}
-              onCheckedChange={(checked) => toggleMetadata("beatsDetection", checked)}
-            />
           </div>
-        </Field>
-      </FieldGroup>
-    </FieldGroup>
+        </div>
+      </div>
+    </div>
   );
 }

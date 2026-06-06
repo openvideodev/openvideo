@@ -1,7 +1,7 @@
 "use client";
 
 import { TabBar } from "./tabbar";
-import { useMediaPanelStore, type Tab } from "./store";
+import { tabs, useMediaPanelStore, type Tab } from "./store";
 import { Separator } from "@/components/ui/separator";
 import PanelAssets from "./panel/assets";
 import PanelEffect from "./panel/effects";
@@ -43,16 +43,22 @@ export function MediaPanel() {
   }, [activeTab]);
 
   return (
-    <div className="h-full flex flex-col bg-card rounded-sm overflow-hidden w-full">
+    <div className="h-full flex flex-row bg-card rounded-sm overflow-hidden w-full">
       <div className="flex-none">
         <TabBar />
       </div>
-      <Separator orientation="horizontal" />
-      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+      <Separator orientation="vertical" />
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
         {selectedClips.length > 0 && showProperties ? (
           <PropertiesPanel selectedClips={selectedClips} />
         ) : (
-          <>{viewMap[activeTab]}</>
+          <>
+            <div className="h-12 items-center flex px-4">
+              <span className="text-sm font-medium">{tabs[activeTab].label}</span>
+            </div>
+            <Separator />
+            <div className="flex-1 overflow-auto">{viewMap[activeTab]}</div>
+          </>
         )}
       </div>
     </div>

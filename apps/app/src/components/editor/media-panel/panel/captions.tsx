@@ -390,13 +390,13 @@ export default function PanelCaptions() {
     <div className="h-full flex flex-col">
       <div className="flex flex-1 flex-col gap-4 overflow-hidden min-w-0">
         {mediaItems.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center p-8 gap-4 select-none">
-            <div className="p-4 rounded-full bg-secondary/15 border border-white/[0.04] text-muted-foreground/50 animate-pulse">
-              <IconSparkles className="size-8 text-white/60" />
-            </div>
-            <div className="space-y-1.5 max-w-[240px]">
-              <h4 className="text-sm font-medium text-foreground">No media detected</h4>
-              <p className="text-xs text-muted-foreground leading-normal">
+          <div className="flex flex-1 items-center justify-center gap-4 select-none">
+            <div className="flex flex-col items-center justify-center pb-12">
+              <div className="size-16 rounded-sm bg-secondary/30 flex items-center justify-center">
+                <IconSparkles size={24} strokeWidth={1.5} className="text-muted-foreground" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground mb-1.5">No Media Detected</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-[210px] mb-5 text-center">
                 Add video or audio clips to your timeline first, then auto-generate or write
                 captions.
               </p>

@@ -19,6 +19,10 @@ import {
   IconClock,
   IconLink,
   IconRefresh,
+  IconUpload,
+  IconSparkles,
+  IconDots,
+  IconDownload,
 } from "@tabler/icons-react";
 import { storageService } from "@/lib/storage/storage-service";
 import type { MediaType } from "@/types/media";
@@ -27,7 +31,7 @@ import { generateThumbnail } from "@/lib/thumbnail-generator";
 import { trpc } from "@/lib/trpc";
 import Draggable from "@/components/shared/draggable";
 import { useGeneratorModalStore } from "@/stores/generator-modal-store";
-import { AssetGeneratorExpandable } from "../asset-generator-expandable";
+import { AssetGeneratorModal } from "../asset-generator-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -147,12 +151,16 @@ function AssetCard({
   onAdd,
   onSelect,
   onDelete,
+  onDownload,
 }: {
   asset: VisualAsset;
   onAdd: (asset: VisualAsset) => void;
   onSelect: (asset: VisualAsset) => void;
   onDelete: (id: string) => void;
+  onDownload: (asset: VisualAsset) => void;
 }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const { studio } = useStudioStore();
   const draggableData = buildDraggableData(asset);
   const isInUse = studio?.clips?.some((clip: any) => clip.src === asset.src);
@@ -199,20 +207,20 @@ function AssetCard({
         className="flex flex-col gap-1.5 group cursor-pointer"
         onClick={() => !isTemp && onSelect(asset)}
       >
-        <div className="relative aspect-square rounded-xl overflow-hidden bg-secondary/30 border border-border/40 group-hover:border-border transition-all flex items-center justify-center select-none shadow-sm">
-          {/* Media Type Icon (Top Left) */}
-          <div className="absolute top-1.5 left-1.5 p-1 rounded-md bg-background/80 backdrop-blur-md text-foreground flex items-center justify-center pointer-events-none z-10">
-            {asset.type === "image" && <IconPhoto size={11} strokeWidth={2.5} />}
-            {asset.type === "video" && <IconVideo size={11} strokeWidth={2.5} />}
-            {asset.type === "audio" && <IconMusic size={11} strokeWidth={2.5} />}
-          </div>
-
-          {/* In Use Badge (Top Right) */}
-          {isInUse && (
-            <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-primary text-[9px] text-primary-foreground font-semibold z-10">
-              In Use
+        <div className="relative aspect-square rounded-xl overflow-hidden bg-secondary/30 border border-border/40 group-hover:border-border transition-all duration-200 flex items-center justify-center select-none shadow-sm group-hover:shadow-md group-hover:scale-[1.02]">
+          {/* Media Type Icon & In Use Badge (Top Left) */}
+          <div className="absolute top-1.5 left-1.5 flex items-center gap-1 z-10">
+            <div className="p-1 rounded-md bg-background/80 backdrop-blur-md text-foreground flex items-center justify-center pointer-events-none">
+              {asset.type === "image" && <IconPhoto size={11} strokeWidth={2.5} />}
+              {asset.type === "video" && <IconVideo size={11} strokeWidth={2.5} />}
+              {asset.type === "audio" && <IconMusic size={11} strokeWidth={2.5} />}
             </div>
-          )}
+            {isInUse && (
+              <div className="px-1.5 py-0.5 rounded-md bg-primary text-[8px] text-primary-foreground font-semibold">
+                In Use
+              </div>
+            )}
+          </div>
 
           {showPreview ? (
             asset.type === "image" ? (
@@ -246,7 +254,7 @@ function AssetCard({
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/20 relative gap-1.5 px-3">
               {asset.type === "audio" && !isTemp && (
-                <div className="flex items-center gap-0.5 h-8 px-2 opacity-40 mb-2">
+                <div className="flex items-center gap-0.5 h-8 px-2 opacity-40">
                   <span className="w-[1.5px] h-2 bg-foreground/45 rounded-full" />
                   <span className="w-[1.5px] h-4 bg-foreground/45 rounded-full" />
                   <span className="w-[1.5px] h-6 bg-foreground/60 rounded-full" />
@@ -310,42 +318,13 @@ function AssetCard({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              ) : asset.indexingStatus === "completed" ? (
-                asset.type === "audio" && (
-                  <Badge
-                    variant="outline"
-                    className="text-[9px] h-4 px-1.5 bg-green-500/10 text-green-500 border-green-500/20"
-                  >
-                    Ready
-                  </Badge>
-                )
-              ) : (
-                /* Indexing States (Pending, Processing) */
+              ) : asset.indexingStatus === "completed" /* No badge for completed audio */ ? null : (
+                /* Simplified to just "Analyzing" for all indexing states */
                 <div className="flex flex-col items-center gap-1.5 w-full">
                   <IconLoader2 className="animate-spin text-amber-500 size-4" />
                   <div className="text-[10px] font-semibold text-muted-foreground text-center">
-                    {asset.indexingStatus === "pending" ? (
-                      <span className="text-muted-foreground/80">Queued</span>
-                    ) : (
-                      <span>{formatStage(asset.indexingStage)}</span>
-                    )}
+                    Analyzing
                   </div>
-                  {asset.indexingStatus === "processing" &&
-                    asset.indexingProgress !== undefined &&
-                    asset.indexingProgress !== null &&
-                    asset.indexingProgress > 0 && (
-                      <div className="w-full flex flex-col items-center gap-1">
-                        <span className="text-[9px] text-muted-foreground">
-                          {asset.indexingProgress}%
-                        </span>
-                        <div className="w-full h-1 bg-border rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-amber-500 transition-all duration-300"
-                            style={{ width: `${asset.indexingProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
                 </div>
               )}
             </div>
@@ -378,29 +357,12 @@ function AssetCard({
                   </Tooltip>
                 </TooltipProvider>
               ) : (
+                /* Simplified to just "Analyzing" for all indexing states */
                 <div className="flex flex-col items-center gap-1.5 w-full">
                   <IconLoader2 className="animate-spin text-amber-500 size-4" />
                   <div className="text-[10px] font-semibold text-white/90 text-center">
-                    {asset.indexingStatus === "pending" ? (
-                      <span>Queued</span>
-                    ) : (
-                      <span>{formatStage(asset.indexingStage)}</span>
-                    )}
+                    Analyzing
                   </div>
-                  {asset.indexingStatus === "processing" &&
-                    asset.indexingProgress !== undefined &&
-                    asset.indexingProgress !== null &&
-                    asset.indexingProgress > 0 && (
-                      <div className="w-full flex flex-col items-center gap-1">
-                        <span className="text-[9px] text-white/70">{asset.indexingProgress}%</span>
-                        <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-amber-500 transition-all duration-300"
-                            style={{ width: `${asset.indexingProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
                 </div>
               )}
             </div>
@@ -418,34 +380,64 @@ function AssetCard({
           {/* Hover Action Buttons */}
           {!isTemp && (
             <>
-              {/* Delete Button (Top Right) */}
-              <button
-                type="button"
-                className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-background/80 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground z-20"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(asset.id);
-                }}
-              >
-                <IconTrash size={12} className="text-foreground" />
-              </button>
+              {/* More Options Dropdown */}
+              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute top-1.5 right-1.5 p-1 rounded-md bg-background/80 backdrop-blur-md opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-all duration-200 hover:bg-secondary hover:text-foreground hover:scale-110 z-20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <IconDots size={12} className="text-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32 py-2">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(asset);
+                    }}
+                    className="text-sm cursor-pointer"
+                  >
+                    Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDownload(asset);
+                    }}
+                    className="text-sm cursor-pointer"
+                  >
+                    Download
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(asset.id);
+                    }}
+                    className="text-sm text-destructive cursor-pointer"
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Add/Plus Button (Bottom Right) */}
               <button
                 type="button"
-                className="absolute bottom-1.5 right-1.5 p-1.5 rounded-md bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/90 z-20 shadow-md flex items-center justify-center"
+                className="absolute bottom-1.5 right-1.5 p-1 rounded-md bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-primary/90 hover:scale-110 z-20 shadow-md flex items-center justify-center"
                 onClick={(e) => {
                   e.stopPropagation();
                   onAdd(asset);
                 }}
               >
-                <IconPlus size={11} strokeWidth={3} />
+                <IconPlus size={10} strokeWidth={3} />
               </button>
             </>
           )}
         </div>
         {/* Visual label for asset names below cards */}
-        <div className="px-1 truncate text-[11px] text-muted-foreground group-hover:text-foreground transition-colors font-medium text-center font-sans">
+        <div className="px-1 truncate text-[11px] text-muted-foreground group-hover:text-foreground transition-colors duration-200 font-medium text-center font-sans">
           {asset.name}
         </div>
       </div>
@@ -475,8 +467,8 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
   const [isUploading, setIsUploading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const openGenerator = useGeneratorModalStore((state) => state.open);
 
   const loadStorageStats = useCallback(async () => {
     await storageService.getStorageStats();
@@ -726,6 +718,20 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
     }
   };
 
+  // Handle download
+  const handleDownload = async (asset: VisualAsset) => {
+    try {
+      const link = document.createElement("a");
+      link.href = asset.src;
+      link.download = asset.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Failed to download asset:", error);
+    }
+  };
+
   // Add item to canvas on click
   const addItemToCanvas = async (asset: VisualAsset) => {
     try {
@@ -807,7 +813,7 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
         ) : (
           /* With assets: search + grid */
           <>
-            {/* Search and Filter Row */}
+            {/* Search, Filter, Generate, Upload Row */}
             <div className="flex items-center gap-2 w-full px-4 py-3">
               {/* Search Input */}
               <div className="relative flex-1 min-w-0">
@@ -856,6 +862,28 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Generate Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 px-3 text-xs border-border/60 bg-secondary/50 hover:bg-secondary text-foreground"
+                onClick={() => setIsGeneratorModalOpen(true)}
+              >
+                <IconSparkles size={14} />
+                <span>Generate</span>
+              </Button>
+
+              {/* Upload Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 px-3 text-xs border-border/60 bg-secondary/50 hover:bg-secondary text-foreground"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <IconUpload size={14} />
+                <span>Upload</span>
+              </Button>
             </div>
 
             <ScrollArea className="flex-1 px-4">
@@ -873,6 +901,7 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
                       onAdd={addItemToCanvas}
                       onSelect={(asset) => setSelectedAssetId(asset.id)}
                       onDelete={handleDelete}
+                      onDownload={handleDownload}
                     />
                   ))}
                 </div>
@@ -881,15 +910,8 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
           </>
         )}
       </div>
-      {showGenerator && (
-        <div className="absolute bottom-4 left-4 right-4 max-w-[600px] mx-auto">
-          <AssetGeneratorExpandable
-            onUploadClick={() => fileInputRef.current?.click()}
-            isUploading={isUploading}
-            floating
-          />
-        </div>
-      )}
+      {/* Asset Generator Modal */}
+      <AssetGeneratorModal open={isGeneratorModalOpen} onOpenChange={setIsGeneratorModalOpen} />
 
       {/* Asset Preview & Details Dialog Modal */}
       <Dialog
@@ -938,14 +960,15 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
                     <Badge variant="outline" className="text-[10px] uppercase font-semibold">
                       {selectedAsset.type}
                     </Badge>
-                    {selectedAsset.indexingStatus === "completed" && (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                      >
-                        Ready
-                      </Badge>
-                    )}
+                    {selectedAsset.indexingStatus === "completed" &&
+                      selectedAsset.type !== "audio" && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                        >
+                          Ready
+                        </Badge>
+                      )}
                     {selectedAsset.indexingStatus === "failed" && (
                       <Badge variant="destructive" className="text-[10px]">
                         Failed
