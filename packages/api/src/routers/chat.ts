@@ -47,13 +47,14 @@ export const chatRouter = router({
       const vectorStr = `[${embedding.join(",")}]`;
 
       // 4. Similarity search via pgvector
-      const docs = (await db.execute(sql`
+      const searchResult = await db.execute(sql`
         SELECT document, cmetadata
         FROM langchain_pg_embedding
         WHERE cmetadata->>'spaceId' = ${input.spaceId}
         ORDER BY embedding <=> ${vectorStr}::vector
         LIMIT ${input.limit}
-      `)) as unknown as Array<{ document: string; cmetadata: any }>;
+      `);
+      const docs = searchResult.rows as unknown as Array<{ document: string; cmetadata: any }>;
 
       // 5. Build context prompt
       const contextText = docs

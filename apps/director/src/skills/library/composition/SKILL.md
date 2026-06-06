@@ -135,6 +135,27 @@ Switch to Narrative Mode when the prompt includes ANY of:
 - A tone descriptor ("authentic", "energetic", "inspiring", "warm")
 - Multiple content themes to cover in sequence
 - Output format requirements (vertical, LinkedIn, Reels, TikTok)
+- A `Highlight:` bullet list (e.g. "* Team collaboration", "* Daily routines")
+
+### Chapter Detection from Highlight Lists
+
+If the prompt contains a `Highlight:` section (a list of bullet points like `* Team collaboration`, `* Daily routines`, `* Innovation and impact`), **treat each bullet as an individual chapter** with a title card. This is the primary structure for the video.
+
+- Each highlight bullet → one chapter block: `[Title Card] → [2–3 video clips from different speakers]`
+- Derive a short title label from the bullet text (e.g. `"* Team collaboration"` → `"Team Collaboration"`)
+- Run a dedicated semantic search for each chapter's topic
+- Use the Narrative Flow section (if present) only as pacing/story guidance — NOT as the chapter structure
+- This automatically activates **Chaptered Mode** (see Chaptered Composition & Title Cards section below)
+
+### Speaker Identification (for Lower Thirds)
+
+Before building the timeline, identify the speaker/person for each asset:
+
+1. Parse the asset `name` filename — e.g. `john_doe_intro.mp4` → `"John Doe"`, `sarah_k_culture.mp4` → `"Sarah K"`
+2. Convert `_` and `-` to spaces, capitalize each word, strip extensions and trailing descriptors (e.g. `_intro`, `_q1`, `_clip2`)
+3. If multiple assets share the same derived name prefix → they are the same person
+4. Build a map: `speakerMap[assetId] = "FirstName LastName"`
+5. Use this map when adding lower third overlays (see Step 8a below)
 
 ### Narrative Mode Workflow
 
@@ -142,7 +163,7 @@ Switch to Narrative Mode when the prompt includes ANY of:
 
 Extract:
 
-- **sections**: ordered list of narrative beats (e.g. `["introductions", "daily routines", "collaboration", "culture", "closing"]`)
+- **chapters**: if `Highlight:` bullet list is present, extract each bullet as an ordered chapter (e.g. `["Team Collaboration", "Positive Culture Moments", "Daily Routines", "Cross-functional Work", "Flexibility and Wellbeing", "Innovation and Impact", "Employee Authenticity"]`). Otherwise extract from Narrative Flow numbered list.
 - **durationRange**: `{ min: N, max: M }` in seconds (if a range is given, target the midpoint)
 - **outputFormat**: `"vertical"` (9:16) or `"horizontal"` (16:9). Default to `"vertical"` for LinkedIn Reels / TikTok / Instagram
 - **tone**: e.g. "energetic", "warm", "inspiring"
@@ -151,6 +172,7 @@ Extract:
   - `"medium"` → target 4–7s per soundbite (warm, narrative, documentary)
 - **subtitles**: true if brief mentions "subtitles", "captions", or "quote callouts"
 - **bgMusic**: true if brief mentions "music" (default true for social reels)
+- **lowerThirds**: true when assets are person-facing videos (Q&A responses, interviews, introductions). Default true for employee highlight reels.
 
 ---
 
@@ -178,19 +200,24 @@ Call `get_space_state`. Note each asset's `id`, `name`, `type`, `src`, and `dura
 
 ---
 
-#### Step 4 — Section-by-section semantic search (with topK=20)
+#### Step 4 — Chapter-by-chapter semantic search (with topK=20)
 
-For each narrative section, run a **separate `search_all_context` call** using `topK=20`. Do NOT use a single broad query for the whole video.
+For each chapter (derived from `Highlight:` bullets or Narrative Flow), run a **separate `search_all_context` call** using `topK=20`. Do NOT use a single broad query for the whole video.
 
-Example section → query mapping for an employee highlight reel:
+Example chapter → query mapping for an employee highlight reel:
 
-- `"introductions"` → `"employee introduction name role team greeting hi hello"`
-- `"daily routines"` → `"morning routine daily work desk laptop office focused working"`
-- `"collaboration"` → `"team meeting together discussion whiteboard pair programming review"`
-- `"culture"` → `"company culture values celebration fun lunch team bonding energy"`
-- `"closing"` → `"why I love working here inspiring closing statement proud meaningful"`
+- `"Team Collaboration"` → `"team meeting together working discussion whiteboard pair programming review collaboration"`
+- `"Positive Culture Moments"` → `"company culture values celebration fun energy enthusiasm bonding proud"`
+- `"Daily Routines"` → `"morning routine daily work desk laptop office focused working schedule"`
+- `"Cross-functional Work"` → `"cross-team departments different functions coordination alignment stakeholders"`
+- `"Flexibility and Wellbeing"` → `"flexible work remote home balance wellbeing health wellness mental life"`
+- `"Innovation and Impact"` → `"innovation impact change building shipping product solving challenges creative ideas"`
+- `"Employee Authenticity"` → `"authentic real genuine personal story real talk honest moment candid"`
+- `"Quick Employee Introductions"` → `"employee introduction name role team greeting hi hello I am my name"`
+- `"What They Enjoy Most"` → `"enjoy love best part favorite meaningful rewarding proud accomplishment"`
+- `"Why the Culture Stands Out"` → `"why I love working here culture stands out different unique special proud"`
 
-Collect all results per section. You will filter them in Step 5.
+Adapt the queries to match the actual chapter names from the prompt. Collect all results per chapter. You will filter them in Step 5.
 
 ---
 
@@ -201,17 +228,22 @@ This is where quality is determined. For each section, go through the results an
 **A. Sentence boundary check (never cut mid-sentence)**
 
 - Examine the `pageContent` field of each RAG result.
-- Only select segments where the `pageContent` text **starts at the beginning of a sentence or phrase** (begins with a capital letter or a name) and **ends at a natural pause** (ends with `.`, `?`, `!`, `,`, `—`, or a complete phrase).
-- Discard any segment whose `pageContent` starts mid-word or mid-sentence.
+- Only select segments where the `pageContent` text **starts at the beginning of a sentence or phrase** (begins with a capital letter or a name) and **ends at a natural pause** (ends with `.`, `?`, `!`, `—`, or a complete phrase).
+- **If a segment's `pageContent` ends mid-sentence** (no terminal punctuation, clearly not a complete thought), look for the immediately following RAG result from the **same `assetId`** and check if `nextSegment.startMs ≈ thisSegment.endMs` (within 200ms). If so, **merge them**: use `thisSegment.startMs` as `trim.from` and `nextSegment.endMs` as `trim.to`, and combine their text. Keep merging until you reach a sentence-ending word.
+- Discard any segment that cannot be completed by merging (no following segment from same asset available).
 - If the segment text is a complete, self-contained thought or soundbite, it is a good candidate.
 
-**B. Minimum duration floor**
+**B. Duration floor and cutPace guidance**
 
-- The natural duration of the segment = `(endMs - startMs)` from the RAG result.
-- Discard any segment shorter than **2000ms** (2 seconds). These are too short to feel complete.
-- Prefer segments in the **3000ms–8000ms** range. They are long enough to feel meaningful but short enough to stay punchy.
-- For a `"fast"` cut pace, trim the trim end to `startMs + 3500ms` if the segment is longer than 4s, preserving the start of the sentence.
-- For a `"medium"` pace, use the full natural segment up to 7s.
+- The natural duration of the segment = `(endMs - startMs)` from the RAG result (or the merged span).
+- Discard any segment shorter than **2000ms** (2 seconds). Too short to feel complete.
+- **NEVER artificially cut a segment shorter than its natural RAG end boundary.** The sentence must finish.
+- `cutPace` is a **selection preference only** — it guides which naturally-complete segments to prefer:
+  - `"fast"` pace → prefer segments whose natural duration is **2s–5s** (pick shorter, punchy soundbites that are already complete)
+  - `"medium"` pace → prefer segments whose natural duration is **4s–10s** (pick more developed thoughts)
+- If a segment naturally ends at 8s, use the full 8s — do **not** cut it to 3.5s.
+- If only long segments (>10s) are available and the pace is `"fast"`, it is acceptable to use them whole rather than cut mid-sentence. Video length is secondary to content integrity.
+
 
 **C. Global deduplication (critical — prevents repeated clips)**
 
@@ -220,11 +252,13 @@ This is where quality is determined. For each section, go through the results an
 - After selecting a segment, immediately add it to `usedSegments`.
 - This applies **across all sections** — a segment used in "introductions" must never appear again in "collaboration" or any other section.
 
-**D. Per-asset variety (diversity of speakers/scenes)**
+**D. Speaker & Asset Variety (No Back-to-Back Same Speaker/Person)**
 
-- Within a single section, do not use the same `Asset ID` more than twice.
-- Never place two clips from the same asset back-to-back. Always alternate assets between consecutive clips.
-- If only one or two assets are available, allow repeats but still enforce minimum 15 seconds of source distance between uses of the same asset (i.e. `|startMs_B - startMs_A| >= 15000`).
+- **Speaker Identification**: Identify the speaker/person for each asset. Group assets by speaker based on the asset filename (e.g., `john_doe_intro.mp4` -> "John Doe"), metadata, or transcript content.
+- **No Back-to-Back Same Speaker**: Never place two clips featuring the same speaker back-to-back on the timeline, even if they are from different files (assets). Always alternate speakers between consecutive clips (e.g., Speaker A → Speaker B → Speaker A → Speaker C).
+- **Limit Speaker Frequency Per Section**: Within a single narrative section or question block, do not use the same speaker more than once. If multiple short videos answer the same question, select the single best clip for each speaker and sequence them alternatingly.
+- **Asset ID Limit**: Within a single section, do not use the same `Asset ID` more than once.
+- **If only 1 or 2 speakers/assets exist**: You may repeat them, but still enforce a minimum 15 seconds of source timeline distance between uses of the same asset (i.e., `|startMs_B - startMs_A| >= 15000`).
 
 **E. Relevance threshold**
 
@@ -262,13 +296,13 @@ Place clips sequentially, tracking a running `cursor` (starts at 0):
 For each selected segment:
 
 1. Set `trim.from = segmentStartMs * 1000` (convert to µs)
-2. Set `trim.to`:
-   - For `"fast"` pace: `min(segmentEndMs, segmentStartMs + 3500) * 1000`
-   - For `"medium"` pace: `min(segmentEndMs, segmentStartMs + 7000) * 1000`
+2. Set `trim.to = segmentEndMs * 1000` — **always use the full natural segment end from RAG**. Never cap or shorten this.
 3. Set `display.from = cursor`
 4. Set `display.to = cursor + (trim.to - trim.from)`
 5. Advance `cursor = display.to`
 6. Use `objectFit: "cover"` for all video clips
+
+> ⚠️ **No hard cuts allowed.** If the RAG segment says a speaker talks from 4200ms to 9800ms, use exactly `trim: { from: 4200000, to: 9800000 }`. Do not cap it at 7500ms or any other value. The total video may be longer than the target duration — that is acceptable. Content integrity always wins over hitting an exact runtime.
 
 ```json
 {
@@ -296,7 +330,45 @@ For each selected segment:
 
 ---
 
-#### Step 8 — Add quote callout text overlays (for key soundbites only)
+#### Step 8a — Add lower third speaker name overlays (for every video clip with a known speaker)
+
+If `lowerThirds: true`, for **every video clip** add a companion `Text` clip that shows the speaker's name at the bottom of the frame. This is a **lower third** — it appears in the lower portion of the frame overlapping the video, exactly matching the video clip's `display.from` and `display.to`.
+
+- Use `speakerMap[assetId]` from Step 1 to get the speaker's name.
+- If the name is unknown, skip the lower third for that clip.
+- Style: small, clean, left-aligned, slightly above the bottom edge.
+
+```json
+{
+  "type": "command",
+  "description": "Lower third: John Doe",
+  "command": {
+    "type": "clip.add",
+    "payload": {
+      "clip": {
+        "type": "Text",
+        "text": "John Doe",
+        "timing": { "display": { "from": <same_from_as_video_clip>, "to": <same_to_as_video_clip> } },
+        "style": {
+          "fontSize": 38,
+          "color": "#ffffff",
+          "align": "left",
+          "fontFamily": "Inter",
+          "shadow": { "color": "#000000", "alpha": 0.75, "blur": 8, "offsetX": 0, "offsetY": 2 }
+        },
+        "transform": { "x": 90, "y": 1760, "width": 900 }
+      }
+    }
+  }
+}
+```
+
+> For **horizontal (16:9)** canvas: position at `y: 940, x: 80` instead.
+> Place lower third commands **immediately after** the video clip command they belong to, so the intent is clear.
+
+---
+
+#### Step 8b — Add quote callout text overlays (for key soundbites only)
 
 Select 2–3 emotionally strong segments — typically from "culture", "why I love it", and "closing" — and add a `Text` clip that overlaps the video clip's exact display window.
 
@@ -370,71 +442,198 @@ Music should sit **under** speech, not over it. The prompt should describe the e
 
 - **Canvas format is always set first** — before any clip.add steps.
 - **Never fabricate asset IDs or src URLs** — use only what `get_space_state` returns.
-- **Never cut mid-sentence** — always verify `pageContent` starts and ends at a natural speech boundary.
+- **🚫 NEVER cut mid-sentence** — always use the full `segmentEndMs` from the RAG result as `trim.to`. Do not cap a clip to a shorter duration. A speaker must finish their thought completely.
+- **🚫 NEVER artificially shorten a clip to hit a duration target** — the total video may run longer than the requested range. Content integrity always wins. A 95-second video where every clip is complete is better than a 75-second video that cuts speakers mid-word.
+- **cutPace is a selection preference, NOT a trim instruction** — use it to choose *which* naturally-complete segments to prefer (shorter for fast pace, longer for medium pace), never to truncate a chosen segment.
 - **Never repeat a segment** — global dedup across all sections is mandatory.
 - **Never place the same asset back-to-back** — alternate speakers/scenes between consecutive clips.
 - **Never add a clip shorter than 2 seconds** — it will feel like a glitch, not an edit.
-- **Duration range**: target the midpoint. If exact fit is impossible after quality filtering, prefer going slightly over the minimum rather than adding low-quality filler clips.
 - **If a section has zero valid segments**: skip the section entirely, log it in the plan `summary` ("I couldn't find strong intro segments, so I merged that time into the collaboration section"), and redistribute time.
 - **Quote text must be verbatim from RAG `pageContent`** — never write fictional quotes.
 - **Music prompt must describe emotion and context** — not just "upbeat music". The more specific, the better the ElevenLabs output.
 
 ---
 
-## Example Plan (60–90s Employee Highlight Reel)
+## Video Formats and Styles
 
-**User prompt**: "Create a 60–90 second vertical highlight reel from employee videos. Theme: A Day in the Life. Include subtitles and upbeat music. Fast-paced cuts. Sections: introductions, daily routines, collaboration, culture, closing."
+Adjust editing pacing, canvas settings, transitions, captions, and audio generation depending on the requested format:
+
+### 1. Vlog (Video Log / Storytelling)
+- **Pacing**: Medium cuts (4.0s to 7.0s per clip). Emphasize speech and personal narratives.
+- **Layout & Tracks**: Place talking-head clips on the base track. Overlay contextual images or b-roll footage on top (higher `zIndex`).
+- **Transitions**: Direct cuts (no transitions) or short crossfades (max 400ms).
+- **Captions**: Always enable subtitles via the `auto-caption` skill step.
+- **Audio**: Low-volume, friendly, conversational instrumental background music.
+
+### 2. Travel Montage
+- **Pacing**: Fast-paced, high-energy cuts (2.0s to 3.5s per clip).
+- **Visuals**: Focus on diverse landscapes, activity, or landmarks matching visual descriptions.
+- **Transitions**: Crossfades or slides (800ms) between adjacent video clips. Invoke `transition-editing` skill.
+- **SFX**: Add atmospheric/cinematic sound effects (whoosh, sweep, zoom, water splash) at transitions.
+- **Audio**: Dynamic, energetic, or cinematic music. Captions are usually omitted unless voiceover exists.
+
+### 3. Podcast
+- **Pacing**: Slower cuts (6.0s to 12.0s per clip) matching speaker changes.
+- **Layout**: Simple talking heads. Alternate clips based on active speaker segments.
+- **Captions**: Always enable subtitles via the `auto-caption` skill step.
+- **Audio**: Extremely low-volume, minimal ambient instrumental music.
+
+### 4. Film (Cinematic / Atmospheric)
+- **Pacing**: Slow, cinematic pacing (6.0s to 10.0s per clip).
+- **Visuals**: Emphasize mood, color, lighting, and composition details.
+- **Transitions**: Long crossfades (800ms to 1200ms) or fade-to-black.
+- **Audio**: Orchestral or ambient/atmospheric synth pad music.
+
+---
+
+## Chaptered Composition & Title Cards
+
+### Deciding When to Add Title/Chapter Cards
+The addition of standalone title cards or chapter dividers is conditional and depends on the user's intent, the editing format, and asset structure:
+
+1. **YES — Add Chapter/Title Cards**:
+   - **Trigger (primary)**: The prompt contains a `Highlight:` bullet list (e.g. `* Team collaboration`, `* Daily routines`, `* Innovation and impact`). Each bullet becomes a chapter with a title card.
+   - **Trigger (secondary)**: The prompt explicitly asks to answer specific questions, cover distinct numbered chapters, or create sections (e.g., "Answer Q1 and Q2 from my responses", "create a video divided into three chapters").
+   - **Asset Structure**: Assets are short Q&A response snippets or employee video responses organized by topic.
+   - **Layout**: Every chapter begins with a standalone `Text` clip occupying the timeline for **2 seconds** (`2,000,000` microseconds) on a blank/black background (no overlapping video). This is the chapter title card.
+   - **Chapter Title Style**:
+     ```json
+     {
+       "type": "Text",
+       "text": "Team Collaboration",
+       "style": {
+         "fontSize": 56,
+         "fontFamily": "Outfit",
+         "color": "#ffffff",
+         "align": "center",
+         "shadow": { "color": "#000000", "alpha": 0.5, "blur": 12, "offsetX": 0, "offsetY": 2 }
+       },
+       "transform": { "x": 540, "y": 960, "width": 960 }
+     }
+     ```
+     (For 16:9: `x: 960, y: 540`)
+   - **Chapter Structure**: `[Chapter Title Card 2s] → [2–3 clips from different speakers on this topic]`
+   - **After each chapter**: continue directly to next chapter's title card — no gap.
+   - **Do NOT** add a global intro title card at `t=0` when using chapter mode — the first chapter's title card IS the opening.
+
+2. **NO — Do NOT Add Chapter/Title Cards (Seamless Sequencing)**:
+   - **Trigger**: The prompt describes a continuous storytelling narrative (e.g. "travel montage", "product promo vlog", "cinematic atmosphere video", "brand story") with NO `Highlight:` list and no numbered questions.
+   - **Asset Structure**: The assets are a mix of B-roll and continuous speaking clips.
+   - **Layout**: Video clips are sequenced end-to-end continuously without divider screens. Set `timing.display` of each clip to start exactly where the previous clip ends (i.e. `from` of clip $N$ is equal to `to` of clip $N-1$). Use soft transitions (like crossfades) to bridge them.
+
+### Timeline Math & Offsets (For Chaptered Mode)
+
+If chapter cards are enabled:
+1. Maintain a running timeline position variable: `cursor = 0` (in microseconds).
+2. For each chapter:
+   - **Add Title Card**:
+     - `clip.type = "Text"`
+     - `timing.display = { from: cursor, to: cursor + 2000000 }`
+     - Update `cursor = cursor + 2000000`
+   - **Add Video Clips for that Chapter** (2–3 clips, alternating speakers):
+     - For each video clip in this chapter:
+       - `clip.type = "Video"`
+       - `timing.display = { from: cursor, to: cursor + clipDuration }`
+       - Update `cursor = cursor + clipDuration`
+     - Immediately after each video clip command, add a lower third `Text` clip with the same `display.from`/`display.to`
+3. **Audio Clips**:
+   - Background music must span the entire composition: `timing.display = { from: 0, to: cursor }`.
+
+---
+
+## Example Plan (Employee Highlight Reel with Highlight-Bullet Chapters)
+
+**User prompt**: _"Create a 60–90 second vertical highlight reel... Highlight: * Team collaboration * Daily routines * Employee authenticity..."_
+
+**Detected**: Chaptered mode (Highlight list found). lowerThirds = true. outputFormat = vertical. cutPace = fast.
 
 **Tool calls**:
+1. `get_space_state` → build speakerMap from filenames
+2. `search_all_context("team meeting together working discussion collaboration", topK=20)` → for Team Collaboration
+3. `search_all_context("morning routine daily work desk laptop office", topK=20)` → for Daily Routines
+4. `search_all_context("authentic real genuine personal honest candid", topK=20)` → for Employee Authenticity
 
-1. `get_space_state` → list employee video assets
-2. `search_all_context("employee introduction name role greeting")` → intro segments
-3. `search_all_context("daily routine morning desk office working")` → routine segments
-4. `search_all_context("team meeting collaboration discussion together")` → collab segments
-5. `search_all_context("company culture values fun celebration")` → culture segments
-6. `search_all_context("why I love working here inspiration closing")` → closing segments
-
-**Then output steps** (targeting 75s total, 2–3s cuts, vertical):
-
+**Steps** (cursor tracked in microseconds):
 ```
-1. command: project.updateSettings (1080×1920, black bg)
-2. command: clip.add Video (intro employee 1, 2s cut)
-3. command: clip.add Video (intro employee 2, 2s cut)
-4. command: clip.add Video (intro employee 3, 2s cut)
-5. command: clip.add Video (daily routine moment, 3s cut)
-6. command: clip.add Video (daily routine moment 2, 3s cut)
-7. command: clip.add Video (collaboration moment 1, 2s cut)
-8. command: clip.add Video (collaboration moment 2, 3s cut)
-9. command: clip.add Text (quote overlay on collab clip)
-10. command: clip.add Video (culture moment 1, 3s cut)
-11. command: clip.add Video (culture moment 2, 2s cut)
-12. command: clip.add Video (closing statement, 4s cut)
-13. command: clip.add Text (quote overlay on closing)
-14. skill: auto-caption
-15. generate: generate-background-music (75s, upbeat energetic)
+cursor = 0
+
+[Chapter: Team Collaboration]
+1.  command: project.updateSettings (1080×1920, black bg)  ← always first
+2.  command: clip.add Text ("Team Collaboration", 0–2s)     cursor → 2,000,000
+3.  command: clip.add Video (John Doe — team clip, 2s–6s)    cursor → 6,000,000
+4.  command: clip.add Text (lower third: "John Doe", 2s–6s)
+5.  command: clip.add Video (Sarah K — team clip, 6s–10s)   cursor → 10,000,000
+6.  command: clip.add Text (lower third: "Sarah K", 6s–10s)
+
+[Chapter: Daily Routines]
+7.  command: clip.add Text ("Daily Routines", 10s–12s)       cursor → 12,000,000
+8.  command: clip.add Video (Maria L — routine clip, 12s–16s) cursor → 16,000,000
+9.  command: clip.add Text (lower third: "Maria L", 12s–16s)
+10. command: clip.add Video (John Doe — routine clip, 16s–20s) cursor → 20,000,000
+11. command: clip.add Text (lower third: "John Doe", 16s–20s)
+
+[Chapter: Employee Authenticity]
+12. command: clip.add Text ("Employee Authenticity", 20s–22s) cursor → 22,000,000
+13. command: clip.add Video (Sarah K — authentic clip, 22s–26s) cursor → 26,000,000
+14. command: clip.add Text (lower third: "Sarah K", 22s–26s)
+15. command: clip.add Video (Maria L — authentic clip, 26s–30s) cursor → 30,000,000
+16. command: clip.add Text (lower third: "Maria L", 26s–30s)
+
+[Audio]
+17. generate: generate-background-music (30s, upbeat warm human acoustic)
 ```
 
 ---
 
-## Example Plan (45-second AI topic video)
+## Example Plan (Chaptered Q&A Video)
 
-**User prompt**: "Using my assets, create a 45 seconds video about AI. Add background music and sound effects."
+**User prompt**: "Answer these questions using my clips: Q1: What is the main goal? Q2: How do we get there? Format: Film. Add music."
 
-**Tool calls to make first**:
+**Tool calls**:
+1. `get_space_state`
+2. `search_all_context("main goal mission vision objective")`
+3. `search_all_context("how to get there steps strategy action plan")`
 
-1. `get_space_state` → discover available assets
-2. `search_all_context` with query `"artificial intelligence technology machine learning"` → find matching segments
-
-**Then output steps**:
-
+**Steps**:
 ```
-1. clip.add (Video, asset matching AI segment 0–15s)
-2. clip.add (Video, asset matching AI segment 15–30s)
-3. clip.add (Video, asset matching AI segment 30–45s)
-4. clip.add (Text, title "Artificial Intelligence")
-5. generate (generate-background-music, 45s, ambient AI theme)
-6. generate (generate-sound-effect, opening whoosh)
-7. generate (generate-sound-effect, mid-point transition)
+1. command: project.updateSettings (1920×1080 horizontal, black bg)
+2. command: clip.add Text (Q1 Title Card, 0s to 2s)
+3. command: clip.add Video (Q1 Answer clip 1, 2s to 8s)
+4. command: clip.add Text (lower third: Speaker Name, 2s to 8s)
+5. command: clip.add Video (Q1 Answer clip 2, 8s to 14s)
+6. command: clip.add Text (lower third: Speaker Name, 8s to 14s)
+7. command: clip.add Text (Q2 Title Card, 14s to 16s)
+8. command: clip.add Video (Q2 Answer clip 1, 16s to 23s)
+9. command: clip.add Text (lower third: Speaker Name, 16s to 23s)
+10. command: clip.add Video (Q2 Answer clip 2, 23s to 30s)
+11. command: clip.add Text (lower third: Speaker Name, 23s to 30s)
+12. skill: transition-editing (between adjacent video clips only, skip text clips)
+13. generate: generate-background-music (30s, slow cinematic orchestral pad)
+```
+
+---
+
+## Example Plan (Travel Montage)
+
+**User prompt**: "Create a 30-second travel montage about exploring the mountains using my video assets. Add fast-paced music, transitions, and whoosh sounds."
+
+**Tool calls**:
+1. `get_space_state`
+2. `search_all_context("mountains climbing hiking peaks visual landscapes nature")`
+
+**Steps**:
+```
+1. command: project.updateSettings (1920×1080, black bg)
+2. command: clip.add Text (Title card: "Mountain Exploration", 0s to 3s)
+3. command: clip.add Video (mountain clip 1, 3s to 9s)
+4. command: clip.add Video (mountain clip 2, 9s to 15s)
+5. command: clip.add Video (mountain clip 3, 15s to 21s)
+6. command: clip.add Video (mountain clip 4, 21s to 27s)
+7. command: clip.add Video (mountain clip 5, 27s to 33s)
+8. skill: transition-editing (crossfades between all adjacent video clips, duration 800ms)
+9. generate: generate-background-music (33s, high energy rhythmic travel beat)
+10. generate: generate-sound-effect (opening whoosh, 2s, placed at 3s transition)
+11. generate: generate-sound-effect (transition whoosh, 2s, placed at 15s transition)
 ```
 
 ---

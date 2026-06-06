@@ -94,6 +94,7 @@ class DeepgramTranscriber(AudioTranscriber):
                         paragraph_words = [
                             {
                                 "word": w.get("word", ""),
+                                "punctuated_word": w.get("punctuated_word", w.get("word", "")),
                                 "start_ms": int(w.get("start", 0) * 1000),
                                 "end_ms": int(w.get("end", 0) * 1000),
                                 "startMs": int(w.get("start", 0) * 1000),
@@ -121,28 +122,38 @@ class DeepgramTranscriber(AudioTranscriber):
             raise TranscriptionError(f"Failed to parse transcript response: {str(e)}")
     
     def _create_segments_from_words(self, words: List[Dict[str, Any]]) -> List[TranscriptSegment]:
-        """Create transcript segments from word timestamps."""
+        """Create transcript segments from word timestamps aligning with sentences."""
         segments = []
         
         if not words:
             return segments
         
-        PAUSE_THRESHOLD_S = 0.4
-        MAX_WORDS_PER_SEGMENT = 8
+        LONG_PAUSE_THRESHOLD_S = 1.2
+        EMERGENCY_MAX_WORDS = 40
         
         chunk_words = []
         chunk_start = words[0].get("start", 0)
         prev_end = words[0].get("end", 0)
         
+        def is_sentence_end(w: Dict[str, Any]) -> bool:
+            pw = w.get("punctuated_word", w.get("word", ""))
+            return any(pw.endswith(char) for char in (".", "!", "?"))
+            
         for i, word in enumerate(words):
             gap = i > 0 and word.get("start", 0) - prev_end or 0
-            should_split = (
-                chunk_words and 
-                (gap > PAUSE_THRESHOLD_S or len(chunk_words) >= MAX_WORDS_PER_SEGMENT)
-            )
+            
+            # Flush when:
+            # 1. Punctuation sentence end
+            # 2. Long pause (> 1.2s)
+            # 3. Emergency cap
+            sentence_end = chunk_words and is_sentence_end(chunk_words[-1])
+            long_pause = gap > LONG_PAUSE_THRESHOLD_S
+            emergency_cap = len(chunk_words) >= EMERGENCY_MAX_WORDS
+            
+            should_split = chunk_words and (sentence_end or long_pause or emergency_cap)
             
             if should_split:
-                text = " ".join([w.get("word", "") for w in chunk_words])
+                text = " ".join([w.get("punctuated_word", w.get("word", "")) for w in chunk_words])
                 segments.append(TranscriptSegment(
                     text=text,
                     start_ms=int(chunk_start * 1000),
@@ -150,6 +161,7 @@ class DeepgramTranscriber(AudioTranscriber):
                     words=[
                         {
                             "word": w.get("word", ""),
+                            "punctuated_word": w.get("punctuated_word", w.get("word", "")),
                             "start_ms": int(w.get("start", 0) * 1000),
                             "end_ms": int(w.get("end", 0) * 1000),
                             "startMs": int(w.get("start", 0) * 1000),
@@ -167,7 +179,7 @@ class DeepgramTranscriber(AudioTranscriber):
         
         # Add final segment
         if chunk_words:
-            text = " ".join([w.get("word", "") for w in chunk_words])
+            text = " ".join([w.get("punctuated_word", w.get("word", "")) for w in chunk_words])
             segments.append(TranscriptSegment(
                 text=text,
                 start_ms=int(chunk_start * 1000),
@@ -175,6 +187,7 @@ class DeepgramTranscriber(AudioTranscriber):
                 words=[
                     {
                         "word": w.get("word", ""),
+                        "punctuated_word": w.get("punctuated_word", w.get("word", "")),
                         "start_ms": int(w.get("start", 0) * 1000),
                         "end_ms": int(w.get("end", 0) * 1000),
                         "startMs": int(w.get("start", 0) * 1000),

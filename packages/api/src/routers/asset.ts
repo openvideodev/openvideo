@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { getDB, asset, assetIndexingStatus } from "@openvideo/db";
 import { router, protectedProcedure } from "../trpc.js";
 import { ModalClient } from "modal";
+import { GoogleGenAI } from "@google/genai";
 
 const db = getDB();
 
@@ -198,5 +199,93 @@ export const assetRouter = router({
       }
 
       return { success: true, status: "queued" };
+    }),
+
+  /**
+   * Semantic search over indexed asset vectors for a space.
+   * Uses Gemini embeddings + pgvector cosine similarity.
+   * Returns deduplicated assets ranked by best match score.
+   */
+  semanticSearch: protectedProcedure
+    .input(
+      z.object({
+        spaceId: z.string(),
+        query: z.string().min(1),
+        limit: z.number().min(1).max(30).optional().default(15),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const apiKey = process.env.GOOGLE_API_KEY;
+      if (!apiKey) throw new Error("GOOGLE_API_KEY not configured");
+
+      const ai = new GoogleGenAI({ apiKey });
+
+      // Generate embedding for the search query
+      const formattedQuery = `task: search result | query: ${input.query}`;
+      const embedResponse = await ai.models.embedContent({
+        model: "gemini-embedding-2",
+        contents: formattedQuery,
+      });
+
+      const embedding = embedResponse.embeddings?.[0]?.values;
+      if (!embedding) throw new Error("Failed to generate embedding");
+
+      const vectorStr = `[${embedding.join(",")}]`;
+
+      // Similarity search via pgvector (cosine distance)
+      const result = await db.execute(sql`
+        SELECT
+          cmetadata->>'assetId'    AS "assetId",
+          cmetadata->>'assetName'  AS "assetName",
+          cmetadata->>'assetType'  AS "assetType",
+          cmetadata->>'src'        AS "src",
+          cmetadata->>'layer'      AS "layer",
+          (cmetadata->>'startMs')::bigint AS "startMs",
+          (cmetadata->>'endMs')::bigint   AS "endMs",
+          document                        AS "matchedText",
+          (embedding <=> ${vectorStr}::vector) AS "distance"
+        FROM langchain_pg_embedding
+        WHERE cmetadata->>'spaceId' = ${input.spaceId}
+        ORDER BY embedding <=> ${vectorStr}::vector
+        LIMIT ${input.limit * 3}
+      `);
+
+      const rows = result.rows as unknown as Array<{
+        assetId: string;
+        assetName: string;
+        assetType: string;
+        src: string;
+        layer: string;
+        startMs: number | null;
+        endMs: number | null;
+        matchedText: string;
+        distance: number;
+      }>;
+
+      // Deduplicate — keep the best (lowest distance) hit per assetId
+      const seen = new Map<string, (typeof rows)[0]>();
+      for (const row of rows) {
+        if (!row.assetId) continue;
+        const existing = seen.get(row.assetId);
+        if (!existing || row.distance < existing.distance) {
+          seen.set(row.assetId, row);
+        }
+      }
+
+      const deduplicated = Array.from(seen.values())
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, input.limit);
+
+      return deduplicated.map((r) => ({
+        assetId: r.assetId,
+        assetName: r.assetName,
+        assetType: r.assetType as "video" | "audio" | "image",
+        src: r.src,
+        layer: r.layer,
+        startMs: r.startMs ?? undefined,
+        endMs: r.endMs ?? undefined,
+        matchedText: r.matchedText,
+        score: 1 - r.distance, // convert distance → similarity (0–1)
+      }));
     }),
 });

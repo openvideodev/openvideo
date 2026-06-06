@@ -71,6 +71,8 @@ interface VisualAsset {
   indexingStage?: string | null;
   indexingError?: string | null;
   uploadProgress?: number | null;
+  startMs?: number;
+  endMs?: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -470,6 +472,18 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
   const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // AI Semantic Search State
+  const [isSemanticMode, setIsSemanticMode] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  // Debounce semantic search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const loadStorageStats = useCallback(async () => {
     await storageService.getStorageStats();
   }, []);
@@ -479,6 +493,18 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
     { spaceId: spaceId ?? "" },
     { enabled: !!spaceId },
   );
+
+  const { data: semanticResults, isFetching: isSemanticFetching } =
+    trpc.asset.semanticSearch.useQuery(
+      {
+        spaceId: spaceId ?? "",
+        query: debouncedQuery,
+      },
+      {
+        enabled: isSemanticMode && debouncedQuery.trim().length >= 3 && !!spaceId,
+      },
+    );
+
   const createAsset = trpc.asset.create.useMutation();
   const deleteAsset = trpc.asset.delete.useMutation();
   const triggerIndex = trpc.asset.triggerIndex.useMutation();
@@ -748,6 +774,20 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
         };
       }
 
+      // If this asset has a startMs and endMs from semantic search, trim it!
+      if (
+        (asset.type === "video" || asset.type === "audio") &&
+        asset.startMs !== undefined &&
+        asset.endMs !== undefined
+      ) {
+        const startSec = asset.startMs / 1000;
+        const endSec = asset.endMs / 1000;
+        clipData.timing = {
+          trim: { from: startSec * 1e6, to: endSec * 1e6 },
+          duration: (endSec - startSec) * 1e6,
+        };
+      }
+
       await core.clip.add(clipData, { objectFit: "contain" });
     } catch (error) {
       console.error("Failed to add clip:", error);
@@ -808,12 +848,28 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
             <input
-              placeholder="Search assets..."
+              placeholder={isSemanticMode ? "Find quotes or topics..." : "Search assets..."}
               className="w-full h-9 pl-9 pr-3 text-[13px] bg-secondary/50 border border-border/60 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border focus:bg-background transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          {/* AI Search Toggle */}
+          <Button
+            variant={isSemanticMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsSemanticMode(!isSemanticMode)}
+            className={`h-9 px-3 gap-1.5 text-xs rounded-lg transition-all shrink-0 ${
+              isSemanticMode
+                ? "bg-gradient-to-r from-violet-600/95 to-indigo-600/95 hover:from-violet-600 hover:to-indigo-600 text-white shadow-md shadow-violet-500/10 border-none font-semibold"
+                : "bg-secondary/50 hover:bg-secondary border-border/60 text-muted-foreground hover:text-foreground font-medium"
+            }`}
+            title="AI Semantic Search (find specific quotes or topics)"
+          >
+            <IconSparkles size={14} className={isSemanticMode ? "animate-pulse" : ""} />
+            <span>AI Search</span>
+          </Button>
 
           {/* Filter Dropdown */}
           <DropdownMenu>
@@ -883,9 +939,151 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
               Drag and drop your assets here, or use the buttons above to upload or generate.
             </p>
           </div>
+        ) : isSemanticMode && searchQuery.trim().length >= 3 ? (
+          /* AI Semantic Search Results */
+          <ScrollArea className="flex-1 px-4">
+            {isSemanticFetching ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
+                <IconLoader2 className="animate-spin text-violet-500" size={24} />
+                <span className="text-xs">Searching with Gemini AI...</span>
+              </div>
+            ) : !semanticResults || semanticResults.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground text-center">
+                <IconSparkles size={28} className="text-violet-500 opacity-40 animate-pulse" />
+                <span className="text-sm font-semibold text-foreground/80">
+                  No AI matches found
+                </span>
+                <p className="text-xs max-w-[220px]">
+                  Try searching for other keywords, phrases, or topics mentioned in the assets.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 pb-6">
+                {semanticResults.map((result: any) => {
+                  const minutes = Math.floor((result.startMs || 0) / 60000);
+                  const seconds = Math.floor(((result.startMs || 0) % 60000) / 1000);
+                  const timestampStr =
+                    result.startMs !== undefined && result.endMs !== undefined
+                      ? `${minutes}:${seconds.toString().padStart(2, "0")} - ${Math.floor(
+                          result.endMs / 60000,
+                        )}:${Math.floor((result.endMs % 60000) / 1000)
+                          .toString()
+                          .padStart(2, "0")}`
+                      : "";
+
+                  const parentFile = files.find((f) => f.id === result.assetId);
+                  const visualAsset: VisualAsset = {
+                    id: result.assetId,
+                    type: result.assetType as any,
+                    src: result.src,
+                    name: result.assetName,
+                    thumbnailSrc: parentFile?.thumbnailSrc,
+                  };
+
+                  const percentageScore = Math.round((result.score || 0) * 100);
+
+                  return (
+                    <div
+                      key={`${result.assetId}-${result.startMs}-${result.endMs}`}
+                      className="group flex flex-col gap-2 p-3 bg-secondary/20 hover:bg-secondary/40 border border-border/40 hover:border-violet-500/30 rounded-xl transition-all duration-200 cursor-pointer shadow-sm relative overflow-hidden"
+                      onClick={() => setSelectedAssetId(result.assetId)}
+                    >
+                      {/* Match score label */}
+                      <div className="absolute top-2.5 right-2.5">
+                        <span className="text-[10px] font-semibold text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded-full border border-violet-500/20">
+                          {percentageScore}% match
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="relative size-12 rounded-lg overflow-hidden bg-background shrink-0 flex items-center justify-center border border-border/50">
+                          {result.assetType === "image" ? (
+                            <img
+                              src={visualAsset.thumbnailSrc || result.src}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : result.assetType === "video" ? (
+                            visualAsset.thumbnailSrc ? (
+                              <img
+                                src={visualAsset.thumbnailSrc}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <video
+                                src={result.src}
+                                className="w-full h-full object-cover"
+                                muted
+                              />
+                            )
+                          ) : (
+                            <IconMusic size={20} className="text-violet-500" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1 pr-16">
+                          <h4 className="text-xs font-semibold text-foreground truncate">
+                            {result.assetName}
+                          </h4>
+                          {timestampStr && (
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5 font-mono">
+                              <IconClock size={10} />
+                              <span>{timestampStr}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {result.matchedText && (
+                        <div className="text-xs text-muted-foreground bg-background/40 p-2 rounded-lg italic border-l-2 border-violet-500/40 line-clamp-2">
+                          "{result.matchedText}"
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-border/20">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="h-7 px-2 text-[10px] text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 gap-1 rounded-md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAssetId(result.assetId);
+                          }}
+                        >
+                          <IconInfoCircle size={12} />
+                          Details
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="h-7 px-2.5 text-[10px] text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 gap-1 rounded-md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addItemToCanvas({
+                              ...visualAsset,
+                              startMs: result.startMs,
+                              endMs: result.endMs,
+                            });
+                          }}
+                        >
+                          <IconPlus size={11} strokeWidth={2.5} />
+                          Add Trimmed Segment
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
         ) : (
           /* With assets: grid */
           <ScrollArea className="flex-1 px-4">
+            {isSemanticMode && searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
+              <div className="text-[11px] text-amber-500 font-medium mb-3 px-1 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center animate-pulse">
+                Type 3+ characters to search with AI...
+              </div>
+            )}
             {filteredAssets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
                 <IconPhoto size={28} className="opacity-40" />

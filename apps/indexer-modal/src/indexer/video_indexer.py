@@ -479,160 +479,116 @@ class VideoIndexer:
             logger.info(f"Indexed {chunk_id} word-level transcript chunks for {asset.name}")
 
     def _split_segment_into_chunks(self, segment: TranscriptSegment) -> List[Dict]:
-        """Split a transcript segment into smaller semantic chunks with word-level timestamps.
+        """Split a transcript segment into sentence-aligned chunks with word-level timestamps.
         
-        Splits on:
-        - Natural sentence boundaries (.!? followed by space/capital)
-        - Clause boundaries (commas in longer segments)
-        - Target: 5-12 words per chunk for optimal granularity
+        Splits strictly on:
+        - Sentence boundaries (.!? at the end of a word)
+        - Major pauses (> 1.2 seconds) between words if punctuation is missing
+        
+        This prevents cutting clips mid-sentence.
         """
-        import re
-
         text = segment.text.strip()
         words = segment.words or []
 
         if not text:
             return []
 
-        # If no word timestamps, return single chunk with estimated boundaries
+        # If no word timestamps, split by sentence using regex on text
         if not words:
-            words_list = text.split()
-            word_count = len(words_list)
+            import re
+            # Split by punctuation followed by space
+            sentences = re.split(r'(?<=[.!?])\s+', text)
+            chunks = []
+            
+            duration = segment.end_ms - segment.start_ms
+            word_count = len(text.split())
             if word_count == 0:
                 return []
-
-            duration = segment.end_ms - segment.start_ms
             word_duration = duration / word_count
-
-            return [{
-                "text": text,
-                "start_ms": segment.start_ms,
-                "end_ms": segment.end_ms,
-                "words": [
-                    {
+            
+            char_count = 0
+            for s in sentences:
+                s_text = s.strip()
+                if not s_text:
+                    continue
+                s_word_count = len(s_text.split())
+                s_start_ms = segment.start_ms + int((char_count / len(text)) * duration)
+                char_count += len(s) + 1  # +1 for split space
+                s_end_ms = min(segment.end_ms, segment.start_ms + int((char_count / len(text)) * duration))
+                
+                # Re-estimate words for this sentence
+                s_words = s_text.split()
+                s_words_list = []
+                for idx, w in enumerate(s_words):
+                    w_start = s_start_ms + int(idx * (s_end_ms - s_start_ms) / len(s_words))
+                    w_end = s_start_ms + int((idx + 1) * (s_end_ms - s_start_ms) / len(s_words))
+                    s_words_list.append({
                         "word": w,
-                        "start_ms": int(segment.start_ms + i * word_duration),
-                        "end_ms": int(segment.start_ms + (i + 1) * word_duration),
-                        "startMs": int(segment.start_ms + i * word_duration),
-                        "endMs": int(segment.start_ms + (i + 1) * word_duration)
-                    }
-                    for i, w in enumerate(words_list)
-                ]
-            }]
-
-        # Build chunks with word-level precision
-        chunks = []
-        current_chunk_words = []
-        chunk_start_word_idx = 0
-
-        # Natural break patterns (in order of preference)
-        sentence_end_pattern = re.compile(r'[.!?]+\s+')
-        clause_pattern = re.compile(r',\s+(?:and|but|or|so|because|when|while|if|although)\s+')
-        comma_pattern = re.compile(r',\s+')
-
-        text_lower = text.lower()
-        word_positions = []  # Map character position to word index
-        char_pos = 0
-        for i, w in enumerate(words):
-            word_text = w.get("word", "")
-            word_positions.append((char_pos, char_pos + len(word_text), i))
-            char_pos += len(word_text) + 1  # +1 for space
-
-        def find_split_point(start_char: int, target_words: int = 8) -> int:
-            """Find best split point around target word count."""
-            search_start = start_char
-            search_end = min(len(text), start_char + 200)
-            search_text = text_lower[search_start:search_end]
-
-            # Try sentence boundary first
-            match = sentence_end_pattern.search(search_text)
-            if match:
-                return start_char + match.end()
-
-            # Try clause boundary
-            match = clause_pattern.search(search_text)
-            if match:
-                return start_char + match.end()
-
-            # Try comma after minimum words
-            if target_words >= 5:
-                match = comma_pattern.search(search_text[search_text.find(' '):])
-                if match:
-                    comma_pos = search_text.find(' ') + match.end()
-                    return start_char + comma_pos
-
-            # Fall back to word boundary
-            words_in_range = search_text.split()
-            if len(words_in_range) >= target_words:
-                boundary = ' '.join(words_in_range[:target_words])
-                return start_char + len(boundary)
-
-            return None
-
-        char_idx = 0
-        while char_idx < len(text):
-            split_char = find_split_point(char_idx, target_words=8)
-
-            if split_char is None or split_char >= len(text):
-                # Last chunk - take remaining text
-                chunk_text = text[char_idx:].strip()
-                if chunk_text:
-                    # Find words for this chunk
-                    chunk_words = []
-                    for w in words:
-                        w_start = w.get("start_ms", w.get("startMs", 0))
-                        if w_start >= segment.start_ms + (char_idx / len(text)) * (segment.end_ms - segment.start_ms):
-                            chunk_words.append(w)
-                            if len(chunk_words) >= 12:  # Max chunk size
-                                break
-
-                    if not chunk_words and words:
-                        # Take remaining words
-                        start_idx = len(words) - len([w for w in words if w.get("start_ms", w.get("startMs", 0)) < segment.start_ms + (char_idx / len(text)) * (segment.end_ms - segment.start_ms)])
-                        chunk_words = words[max(0, start_idx - 1):]
-
-                    chunks.append({
-                        "text": chunk_text,
-                        "start_ms": chunk_words[0].get("start_ms", chunk_words[0].get("startMs", segment.start_ms)) if chunk_words else segment.start_ms,
-                        "end_ms": chunk_words[-1].get("end_ms", chunk_words[-1].get("endMs", segment.end_ms)) if chunk_words else segment.end_ms,
-                        "words": chunk_words
+                        "start_ms": w_start,
+                        "end_ms": w_end,
+                        "startMs": w_start,
+                        "endMs": w_end
                     })
-                break
+                chunks.append({
+                    "text": s_text,
+                    "start_ms": s_start_ms,
+                    "end_ms": s_end_ms,
+                    "words": s_words_list
+                })
+            return chunks
 
-            chunk_text = text[char_idx:split_char].strip()
-            if chunk_text:
-                # Find corresponding words by timestamp overlap
-                chunk_start_ms = segment.start_ms + int((char_idx / len(text)) * (segment.end_ms - segment.start_ms))
-                chunk_end_ms = segment.start_ms + int((split_char / len(text)) * (segment.end_ms - segment.start_ms))
+        # If we have word timestamps, we chunk them based on sentence punctuation
+        # and long pauses.
+        chunks = []
+        current_words = []
+        chunk_start_ms = words[0].get("start_ms", words[0].get("startMs", segment.start_ms))
 
-                chunk_words = [
-                    w for w in words
-                    if w.get("start_ms", w.get("startMs", 0)) >= chunk_start_ms - 50
-                    and w.get("end_ms", w.get("endMs", 0)) <= chunk_end_ms + 50
-                ]
+        def is_sentence_end(w: Dict) -> bool:
+            pw = w.get("punctuated_word", w.get("word", ""))
+            return any(pw.endswith(char) for char in (".", "!", "?"))
 
-                # Adjust timestamps to actual word boundaries if available
-                if chunk_words:
-                    actual_start = chunk_words[0].get("start_ms", chunk_words[0].get("startMs", chunk_start_ms))
-                    actual_end = chunk_words[-1].get("end_ms", chunk_words[-1].get("endMs", chunk_end_ms))
-                else:
-                    actual_start, actual_end = chunk_start_ms, chunk_end_ms
+        for i, w in enumerate(words):
+            current_words.append(w)
+            
+            # Check for split conditions:
+            # 1. Word has sentence-ending punctuation
+            # 2. Significant pause before next word (> 1.2s)
+            # 3. Emergency chunk size (> 35 words)
+            
+            has_next = i < len(words) - 1
+            next_w = words[i + 1] if has_next else None
+            
+            curr_end = w.get("end_ms", w.get("endMs", segment.end_ms))
+            next_start = next_w.get("start_ms", next_w.get("startMs", curr_end)) if next_w else curr_end
+            pause = (next_start - curr_end) / 1000.0  # seconds
+            
+            should_split = False
+            if not has_next:
+                should_split = True
+            elif is_sentence_end(w):
+                # Split at sentence end
+                should_split = True
+            elif pause > 1.2:
+                # Split at long pause
+                should_split = True
+            elif len(current_words) >= 35:
+                # Split at word limit (emergency cap)
+                should_split = True
 
+            if should_split and current_words:
+                chunk_text = " ".join([cw.get("punctuated_word", cw.get("word", "")) for cw in current_words])
+                chunk_end_ms = current_words[-1].get("end_ms", current_words[-1].get("endMs", segment.end_ms))
                 chunks.append({
                     "text": chunk_text,
-                    "start_ms": actual_start,
-                    "end_ms": actual_end,
-                    "words": chunk_words
+                    "start_ms": chunk_start_ms,
+                    "end_ms": chunk_end_ms,
+                    "words": list(current_words)
                 })
+                if has_next:
+                    current_words = []
+                    chunk_start_ms = next_w.get("start_ms", next_w.get("startMs", next_start))
 
-            char_idx = split_char
-
-        return chunks if chunks else [{
-            "text": text,
-            "start_ms": segment.start_ms,
-            "end_ms": segment.end_ms,
-            "words": words
-        }]
+        return chunks
     
     async def _create_image_vectors(self, asset: Asset, description: str) -> None:
         """Create vector documents for image content."""

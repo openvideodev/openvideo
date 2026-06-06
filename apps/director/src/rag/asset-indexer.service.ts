@@ -158,19 +158,22 @@ export class AssetIndexerService {
       });
 
     // Create and upsert vector documents for each segment
-    const docs = segments.map((seg) => {
-      return new Document({
-        pageContent: `title: ${asset.name} | text: ${seg.text}`,
-        metadata: {
-          spaceId,
-          assetId: asset.id,
-          assetName: asset.name,
-          assetType: "audio",
-          src: asset.src,
-          layer: "asset-transcript",
-          startMs: seg.startMs,
-          endMs: seg.endMs,
-        },
+    const docs = segments.flatMap((seg) => {
+      const chunks = this.splitSegmentIntoChunks(seg);
+      return chunks.map((chunk) => {
+        return new Document({
+          pageContent: `title: ${asset.name} | text: ${chunk.text}`,
+          metadata: {
+            spaceId,
+            assetId: asset.id,
+            assetName: asset.name,
+            assetType: "audio",
+            src: asset.src,
+            layer: "asset-transcript",
+            startMs: chunk.startMs,
+            endMs: chunk.endMs,
+          },
+        });
       });
     });
 
@@ -273,19 +276,22 @@ export class AssetIndexerService {
         });
       });
 
-      const audioDocs = segments.map((seg) => {
-        return new Document({
-          pageContent: `title: ${asset.name} | text: ${seg.text}`,
-          metadata: {
-            spaceId,
-            assetId: asset.id,
-            assetName: asset.name,
-            assetType: "video",
-            src: asset.src,
-            layer: "asset-transcript",
-            startMs: seg.startMs,
-            endMs: seg.endMs,
-          },
+      const audioDocs = segments.flatMap((seg) => {
+        const chunks = this.splitSegmentIntoChunks(seg);
+        return chunks.map((chunk) => {
+          return new Document({
+            pageContent: `title: ${asset.name} | text: ${chunk.text}`,
+            metadata: {
+              spaceId,
+              assetId: asset.id,
+              assetName: asset.name,
+              assetType: "video",
+              src: asset.src,
+              layer: "asset-transcript",
+              startMs: chunk.startMs,
+              endMs: chunk.endMs,
+            },
+          });
         });
       });
 
@@ -324,7 +330,7 @@ export class AssetIndexerService {
       text: string;
       startMs: number;
       endMs: number;
-      words?: Array<{ word: string; startMs: number; endMs: number }>;
+      words?: Array<{ word: string; punctuated_word?: string; startMs: number; endMs: number }>;
     }>
   > {
     let segments: any[] = [];
@@ -519,7 +525,7 @@ Return raw JSON only. No markdown, no backticks.`;
       text: string;
       startMs: number;
       endMs: number;
-      words?: Array<{ word: string; startMs: number; endMs: number }>;
+      words?: Array<{ word: string; punctuated_word?: string; startMs: number; endMs: number }>;
     }>
   > {
     const deepgramKey = this.configService.get<string>("DEEPGRAM_API_KEY");
@@ -567,6 +573,7 @@ Return raw JSON only. No markdown, no backticks.`;
           .filter((w: any) => w.start >= pStart && w.end <= pEnd + 0.1)
           .map((w: any) => ({
             word: w.word,
+            punctuated_word: w.punctuated_word ?? w.word,
             startMs: Math.round(w.start * 1000),
             endMs: Math.round(w.end * 1000),
           }));
@@ -578,29 +585,48 @@ Return raw JSON only. No markdown, no backticks.`;
         });
       }
     } else {
-      // Fallback: split into sentence-level segments using word timestamps.
-      // A new sentence starts when there's a pause of >0.4s between words, or every 8 words max.
+      // Fallback: build sentence-boundary segments from word timestamps.
+      // Deepgram provides `punctuated_word` (e.g. "Yeah.", "As") — use it for
+      // sentence-end detection and for the human-readable segment text.
+      // Split ONLY when we hit sentence-ending punctuation OR a long pause (>1.2s).
+      // Never split mid-sentence — content integrity is more important than chunk size.
       if (allWords.length > 0) {
-        const PAUSE_THRESHOLD_S = 0.4;
-        const MAX_WORDS_PER_SEGMENT = 8;
+        const LONG_PAUSE_THRESHOLD_S = 1.2; // only split on a real breath/pause
+        const EMERGENCY_MAX_WORDS = 60; // absolute safety valve — avoids runaway chunks
         let chunkWords: any[] = [];
         let chunkStart = allWords[0].start;
         let prevEnd = allWords[0].end;
 
+        const isSentenceEnd = (w: any): boolean => {
+          // Prefer punctuated_word ("Yeah.") over raw word ("yeah")
+          const pw: string = w.punctuated_word ?? w.word ?? "";
+          return /[.?!]\s*$/.test(pw.trimEnd());
+        };
+
         for (let i = 0; i < allWords.length; i++) {
           const w = allWords[i];
           const gap = i > 0 ? w.start - prevEnd : 0;
+          const prevWord = chunkWords[chunkWords.length - 1];
+
+          // Flush the chunk when:
+          // 1. Long pause (>1.2s) — real breath between thoughts
+          // 2. Previous word ended a sentence + any pause >0.3s
+          // 3. Emergency cap reached
+          const longPause = gap > LONG_PAUSE_THRESHOLD_S;
+          const sentenceEnd = prevWord && isSentenceEnd(prevWord);
+          const shortPauseAfterSentence = sentenceEnd && gap > 0.3;
+          const emergencyCap = chunkWords.length >= EMERGENCY_MAX_WORDS;
+
           const shouldSplit =
-            chunkWords.length > 0 &&
-            (gap > PAUSE_THRESHOLD_S || chunkWords.length >= MAX_WORDS_PER_SEGMENT);
+            chunkWords.length > 0 && (longPause || shortPauseAfterSentence || emergencyCap);
 
           if (shouldSplit) {
             segments.push({
-              text: chunkWords.map((x) => x.word).join(" "),
+              text: chunkWords.map((x) => x.punctuated_word ?? x.word).join(" "),
               startMs: Math.round(chunkStart * 1000),
               endMs: Math.round(prevEnd * 1000),
               words: chunkWords.map((x) => ({
-                word: x.word,
+                word: x.punctuated_word ?? x.word,
                 startMs: Math.round(x.start * 1000),
                 endMs: Math.round(x.end * 1000),
               })),
@@ -615,11 +641,11 @@ Return raw JSON only. No markdown, no backticks.`;
 
         if (chunkWords.length > 0) {
           segments.push({
-            text: chunkWords.map((x) => x.word).join(" "),
+            text: chunkWords.map((x) => x.punctuated_word ?? x.word).join(" "),
             startMs: Math.round(chunkStart * 1000),
             endMs: Math.round(prevEnd * 1000),
             words: chunkWords.map((x) => ({
-              word: x.word,
+              word: x.punctuated_word ?? x.word,
               startMs: Math.round(x.start * 1000),
               endMs: Math.round(x.end * 1000),
             })),
@@ -630,5 +656,92 @@ Return raw JSON only. No markdown, no backticks.`;
 
     this.logger.log(`Deepgram generated ${segments.length} segments.`);
     return segments;
+  }
+
+  private splitSegmentIntoChunks(segment: {
+    text: string;
+    startMs: number;
+    endMs: number;
+    words?: Array<{ word: string; punctuated_word?: string; startMs: number; endMs: number }>;
+  }): Array<{ text: string; startMs: number; endMs: number }> {
+    const text = segment.text.trim();
+    const words = segment.words || [];
+
+    if (!text) return [];
+
+    // If no word timestamps, split text by sentence punctuation using regex
+    if (words.length === 0) {
+      const sentences = text.split(/(?<=[.!?])\s+/);
+      const chunks: Array<{ text: string; startMs: number; endMs: number }> = [];
+      const duration = segment.endMs - segment.startMs;
+
+      let charCount = 0;
+      for (const s of sentences) {
+        const sText = s.trim();
+        if (!sText) continue;
+
+        const sStartMs = segment.startMs + Math.round((charCount / text.length) * duration);
+        charCount += s.length + 1; // +1 for the split space
+        const sEndMs = Math.min(
+          segment.endMs,
+          segment.startMs + Math.round((charCount / text.length) * duration),
+        );
+
+        chunks.push({
+          text: sText,
+          startMs: sStartMs,
+          endMs: sEndMs,
+        });
+      }
+      return chunks;
+    }
+
+    const chunks: Array<{ text: string; startMs: number; endMs: number }> = [];
+    let currentWords: typeof words = [];
+    let chunkStartMs = words[0].startMs;
+
+    const isSentenceEnd = (w: (typeof words)[0]): boolean => {
+      const pw = w.punctuated_word ?? w.word;
+      return /[.!?]$/.test(pw.trim());
+    };
+
+    for (let i = 0; i < words.length; i++) {
+      const w = words[i];
+      currentWords.push(w);
+
+      const hasNext = i < words.length - 1;
+      const nextW = words[i + 1];
+
+      const currEnd = w.endMs;
+      const nextStart = nextW ? nextW.startMs : currEnd;
+      const pause = (nextStart - currEnd) / 1000; // seconds
+
+      let shouldSplit = false;
+      if (!hasNext) {
+        shouldSplit = true;
+      } else if (isSentenceEnd(w)) {
+        shouldSplit = true;
+      } else if (pause > 1.2) {
+        shouldSplit = true;
+      } else if (currentWords.length >= 35) {
+        shouldSplit = true;
+      }
+
+      if (shouldSplit && currentWords.length > 0) {
+        const chunkText = currentWords.map((cw) => cw.punctuated_word ?? cw.word).join(" ");
+        const chunkEndMs = currentWords[currentWords.length - 1].endMs;
+        chunks.push({
+          text: chunkText,
+          startMs: chunkStartMs,
+          endMs: chunkEndMs,
+        });
+        if (hasNext) {
+          currentWords = [];
+          chunkStartMs = nextW.startMs;
+        }
+      }
+    }
+
+    return chunks;
   }
 }

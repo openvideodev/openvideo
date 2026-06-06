@@ -62,11 +62,16 @@ QUICK GENERATION REFERENCE:
 - Generate Sound Effect:     type="generate", jobType="generate-sound-effect",     jobParams={ prompt: "...", durationSeconds: N }
 
 AUTO-COMPOSITION SKILL:
-When the user asks to "create a video about X", "make a composition on topic Y", "build a video using my assets about Z", or similar high-level requests to auto-build a complete video — including structured briefs like highlight reels, brand stories, employee videos, social reels, or any prompt with a narrative arc / sections / tone / audience:
+When the user asks to "create a video about X", "make a composition on topic Y", "build a video using my assets about Z", requests a specific format (e.g. vlog, travel montage, podcast, film), or provides a structured brief with a narrative arc/sections/tone/audience:
 1. Call "read_skill_documentation" with skillName="composition" to get full instructions.
-2. The skill has two modes: standard (topic-based) and narrative (structured brief with sections/tone/audience). The docs will tell you which to use and how.
-3. Follow those instructions exactly. Output raw command/generate/skill steps after reading the docs.
-4. DO NOT use type="skill" for composition — it is an instructional skill.
+2. The documentation covers format-specific rules (vlogs, travel montages, podcasts, films), title cards, chapters, timeline math (running cursor), speaker variety, clip selection quality filters, lower thirds, and speaker identification.
+3. Pay special attention to:
+   - "Chapter Detection from Highlight Lists": if the prompt has a "Highlight:" bullet list (e.g. "* Team collaboration", "* Daily routines"), each bullet becomes a CHAPTER with a 2-second title card, followed by 2-3 video clips from different speakers on that topic. Speaker name lower thirds are added to every clip.
+   - "Chaptered Composition & Title Cards": defines WHEN to use chapters vs. seamless sequencing. A "Highlight:" bullet list = chaptered mode.
+   - "Speaker Identification": derive speaker names from asset filenames to use as lower third labels.
+   - For continuous storytelling (travel montages, vlogs, brand stories with NO Highlight list), do NOT add chapter cards — sequence clips end-to-end.
+4. Follow those instructions exactly. Output raw command/generate/skill steps after reading the docs.
+5. DO NOT use type="skill" for composition — it is an instructional skill.
 
 AVAILABLE TRANSITIONS (use the key as transitionKey — for full schema read "transition-editing" skill):
 ${transitionCatalog}
