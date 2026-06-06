@@ -15,11 +15,18 @@ export interface IFlip {
 
 export type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption" | "Effect";
 
+export interface IFade {
+  duration: number; // ms
+  curve?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
+}
+
 export interface IClipTiming {
   display: IDisplay;
   trim: ITrim;
   duration: number;
   playbackRate: number;
+  fadeIn?: IFade;
+  fadeOut?: IFade;
 }
 
 /** Partial timing for use in add/prepare payloads. loadClip fills in defaults. */
@@ -28,6 +35,8 @@ export type IClipTimingInput = Partial<{
   trim: Partial<ITrim>;
   duration: number;
   playbackRate: number;
+  fadeIn?: IFade;
+  fadeOut?: IFade;
 }>;
 
 export interface IClipTransform {

@@ -121,6 +121,14 @@ export class TimelineBridge {
       return false;
     }
 
+    const coreFadeIn = coreClip.timing?.fadeIn;
+    const timelineFadeIn = timelineClip.timing?.fadeIn;
+    if (!this.isDeepEqual(coreFadeIn, timelineFadeIn)) return false;
+
+    const coreFadeOut = coreClip.timing?.fadeOut;
+    const timelineFadeOut = timelineClip.timing?.fadeOut;
+    if (!this.isDeepEqual(coreFadeOut, timelineFadeOut)) return false;
+
     // 3. Style / complex properties
     if (!this.isDeepEqual(coreClip.style, timelineClip.style)) return false;
 

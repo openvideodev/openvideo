@@ -205,6 +205,16 @@ export class StudioBridge {
             if (value.playbackRate !== undefined) {
               clip.playbackRate = value.playbackRate;
             }
+            if (value.fadeIn !== undefined) {
+              clip.timing.fadeIn = value.fadeIn;
+            } else {
+              delete clip.timing.fadeIn;
+            }
+            if (value.fadeOut !== undefined) {
+              clip.timing.fadeOut = value.fadeOut;
+            } else {
+              delete clip.timing.fadeOut;
+            }
             changed = true;
           }
         } else {
@@ -220,6 +230,20 @@ export class StudioBridge {
             changed = true;
           } else if (subProp === "playbackRate") {
             clip.playbackRate = value;
+            changed = true;
+          } else if (subProp === "fadeIn") {
+            if (value !== undefined) {
+              clip.timing.fadeIn = value;
+            } else {
+              delete clip.timing.fadeIn;
+            }
+            changed = true;
+          } else if (subProp === "fadeOut") {
+            if (value !== undefined) {
+              clip.timing.fadeOut = value;
+            } else {
+              delete clip.timing.fadeOut;
+            }
             changed = true;
           }
         }
@@ -492,6 +516,24 @@ export class StudioBridge {
           clip.playbackRate = t.playbackRate;
           changed = true;
         }
+      }
+      if (t.fadeIn !== undefined) {
+        if (JSON.stringify(clip.timing.fadeIn) !== JSON.stringify(t.fadeIn)) {
+          clip.timing.fadeIn = t.fadeIn;
+          changed = true;
+        }
+      } else if (clip.timing.fadeIn !== undefined) {
+        delete clip.timing.fadeIn;
+        changed = true;
+      }
+      if (t.fadeOut !== undefined) {
+        if (JSON.stringify(clip.timing.fadeOut) !== JSON.stringify(t.fadeOut)) {
+          clip.timing.fadeOut = t.fadeOut;
+          changed = true;
+        }
+      } else if (clip.timing.fadeOut !== undefined) {
+        delete clip.timing.fadeOut;
+        changed = true;
       }
     } else {
       // Fallback legacy support

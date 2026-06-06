@@ -22,6 +22,14 @@ export interface ClipTimingJSON {
   };
   duration: number;
   playbackRate: number;
+  fadeIn?: {
+    duration: number; // ms
+    curve?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
+  };
+  fadeOut?: {
+    duration: number; // ms
+    curve?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
+  };
 }
 
 export interface ClipTransformJSON {
@@ -335,6 +343,8 @@ export function normalizeClipJSON(json: ClipJSON): ClipJSON {
       trim: json.trim || { from: 0, to: 0 },
       duration: json.duration ?? 0,
       playbackRate: json.playbackRate ?? 1,
+      fadeIn: (json as any).fadeIn,
+      fadeOut: (json as any).fadeOut,
     };
   } else {
     normalized.timing = {
@@ -342,8 +352,12 @@ export function normalizeClipJSON(json: ClipJSON): ClipJSON {
       trim: normalized.timing.trim || { from: 0, to: 0 },
       duration: normalized.timing.duration ?? 0,
       playbackRate: normalized.timing.playbackRate ?? 1,
+      fadeIn: normalized.timing.fadeIn ?? (json as any).fadeIn,
+      fadeOut: normalized.timing.fadeOut ?? (json as any).fadeOut,
     };
   }
+  delete normalized.fadeIn;
+  delete normalized.fadeOut;
 
   if (!normalized.transform) {
     const raw = json as any;

@@ -260,3 +260,66 @@ export function changePCMPlaybackRate(pcmData: Float32Array, playbackRate: numbe
 
   return newPcmData;
 }
+
+export interface IFade {
+  duration: number; // ms
+  curve?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
+}
+
+export function getEaseFactor(
+  t: number,
+  curve?: "linear" | "ease-in" | "ease-out" | "ease-in-out",
+): number {
+  const clampedT = Math.max(0, Math.min(1, t));
+  if (!curve || curve === "linear") return clampedT;
+  if (curve === "ease-in") return clampedT * clampedT;
+  if (curve === "ease-out") return clampedT * (2 - clampedT);
+  if (curve === "ease-in-out") {
+    return clampedT < 0.5 ? 2 * clampedT * clampedT : -1 + (4 - 2 * clampedT) * clampedT;
+  }
+  return clampedT;
+}
+
+export function applyAudioFade(
+  audio: Float32Array[],
+  endTimeMicro: number,
+  clipDurationMicro: number,
+  sampleRate: number,
+  fadeIn?: IFade,
+  fadeOut?: IFade,
+): void {
+  if (!audio || audio.length === 0 || audio[0].length === 0) return;
+  const length = audio[0].length;
+  const durationMicro = (length / sampleRate) * 1e6;
+  const startTimeMicro = endTimeMicro - durationMicro;
+
+  const hasFadeIn = fadeIn !== undefined && fadeIn.duration > 0;
+  const hasFadeOut = fadeOut !== undefined && fadeOut.duration > 0;
+  if (!hasFadeIn && !hasFadeOut) return;
+
+  const fadeInDurationMicro = hasFadeIn ? fadeIn!.duration * 1000 : 0;
+  const fadeOutDurationMicro = hasFadeOut ? fadeOut!.duration * 1000 : 0;
+
+  for (const chan of audio) {
+    for (let i = 0; i < chan.length; i++) {
+      const sampleClipTime = startTimeMicro + (i / sampleRate) * 1e6;
+      let fadeMultiplier = 1.0;
+
+      if (hasFadeIn && sampleClipTime < fadeInDurationMicro) {
+        const t = sampleClipTime / fadeInDurationMicro;
+        fadeMultiplier *= getEaseFactor(t, fadeIn!.curve);
+      }
+
+      if (hasFadeOut) {
+        const fadeOutStartTime = clipDurationMicro - fadeOutDurationMicro;
+        if (sampleClipTime >= fadeOutStartTime) {
+          const timeInFadeOut = sampleClipTime - fadeOutStartTime;
+          const t = 1.0 - timeInFadeOut / fadeOutDurationMicro;
+          fadeMultiplier *= getEaseFactor(t, fadeOut!.curve);
+        }
+      }
+
+      chan[i] *= Math.max(0, Math.min(1, fadeMultiplier));
+    }
+  }
+}

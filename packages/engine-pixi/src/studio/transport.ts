@@ -40,27 +40,10 @@ export class Transport {
     this.playStartTime = this.currentTime;
     this.playStartTimestamp = performance.now();
 
-    // Start all playback elements
-    for (const [clip, { element }] of this.playbackElements.entries()) {
-      // Check if clip should be active at current time
-      const shouldBeActive =
-        this.currentTime >= clip.display.from &&
-        (clip.display.to === 0 || this.currentTime <= clip.display.to);
-
-      if (!shouldBeActive) {
-        if (this.isPlaybackCapable(clip)) {
-          clip.pause(element);
-        }
-        continue;
-      }
-
-      const relativeTime = (this.currentTime - clip.display.from) / 1e6;
-      if (this.isPlaybackCapable(clip)) {
-        await clip.play(element, relativeTime);
-      }
-    }
-
-    // Start render loop
+    // Start render loop — syncPlayback (called every frame inside updateFrame)
+    // is the sole authority for starting/stopping/volume on playback elements.
+    // Calling clip.play() directly here would bypass the fade-volume computation
+    // inside syncPlayback, causing fade-in to be skipped on the first frame.
     this.renderLoop();
     this.studio.emit("play", { isPlaying: true });
   }
@@ -141,24 +124,11 @@ export class Transport {
     await this.studio.updateFrame(this.currentTime);
     this.studio.emit("currentTime", { currentTime: this.currentTime });
 
-    // Restore play state if it was playing
+    // Restore play state if it was playing.
+    // Same reason as transport.play(): let syncPlayback handle the actual
+    // element.play() call so fade volume is applied before audio starts.
     if (wasPlaying) {
       this.isPlaying = true;
-      for (const [clip, { element }] of this.playbackElements.entries()) {
-        // Check if clip should be active at current time
-        const shouldBeActive =
-          this.currentTime >= clip.display.from &&
-          (clip.display.to === 0 || this.currentTime <= clip.display.to);
-
-        if (!shouldBeActive) {
-          continue;
-        }
-
-        const relativeTime = (this.currentTime - clip.display.from) / 1e6;
-        if (this.isPlaybackCapable(clip)) {
-          await clip.play(element, relativeTime);
-        }
-      }
     }
   }
 

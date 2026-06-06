@@ -1,5 +1,5 @@
 import { Log } from "../utils/log";
-import { extractPCM4AudioBuffer, ringSliceFloat32Array } from "../utils";
+import { extractPCM4AudioBuffer, ringSliceFloat32Array, getEaseFactor } from "../utils";
 import { BaseClip } from "./base-clip";
 import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from "./iclip";
 import type { AudioJSON } from "../json-serialization";
@@ -129,6 +129,8 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     clip.display.to = timing.display.to;
     clip.duration = timing.duration;
     clip.playbackRate = timing.playbackRate;
+    if (timing.fadeIn !== undefined) clip.timing.fadeIn = timing.fadeIn;
+    if (timing.fadeOut !== undefined) clip.timing.fadeOut = timing.fadeOut;
 
     // Apply animation if present
     if (json.animation) {
@@ -180,6 +182,12 @@ export class Audio extends BaseClip implements IPlaybackCapable {
       this.duration = this.duration === 0 ? clipMeta.duration : this.duration;
       // Update display.to when duration changes
       this.display.to = this.display.from + this.duration;
+
+      // Update trim.to if not set or exceeds meta duration
+      this.trim.to =
+        this.trim.to === 0 ? this._meta.duration : Math.min(this.trim.to, this._meta.duration);
+      this.trim.from = Math.min(this.trim.from, this.trim.to);
+
       return clipMeta;
     });
   }
@@ -312,6 +320,8 @@ export class Audio extends BaseClip implements IPlaybackCapable {
         },
         duration: this.timing.duration,
         playbackRate: this.timing.playbackRate,
+        fadeIn: this.timing.fadeIn,
+        fadeOut: this.timing.fadeOut,
       },
       loop: this.loop,
       volume: this.volume,
@@ -426,12 +436,36 @@ export class Audio extends BaseClip implements IPlaybackCapable {
     timeSeconds: number,
   ): void {
     const audio = element as HTMLAudioElement;
-    const clipDuration = (this.trim.to - this.trim.from) / 1e6;
+    const clipDuration =
+      this.duration && this.duration !== Infinity
+        ? this.duration / 1e6
+        : (this.display.to - this.display.from) / 1e6;
     const isWithinClip = timeSeconds >= 0 && timeSeconds < clipDuration;
 
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
-    // Sync volume
-    audio.volume = this.volume;
+    // Compute fade volume multiplier for preview
+    const clipDurationMs = clipDuration * 1000;
+    const timeMs = timeSeconds * 1000;
+    let fadeMultiplier = 1.0;
+    if (
+      this.timing.fadeIn &&
+      this.timing.fadeIn.duration > 0 &&
+      timeMs < this.timing.fadeIn.duration
+    ) {
+      fadeMultiplier *= getEaseFactor(
+        timeMs / this.timing.fadeIn.duration,
+        this.timing.fadeIn.curve,
+      );
+    }
+    if (this.timing.fadeOut && this.timing.fadeOut.duration > 0) {
+      const fadeOutStartMs = clipDurationMs - this.timing.fadeOut.duration;
+      if (timeMs >= fadeOutStartMs) {
+        const t = 1.0 - (timeMs - fadeOutStartMs) / this.timing.fadeOut.duration;
+        fadeMultiplier *= getEaseFactor(t, this.timing.fadeOut.curve);
+      }
+    }
+    // Sync volume with fade applied
+    audio.volume = Math.max(0, Math.min(1, this.volume * fadeMultiplier));
 
     if (isPlaying && isWithinClip) {
       // Should be playing

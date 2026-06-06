@@ -134,7 +134,7 @@ export class Compositor extends EventEmitter<{
    */
   constructor(opts: ICompositorOpts = {}) {
     super();
-
+    console.log({ opts });
     const { width = 0, height = 0 } = opts;
     this.canvas = new OffscreenCanvas(width, height);
 
@@ -583,6 +583,7 @@ export class Compositor extends EventEmitter<{
    * @param json The JSON project data
    */
   async loadFromJSON(json: ProjectJSON): Promise<void> {
+    console.log({ json });
     // Clear existing sprites
     this.sprites.forEach((sprite) => {
       sprite.destroy();

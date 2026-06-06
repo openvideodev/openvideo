@@ -47,6 +47,8 @@ export function normalizeClip(clip: any): AnyClip {
       trim: clip.trim || { from: 0, to: 0 },
       duration: clip.duration ?? 0,
       playbackRate: clip.playbackRate ?? 1,
+      fadeIn: clip.fadeIn,
+      fadeOut: clip.fadeOut,
     };
   } else {
     normalized.timing = {
@@ -54,6 +56,8 @@ export function normalizeClip(clip: any): AnyClip {
       trim: normalized.timing.trim || { from: 0, to: 0 },
       duration: normalized.timing.duration ?? 0,
       playbackRate: normalized.timing.playbackRate ?? 1,
+      fadeIn: normalized.timing.fadeIn ?? clip.fadeIn,
+      fadeOut: normalized.timing.fadeOut ?? clip.fadeOut,
     };
   }
 
@@ -100,6 +104,8 @@ export function normalizeClip(clip: any): AnyClip {
   delete normalized.opacity;
   delete normalized.zIndex;
   delete normalized.flip;
+  delete normalized.fadeIn;
+  delete normalized.fadeOut;
 
   return normalized as AnyClip;
 }

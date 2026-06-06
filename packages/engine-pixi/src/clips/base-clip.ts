@@ -276,6 +276,14 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
         };
         duration?: number;
         playbackRate?: number;
+        fadeIn?: {
+          duration: number;
+          curve?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
+        };
+        fadeOut?: {
+          duration: number;
+          curve?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
+        };
       };
     },
     _fps: number = 30,
@@ -302,6 +310,12 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
       }
       if (props.timing.playbackRate !== undefined) {
         this.timing.playbackRate = props.timing.playbackRate;
+      }
+      if (props.timing.fadeIn !== undefined) {
+        this.timing.fadeIn = props.timing.fadeIn;
+      }
+      if (props.timing.fadeOut !== undefined) {
+        this.timing.fadeOut = props.timing.fadeOut;
       }
     }
 
@@ -386,6 +400,8 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
         },
         duration: this.timing.duration,
         playbackRate: this.timing.playbackRate,
+        fadeIn: this.timing.fadeIn,
+        fadeOut: this.timing.fadeOut,
       },
       transform: {
         x: this.left,

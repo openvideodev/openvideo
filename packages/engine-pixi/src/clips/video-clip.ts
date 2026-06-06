@@ -7,7 +7,7 @@ import {
   parseMatrix,
   quickParseMP4File,
 } from "../mp4-utils/mp4box-utils";
-import { audioResample, extractPCM4AudioData, sleep } from "../utils";
+import { audioResample, extractPCM4AudioData, sleep, getEaseFactor } from "../utils";
 import { BaseClip } from "./base-clip";
 import { DEFAULT_AUDIO_CONF, type IClip, type IPlaybackCapable } from "./iclip";
 import { type VideoJSON } from "../json-serialization";
@@ -474,6 +474,8 @@ export class Video extends BaseClip implements IPlaybackCapable {
     clip.display.to = timing.display.to;
     clip.duration = timing.duration;
     clip.playbackRate = timing.playbackRate;
+    if (timing.fadeIn !== undefined) clip.timing.fadeIn = timing.fadeIn;
+    if (timing.fadeOut !== undefined) clip.timing.fadeOut = timing.fadeOut;
 
     if (json.style) {
       clip.style = { ...clip.style, ...json.style };
@@ -632,12 +634,35 @@ export class Video extends BaseClip implements IPlaybackCapable {
     timeSeconds: number,
   ): void {
     const video = element as HTMLVideoElement;
-    const clipDuration = (this.trim.to - this.trim.from) / 1e6;
+    const clipDuration =
+      this.duration && this.duration !== Infinity
+        ? this.duration / 1e6
+        : (this.display.to - this.display.from) / 1e6;
     const isWithinClip = timeSeconds >= 0 && timeSeconds < clipDuration;
 
     const trimmedTime = timeSeconds + this.trim.from / 1e6;
-    // Sync volume
-    video.volume = this.volume;
+    // Sync volume with fade applied for HTML Video element preview
+    const clipDurationMs = clipDuration * 1000;
+    const timeMs = timeSeconds * 1000;
+    let fadeMultiplier = 1.0;
+    if (
+      this.timing.fadeIn &&
+      this.timing.fadeIn.duration > 0 &&
+      timeMs < this.timing.fadeIn.duration
+    ) {
+      fadeMultiplier *= getEaseFactor(
+        timeMs / this.timing.fadeIn.duration,
+        this.timing.fadeIn.curve,
+      );
+    }
+    if (this.timing.fadeOut && this.timing.fadeOut.duration > 0) {
+      const fadeOutStartMs = clipDurationMs - this.timing.fadeOut.duration;
+      if (timeMs >= fadeOutStartMs) {
+        const t = 1.0 - (timeMs - fadeOutStartMs) / this.timing.fadeOut.duration;
+        fadeMultiplier *= getEaseFactor(t, this.timing.fadeOut.curve);
+      }
+    }
+    video.volume = Math.max(0, Math.min(1, this.volume * fadeMultiplier));
 
     if (isPlaying && isWithinClip) {
       // Should be playing

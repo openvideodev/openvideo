@@ -49,6 +49,7 @@ import useLayoutStore from "../store/use-layout-store";
 import { useStore } from "zustand";
 import { useEphemeralClip } from "@/hooks/use-ephemeral-clip";
 import { projectStore, core } from "@/lib/project";
+import { SharedAudioProperties } from "./shared-audio-properties";
 
 interface VideoPropertiesProps {
   clip: IClip;
@@ -278,32 +279,8 @@ export function VideoProperties({ clip }: VideoPropertiesProps) {
         </div>
       </div>
 
-      {/* Audio Section */}
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Volume
-        </label>
-        <div className="flex items-center gap-4">
-          <IconVolume className="size-4 text-muted-foreground" />
-          <Slider
-            value={[Math.round(getVolume() * 100)]}
-            onValueChange={(v) => handleUpdate({ volume: v[0] / 100 })}
-            max={100}
-            step={1}
-            className="flex-1"
-          />
-          <InputGroup className="w-20">
-            <NumberInput
-              value={Math.round(getVolume() * 100)}
-              onChange={(val) => handleUpdate({ volume: val / 100 })}
-              className="p-0 text-center"
-            />
-            <InputGroupAddon align="inline-end" className="p-0 pr-2">
-              <span className="text-[10px] text-muted-foreground">%</span>
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-      </div>
+      {/* Audio properties */}
+      <SharedAudioProperties clip={clip} />
 
       {/* Opacity Section */}
       <div className="flex flex-col gap-2">

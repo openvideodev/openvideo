@@ -1,8 +1,9 @@
 import { Application, Container } from "pixi.js";
-import { type IClip, Transition } from "../clips";
+import { type IClip, Transition, DEFAULT_AUDIO_CONF } from "../clips";
 import { PixiSpriteRenderer } from "../sprite/pixi-sprite-renderer";
 import { TransitionManager } from "./transition-manager";
 import { EffectManager } from "./effect-manager";
+import { applyAudioFade } from "../utils";
 
 export interface ISpritesRenderOpts {
   pixiApp: Application | null;
@@ -184,6 +185,24 @@ export function createSpritesRender(opts: ISpritesRenderOpts): ISpritesRenderRes
 
       // Get video frame and audio from sprite (using cache)
       const { video, audio, done } = await getFrameCached(sprite, relativeTime);
+
+      // Apply audio fade using precise clip-relative timing known at compositor level
+      if (audio && audio.length > 0 && (sprite.timing?.fadeIn || sprite.timing?.fadeOut)) {
+        const clipDurationMicro =
+          sprite.duration && sprite.duration !== Infinity
+            ? sprite.duration
+            : sprite.display.to - sprite.display.from;
+        const audioDurationMicro = (audio[0].length / DEFAULT_AUDIO_CONF.sampleRate) * 1e6;
+        const endTimeMicro = relativeTime + audioDurationMicro;
+        applyAudioFade(
+          audio,
+          endTimeMicro, // clip-relative END time of this chunk
+          clipDurationMicro,
+          DEFAULT_AUDIO_CONF.sampleRate,
+          sprite.timing?.fadeIn,
+          sprite.timing?.fadeOut,
+        );
+      }
 
       // Process audio
       audios.push(audio);
