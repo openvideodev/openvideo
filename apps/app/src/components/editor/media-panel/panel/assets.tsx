@@ -318,34 +318,13 @@ function AssetCard({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              ) : asset.indexingStatus === "completed" ? /* No badge for completed audio */
-              null : (
-                /* Indexing States (Pending, Processing) */
+              ) : asset.indexingStatus === "completed" /* No badge for completed audio */ ? null : (
+                /* Simplified to just "Analyzing" for all indexing states */
                 <div className="flex flex-col items-center gap-1.5 w-full">
                   <IconLoader2 className="animate-spin text-amber-500 size-4" />
                   <div className="text-[10px] font-semibold text-muted-foreground text-center">
-                    {asset.indexingStatus === "pending" ? (
-                      <span className="text-muted-foreground/80">Queued</span>
-                    ) : (
-                      <span>{formatStage(asset.indexingStage)}</span>
-                    )}
+                    Analyzing
                   </div>
-                  {asset.indexingStatus === "processing" &&
-                    asset.indexingProgress !== undefined &&
-                    asset.indexingProgress !== null &&
-                    asset.indexingProgress > 0 && (
-                      <div className="w-full flex flex-col items-center gap-1">
-                        <span className="text-[9px] text-muted-foreground">
-                          {asset.indexingProgress}%
-                        </span>
-                        <div className="w-full h-1 bg-border rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-amber-500 transition-all duration-300"
-                            style={{ width: `${asset.indexingProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
                 </div>
               )}
             </div>
@@ -378,29 +357,12 @@ function AssetCard({
                   </Tooltip>
                 </TooltipProvider>
               ) : (
+                /* Simplified to just "Analyzing" for all indexing states */
                 <div className="flex flex-col items-center gap-1.5 w-full">
                   <IconLoader2 className="animate-spin text-amber-500 size-4" />
                   <div className="text-[10px] font-semibold text-white/90 text-center">
-                    {asset.indexingStatus === "pending" ? (
-                      <span>Queued</span>
-                    ) : (
-                      <span>{formatStage(asset.indexingStage)}</span>
-                    )}
+                    Analyzing
                   </div>
-                  {asset.indexingStatus === "processing" &&
-                    asset.indexingProgress !== undefined &&
-                    asset.indexingProgress !== null &&
-                    asset.indexingProgress > 0 && (
-                      <div className="w-full flex flex-col items-center gap-1">
-                        <span className="text-[9px] text-white/70">{asset.indexingProgress}%</span>
-                        <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-amber-500 transition-all duration-300"
-                            style={{ width: `${asset.indexingProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
                 </div>
               )}
             </div>
@@ -429,13 +391,13 @@ function AssetCard({
                     <IconDots size={12} className="text-foreground" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-32">
+                <DropdownMenuContent align="end" className="w-32 py-2">
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
                       onSelect(asset);
                     }}
-                    className="text-xs cursor-pointer"
+                    className="text-sm cursor-pointer"
                   >
                     Details
                   </DropdownMenuItem>
@@ -444,7 +406,7 @@ function AssetCard({
                       e.stopPropagation();
                       onDownload(asset);
                     }}
-                    className="text-xs cursor-pointer"
+                    className="text-sm cursor-pointer"
                   >
                     Download
                   </DropdownMenuItem>
@@ -453,7 +415,7 @@ function AssetCard({
                       e.stopPropagation();
                       onDelete(asset.id);
                     }}
-                    className="text-xs text-destructive cursor-pointer"
+                    className="text-sm text-destructive cursor-pointer"
                   >
                     Delete
                   </DropdownMenuItem>
