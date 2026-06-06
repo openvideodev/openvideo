@@ -555,6 +555,13 @@ export abstract class BaseSprite<
     target.duration = this.duration;
     target.playbackRate = this.playbackRate;
     target.trim = { ...this.trim };
+    // Copy fade settings so they are preserved when cloning for the compositor
+    if (this.timing.fadeIn !== undefined) {
+      target.timing.fadeIn = { ...this.timing.fadeIn };
+    }
+    if (this.timing.fadeOut !== undefined) {
+      target.timing.fadeOut = { ...this.timing.fadeOut };
+    }
     target.style = JSON.parse(JSON.stringify(this.style || {}));
     target.animations = [...this.animations];
     target.chromaKey = { ...this.chromaKey };
