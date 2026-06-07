@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 
 from ..core.interfaces import DatabaseClient, Asset, TranscriptSegment, VisualScene
 from ..core.exceptions import DatabaseError
+from ..shared.logging import get_logger
+
+logger = get_logger("database")
 
 load_dotenv()
 
@@ -34,22 +37,23 @@ class PostgreSQLClient(DatabaseClient):
                 with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                     cursor.execute(
                         """
-                        SELECT id, name, type, src, "spaceId", "userId", duration, size, width, height
+                        SELECT id, name, type, src, "originalSrc", "spaceId", "userId", duration, size, width, height
                         FROM asset
                         WHERE id = %s
                         """,
                         (asset_id,)
                     )
-                    
+
                     row = cursor.fetchone()
                     if not row:
                         return None
-                    
+
                     return Asset(
                         id=row["id"],
                         name=row["name"],
                         type=row["type"],
                         src=row["src"],
+                        original_src=row["originalSrc"],
                         space_id=row["spaceId"],
                         user_id=row["userId"],
                         duration=row["duration"],
@@ -237,4 +241,34 @@ class PostgreSQLClient(DatabaseClient):
                 conn.close()
         except Exception as e:
             raise DatabaseError(f"Failed to get visual timeline for {asset_id}: {str(e)}")
+    
+    async def update_asset_src(self, asset_id: str, new_src: str) -> None:
+        """Update asset src URL after conforming, preserving original src."""
+        try:
+            conn = psycopg2.connect(self.connection_string)
+            try:
+                with conn.cursor() as cursor:
+                    # First, get current src to save as originalSrc if not already set
+                    cursor.execute(
+                        'SELECT src, "originalSrc" FROM asset WHERE id = %s',
+                        (asset_id,)
+                    )
+                    row = cursor.fetchone()
+                    current_src = row[0] if row else None
+                    existing_original = row[1] if row else None
+
+                    # Only set originalSrc if it's not already set (first conform)
+                    original_to_save = existing_original or current_src
+
+                    # Update src and set originalSrc
+                    cursor.execute(
+                        'UPDATE asset SET src = %s, "originalSrc" = %s, "updatedAt" = NOW() WHERE id = %s',
+                        (new_src, original_to_save, asset_id)
+                    )
+                    conn.commit()
+                    logger.info(f"Updated asset {asset_id} src to {new_src}, originalSrc={original_to_save}")
+            finally:
+                conn.close()
+        except Exception as e:
+            raise DatabaseError(f"Failed to update asset src for {asset_id}: {str(e)}")
 

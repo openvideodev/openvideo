@@ -46,6 +46,7 @@
     "@trpc/next": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
     "@vercel/analytics": "^2.0.1",
+    "@workflow/core": "^4.3.1",
     "better-auth": "^1.6.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -58,6 +59,7 @@
     "lodash": "^4.17.21",
     "mediabunny": "^1.26.0",
     "mime": "^4.1.0",
+    "modal": "^0.7.6",
     "motion": "^12.23.26",
     "nanoid": "^5.0.7",
     "next": "16.2.6",
@@ -80,6 +82,7 @@
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.5.0",
     "tinyld": "^1.3.4",
+    "workflow": "^4.3.1",
     "zod": "^4.1.13",
     "zustand": "^5.0.4"
   },

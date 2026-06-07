@@ -15,6 +15,13 @@
       "when": 1780496465786,
       "tag": "0001_motionless_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780858435011,
+      "tag": "0002_stale_scrambler",
+      "breakpoints": true
     }
   ]
 }

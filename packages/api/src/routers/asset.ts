@@ -46,6 +46,9 @@ export const assetRouter = router({
         thumbnailSrc: z.string().optional(),
         duration: z.number().optional(),
         size: z.number().optional(),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        fps: z.number().optional(),
         autoIndex: z.boolean().default(true),
       }),
     )
@@ -63,6 +66,9 @@ export const assetRouter = router({
           thumbnailSrc: input.thumbnailSrc,
           duration: input.duration,
           size: input.size,
+          width: input.width,
+          height: input.height,
+          fps: input.fps,
           userId: ctx.user.id,
         })
         .returning();
@@ -75,28 +81,31 @@ export const assetRouter = router({
             assetId: id,
             spaceId: input.spaceId,
             status: "pending",
+            processingStatus: "pending",
           })
           .onConflictDoNothing();
 
-        // Trigger the actual indexing workflow using Modal SDK (non-blocking)
-        console.log(`[DEBUG] Triggering Modal indexing for asset ${id} in space ${input.spaceId}`);
+        // Trigger the workflow for asset processing (conform + index)
+        console.log(`[DEBUG] Triggering workflow for asset ${id} in space ${input.spaceId}`);
         try {
-          const modal = new ModalClient();
-          const indexAsset = await modal.functions.fromName("openvideo-indexer", "index_asset");
-          // Fire-and-forget — do not await so the create response returns immediately
-          indexAsset
-            .remote([id])
-            .then((result: any) => {
-              console.log(`[DEBUG] Modal indexing triggered successfully via SDK:`, result);
-            })
-            .catch((triggerErr: any) => {
-              console.error(
-                `[DEBUG] Failed to trigger Modal indexing for asset ${id}:`,
-                triggerErr,
-              );
+          await startWorkflow("process-asset", {
+            assetId: id,
+            spaceId: input.spaceId,
+            userId: ctx.user.id,
+          });
+          console.log(`[DEBUG] Workflow triggered successfully for asset ${id}`);
+        } catch (workflowErr: any) {
+          console.error(`[DEBUG] Failed to trigger workflow for asset ${id}:`, workflowErr);
+          // Fallback: trigger indexing directly
+          try {
+            const modal = new ModalClient();
+            const indexAsset = await modal.functions.fromName("openvideo-processor", "index_asset");
+            indexAsset.remote([id]).catch((err: any) => {
+              console.error(`[DEBUG] Fallback indexing failed for asset ${id}:`, err);
             });
-        } catch (triggerErr) {
-          console.error(`[DEBUG] Failed to set up Modal client for asset ${id}:`, triggerErr);
+          } catch (fallbackErr) {
+            console.error(`[DEBUG] Fallback also failed for asset ${id}:`, fallbackErr);
+          }
         }
       }
 
@@ -190,11 +199,44 @@ export const assetRouter = router({
       console.log(`[DEBUG] triggerIndex: Calling Modal SDK for asset ${input.id}`);
       try {
         const modal = new ModalClient();
-        const indexAsset = await modal.functions.fromName("openvideo-indexer", "index_asset");
+        const indexAsset = await modal.functions.fromName("openvideo-processor", "index_asset");
         const result = await indexAsset.remote([input.id]);
         console.log(`[DEBUG] triggerIndex: Modal indexing triggered successfully:`, result);
       } catch (err: any) {
         console.error(`[DEBUG] triggerIndex: Failed to start Modal indexing:`, err);
+        throw err;
+      }
+
+      return { success: true, status: "queued" };
+    }),
+
+  // Trigger video conforming (re-encode to browser-compatible format, max 60fps)
+  triggerConform: protectedProcedure
+    .input(
+      z.object({ id: z.string(), spaceId: z.string(), maxFps: z.number().optional().default(60) }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Ensure asset exists and belongs to user
+      const exists = await db.query.asset.findFirst({
+        where: and(
+          eq(asset.id, input.id),
+          eq(asset.spaceId, input.spaceId),
+          eq(asset.userId, ctx.user.id),
+        ),
+      });
+
+      if (!exists) throw new Error("Asset not found");
+      if (exists.type !== "video") throw new Error("Asset is not a video");
+
+      // Trigger conform via Modal SDK
+      console.log(`[DEBUG] triggerConform: Calling Modal SDK for asset ${input.id}`);
+      try {
+        const modal = new ModalClient();
+        const conformAsset = await modal.functions.fromName("openvideo-processor", "conform_asset");
+        const result = await conformAsset.remote([input.id, input.maxFps]);
+        console.log(`[DEBUG] triggerConform: Modal conform triggered successfully:`, result);
+      } catch (err: any) {
+        console.error(`[DEBUG] triggerConform: Failed to start Modal conform:`, err);
         throw err;
       }
 

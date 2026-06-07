@@ -7,6 +7,8 @@ export interface ProjectFile {
   type: "image" | "video" | "audio";
   src: string;
   thumbnailSrc?: string | null;
+  width?: number;
+  height?: number;
   duration?: number;
   size?: number;
   createdAt: string;

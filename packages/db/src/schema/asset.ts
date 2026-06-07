@@ -19,6 +19,8 @@ export const asset = pgTable(
     size: integer("size"), // size in bytes
     width: integer("width"),
     height: integer("height"),
+    fps: real("fps"), // frame rate for videos
+    originalSrc: text("originalSrc"), // Original URL before conforming
     source: text("source").notNull().default("upload"), // 'upload' | 'ai_generated'
     userId: text("userId")
       .notNull()
@@ -90,6 +92,7 @@ export const assetIndexingStatus = pgTable(
       .references(() => space.id, { onDelete: "cascade" }),
     orgId: text("orgId"),
     status: text("status").notNull().default("pending"), // 'pending' | 'processing' | 'completed' | 'failed'
+    processingStatus: text("processingStatus").default("pending"), // 'pending' | 'conforming' | 'indexing' | 'completed' | 'failed'
     progress: integer("progress").default(0), // 0-100 percentage
     stage: text("stage"), // 'downloading' | 'transcribing' | 'embedding' | 'storing'
     error: text("error"), // Error message if failed

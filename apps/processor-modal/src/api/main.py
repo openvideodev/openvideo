@@ -1,4 +1,4 @@
-"""Main Modal functions for video indexing - integrated with app workflow approach."""
+"""Main Modal functions for video processing - indexing, conforming, transcoding, and AI operations."""
 
 import asyncio
 import modal
@@ -10,7 +10,7 @@ from ..indexer.video_indexer import VideoIndexer
 from ..core.exceptions import VideoIndexingError
 
 # Modal app configuration
-app = modal.App("openvideo-indexer")
+app = modal.App("openvideo-processor")
 
 # Define Modal image with dependencies from app package.json
 # Rebuild: 2026-06-01 - Fix PGVector connection_string parameter
@@ -38,7 +38,8 @@ image = modal.Image.debian_slim().pip_install([
     # Utilities
     "python-dotenv>=1.0.0",
     "tenacity>=8.2.0",
-    "nanoid==2.0.0"
+    "nanoid==2.0.0",
+    "boto3>=1.28.0"
 ]).run_commands([
     "apt-get update && apt-get install -y ffmpeg",
     "ffmpeg -version"  # Verify installation
@@ -285,6 +286,119 @@ async def health_check() -> Dict[str, Any]:
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat()
         }
+
+
+@app.function(
+    image=image,
+    volumes={"/data": volume},
+    timeout=600,  # 10 minutes
+    memory=4096,  # 4GB RAM
+    secrets=[
+        modal.Secret.from_name("openvideo-db"),
+        modal.Secret.from_name("openvideo-r2"),  # R2 credentials
+    ]
+)
+async def conform_asset(asset_id: str, max_fps: int = 60) -> Dict[str, Any]:
+    """Conform video to browser-optimized format (H.264, 60fps max, yuv420p)."""
+    from ..services.downloader import HttpVideoDownloader
+    from ..services.uploader import R2Uploader
+    from ..services.video_conformer import VideoConformer
+    from ..services.database import PostgreSQLClient
+    
+    start_time = datetime.utcnow()
+    
+    try:
+        print(f"Starting conform for asset: {asset_id}")
+        
+        # Validate environment
+        required_envs = ["DATABASE_URL", "R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]
+        missing_envs = [env for env in required_envs if not os.getenv(env)]
+        
+        if missing_envs:
+            raise Exception(f"Missing environment variables: {', '.join(missing_envs)}")
+        
+        # Get asset from database
+        db = PostgreSQLClient()
+        asset = await db.get_asset(asset_id)
+        
+        if not asset:
+            return {
+                "success": False,
+                "asset_id": asset_id,
+                "error": "Asset not found",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        if asset.type != "video":
+            return {
+                "success": False,
+                "asset_id": asset_id,
+                "error": "Asset is not a video",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        # Initialize services
+        downloader = HttpVideoDownloader()
+        conformer = VideoConformer(downloader, max_fps=max_fps)
+        uploader = R2Uploader()
+        
+        # Conform video
+        result = await conformer.conform(asset)
+        
+        if not result["was_conformed"]:
+            duration = (datetime.utcnow() - start_time).total_seconds()
+            return {
+                "success": True,
+                "asset_id": asset_id,
+                "was_conformed": False,
+                "message": "Video already optimized",
+                "video_info": result["video_info"],
+                "duration_seconds": round(duration, 2),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        # Upload conformed video to R2
+        r2_key = uploader.generate_key(asset_id, suffix="conformed")
+        new_src = await uploader.upload_file(result["local_path"], r2_key)
+        
+        # Update asset in database with new src
+        await db.update_asset_src(asset_id, new_src)
+        
+        # Clean up local files
+        for path in [result.get("local_path"), result.get("original_local_path")]:
+            if path and os.path.exists(path):
+                os.unlink(path)
+                # Try to remove temp dir
+                try:
+                    os.rmdir(os.path.dirname(path))
+                except:
+                    pass
+        
+        duration = (datetime.utcnow() - start_time).total_seconds()
+        
+        print(f"Conform completed for asset: {asset_id} in {duration:.2f}s")
+        
+        return {
+            "success": True,
+            "asset_id": asset_id,
+            "was_conformed": True,
+            "original_fps": result["original_fps"],
+            "new_fps": result["new_fps"],
+            "new_src": new_src,
+            "video_info": result["video_info"],
+            "duration_seconds": round(duration, 2),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"Conform failed for asset {asset_id}: {str(e)}")
+        return {
+            "success": False,
+            "asset_id": asset_id,
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
 
 # Local development entry point
 if __name__ == "__main__":

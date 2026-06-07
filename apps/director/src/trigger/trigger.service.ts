@@ -108,4 +108,21 @@ export class TriggerService {
       throw error;
     }
   }
+
+  async triggerConformAsset(assetId: string, maxFps: number = 60): Promise<string> {
+    this.logger.log(`Triggering Modal asset conform for asset ${assetId} (max_fps: ${maxFps})`);
+
+    try {
+      const modal = new ModalClient();
+      const conformAsset = await modal.functions.fromName("openvideo-processor", "conform_asset");
+
+      const result = await conformAsset.remote([assetId, maxFps]);
+      this.logger.log(`Modal asset conform triggered successfully:`, result);
+      return "success";
+    } catch (error: any) {
+      this.logger.error(`Failed to trigger Modal asset conform:`, error.message);
+      this.logger.error(`Error stack:`, error.stack);
+      throw error;
+    }
+  }
 }

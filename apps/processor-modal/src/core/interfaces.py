@@ -33,6 +33,7 @@ class Asset:
     duration: Optional[float] = None
     size: Optional[int] = None
     dimensions: Optional[Dict[str, int]] = None
+    original_src: Optional[str] = None  # Original URL before conforming
 
 
 @dataclass

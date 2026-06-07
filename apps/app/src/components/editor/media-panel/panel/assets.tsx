@@ -22,15 +22,11 @@ import {
   IconUpload,
   IconSparkles,
   IconDots,
-  IconDownload,
 } from "@tabler/icons-react";
-import { storageService } from "@/lib/storage/storage-service";
 import type { MediaType } from "@/types/media";
-import { getPresignedConfig, uploadFileWithConfig } from "@/lib/upload-utils";
-import { generateThumbnail } from "@/lib/thumbnail-generator";
+import { useAssetUpload } from "@/hooks/use-asset-upload";
 import { trpc } from "@/lib/trpc";
 import Draggable from "@/components/shared/draggable";
-import { useGeneratorModalStore } from "@/stores/generator-modal-store";
 import { AssetGeneratorModal } from "../asset-generator-modal";
 import {
   DropdownMenu,
@@ -49,7 +45,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
@@ -76,16 +71,6 @@ interface VisualAsset {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function detectFileType(file: File): MediaType {
-  const mime = file.type.toLowerCase();
-  const ext = file.name.split(".").pop()?.toLowerCase() || "";
-  if (mime.startsWith("audio/") || ["mp3", "wav", "ogg", "flac", "aac", "m4a"].includes(ext))
-    return "audio";
-  if (mime.startsWith("video/") || ["mp4", "webm", "mov", "avi", "mkv"].includes(ext))
-    return "video";
-  return "image";
-}
 
 function formatDuration(seconds?: number) {
   if (!seconds) return "";
@@ -458,7 +443,6 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
   const spaceId = useProjectStore((state) => state.spaceId);
   const files = useAssetsStore((state) => state.files);
   const setFiles = useAssetsStore((state) => state.setFiles);
-  const addFiles = useAssetsStore((state) => state.addFiles);
   const updateFile = useAssetsStore((state) => state.updateFile);
   const removeFile = useAssetsStore((state) => state.removeFile);
   const isAssetsStoreLoading = useAssetsStore((state) => state.isLoading);
@@ -466,7 +450,6 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "image" | "video" | "audio">("all");
-  const [isUploading, setIsUploading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState(false);
@@ -483,10 +466,6 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  const loadStorageStats = useCallback(async () => {
-    await storageService.getStorageStats();
-  }, []);
 
   // tRPC asset queries and mutations
   const { data: assetsData, refetch: refetchAssets } = trpc.asset.list.useQuery(
@@ -505,7 +484,6 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
       },
     );
 
-  const createAsset = trpc.asset.create.useMutation();
   const deleteAsset = trpc.asset.delete.useMutation();
   const triggerIndex = trpc.asset.triggerIndex.useMutation();
 
@@ -529,11 +507,10 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
         indexingError: asset.indexingStatus?.error ?? null,
       }));
       setFiles(projectFiles);
-      loadStorageStats();
       setAssetsStoreLoading(false);
       setIsLoaded(true);
     }
-  }, [assetsData, spaceId, setFiles, loadStorageStats, setAssetsStoreLoading]);
+  }, [assetsData, spaceId, setFiles, setAssetsStoreLoading]);
 
   // Load uploads on mount
   useEffect(() => {
@@ -543,7 +520,7 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
     }
   }, [spaceId, setAssetsStoreLoading]);
 
-  // Real-time polling for indexing status of in-flight files
+  // Real-time polling for indexing/conform status of in-flight files
   useEffect(() => {
     const inFlight = files.filter(
       (f) =>
@@ -561,21 +538,44 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
         const { data: freshAssets } = await refetchAssets();
         if (freshAssets) {
           freshAssets.forEach((asset: any) => {
-            if (asset.indexingStatus) {
-              updateFile(asset.id, {
-                indexingStatus: asset.indexingStatus.status ?? null,
-                indexingProgress: asset.indexingStatus.progress ?? null,
-                indexingStage: asset.indexingStatus.stage ?? null,
-                indexingError: asset.indexingStatus.error ?? null,
-              });
-            } else {
-              updateFile(asset.id, {
-                indexingStatus: null,
-                indexingProgress: null,
-                indexingStage: null,
-                indexingError: null,
-              });
+            // Use workflow processingStatus for display, fallback to indexing status
+            const processingStatus = asset.indexingStatus?.processingStatus;
+            const indexingStatus = asset.indexingStatus?.status;
+
+            // Determine display status:
+            // - uploading: client-side only (while uploadProgress exists)
+            // - conforming: workflow processingStatus
+            // - analyzing/indexing: workflow processingStatus or indexing status
+            // - completed: both completed
+            let displayStatus = null;
+            let displayStage = null;
+
+            if (processingStatus === "conforming") {
+              displayStatus = "processing";
+              displayStage = "conforming";
+            } else if (processingStatus === "indexing" || indexingStatus === "processing") {
+              displayStatus = "processing";
+              displayStage = "analyzing";
+            } else if (processingStatus === "failed" || indexingStatus === "failed") {
+              displayStatus = "failed";
+            } else if (processingStatus === "completed" || indexingStatus === "completed") {
+              displayStatus = "completed";
+            } else if (indexingStatus === "pending") {
+              displayStatus = "pending";
             }
+
+            updateFile(asset.id, {
+              src: asset.src,
+              indexingStatus: displayStatus as
+                | "pending"
+                | "processing"
+                | "completed"
+                | "failed"
+                | null,
+              indexingProgress: asset.indexingStatus?.progress ?? null,
+              indexingStage: displayStage as "conforming" | "analyzing" | null,
+              indexingError: asset.indexingStatus?.error ?? null,
+            });
           });
         }
       } catch {
@@ -596,125 +596,15 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
     };
   }, [refetchAssets]);
 
-  // Handle file upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = e.target.files;
-    if (!uploadedFiles || uploadedFiles.length === 0 || !spaceId) return;
-    setIsUploading(true);
-
-    const fileArray = Array.from(uploadedFiles);
-
-    // Create temporary file entries with uploading status
-    const tempFiles: ProjectFile[] = fileArray.map((file) => ({
-      id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      spaceId,
-      name: file.name,
-      type: detectFileType(file),
-      src: "",
-      duration: undefined,
-      size: file.size,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      indexingStatus: null,
-      uploadProgress: 0,
-    }));
-
-    addFiles(tempFiles);
-
-    try {
-      const uploadPromises = fileArray.map(async (file, index) => {
-        const tempId = tempFiles[index].id;
-        const type = tempFiles[index].type;
-        let currentId = tempId;
-
-        try {
-          // 1. Generate thumbnail + presign main URL in parallel
-          const [thumbnailBlob, uploadConfig, duration] = await Promise.all([
-            generateThumbnail(file).catch(() => null),
-            getPresignedConfig(file.name),
-            getMediaDuration(file),
-          ]);
-          const src = uploadConfig.url; // final public R2 URL
-
-          // 2. If we have a thumbnail blob, presign a second URL for it
-          let thumbnailUploadConfig: Awaited<ReturnType<typeof getPresignedConfig>> | null = null;
-          if (thumbnailBlob) {
-            const thumbName = `thumb_${file.name.replace(/\.[^.]+$/, "")}.webp`;
-            thumbnailUploadConfig = await getPresignedConfig(thumbName).catch(() => null);
-          }
-          const thumbnailSrc = thumbnailUploadConfig?.url ?? undefined;
-
-          // 3. Register asset in DB with autoIndex: false so we get a real ID immediately
-          const newAsset = await createAsset.mutateAsync({
-            spaceId,
-            name: file.name,
-            type,
-            src,
-            thumbnailSrc,
-            duration,
-            size: file.size,
-            autoIndex: false,
-          });
-
-          // 4. Replace temp placeholder with real asset ID and show uploading state
-          currentId = newAsset.id;
-          updateFile(tempId, {
-            id: newAsset.id,
-            src,
-            thumbnailSrc: thumbnailSrc ?? null,
-            duration,
-            uploadProgress: 0,
-            indexingStatus: null,
-            indexingProgress: null,
-            indexingStage: null,
-            indexingError: null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
-
-          if (storageService.isOPFSSupported()) {
-            const mediaFile = { id: newAsset.id, file, name: file.name, type, url: src, duration };
-            await storageService.saveMediaFile({ projectId: spaceId, mediaItem: mediaFile });
-          }
-
-          // 5. Upload original file + thumbnail to R2 in parallel
-          await Promise.all([
-            uploadFileWithConfig(file, uploadConfig, (progress) => {
-              updateFile(newAsset.id, { uploadProgress: progress });
-            }),
-            thumbnailBlob && thumbnailUploadConfig
-              ? uploadFileWithConfig(
-                  new File([thumbnailBlob], "thumbnail.webp", { type: "image/webp" }),
-                  thumbnailUploadConfig,
-                ).catch(() => null)
-              : Promise.resolve(),
-          ]);
-
-          // 6. Upload done — clear progress bar, set indexing pending state
-          updateFile(newAsset.id, {
-            uploadProgress: null,
-            indexingStatus: "pending" as const,
-          });
-
-          // 7. Kick off indexing in the background (non-blocking)
-          triggerIndex.mutateAsync({ id: newAsset.id, spaceId }).catch((err) => {
-            console.error(`Failed to trigger index for ${file.name}:`, err);
-            updateFile(newAsset.id, { indexingStatus: "failed" });
-          });
-        } catch (error) {
-          console.error(`Error uploading ${file.name}:`, error);
-          updateFile(currentId, { uploadProgress: null, indexingStatus: "failed" });
-        }
-      });
-
-      await Promise.all(uploadPromises);
-      await loadStorageStats();
-    } catch (error) {
-      console.error("Upload failed:", error);
-    } finally {
-      setIsUploading(false);
+  const { uploadFiles, isUploading } = useAssetUpload({
+    spaceId,
+    onComplete: () => {
       if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    },
+  });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    uploadFiles(e.target.files);
   };
 
   // Handle delete
@@ -732,13 +622,9 @@ export default function PanelAssets({ showHeader = true, showGenerator = true }:
               body: JSON.stringify({ src: file.src }),
             })
           : Promise.resolve(),
-        storageService.isOPFSSupported()
-          ? storageService.deleteMediaFile({ projectId: spaceId, id }).catch(() => null)
-          : Promise.resolve(),
       ]);
 
       removeFile(id);
-      await loadStorageStats();
     } catch (error) {
       console.error("Failed to delete upload:", error);
     }
