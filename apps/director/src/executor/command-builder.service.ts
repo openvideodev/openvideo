@@ -22,27 +22,58 @@ export class CommandBuilderService {
   async buildCommandsForStep(spaceId: string, step: PlanStep): Promise<Command[]> {
     if (step.command) {
       this.logger.debug(`Processing command: ${JSON.stringify(step.command)}`);
-      if (step.command.type === "clip.add" && step.command.payload?.clip) {
+
+      if (step.command.type === "clip.add") {
+        const payloads = Array.isArray(step.command.payload)
+          ? step.command.payload
+          : [step.command.payload];
+
+        this.logger.debug(`clip.add detected. Number of clips to add: ${payloads.length}`);
+
         const core = await this.coreRegistry.get(spaceId);
         const state = core.getSnapshot();
-        const clip = step.command.payload.clip;
+        const commands: Command[] = [];
 
-        let objectFit =
-          step.command.payload.options?.objectFit ||
-          step.command.payload.objectFit ||
-          clip.objectFit;
+        for (let i = 0; i < payloads.length; i++) {
+          const payloadItem = payloads[i];
+          if (!payloadItem?.clip) {
+            this.logger.warn(`clip.add payload element at index ${i} is missing 'clip' property.`);
+            continue;
+          }
 
-        if (!objectFit && (clip.type === "Image" || clip.type === "Video")) {
-          objectFit = "contain";
+          const clip = payloadItem.clip;
+          let objectFit = payloadItem.options?.objectFit || payloadItem.objectFit || clip.objectFit;
+
+          if (!objectFit && (clip.type === "Image" || clip.type === "Video")) {
+            objectFit = "contain";
+          }
+
+          this.logger.log(
+            `Adding clip ${clip.id || i} (type: ${clip.type}) with objectFit: ${objectFit}`,
+          );
+
+          const loadedClip = await loadClip(clip, {
+            canvasSize: { width: state.settings.width, height: state.settings.height },
+            objectFit,
+          });
+
+          this.logger.debug(
+            `Clip loaded successfully: ID = ${loadedClip.id}, type = ${loadedClip.type}`,
+          );
+
+          commands.push({
+            id: `${step.command.id || "clip_add"}_${i}`,
+            type: "clip.add",
+            payload: {
+              ...payloadItem,
+              clip: loadedClip,
+            },
+            meta: step.command.meta,
+          });
         }
-
-        this.logger.log(`Adding clip in server with objectFit: ${objectFit}`);
-
-        step.command.payload.clip = await loadClip(clip, {
-          canvasSize: { width: state.settings.width, height: state.settings.height },
-          objectFit,
-        });
+        return commands;
       }
+
       return [step.command];
     }
 

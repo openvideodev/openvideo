@@ -48,8 +48,8 @@ INSTRUCTIONS:
 QUICK COMMAND REFERENCE (always verify against read_skill_documentation):
 - Add an image clip:   type="command", command.type="clip.add",    payload={ clip: { type: "Image", src: "..." } }
   → The system defaults to objectFit="contain" (scales to fit inside canvas). To override, set clip.objectFit="cover" (fills canvas, may crop).
-- Add a video/audio clip: type="command", command.type="clip.add",  payload={ clip: { type: "Video", src: "...", timing: { display: { from: 0, to: 5000000 }, trim: { from: 10000000, to: 15000000 } } } }
-  → Same objectFit rules apply: defaults to "contain", use clip.objectFit="cover" to fill/crop.
+- Add a video/audio clip: type="command", command.type="clip.add",  payload={ clip: { type: "Video", src: "...", timing: { trim: { from: segmentStartMs*1000, to: segmentEndMs*1000 }, display: { from: cursor, to: cursor+((segmentEndMs-segmentStartMs)*1000) } } } }
+  → TEMPLATE: trim.to MUST equal segmentEndMs*1000 (never trim.from+5000000). display duration MUST equal trim duration. Advance cursor = display.to.
 - Delete a clip:    type="command", command.type="clip.remove", payload={ ids: ["clip_id"] }
 - Delete a track:   type="command", command.type="track.remove", payload={ id: "track_id" }
 - Add a text clip:  type="command", command.type="clip.add",    payload={ clip: { type: "Text", text: "..." } }
@@ -62,11 +62,19 @@ QUICK GENERATION REFERENCE:
 - Generate Sound Effect:     type="generate", jobType="generate-sound-effect",     jobParams={ prompt: "...", durationSeconds: N }
 
 AUTO-COMPOSITION SKILL:
-When the user asks to "create a video about X", "make a composition on topic Y", "build a video using my assets about Z", or similar high-level requests to auto-build a complete video — including structured briefs like highlight reels, brand stories, employee videos, social reels, or any prompt with a narrative arc / sections / tone / audience:
+When the user asks to "create a video about X", "make a composition on topic Y", "build a video using my assets about Z", requests a specific format (e.g. vlog, travel montage, podcast, film), or provides a structured brief with a narrative arc/sections/tone/audience:
 1. Call "read_skill_documentation" with skillName="composition" to get full instructions.
-2. The skill has two modes: standard (topic-based) and narrative (structured brief with sections/tone/audience). The docs will tell you which to use and how.
-3. Follow those instructions exactly. Output raw command/generate/skill steps after reading the docs.
-4. DO NOT use type="skill" for composition — it is an instructional skill.
+2. The documentation covers format-specific rules (vlogs, travel montages, podcasts, films), title cards, chapters, timeline math (running cursor), speaker variety, clip selection quality filters, lower thirds, and speaker identification.
+3. Pay special attention to:
+   - "Timestamp validation": ONLY use RAG results with valid startMs/endMs numbers. Reject asset-summary, asset-topics, asset-description layers (they have no timing). Without timestamps, you cannot calculate trim boundaries. **ALWAYS verify src URL from get_space_state** — RAG may contain stale URLs from re-uploaded assets.
+   - "Strict relevance validation": ONLY use clips where pageContent HIGHLY matches the section intent. Apply the Relevance Score table: HIGH = explicitly matches core intent, MEDIUM = related but not core, LOW = off-topic. Skip MEDIUM and LOW. Never force clips to fill quotas — skip assets/people entirely if they lack HIGH relevance content. Better a shorter cohesive video than one padded with weak clips.
+   - "Chapter Detection from Highlight Lists": if the prompt has a "Highlight:" bullet list (e.g. "* Team collaboration", "* Daily routines"), each bullet becomes a CHAPTER with a 2-second title card, followed by 2-3 video clips from different speakers on that topic. Speaker name lower thirds are added to every clip.
+   - "Chaptered Composition & Title Cards": defines WHEN to use chapters vs. seamless sequencing. A "Highlight:" bullet list = chaptered mode.
+   - "Speaker Identification": derive speaker names from asset filenames to use as lower third labels.
+   - For continuous storytelling (travel montages, vlogs, brand stories with NO Highlight list), do NOT add chapter cards — sequence clips end-to-end.
+4. When generating clip.add commands for video, use the Step 7b Template Formula from the skill docs: trim.to MUST equal segmentEndMs*1000, display.to MUST equal cursor + (segmentEndMs-segmentStartMs)*1000.
+5. Follow those instructions exactly. Output raw command/generate/skill steps after reading the docs.
+6. DO NOT use type="skill" for composition — it is an instructional skill.
 
 AVAILABLE TRANSITIONS (use the key as transitionKey — for full schema read "transition-editing" skill):
 ${transitionCatalog}

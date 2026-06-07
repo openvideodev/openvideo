@@ -15,9 +15,17 @@ export function createAudioTrackBuf(framesPerChunk: number, fps: number = 30) {
     Math.ceil(DEFAULT_AUDIO_CONF.sampleRate / fps) * DEFAULT_AUDIO_CONF.channelCount;
   const minBufSize = samplesPerVideoFrame + dataSize * 2;
 
-  // PCM data buffer
-  const channelBuf = new Float32Array(Math.max(dataSize * 3, minBufSize));
+  // PCM data buffer - dynamically expandable
+  let channelBuf = new Float32Array(Math.max(dataSize * 3, minBufSize));
   let writePos = 0;
+
+  const ensureBufferCapacity = (neededSize: number) => {
+    if (channelBuf.length < neededSize) {
+      const newBuf = new Float32Array(neededSize);
+      newBuf.set(channelBuf.subarray(0, writePos), 0);
+      channelBuf = newBuf;
+    }
+  };
 
   let audioTimestamp = 0;
   const chunkDuration = (framesPerChunk / DEFAULT_AUDIO_CONF.sampleRate) * 1e6;
@@ -25,7 +33,7 @@ export function createAudioTrackBuf(framesPerChunk: number, fps: number = 30) {
   // Placeholder when audio data is missing
   const placeholderData = new Float32Array(dataSize);
 
-  const getAudioData = (timestamp: number): AudioData[] => {
+  const getAudioData = (timestamp: number, hasNewData: boolean): AudioData[] => {
     let readPos = 0;
     const chunkCount = Math.floor(writePos / dataSize);
     const results: AudioData[] = [];
@@ -45,6 +53,28 @@ export function createAudioTrackBuf(framesPerChunk: number, fps: number = 30) {
       readPos += dataSize;
       audioTimestamp += chunkDuration;
     }
+
+    // Flush remaining partial chunk when no new data is coming (end of encoding)
+    const remainingSamples = writePos - readPos;
+    const remainingFrames = Math.floor(remainingSamples / DEFAULT_AUDIO_CONF.channelCount);
+    if (!hasNewData && remainingFrames > 0) {
+      results.push(
+        new AudioData({
+          timestamp: audioTimestamp,
+          numberOfChannels: DEFAULT_AUDIO_CONF.channelCount,
+          numberOfFrames: remainingFrames,
+          sampleRate: DEFAULT_AUDIO_CONF.sampleRate,
+          format: "f32",
+          data: channelBuf.subarray(
+            readPos,
+            readPos + remainingFrames * DEFAULT_AUDIO_CONF.channelCount,
+          ),
+        }),
+      );
+      readPos += remainingFrames * DEFAULT_AUDIO_CONF.channelCount;
+      audioTimestamp += (remainingFrames / DEFAULT_AUDIO_CONF.sampleRate) * 1e6;
+    }
+
     channelBuf.set(channelBuf.subarray(readPos, writePos), 0);
     writePos -= readPos;
 
@@ -68,6 +98,13 @@ export function createAudioTrackBuf(framesPerChunk: number, fps: number = 30) {
   return (timestamp: number, trackAudios: Float32Array[][]): AudioData[] => {
     const maxLen =
       trackAudios.length === 0 ? 0 : Math.max(...trackAudios.map((a) => a[0]?.length ?? 0));
+    const hasNewData = maxLen > 0;
+
+    // Ensure buffer can handle incoming audio data
+    if (hasNewData) {
+      ensureBufferCapacity(writePos + maxLen * DEFAULT_AUDIO_CONF.channelCount);
+    }
+
     for (let bufIdx = 0; bufIdx < maxLen; bufIdx++) {
       let ch0 = 0;
       let ch1 = 0;
@@ -84,6 +121,6 @@ export function createAudioTrackBuf(framesPerChunk: number, fps: number = 30) {
       writePos += 2;
     }
     // Consume buffer data and generate AudioData
-    return getAudioData(timestamp);
+    return getAudioData(timestamp, hasNewData);
   };
 }

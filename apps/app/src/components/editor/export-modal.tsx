@@ -237,7 +237,12 @@ function suppressRenderLoop(): () => void {
     return id;
   };
   win.cancelAnimationFrame = (id) => {
-    if (!queued.delete(id)) originalCAF(id);
+    // Only handle IDs in our range. Pre-suppression IDs (< 0x70000000)
+    // may be stale/invalid - don't try to cancel them with original RAF.
+    if (id >= 0x70000000) {
+      queued.delete(id);
+    }
+    // Silently ignore cancel for IDs outside our range (pre-suppression)
   };
 
   return () => {

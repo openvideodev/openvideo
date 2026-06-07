@@ -458,6 +458,8 @@ export class Compositor extends EventEmitter<{
           (maxTime === -1 ? false : timestamp > maxTime) ||
           this.sprites.length === 0
         ) {
+          // # watch out for cuts in audio
+          // await encodeFrame(timestamp, [], false);
           exit();
           await onEnded();
           return;
@@ -466,6 +468,8 @@ export class Compositor extends EventEmitter<{
 
         const { audios, mainSprDone, hasVideo } = await renderSprites.render(timestamp);
         if (mainSprDone) {
+          // # watch out for cuts in audio
+          // await encodeFrame(timestamp, audios, hasVideo);
           exit();
           await onEnded();
           return;

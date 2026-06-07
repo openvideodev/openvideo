@@ -189,7 +189,36 @@ export class RetrieverService {
       return "No relevant project context found.";
     }
 
-    const blocks = docs.map((doc, i) => this.formatDoc(doc, i));
+    // Filter out results without valid timestamps (asset-summary, asset-topics layers don't have timing)
+    const validDocs = docs.filter((doc) => {
+      const meta = doc.metadata || {};
+      const hasTimestamps = typeof meta.startMs === "number" && typeof meta.endMs === "number";
+      if (!hasTimestamps) {
+        this.logger.debug(
+          `[RAG FILTER] Excluding result without timestamps: ${meta.assetId}, layer=${meta.layer}`,
+        );
+      }
+      return hasTimestamps;
+    });
+
+    this.logger.log(
+      `[RAG DEBUG] Query: "${query}" | Found ${docs.length} total, ${validDocs.length} with valid timestamps:`,
+    );
+    validDocs.forEach((doc, i) => {
+      const meta = doc.metadata || {};
+      this.logger.log(
+        `[RAG DEBUG] Result ${i + 1}: assetId=${meta.assetId}, startMs=${meta.startMs}, endMs=${meta.endMs}, durationMs=${meta.endMs - meta.startMs}, layer=${meta.layer}`,
+      );
+      this.logger.log(
+        `[RAG DEBUG] Result ${i + 1} content: ${doc.pageContent?.substring(0, 100)}...`,
+      );
+    });
+
+    if (validDocs.length === 0) {
+      return "No relevant segments with timing information found. Try searching with different keywords.";
+    }
+
+    const blocks = validDocs.map((doc, i) => this.formatDoc(doc, i));
     return "--- RELEVANT PROJECT CONTEXT ---\n\n" + blocks.join("\n\n") + "\n";
   }
 }
