@@ -33,8 +33,7 @@ export type PropertyKey =
   | "captionLayout"
   // Audio specific
   | "volume"
-  | "fadeIn"
-  | "fadeOut"
+  | "fade"
   | "aiTools"
   // Effect specific
   | "effectConfig"
@@ -45,8 +44,7 @@ export type PropertyKey =
   | "visualGroup" // visual properties grouped together
   | "audioGroup" // audio properties grouped together
   | "textGroup" // text properties grouped together
-  | "captionGroup" // caption properties grouped together
-  | "separator";
+  | "captionGroup"; // caption properties grouped together
 
 // Property configuration for each clip type
 export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
@@ -74,10 +72,8 @@ export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
     "cornerRadius",
     "chromaKey",
     "animations",
-    "separator",
     "volume",
-    "fadeIn",
-    "fadeOut",
+    "fade",
     "aiTools",
   ],
 
@@ -96,7 +92,7 @@ export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
   ],
 
   // Audio clip properties
-  Audio: ["volume", "fadeIn", "fadeOut", "aiTools"],
+  Audio: ["volume", "fade", "aiTools"],
 
   // Effect clip properties
   Effect: ["effectConfig"],
@@ -127,8 +123,7 @@ export const PROPERTY_LABELS: Record<PropertyKey, string> = {
   captionWordsPerLine: "Words Per Line",
   captionLayout: "Layout",
   volume: "Volume",
-  fadeIn: "Fade In",
-  fadeOut: "Fade Out",
+  fade: "Fade",
   aiTools: "AI Tools",
   effectConfig: "Configuration",
   transitionDuration: "Duration",
@@ -137,7 +132,6 @@ export const PROPERTY_LABELS: Record<PropertyKey, string> = {
   audioGroup: "Audio",
   textGroup: "Text",
   captionGroup: "Caption",
-  separator: "",
 };
 
 // Helper to check if a clip type supports a property

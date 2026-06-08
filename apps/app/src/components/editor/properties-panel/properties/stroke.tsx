@@ -46,8 +46,8 @@ export function StrokeProperty({
   return (
     <Collapsible open={open}>
       <SectionHeader title="Stroke" hasContent={open} onAdd={onAdd} onRemove={onRemove} />
-      <CollapsibleContent>
-        <div className="pb-2 flex flex-col gap-2">
+      <CollapsibleContent className="pb-4">
+        <div className="flex flex-col gap-2">
           <div className="flex gap-2">
             <InputGroup className="flex-1">
               <InputGroupAddon align="inline-start" className="relative p-0">

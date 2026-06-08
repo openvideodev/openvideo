@@ -11,7 +11,7 @@ export { CornerRadiusProperty } from "./corner-radius";
 export { ChromaKeyProperty } from "./chroma-key";
 export { AnimationsProperty } from "./animations";
 export { VolumeProperty } from "./volume";
-export { FadeProperty } from "./fade";
+export { FadeGroupProperty } from "./fade-group";
 export { AiToolsProperty } from "./ai-tools";
 export { TextStyleProperty } from "./text-style";
 export { FontProperty } from "./font";

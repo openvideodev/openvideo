@@ -18,10 +18,12 @@ export function FlipProperty({ value, onChange }: FlipPropertyProps) {
   const { x, y } = value;
 
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Flip
-      </label>
+    <div className="flex flex-col gap-2 pb-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Flip
+        </label>
+      </div>
       <div className="flex items-center gap-2 mt-1">
         <Toggle
           pressed={x}

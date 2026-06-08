@@ -12,11 +12,14 @@ interface CornerRadiusPropertyProps {
 
 export function CornerRadiusProperty({ value, onChange, max = 500 }: CornerRadiusPropertyProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Corner Radius
-      </label>
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Corner Radius
+        </label>
+      </div>
+
+      <div className="flex items-center gap-4 pb-4">
         <Slider
           value={[value || 0]}
           onValueChange={(v) => onChange(v[0])}

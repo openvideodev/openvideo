@@ -15,10 +15,12 @@ interface CaptionPositionPropertyProps {
 
 export function CaptionPositionProperty({ value, onChange }: CaptionPositionPropertyProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Position
-      </label>
+    <div className="flex flex-col gap-2 pb-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Position
+        </label>
+      </div>
       <Select value={value} onValueChange={(v) => onChange(v as any)}>
         <SelectTrigger className="w-full h-9">
           <SelectValue placeholder="Vertical Position" />

@@ -15,10 +15,13 @@ export function VolumeProperty({ value, onChange }: VolumePropertyProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Volume
-      </label>
-      <div className="flex items-center gap-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Volume
+        </label>
+      </div>
+
+      <div className="flex items-center gap-4 pb-4">
         <Slider
           value={[percentage]}
           onValueChange={(v) => onChange(v[0] / 100)}

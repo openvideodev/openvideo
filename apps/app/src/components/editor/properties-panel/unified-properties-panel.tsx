@@ -222,31 +222,20 @@ export function UnifiedPropertiesPanel({ clip }: UnifiedPropertiesPanelProps) {
           />
         );
 
-      case "fadeIn": {
+      case "fade": {
         const timing = coreClip.timing || {};
         const fadeIn = timing.fadeIn || { duration: 0, curve: "linear" };
+        const fadeOut = timing.fadeOut || { duration: 0, curve: "linear" };
         return (
-          <Properties.FadeProperty
+          <Properties.FadeGroupProperty
             key={key}
-            type="in"
-            duration={fadeIn.duration}
-            onChange={(val: number) => {
+            fadeInDuration={fadeIn.duration}
+            fadeOutDuration={fadeOut.duration}
+            onFadeInChange={(val: number) => {
               const newFadeIn = val > 0 ? { duration: val, curve: "linear" } : undefined;
               handleUpdate({ timing: { ...timing, fadeIn: newFadeIn } });
             }}
-          />
-        );
-      }
-
-      case "fadeOut": {
-        const timing = coreClip.timing || {};
-        const fadeOut = timing.fadeOut || { duration: 0, curve: "linear" };
-        return (
-          <Properties.FadeProperty
-            key={key}
-            type="out"
-            duration={fadeOut.duration}
-            onChange={(val: number) => {
+            onFadeOutChange={(val: number) => {
               const newFadeOut = val > 0 ? { duration: val, curve: "linear" } : undefined;
               handleUpdate({ timing: { ...timing, fadeOut: newFadeOut } });
             }}
@@ -643,15 +632,26 @@ export function UnifiedPropertiesPanel({ clip }: UnifiedPropertiesPanelProps) {
         );
       }
 
-      case "separator":
-        return <Separator key={key} className="bg-white/5" />;
-
       default:
         return null;
     }
   };
 
+  // Auto-insert separators between logical property groups
+  const needsSeparator = (key: PropertyKey, index: number) => {
+    if (index === 0) return false;
+    // Insert separator before transform (after textGroup) and before stroke/effects
+    return true;
+  };
+
   return (
-    <div className="flex flex-col gap-5">{propertyKeys.map((key) => renderProperty(key))}</div>
+    <div className="flex flex-col">
+      {propertyKeys.map((key, index) => (
+        <React.Fragment key={key}>
+          {needsSeparator(key, index) && <Separator className="bg-white/10" />}
+          {renderProperty(key)}
+        </React.Fragment>
+      ))}
+    </div>
   );
 }

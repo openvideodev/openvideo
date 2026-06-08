@@ -25,10 +25,12 @@ interface CaptionColorsPropertyProps {
 
 export function CaptionColorsProperty({ captionColors, setColors }: CaptionColorsPropertyProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Caption Colors
-      </label>
+    <div className="flex flex-col gap-2 pb-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Caption Colors
+        </label>
+      </div>
 
       {(
         [
@@ -40,7 +42,7 @@ export function CaptionColorsProperty({ captionColors, setColors }: CaptionColor
         ] as const
       ).map(({ key, label, fallback }) => (
         <div key={key} className="flex flex-col gap-1">
-          <span className="text-[9px] text-muted-foreground">{label}</span>
+          <span className="text-[10px] text-muted-foreground">{label}</span>
           <InputGroup>
             <InputGroupAddon align="inline-start" className="relative p-0">
               <Popover modal={true}>

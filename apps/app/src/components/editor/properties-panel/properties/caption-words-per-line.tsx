@@ -17,10 +17,12 @@ interface CaptionWordsPerLinePropertyProps {
 
 export function CaptionWordsPerLineProperty({ value, onChange }: CaptionWordsPerLinePropertyProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Words per line
-      </label>
+    <div className="flex flex-col gap-2 pb-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Words per line
+        </label>
+      </div>
       <Select value={value} onValueChange={(v) => onChange(v as WordsPerLineMode)}>
         <SelectTrigger className="w-full h-9">
           <SelectValue placeholder="Words per line" />

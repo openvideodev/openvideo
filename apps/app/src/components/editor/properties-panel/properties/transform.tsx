@@ -25,10 +25,12 @@ export function TransformProperty({
   onHeightChange,
 }: TransformPropertyProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Transform
-      </label>
+    <div className="flex flex-col gap-2 pb-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Transform
+        </label>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <InputGroup>
           <InputGroupAddon align="inline-start">

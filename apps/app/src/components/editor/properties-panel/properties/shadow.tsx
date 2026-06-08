@@ -54,8 +54,8 @@ export function ShadowProperty({
   return (
     <Collapsible open={open}>
       <SectionHeader title="Shadow" hasContent={open} onAdd={onAdd} onRemove={onRemove} />
-      <CollapsibleContent>
-        <div className="pb-2 flex flex-col gap-2">
+      <CollapsibleContent className="pb-4">
+        <div className="flex flex-col gap-2">
           <div className="grid grid-cols-2 gap-2">
             <InputGroup>
               <InputGroupAddon align="inline-start">

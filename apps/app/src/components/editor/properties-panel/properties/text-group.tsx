@@ -149,12 +149,14 @@ export function TextGroupProperty({
   const [colorOpen, setColorOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 pb-4">
       {/* Font Section */}
       <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Font
-        </label>
+        <div className="h-12 flex items-center">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Font
+          </label>
+        </div>
 
         <FontPicker currentFamily={{ family: currentFamily }} handleFontChange={onFontChange} />
 

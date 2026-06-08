@@ -22,9 +22,11 @@ export function AiToolsProperty({
 }: AiToolsPropertyProps) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        AI Tools
-      </label>
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Ai tools
+        </label>
+      </div>
       <div className="flex flex-col gap-2">
         {/* Noise Reduction */}
         <div className="p-3 rounded-lg bg-secondary/30 border border-border/40 hover:border-border/60 transition-colors">

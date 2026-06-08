@@ -11,10 +11,13 @@ interface RotationPropertyProps {
 
 export function RotationProperty({ value, onChange, max = 360 }: RotationPropertyProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Rotation
-      </label>
+    <div className="flex flex-col gap-2 pb-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Rotation
+        </label>
+      </div>
+
       <div className="flex items-center gap-4">
         <Slider
           value={[Math.round(value)]}

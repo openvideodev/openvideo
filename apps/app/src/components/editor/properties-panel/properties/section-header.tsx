@@ -19,7 +19,7 @@ export function SectionHeader({ title, hasContent, onAdd, onRemove }: SectionHea
       <Button
         variant="ghost"
         size="icon"
-        className="size-6 rounded-sm"
+        className="size-6 rounded-sm text-muted-foreground"
         onClick={hasContent ? onRemove : onAdd}
       >
         {hasContent ? <IconMinus className="size-4" /> : <IconPlus className="size-4" />}

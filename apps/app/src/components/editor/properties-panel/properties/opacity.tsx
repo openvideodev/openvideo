@@ -13,10 +13,12 @@ export function OpacityProperty({ value, onChange }: OpacityPropertyProps) {
   const percentage = Math.round(value * 100);
 
   return (
-    <div className="flex flex-col gap-4">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-        Opacity
-      </label>
+    <div className="flex flex-col gap-4 pb-4">
+      <div className="h-12 flex items-center">
+        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Opacity
+        </label>
+      </div>
       <div className="flex items-center gap-4">
         <Slider
           value={[percentage]}

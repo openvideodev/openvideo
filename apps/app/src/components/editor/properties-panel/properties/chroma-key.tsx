@@ -39,7 +39,7 @@ export function ChromaKeyProperty({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between h-12">
         <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
           Chroma Key
         </label>
