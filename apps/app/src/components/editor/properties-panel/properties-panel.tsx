@@ -9,16 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import useLayoutStore from "../store/use-layout-store";
 import { PropertyKey, getPropertiesForType } from "./property-registry";
 import * as Properties from "./properties";
-import { EffectProperties } from "./effect-properties";
 import { getFontByPostScriptName, getGroupedFonts } from "@/utils/font-utils";
 
 const GROUPED_FONTS = getGroupedFonts();
 
-interface UnifiedPropertiesPanelProps {
+interface PropertiesPanelContentProps {
   clip: IClip;
 }
 
-export function UnifiedPropertiesPanel({ clip }: UnifiedPropertiesPanelProps) {
+export function PropertiesPanelContent({ clip }: PropertiesPanelContentProps) {
   const coreClipBase = useStore(projectStore, (s) => s.clips[clip.id]);
   const coreClip = useEphemeralClip(clip.id, coreClipBase ?? clip) as any;
   const { setFloatingControl } = useLayoutStore();
@@ -306,29 +305,6 @@ export function UnifiedPropertiesPanel({ clip }: UnifiedPropertiesPanelProps) {
         );
       }
 
-      case "textStyle":
-        return (
-          <Properties.TextStyleProperty
-            key={key}
-            size={style.fontSize || 24}
-            color={style.fill || "#FFFFFF"}
-            backgroundColor={style.backgroundColor}
-            underline={style.underline || false}
-            overline={style.overline || false}
-            linethrough={style.linethrough || false}
-            onSizeChange={(val: number) => handleStyleUpdate({ fontSize: val })}
-            onColorChange={(val: string) => handleStyleUpdate({ fill: val })}
-            onBackgroundColorChange={
-              style.backgroundColor !== undefined
-                ? (val: string) => handleStyleUpdate({ backgroundColor: val })
-                : undefined
-            }
-            onUnderlineChange={(val: boolean) => handleStyleUpdate({ underline: val })}
-            onOverlineChange={(val: boolean) => handleStyleUpdate({ overline: val })}
-            onLinethroughChange={(val: boolean) => handleStyleUpdate({ linethrough: val })}
-          />
-        );
-
       case "textAlignment":
         return (
           <Properties.AlignmentProperty
@@ -583,7 +559,7 @@ export function UnifiedPropertiesPanel({ clip }: UnifiedPropertiesPanelProps) {
 
       // Effect properties - uses the dedicated EffectProperties component
       case "effectConfig":
-        return <EffectProperties key={key} clip={clip} />;
+        return <Properties.EffectProperties key={key} clip={clip} />;
 
       // Transition properties
       case "transitionDuration": {

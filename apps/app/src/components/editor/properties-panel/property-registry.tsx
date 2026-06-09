@@ -130,7 +130,6 @@ export const PROPERTY_LABELS: Record<PropertyKey, string> = {
   animations: "Animations",
   text: "Content",
   font: "Font",
-  textStyle: "Text Style",
   textAlignment: "Alignment",
   textSpacing: "Spacing",
   textBlur: "Blur",
