@@ -20,6 +20,7 @@ const ACCEPTS_MAP: Record<string, string[]> = {
   Caption: ["caption", "text"],
   Effect: ["effect"],
   Transition: ["transition"],
+  Shape: ["shape"],
 };
 
 /**

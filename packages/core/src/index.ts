@@ -13,6 +13,8 @@ export type {
   ICaptionClip,
   ITransitionClip,
   IEffectClip,
+  IShapeClip,
+  IShapeStyle,
   ICaptionStyle,
   ICaptionColors,
   ICaptionWord,
@@ -20,6 +22,7 @@ export type {
   ITrim,
   IFlip,
   ClipType,
+  ShapeType,
   IScaleState,
 } from "./types";
 export {
@@ -48,6 +51,7 @@ import { registerDefaultHandlers } from "./commands/index";
 registerDefaultHandlers();
 export { loadClip } from "./utils/load-item";
 export * from "./utils/patch";
+export { generateId } from "./utils/id";
 export { nanoid } from "nanoid";
 export * from "./utils/caption-utils";
 export { CoreConfig } from "./config";

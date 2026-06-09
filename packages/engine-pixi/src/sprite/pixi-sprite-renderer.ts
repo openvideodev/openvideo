@@ -436,14 +436,23 @@ export class PixiSpriteRenderer {
       }
     }
 
-    if (this.sprite.type !== "Text" && this.sprite.type !== "Caption") {
+    // Skip stroke for clips that handle their own rendering (Text, Caption, Shape)
+    if (
+      this.sprite.type !== "Text" &&
+      this.sprite.type !== "Caption" &&
+      this.sprite.type !== "Shape"
+    ) {
       this.applyStroke(style);
     } else if (this.strokeGraphics) {
       this.strokeGraphics.visible = false;
     }
 
     // 3. Apply Drop Shadow (Media only)
-    if (this.sprite.type !== "Text" && this.sprite.type !== "Caption") {
+    if (
+      this.sprite.type !== "Text" &&
+      this.sprite.type !== "Caption" &&
+      this.sprite.type !== "Shape"
+    ) {
       this.applyShadow(style);
     } else if (this.shadowContainer) {
       this.shadowContainer.visible = false;

@@ -51,6 +51,7 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
   timeline.emitter.on("add:text", handleAddClip);
   timeline.emitter.on("add:transition", handleAddClip);
   timeline.emitter.on("add:effect", handleAddClip);
+  timeline.emitter.on("add:shape", handleAddClip);
 
   // --- 2. CORE -> ENGINES (Reconciliation via store subscription) ---
   // The StudioBridge + TimelineBridge handle patch-driven reconciliation.
@@ -90,6 +91,7 @@ export const addStudioSync = (studio: Studio, timeline: CanvasTimeline): (() => 
     timeline.emitter.off("add:text", handleAddClip);
     timeline.emitter.off("add:transition", handleAddClip);
     timeline.emitter.off("add:effect", handleAddClip);
+    timeline.emitter.off("add:shape", handleAddClip);
     unsubCore();
   };
 };

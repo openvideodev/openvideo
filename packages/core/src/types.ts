@@ -13,7 +13,15 @@ export interface IFlip {
   y: boolean;
 }
 
-export type ClipType = "Video" | "Audio" | "Image" | "Text" | "Transition" | "Caption" | "Effect";
+export type ClipType =
+  | "Video"
+  | "Audio"
+  | "Image"
+  | "Text"
+  | "Transition"
+  | "Caption"
+  | "Effect"
+  | "Shape";
 
 export interface IFade {
   duration: number; // ms
@@ -184,6 +192,24 @@ export interface IEffectClip extends IBaseClip {
   values?: Record<string, any>;
 }
 
+export type ShapeType = "rectangle";
+
+export interface IShapeStyle extends IBaseClipStyle {
+  fill?: string;
+  fillOpacity?: number;
+  stroke?: IClipStroke;
+  borderRadius?: number; // for rectangle rounded corners (consistent with Video)
+  sides?: number; // for polygon and star
+  innerRadius?: number; // for star
+  points?: number[]; // for custom polygon points
+}
+
+export interface IShapeClip extends IBaseClip {
+  type: "Shape";
+  shapeType: ShapeType;
+  style: IShapeStyle;
+}
+
 export type AnyClip =
   | IVideoClip
   | IAudioClip
@@ -191,7 +217,8 @@ export type AnyClip =
   | ITextClip
   | ICaptionClip
   | ITransitionClip
-  | IEffectClip;
+  | IEffectClip
+  | IShapeClip;
 
 export interface ITrack {
   id: string;

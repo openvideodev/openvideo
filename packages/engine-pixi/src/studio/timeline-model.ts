@@ -313,6 +313,8 @@ export class TimelineModel {
       ) {
         (interactionManager.activeTransformer as any).updateBounds();
       }
+      // Refresh hit area when dimensions change
+      interactionManager.refreshClipHitArea(clip);
     };
     clip.on("propsChange", onPropsChange);
     this.studio.clipListeners.set(clip, onPropsChange);
@@ -362,6 +364,7 @@ export class TimelineModel {
   }
 
   private async setupClipVisuals(clip: IClip, audioSource?: string | File | Blob) {
+    console.log("[TimelineModel] setupClipVisuals called for clip:", clip.id, "type:", clip.type);
     // If we've already set up visuals (from cache), check if we need to re-add to container
     const existingRenderer = this.studio.spriteRenderers.get(clip);
     if (existingRenderer) {
@@ -373,15 +376,29 @@ export class TimelineModel {
     } else {
       const meta = await clip.ready;
 
-      // Renderer (Video/Image)
+      // Renderer (Video/Image/Shape)
+      console.log(
+        "[TimelineModel] Setting up renderer for clip:",
+        clip.id,
+        "type:",
+        clip.type,
+        "meta:",
+        meta,
+      );
       if (meta.width > 0 && meta.height > 0) {
         const container = this.studio.clipsNormalContainer!;
         // Simple logic as both branches did the same thing in previous code
         const isVideo = clip.type === "Video" && this.isPlaybackCapable(clip);
         if (!isVideo || (isVideo && (clip as any).tickInterceptor != null)) {
+          console.log("[TimelineModel] Creating PixiSpriteRenderer for clip:", clip.id);
           const renderer = new PixiSpriteRenderer(this.studio.pixiApp!, clip, container);
           this.studio.spriteRenderers.set(clip, renderer);
+          console.log("[TimelineModel] PixiSpriteRenderer created and stored for clip:", clip.id);
+        } else {
+          console.log("[TimelineModel] Skipping PixiSpriteRenderer for video clip:", clip.id);
         }
+      } else {
+        console.log("[TimelineModel] Skipping renderer - invalid dimensions for clip:", clip.id);
       }
     }
 

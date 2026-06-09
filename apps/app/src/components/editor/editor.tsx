@@ -57,11 +57,11 @@ export default function Editor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    setTimeout(() => {
-      core.project.import(data);
-    }, 1000);
-  }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     core.project.import(data);
+  //   }, 1000);
+  // }, []);
 
   // tRPC query for project data
   const { data: projectData } = trpc.space.getById.useQuery(

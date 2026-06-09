@@ -385,7 +385,7 @@ export abstract class BaseClip<T extends BaseSpriteEvents = BaseSpriteEvents>
     const style = this.style ? JSON.parse(JSON.stringify(this.style)) : undefined;
 
     return {
-      type: this.constructor.name as ClipJSON["type"],
+      type: this.type as ClipJSON["type"],
       id: this.id,
       name: this.name,
       src: this.src,

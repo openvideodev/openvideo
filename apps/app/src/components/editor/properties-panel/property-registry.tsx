@@ -14,6 +14,7 @@ export type PropertyKey =
   | "rotation"
   | "flip"
   | "opacity"
+  | "fill"
   | "stroke"
   | "shadow"
   | "cornerRadius"
@@ -99,6 +100,18 @@ export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
 
   // Transition clip properties
   Transition: ["transitionDuration", "transitionSelector"],
+
+  // Shape clip properties
+  Shape: [
+    "transform",
+    "rotation",
+    "opacity",
+    "fill",
+    "stroke",
+    "shadow",
+    "cornerRadius",
+    "animations",
+  ],
 };
 
 // Property labels for UI display
@@ -107,6 +120,7 @@ export const PROPERTY_LABELS: Record<PropertyKey, string> = {
   rotation: "Rotation",
   flip: "Flip",
   opacity: "Opacity",
+  fill: "Fill",
   stroke: "Stroke",
   shadow: "Shadow",
   cornerRadius: "Corner Radius",

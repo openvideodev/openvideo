@@ -18,9 +18,16 @@
     "dist"
   ],
   "type": "module",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "dist/index.umd.cjs",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.cjs"
+    }
+  },
   "publishConfig": {
     "access": "public",
     "tag": "latest"

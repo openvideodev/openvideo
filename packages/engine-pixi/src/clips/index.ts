@@ -14,3 +14,5 @@ export * from "./placeholder-clip";
 export { Placeholder } from "./placeholder-clip";
 export * from "./transition-clip";
 export { Transition } from "./transition-clip";
+export * from "./shape-clip";
+export { ShapeClip } from "./shape-clip";

@@ -29,3 +29,4 @@ export { TransitionSelectorProperty } from "./transition-selector";
 export { AudioPropertyWrapper } from "./audio-wrapper";
 export { TextGroupProperty } from "./text-group";
 export { CaptionGroupProperty } from "./caption-group";
+export { FillProperty } from "./fill";

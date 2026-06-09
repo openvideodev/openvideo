@@ -28,6 +28,7 @@ import { addStudioSync } from "./studio-to-store-sync";
 import { TIMELINE_SCALE_CHANGED } from "@openvideo/timeline";
 import Effect from "./items/effect";
 import { useTimelineContextMenu, TimelineContextMenuProvider } from "./timeline-context-menu";
+import Shape from "./items/shape";
 
 CanvasTimeline.registerItems({
   Text,
@@ -44,6 +45,7 @@ CanvasTimeline.registerItems({
   HillAudioBars,
   Effect,
   Transition,
+  Shape,
 });
 
 const EMPTY_SIZE = { width: 0, height: 0 };
@@ -166,6 +168,7 @@ const Timeline = () => {
       },
       sizesMap: {
         caption: 32,
+        shape: 32,
         text: 32,
         effect: 32,
         audio: 36,
@@ -184,6 +187,7 @@ const Timeline = () => {
         "effect",
         "track",
         "transition",
+        "shape",
       ],
       acceptsMap: {
         text: ["text", "caption"],
@@ -193,6 +197,7 @@ const Timeline = () => {
         video: ["video", "image"],
         audio: ["audio"],
         caption: ["caption", "text"],
+        shape: ["shape"],
       },
       guideLineColor: "#ffffff",
       withTransitions: ["image", "video"],

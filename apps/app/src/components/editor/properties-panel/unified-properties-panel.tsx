@@ -107,6 +107,15 @@ export function UnifiedPropertiesPanel({ clip }: UnifiedPropertiesPanelProps) {
           />
         );
 
+      case "fill":
+        return (
+          <Properties.FillProperty
+            key={key}
+            color={style.fill || "#3b82f6"}
+            onColorChange={(val: string) => handleStyleUpdate({ fill: val })}
+          />
+        );
+
       case "stroke": {
         const hasStroke = style.stroke != null;
         return (

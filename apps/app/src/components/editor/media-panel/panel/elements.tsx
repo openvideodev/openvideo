@@ -2,28 +2,31 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { createShapeClip, type ShapeElement } from "@/lib/shape-utils";
+import { core } from "@/lib/project";
 
-const ELEMENTS = [
-  { id: "path3", name: "Arrow", src: "https://cdn.scenify.io/svg/path3.svg" },
-  { id: "path4", name: "Star", src: "https://cdn.scenify.io/svg/path4.svg" },
-  { id: "path5", name: "Heart", src: "https://cdn.scenify.io/svg/path5.svg" },
-  { id: "path6", name: "Lightning", src: "https://cdn.scenify.io/svg/path6.svg" },
-  { id: "path7", name: "Cloud", src: "https://cdn.scenify.io/svg/path7.svg" },
-  { id: "path8", name: "Burst", src: "https://cdn.scenify.io/svg/path8.svg" },
-  { id: "path9", name: "Wave", src: "https://cdn.scenify.io/svg/path9.svg" },
-  { id: "path10", name: "Spiral", src: "https://cdn.scenify.io/svg/path10.svg" },
-  { id: "path11", name: "Blob", src: "https://cdn.scenify.io/svg/path11.svg" },
-  { id: "path12", name: "Badge", src: "https://cdn.scenify.io/svg/path12.svg" },
-  { id: "path13", name: "Orbit", src: "https://cdn.scenify.io/svg/path13.svg" },
-  { id: "path14", name: "Frame", src: "https://cdn.scenify.io/svg/path14.svg" },
+const ELEMENTS: ShapeElement[] = [
+  { id: "rectangle", name: "Rectangle", shapeType: "rectangle", icon: "□" },
 ];
 
 export default function PanelElements() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const handleAdd = (id: string) => {
-    setSelectedId(id);
-    // TODO: Add element to canvas
+  const handleAdd = async (element: ShapeElement) => {
+    setSelectedId(element.id);
+
+    try {
+      // Create ShapeClip instance
+      const shapeClip = createShapeClip(element);
+
+      // Add to core system
+      await core.clip.add(shapeClip);
+
+      console.log("Added shape:", element.name, "with ID:", shapeClip.id);
+    } catch (error) {
+      console.error("Failed to add shape:", error);
+    }
+
     setTimeout(() => setSelectedId(null), 300);
   };
 
@@ -35,7 +38,7 @@ export default function PanelElements() {
           {ELEMENTS.map((element) => (
             <button
               key={element.id}
-              onClick={() => handleAdd(element.id)}
+              onClick={() => handleAdd(element)}
               className={cn(
                 "group relative aspect-square rounded-lg border overflow-hidden",
                 "bg-secondary/30 border-border/40",
@@ -44,12 +47,9 @@ export default function PanelElements() {
                 selectedId === element.id && "ring-2 ring-primary border-primary",
               )}
             >
-              <img
-                src={element.src}
-                alt={element.name}
-                className="w-full h-full object-contain p-3 invert-[0.35]"
-                loading="lazy"
-              />
+              <div className="w-full h-full flex items-center justify-center p-3">
+                <span className="text-4xl text-foreground/60 invert-[0.35]">{element.icon}</span>
+              </div>
               {/* Hover overlay with name */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-[10px] font-medium text-foreground truncate block">

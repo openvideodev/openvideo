@@ -1948,7 +1948,19 @@ export class Studio extends EventEmitter<StudioEvents> {
           }
         }
 
-        // Traditional path: Get frame data
+        // Shape clip: Set renderer before getting frame
+        if (clip.type === "Shape") {
+          const shapeClip = clip as any;
+          if (this.pixiApp?.renderer && typeof shapeClip.setRenderer === "function") {
+            shapeClip.setRenderer(this.pixiApp.renderer);
+          } else {
+            console.log("[Studio] Cannot set renderer:", {
+              hasRenderer: !!this.pixiApp?.renderer,
+              hasSetRenderer: typeof shapeClip.setRenderer === "function",
+            });
+          }
+        }
+
         const { video: frameVideo } = await clip.getFrame(relativeTime);
 
         // Update renderer with new frame
