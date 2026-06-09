@@ -272,6 +272,7 @@ export function TextGroupProperty({
               </PopoverTrigger>
               <PopoverContent className="w-64 p-3" align="start">
                 <ColorPicker
+                  value={fill}
                   onChange={(colorValue) => {
                     const hexColor = color.rgb(colorValue as number[]).hex();
                     onFillChange(hexColor);

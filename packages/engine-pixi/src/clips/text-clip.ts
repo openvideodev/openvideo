@@ -326,6 +326,33 @@ export class Text extends BaseClip<ITextEvents> {
     this.updateStyle({ textCase: v });
   }
 
+  /**
+   * Decoration proxies for UI compatibility (booleans)
+   */
+  get underline(): boolean {
+    return this.originalOpts.textDecoration === "underline";
+  }
+
+  set underline(v: boolean) {
+    this.updateStyle({ textDecoration: v ? "underline" : "none" });
+  }
+
+  get overline(): boolean {
+    return this.originalOpts.textDecoration === "overline";
+  }
+
+  set overline(v: boolean) {
+    this.updateStyle({ textDecoration: v ? "overline" : "none" });
+  }
+
+  get linethrough(): boolean {
+    return this.originalOpts.textDecoration === "line-through";
+  }
+
+  set linethrough(v: boolean) {
+    this.updateStyle({ textDecoration: v ? "line-through" : "none" });
+  }
+
   private pixiTextContainer: Container | null = null;
   private wordTexts: SplitBitmapText[] = [];
   private textStyle: TextStyle;
@@ -683,6 +710,31 @@ export class Text extends BaseClip<ITextEvents> {
     if ((processedOpts as any).dropShadow !== undefined) {
       processedOpts.shadow = (processedOpts as any).dropShadow;
       delete (processedOpts as any).dropShadow;
+    }
+
+    // Map textAlign to align (UI uses textAlign, internal uses align)
+    if ((processedOpts as any).textAlign !== undefined) {
+      processedOpts.align = (processedOpts as any).textAlign;
+      delete (processedOpts as any).textAlign;
+    }
+
+    // Map boolean decoration flags to textDecoration (UI sends booleans, internal uses enum)
+    const hasUnderline = (processedOpts as any).underline;
+    const hasOverline = (processedOpts as any).overline;
+    const hasLinethrough = (processedOpts as any).linethrough;
+    if (hasUnderline !== undefined || hasOverline !== undefined || hasLinethrough !== undefined) {
+      if (hasUnderline) {
+        processedOpts.textDecoration = "underline";
+      } else if (hasOverline) {
+        processedOpts.textDecoration = "overline";
+      } else if (hasLinethrough) {
+        processedOpts.textDecoration = "line-through";
+      } else {
+        processedOpts.textDecoration = "none";
+      }
+      delete (processedOpts as any).underline;
+      delete (processedOpts as any).overline;
+      delete (processedOpts as any).linethrough;
     }
 
     // 2. Update originalOpts with new values

@@ -46,6 +46,7 @@ export function FillProperty({ color: fillColor, onColorChange }: FillPropertyPr
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3" align="start">
               <ColorPicker
+                value={fillColor}
                 onChange={(colorValue) => {
                   const hexColor = color.rgb(colorValue as number[]).hex();
                   onColorChange(hexColor);

@@ -37,9 +37,14 @@ export function useEphemeralClip(clipId: string, baseClip: any) {
       }
     };
 
-    const handleUpdated = (data: { id: string } | any) => {
-      const id = data.id || data.clip?.id;
-      if (id === clipId) {
+    const handleUpdated = (patches: any[]) => {
+      // Check if any patch affects our clip
+      const hasClipUpdate = patches?.some((patch: any) => {
+        // Match paths like /clips/clipId or /clips/clipId/property
+        const path = patch.path || "";
+        return path.startsWith(`/clips/${clipId}`);
+      });
+      if (hasClipUpdate) {
         setEphemeralUpdates(null);
       }
     };
