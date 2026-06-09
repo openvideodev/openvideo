@@ -65,6 +65,15 @@ export function UnifiedPropertiesPanel({ clip }: UnifiedPropertiesPanelProps) {
   // Render a single property
   const renderProperty = (key: PropertyKey) => {
     switch (key) {
+      case "text":
+        return (
+          <Properties.TextContentProperty
+            key={key}
+            value={coreClip.text || ""}
+            onChange={(val) => handleUpdate({ text: val })}
+          />
+        );
+
       case "transform":
         return (
           <Properties.TransformProperty

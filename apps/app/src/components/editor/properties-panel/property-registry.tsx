@@ -21,6 +21,7 @@ export type PropertyKey =
   | "chromaKey"
   | "animations"
   // Text specific
+  | "text"
   | "font"
   | "textStyle"
   | "textAlignment"
@@ -79,7 +80,7 @@ export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
   ],
 
   // Text clip properties - grouped for unified UI
-  Text: ["textGroup", "transform", "rotation", "opacity", "stroke", "shadow", "animations"],
+  Text: ["text", "textGroup", "transform", "rotation", "opacity", "stroke", "shadow", "animations"],
 
   // Caption clip properties - grouped for unified UI
   Caption: [
@@ -126,6 +127,7 @@ export const PROPERTY_LABELS: Record<PropertyKey, string> = {
   cornerRadius: "Corner Radius",
   chromaKey: "Chroma Key",
   animations: "Animations",
+  text: "Content",
   font: "Font",
   textStyle: "Text Style",
   textAlignment: "Alignment",

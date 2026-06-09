@@ -28,5 +28,6 @@ export { TransitionDurationProperty } from "./transition-duration";
 export { TransitionSelectorProperty } from "./transition-selector";
 export { AudioPropertyWrapper } from "./audio-wrapper";
 export { TextGroupProperty } from "./text-group";
+export { TextContentProperty } from "./text-content";
 export { CaptionGroupProperty } from "./caption-group";
 export { FillProperty } from "./fill";
