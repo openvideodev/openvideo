@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import useLayoutStore from "../store/use-layout-store";
 import { useStudioStore } from "@/stores/studio-store";
+import { core } from "@/lib/project";
 import { Switch } from "@/components/ui/switch";
 import * as Popover from "@radix-ui/react-popover";
 
@@ -126,8 +127,12 @@ export function AnimationPropertiesPicker() {
     }
   }, [duration, clipDuration, activeTab]);
 
-  // Update keyframes only when preset or params change via UI
+  // Update keyframes only when preset or params change via UI (skip in edit mode)
   useEffect(() => {
+    // Don't overwrite keyframes when editing - use saved params
+    if (mode === "edit" && animation?.params) {
+      return;
+    }
     if (preset !== "custom" && preset !== "") {
       if (!(preset in GSAP_PRESETS)) {
         const template = getPresetKeyframes(preset);
@@ -136,7 +141,7 @@ export function AnimationPropertiesPicker() {
     } else if (preset === "" || (preset === "custom" && Object.keys(keyframes).length === 0)) {
       setKeyframes({ "0%": {}, "100%": {} });
     }
-  }, [preset, presetParams]);
+  }, [preset, presetParams, mode, animation]);
 
   const handlePresetChange = (value: string) => {
     setPreset(value);
@@ -264,6 +269,15 @@ export function AnimationPropertiesPicker() {
       clip.addAnimation(type, options, finalParams);
     }
 
+    // Sync animations from engine clip back to core store
+    const updatedAnimations = clip.animations.map((anim: any) => ({
+      id: anim.id,
+      type: anim.type,
+      options: anim.options,
+      params: anim.params,
+    }));
+    core.clip.update(clipId, { animations: updatedAnimations });
+
     clip.emit("propsChange", {});
     setFloatingControl("");
   };
@@ -288,6 +302,14 @@ export function AnimationPropertiesPicker() {
           { ...options, duration: targetDuration, delay: targetDelay },
           finalParams,
         );
+        // Sync animations back to core for each caption clip
+        const updatedAnimations = c.animations.map((anim: any) => ({
+          id: anim.id,
+          type: anim.type,
+          options: anim.options,
+          params: anim.params,
+        }));
+        core.clip.update(c.id, { animations: updatedAnimations });
         c.emit("propsChange", {});
       }
     });

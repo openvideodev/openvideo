@@ -84,6 +84,7 @@ export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
 
   // Caption clip properties - grouped for unified UI
   Caption: [
+    "text",
     "captionColors",
     "captionPosition",
     "captionWordsPerLine",
