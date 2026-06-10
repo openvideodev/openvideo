@@ -46,11 +46,14 @@
           }
         });
 
+        console.log("Loading project with", Object.keys(project.clips || {}).length, "clips...");
         await com.loadFromJSON(project);
+        console.log("Project loaded, starting export...");
 
         const stream = com.output();
         const blob   = await new Response(stream).blob();
 
+        console.log("Export complete - blob size:", blob.size, "bytes, type:", blob.type);
         window.__VIDEO_BLOB__       = blob;
         window.__RENDER_COMPLETE__  = true;
       } catch (err) {

@@ -1,0 +1,22 @@
+services:
+  video-renderer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # For running as a one-off render command:
+    # docker compose run --rm video-renderer /data/project.json /data/output.mp4
+    volumes:
+      - ./data:/data:ro
+      - ./outputs:/tmp/outputs
+    # GPU support (optional, for hardware acceleration)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    environment:
+      - NODE_ENV=production
+    # Keep container alive for testing
+    # command: tail -f /dev/null

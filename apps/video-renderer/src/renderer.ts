@@ -1,10 +1,85 @@
 import { chromium, type Browser, type Page } from "playwright";
 import sirv from "sirv";
 import { createServer, type Server } from "http";
+import { exec } from "child_process";
+import { promisify } from "util";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import type { RenderOptions } from "./index.js";
+
+const execAsync = promisify(exec);
+
+// ---------------------------------------------------------------------------
+// Video pre-transcoding to Opus audio (for WebCodecs compatibility)
+// ---------------------------------------------------------------------------
+
+interface ProjectClip {
+  type?: string;
+  src?: string;
+  audio?: boolean;
+  [key: string]: unknown;
+}
+
+interface ProjectJSON {
+  clips?: Record<string, ProjectClip>;
+  [key: string]: unknown;
+}
+
+/** Pre-transcode video clips to have Opus audio for WebCodecs compatibility */
+async function pretranscodeVideos(project: ProjectJSON): Promise<ProjectJSON> {
+  if (!project.clips) return project;
+
+  const tempDir = path.join(PKG_ROOT, "temp");
+  await fs.mkdir(tempDir, { recursive: true });
+
+  const transcodedClips: Record<string, ProjectClip> = {};
+
+  for (const [id, clip] of Object.entries(project.clips)) {
+    // Only transcode video clips with external URLs and audio
+    if (clip.type === "Video" && clip.src?.startsWith("http") && clip.audio !== false) {
+      try {
+        const tempInput = path.join(tempDir, `input-${id}.mp4`);
+        const tempOutput = path.join(tempDir, `output-${id}.mp4`);
+
+        console.log(`Downloading and transcoding clip ${id}...`);
+
+        // Download the video
+        const response = await fetch(clip.src);
+        if (!response.ok) throw new Error(`Failed to fetch ${clip.src}`);
+        const buffer = Buffer.from(await response.arrayBuffer());
+        await fs.writeFile(tempInput, buffer);
+
+        // Transcode to MP4 with Opus audio (WebCodecs compatible, keeps H.264 video)
+        await execAsync(
+          `ffmpeg -i "${tempInput}" -c:v copy -c:a libopus -b:a 128k "${tempOutput}" -y`,
+          { timeout: 300_000 },
+        );
+
+        // Read the transcoded file as base64 data URL
+        const transcodedBuffer = await fs.readFile(tempOutput);
+        const base64 = transcodedBuffer.toString("base64");
+        const dataUrl = `data:video/mp4;base64,${base64}`;
+
+        transcodedClips[id] = { ...clip, src: dataUrl };
+        console.log(
+          `Transcoded clip ${id} to MP4/Opus (${(transcodedBuffer.length / 1e6).toFixed(1)} MB)`,
+        );
+
+        // Cleanup temp files
+        await fs.unlink(tempInput).catch(() => undefined);
+        await fs.unlink(tempOutput).catch(() => undefined);
+      } catch (err) {
+        console.warn(`Failed to transcode clip ${id}:`, (err as Error).message);
+        transcodedClips[id] = clip; // Keep original on failure
+      }
+    } else {
+      transcodedClips[id] = clip;
+    }
+  }
+
+  return { ...project, clips: transcodedClips };
+}
 
 // ---------------------------------------------------------------------------
 // Path helpers (works both from src/ with tsx and from dist/ after build)
@@ -84,12 +159,18 @@ export class VideoRenderer {
         "--disable-background-timer-throttling",
         "--disable-renderer-backgrounding",
         "--disable-backgrounding-occluded-windows",
-        "--use-gl=angle", // Enable GPU acceleration
-        "--enable-features=VaapiVideoEncoder,VaapiVideoDecoder", // Hardware encoding
-        "--enable-gpu-rasterization", // Faster rasterization
-        "--ignore-gpu-blocklist", // Force GPU even if not on allowlist
+        "--enable-features=WebCodecs,MediaRecorder,AudioEncoder,VideoEncoder",
+        "--enable-blink-features=WebCodecs",
+        "--enable-accelerated-video-encode",
+        "--enable-accelerated-video-decode",
+        "--enable-accelerated-video",
+        "--enable-media-stream",
+        "--autoplay-policy=no-user-gesture-required",
       ],
     });
+
+    const version = await this.browser.version();
+    console.log("Browser:", version);
   }
 
   /**
@@ -105,12 +186,18 @@ export class VideoRenderer {
       videoCodec = "avc1.640033",
       bitrate = 12_000_000,
       audio = true,
-      audioCodec = "aac",
+      audioCodec = "opus",
       audioSampleRate = 48_000,
       onProgress,
       timeout = 600_000,
       prioritizeSpeed = false,
     } = options;
+
+    // Pre-transcode videos to Opus audio if audio is enabled
+    if (audio) {
+      console.log("Pre-transcoding videos to Opus audio...");
+      project = await pretranscodeVideos(project as any);
+    }
 
     // Derive export dimensions from the project settings (can be overridden via options)
     const settings = (project as any).settings ?? {};
@@ -153,9 +240,7 @@ export class VideoRenderer {
       // Forward browser console → Node stdout (useful for debugging)
       page.on("console", (msg) => {
         const type = msg.type();
-        if (type === "error" || type === "warning") {
-          process.stderr.write(`[browser:${type}] ${msg.text()}\n`);
-        }
+        process.stdout.write(`[browser:${type}] ${msg.text()}\n`);
       });
       page.on("pageerror", (err) => process.stderr.write(`[browser:pageerror] ${err.message}\n`));
 

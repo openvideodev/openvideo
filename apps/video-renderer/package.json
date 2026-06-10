@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@openvideo/engine-pixi": "^1.1.4",
-    "playwright": "^1.49.0",
+    "playwright": "^1.60.0",
     "sirv": "^2.0.4"
   },
   "devDependencies": {
@@ -26,7 +26,12 @@
     "tsx": "^4.7.1",
     "typescript": "^5.7.0"
   },
-  "keywords": ["video", "rendering", "playwright", "webcodecs"],
+  "keywords": [
+    "video",
+    "rendering",
+    "playwright",
+    "webcodecs"
+  ],
   "author": "OpenVideo",
   "license": "MIT"
 }

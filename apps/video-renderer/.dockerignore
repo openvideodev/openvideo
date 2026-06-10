@@ -1,0 +1,9 @@
+node_modules
+dist
+*.mp4
+output*
+.gitignore
+README.md
+data*.json
+scratch/
+.DS_Store
