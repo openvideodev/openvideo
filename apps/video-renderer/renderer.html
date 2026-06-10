@@ -1,409 +1,66 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <title>Video Renderer</title>
-    <!-- Import map: resolved by the local HTTP server at /engine-pixi/... -->
-    <script type="importmap">
-    {
-        "imports": {
-            "@openvideo/engine-pixi": "/engine-pixi/index.es.js",
-            "@openvideo/engine-pixi/": "/engine-pixi/"
-        }
-    }
-    </script>
-</head>
-<body>
-    <canvas id="canvas"></canvas>
 
-    <script type="module">
-        import { Compositor } from '@openvideo/engine-pixi';
-        
-        // Project data from sample-project.json
-        const projectData = {
-            "settings": {
-                "width": 1080,
-                "height": 1920,
-                "fps": 30,
-                "duration": 6834675
-            },
-            "tracks": [
-                {
-                    "id": "track_ofb15Ebsl1",
-                    "name": "Captions",
-                    "type": "caption",
-                    "clipIds": ["zUMNRE5IqMIoRmLk00ADl"],
-                    "accepts": ["caption"]
-                },
-                {
-                    "id": "JbOOHCzwhDeqRYAiHjpoW",
-                    "name": "Video Track",
-                    "type": "video",
-                    "clipIds": ["KdfVbYAZCgq2CxkdCD2l9"],
-                    "accepts": ["video", "image"]
-                },
-                {
-                    "id": "2yUr6pCaCG-nGQnA7Elig",
-                    "name": "Text Track",
-                    "type": "text",
-                    "clipIds": ["qF0EnwM8dH7zGR31LJ12O"],
-                    "accepts": ["text", "caption"]
-                },
-                {
-                    "id": "MxIdYjH7NfnzOBNrlGrnG",
-                    "name": "Image Track",
-                    "type": "image",
-                    "clipIds": ["ZSRqW9CEuHcYkf8T_ZiMU"],
-                    "accepts": ["image", "video"]
-                }
-            ],
-            "clips": {
-                "KdfVbYAZCgq2CxkdCD2l9": {
-                    "type": "Video",
-                    "src": "https://cdn.scenify.io/mockuser/3f6b12df-e7af-4f74-8830-7a4d69a16dcf-audio1.mp4",
-                    "name": "audio1.mp4",
-                    "metadata": {
-                        "previewUrl": "https://cdn.scenify.io/mockuser/b768d2ec-00cb-4438-b27a-df651c99311d-thumb_audio1.webp"
-                    },
-                    "id": "KdfVbYAZCgq2CxkdCD2l9",
-                    "timing": {
-                        "display": {
-                            "from": 0,
-                            "to": 6834675
-                        },
-                        "trim": {
-                            "from": 0,
-                            "to": 6834675
-                        },
-                        "duration": 6834675,
-                        "playbackRate": 1
-                    },
-                    "style": {},
-                    "chromaKey": {
-                        "enabled": false,
-                        "color": "#00FF00",
-                        "similarity": 0.1,
-                        "spill": 0
-                    },
-                    "locked": false,
-                    "effects": [],
-                    "animations": [],
-                    "colorAdjustment": {
-                        "enabled": false,
-                        "type": "basic",
-                        "basic": {},
-                        "hsl": {},
-                        "curves": {}
-                    },
-                    "transform": {
-                        "x": 0,
-                        "y": 0,
-                        "width": 1080,
-                        "height": 1920,
-                        "angle": 0,
-                        "opacity": 1,
-                        "zIndex": 10,
-                        "flip": {
-                            "x": false,
-                            "y": false
-                        }
-                    }
-                },
-                "zUMNRE5IqMIoRmLk00ADl": {
-                    "type": "Caption",
-                    "src": "",
-                    "timing": {
-                        "display": {
-                            "from": 240000,
-                            "to": 1360000
-                        },
-                        "trim": {
-                            "from": 0,
-                            "to": 1120000
-                        },
-                        "duration": 1120000,
-                        "playbackRate": 1
-                    },
-                    "text": "I see a lot of",
-                    "style": {
-                        "fontSize": 80,
-                        "fontFamily": "Bangers-Regular",
-                        "fontWeight": "700",
-                        "fontStyle": "normal",
-                        "color": "#ffffff",
-                        "align": "center",
-                        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                        "stroke": {
-                            "color": "#000000",
-                            "width": 4
-                        },
-                        "shadow": {
-                            "color": "#000000",
-                            "alpha": 0.5,
-                            "blur": 4,
-                            "offsetX": 2,
-                            "offsetY": 2
-                        },
-                        "captionColors": {
-                            "appeared": "#000000",
-                            "keyword": "#000000",
-                            "activeFill": "#000000"
-                        }
-                    },
-                    "caption": {
-                        "words": [
-                            {
-                                "text": "I",
-                                "from": 0,
-                                "to": 479.9999700000001,
-                                "isKeyWord": true,
-                                "paragraphIndex": ""
-                            },
-                            {
-                                "text": "see",
-                                "from": 479.9999700000001,
-                                "to": 800,
-                                "isKeyWord": false,
-                                "paragraphIndex": ""
-                            },
-                            {
-                                "text": "a",
-                                "from": 800,
-                                "to": 880.0000000000001,
-                                "isKeyWord": false,
-                                "paragraphIndex": ""
-                            },
-                            {
-                                "text": "lot",
-                                "from": 880.0000000000001,
-                                "to": 1040,
-                                "isKeyWord": false,
-                                "paragraphIndex": ""
-                            },
-                            {
-                                "text": "of",
-                                "from": 1040,
-                                "to": 1120,
-                                "isKeyWord": true,
-                                "paragraphIndex": ""
-                            }
-                        ],
-                        "colors": {
-                            "appeared": "#ffffff",
-                            "active": "#ffffff",
-                            "activeFill": "#FF5700",
-                            "background": "",
-                            "keyword": "#ffffff"
-                        },
-                        "preserveKeywordColor": true,
-                        "positioning": {
-                            "videoWidth": 1080,
-                            "videoHeight": 1920
-                        }
-                    },
-                    "wordsPerLine": "multiple",
-                    "mediaId": "KdfVbYAZCgq2CxkdCD2l9",
-                    "metadata": {
-                        "sourceClipId": "KdfVbYAZCgq2CxkdCD2l9"
-                    },
-                    "id": "zUMNRE5IqMIoRmLk00ADl",
-                    "name": "Caption",
-                    "chromaKey": {
-                        "enabled": false,
-                        "color": "#00FF00",
-                        "similarity": 0.1,
-                        "spill": 0
-                    },
-                    "locked": false,
-                    "effects": [],
-                    "animations": [],
-                    "colorAdjustment": {
-                        "enabled": false,
-                        "type": "basic",
-                        "basic": {},
-                        "hsl": {},
-                        "curves": {}
-                    },
-                    "transform": {
-                        "x": 245.00000000000023,
-                        "y": 1315.7849623980978,
-                        "width": 590,
-                        "height": 105,
-                        "angle": 0,
-                        "opacity": 1,
-                        "zIndex": 10,
-                        "flip": {
-                            "x": false,
-                            "y": false
-                        }
-                    }
-                },
-                "qF0EnwM8dH7zGR31LJ12O": {
-                    "type": "Text",
-                    "name": "Text",
-                    "text": "Add Text",
-                    "style": {
-                        "fontSize": 120,
-                        "fontFamily": "Roboto-Bold",
-                        "align": "center",
-                        "wordWrap": true,
-                        "wordWrapWidth": 600,
-                        "fontUrl": "https://fonts.gstatic.com/s/roboto/v29/KFOlCnqEu92Fr1MmWUlvAx05IsDqlA.ttf"
-                    },
-                    "timing": {
-                        "display": {
-                            "from": 0,
-                            "to": 5000000
-                        },
-                        "trim": {
-                            "from": 0,
-                            "to": 5000000
-                        },
-                        "duration": 5000000,
-                        "playbackRate": 1
-                    },
-                    "id": "qF0EnwM8dH7zGR31LJ12O",
-                    "chromaKey": {
-                        "enabled": false,
-                        "color": "#00FF00",
-                        "similarity": 0.1,
-                        "spill": 0
-                    },
-                    "locked": false,
-                    "effects": [],
-                    "animations": [],
-                    "colorAdjustment": {
-                        "enabled": false,
-                        "type": "basic",
-                        "basic": {},
-                        "hsl": {},
-                        "curves": {}
-                    },
-                    "transform": {
-                        "x": 240,
-                        "y": 898.0000000000003,
-                        "width": 600,
-                        "height": 144,
-                        "angle": 0,
-                        "opacity": 1,
-                        "zIndex": 10,
-                        "flip": {
-                            "x": false,
-                            "y": false
-                        }
-                    }
-                },
-                "ZSRqW9CEuHcYkf8T_ZiMU": {
-                    "type": "Image",
-                    "src": "https://cdn.scenify.io/mockuser/b171ff5b-f13d-441f-9714-20267f8b6dc7-im2.png",
-                    "name": "im2.png",
-                    "id": "ZSRqW9CEuHcYkf8T_ZiMU",
-                    "timing": {
-                        "display": {
-                            "from": 0,
-                            "to": 5000000
-                        },
-                        "trim": {
-                            "from": 0,
-                            "to": 5000000
-                        },
-                        "duration": 5000000,
-                        "playbackRate": 1
-                    },
-                    "style": {},
-                    "chromaKey": {
-                        "enabled": false,
-                        "color": "#00FF00",
-                        "similarity": 0.1,
-                        "spill": 0
-                    },
-                    "locked": false,
-                    "effects": [],
-                    "animations": [],
-                    "colorAdjustment": {
-                        "enabled": false,
-                        "type": "basic",
-                        "basic": {},
-                        "hsl": {},
-                        "curves": {}
-                    },
-                    "transform": {
-                        "x": 4.186046511627865,
-                        "y": 0,
-                        "width": 1071.6279069767443,
-                        "height": 1920,
-                        "angle": 0,
-                        "opacity": 1,
-                        "zIndex": 10,
-                        "flip": {
-                            "x": false,
-                            "y": false
-                        }
-                    }
-                }
-            }
-        };
-        
-        // Actual Compositor render function (matching export-modal implementation)
-        async function render() {
-            console.log('Starting render with Compositor...');
-            console.log('Project:', projectData.settings);
-            console.log('Tracks:', projectData.tracks.length);
-            console.log('Clips:', Object.keys(projectData.clips).length);
-            
-            try {
-                // Create compositor options (matching export-modal defaults)
-                const compositorOptions = {
-                    width: projectData.settings.width,
-                    height: projectData.settings.height,
-                    fps: projectData.settings.fps,
-                    backgroundColor: projectData.settings.backgroundColor || '#000000',
-                    format: 'mp4',
-                    videoCodec: 'avc1.640033', // WebCodecs codec string (not FFmpeg name)
-                    bitrate: 12000000,
-                    audio: true,
-                    audioCodec: 'aac',
-                    audioSampleRate: 48000,
-                };
-                
-                console.log('Creating Compositor with options:', compositorOptions);
-                
-                // Create compositor (exactly like export-modal)
-                const com = new Compositor(compositorOptions);
-                
-                // Initialize PixiJS app (exactly like export-modal)
-                await com.initPixiApp();
-                console.log('Compositor initialized');
-                
-                // Add progress listener (like export-modal)
-                com.on("export:progress", (progress) => {
-                    console.log('Export progress:', progress);
-                });
-                
-                // Load project data (exactly like export-modal — pass the object directly, not a JSON string)
-                await com.loadFromJSON(projectData);
-                console.log('Project data loaded');
-                
-                // Get output stream (exactly like export-modal)
-                const stream = com.output();
-                const blob = await new Response(stream).blob();
-                
-                console.log('Video blob created, size:', blob.size, 'type:', blob.type);
-                
-                // Signal completion
-                window.renderComplete = true;
-                window.videoBlob = blob;
-                
-                console.log('Render complete with actual Compositor!');
-                
-            } catch (error) {
-                console.error('Compositor render failed:', error);
-                window.renderError = error.message;
-            }
+<head>
+  <meta charset="utf-8">
+  <title>Video Renderer</title>
+  <!--
+    Import map: @openvideo/engine-pixi is resolved to the local dist files
+    served by the Node.js static HTTP server at /engine-pixi/...
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@openvideo/engine-pixi": "/engine-pixi/index.es.js"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <script type="module">
+    import { Compositor } from "@openvideo/engine-pixi";
+
+    async function render() {
+      /** @type {import('@openvideo/engine-pixi').ProjectJSON} */
+      const project = window.__PROJECT_DATA__;
+      const opts    = window.__COMPOSITOR_OPTIONS__;
+
+      if (!project) {
+        window.__RENDER_ERROR__ = "No project data found. window.__PROJECT_DATA__ was not set.";
+        return;
+      }
+
+      try {
+        const com = new Compositor(opts ?? {});
+
+        if ((opts?.width ?? 0) > 0 && (opts?.height ?? 0) > 0) {
+          await com.initPixiApp();
         }
-        
-        // Start rendering when page loads
-        window.addEventListener('load', render);
-    </script>
+
+        com.on("export:progress", (v) => {
+          window.__RENDER_PROGRESS__ = v;
+          // Notify Node.js side if a progress bridge is exposed
+          if (typeof window.__onProgress__ === "function") {
+            window.__onProgress__(v);
+          }
+        });
+
+        await com.loadFromJSON(project);
+
+        const stream = com.output();
+        const blob   = await new Response(stream).blob();
+
+        window.__VIDEO_BLOB__       = blob;
+        window.__RENDER_COMPLETE__  = true;
+      } catch (err) {
+        console.error("Compositor render failed:", err);
+        window.__RENDER_ERROR__ = err instanceof Error ? err.message : String(err);
+      }
+    }
+
+    window.addEventListener("load", render);
+  </script>
 </body>
+
 </html>

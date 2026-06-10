@@ -1,17 +1,33 @@
 {
   "name": "@openvideo/video-renderer",
   "version": "1.0.0",
-  "description": "Headless video renderer using Playwright + @openvideo/engine-pixi",
+  "description": "Headless video renderer: runs @openvideo/engine-pixi inside a Playwright browser and returns a Buffer",
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "render": "node simple-render.js"
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "render": "tsx src/cli.ts"
   },
   "dependencies": {
     "@openvideo/engine-pixi": "^1.1.4",
-    "playwright": "^1.44.0",
-    "express": "^4.18.3"
+    "express": "^4.18.3",
+    "playwright": "^1.44.0"
   },
-  "keywords": ["video", "rendering", "playwright", "nodejs"],
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.30",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.2"
+  },
+  "keywords": ["video", "rendering", "playwright", "webcodecs"],
   "author": "OpenVideo",
   "license": "MIT"
 }
