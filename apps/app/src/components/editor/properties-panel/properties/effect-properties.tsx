@@ -1,3 +1,5 @@
+"use client";
+
 import { IClip, VALUES_FILTER_SPECIAL_LIMITS, VALUES_FILTER_SPECIAL } from "@openvideo/engine-pixi";
 import {
   InputGroup,
@@ -25,12 +27,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { NumberInput } from "@/components/ui/number-input";
 import { useStore } from "zustand";
 import { projectStore, core } from "@/lib/project";
 
 interface EffectPropertiesProps {
   clip: IClip;
 }
+
 interface CoordinatesPropertyProps {
   value: { x: number; y: number };
   min: { x: number; y: number };
@@ -57,6 +61,7 @@ interface MatrixPropertyProps {
   value: number[];
   onChange: (value: number[]) => void;
 }
+
 interface ReplacementsPropertyProps {
   value: string[][];
   onChange: (val: string[][]) => void;
@@ -68,6 +73,7 @@ interface PairPropertyProps {
   labels?: [string, string];
   onChange: (value: number[]) => void;
 }
+
 const TYPES_COLOR_GRADIENT_FILTER = [
   {
     value: 0,
@@ -105,6 +111,7 @@ const TYPES_GLITCH_FILTER = [
     label: "MIRROR",
   },
 ];
+
 const EXTRA_PROPERTIES = {
   asciiFilter: {
     color: "color",
@@ -164,9 +171,7 @@ const EXTRA_PROPERTIES = {
 
 const rgbaArrayToHex = (rgba: number[]): string => {
   const [r, g, b] = rgba;
-
   const toHex = (value: number) => Math.round(value).toString(16).padStart(2, "0");
-
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toLowerCase();
 };
 
@@ -177,11 +182,12 @@ const PairProperty = ({
   onChange,
 }: PairPropertyProps) => {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-1 w-[130px]">
       {([0, 1] as const).map((i) => (
-        <div key={i} className="flex items-center gap-4">
-          <span className="w-12 text-xs uppercase">{labels[i]}</span>
-
+        <div key={i} className="flex items-center gap-2 py-0.5">
+          <span className="w-8 text-[9px] uppercase text-muted-foreground truncate">
+            {labels[i]}
+          </span>
           <Slider
             value={[value[i]]}
             min={config[i].min}
@@ -194,20 +200,18 @@ const PairProperty = ({
             }}
             className="flex-1"
           />
-
-          <InputGroup className="w-20">
-            <InputGroupInput
-              type="number"
+          <InputGroup className="w-12">
+            <NumberInput
               value={value[i]}
+              onChange={(val) => {
+                const updated = [...value];
+                updated[i] = val || 0;
+                onChange(updated);
+              }}
+              className="pl-1 bg-transparent text-[10px]!"
               min={config[i].min}
               max={config[i].max}
               step={config[i].step}
-              onChange={(e) => {
-                const updated = [...value];
-                updated[i] = parseFloat(e.target.value) || config[i].min;
-                onChange(updated);
-              }}
-              className="text-sm p-0 text-center"
             />
           </InputGroup>
         </div>
@@ -235,7 +239,7 @@ const ReplacementsProperty = ({ value, onChange }: ReplacementsPropertyProps) =>
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
       {value.map((colors, rowIndex) => (
         <div key={rowIndex} className="flex items-center gap-2 border p-2 rounded relative pt-6">
           {value.length > 1 && (
@@ -270,31 +274,32 @@ const MatrixProperty = ({ value, onChange }: MatrixPropertyProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
       {value.map(
         (v, i) =>
           i < 8 && (
-            <div key={i} className="flex items-center gap-4">
-              <span className="text-[10px] font-mono">M{i}</span>
-              <Slider
-                value={[v]}
-                min={0}
-                max={1}
-                step={0.01}
-                onValueChange={(vals) => handleChange(i, vals[0])}
-                className="w-full"
-              />
-              <InputGroup className="w-20">
-                <InputGroupInput
-                  type="number"
-                  value={v}
+            <div key={i} className="flex items-center justify-between py-1 gap-4">
+              <span className="text-xs text-muted-foreground font-mono">M{i}</span>
+              <div className="flex items-center gap-2 w-[130px]">
+                <Slider
+                  value={[v]}
                   min={0}
                   max={1}
                   step={0.01}
-                  onChange={(e) => handleChange(i, parseFloat(e.target.value) || 0)}
-                  className="text-sm p-0 text-center"
+                  onValueChange={(vals) => handleChange(i, vals[0])}
+                  className="flex-1"
                 />
-              </InputGroup>
+                <InputGroup className="w-14">
+                  <NumberInput
+                    value={v}
+                    onChange={(val) => handleChange(i, val || 0)}
+                    className="pl-1 bg-transparent text-xs!"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                  />
+                </InputGroup>
+              </div>
             </div>
           ),
       )}
@@ -322,7 +327,10 @@ const StopsProperty = ({ value, config, onChange }: StopsPropertyProps) => {
   return (
     <div className="flex flex-col gap-4">
       {value.map((stop, index) => (
-        <div key={index} className="flex flex-col gap-2 border p-2 rounded relative pt-6">
+        <div
+          key={index}
+          className="flex flex-col gap-2 border p-2 rounded relative pt-6 bg-secondary/10"
+        >
           {value.length > 2 && (
             <button
               className="absolute top-0 right-2 text-red-400 hover:text-red-500"
@@ -332,61 +340,62 @@ const StopsProperty = ({ value, config, onChange }: StopsPropertyProps) => {
             </button>
           )}
           {/* Color */}
-          <ColorProperty
-            value={stop.color}
-            onChange={(val) => handleStopChange(index, "color", val)}
-          />
+          <div className="flex items-center justify-between py-1 gap-4">
+            <span className="text-xs text-muted-foreground">Color</span>
+            <ColorProperty
+              value={stop.color}
+              onChange={(val) => handleStopChange(index, "color", val)}
+            />
+          </div>
 
           {/* Offset */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs w-12">Offset</span>
-            <Slider
-              value={[stop.offset]}
-              min={config.offset.min}
-              max={config.offset.max}
-              step={config.offset.step}
-              onValueChange={(v) => handleStopChange(index, "offset", v[0])}
-              className="flex-1"
-            />
-            <InputGroup className="w-20">
-              <InputGroupInput
-                type="number"
-                value={stop.offset}
+          <div className="flex items-center justify-between py-1 gap-4">
+            <span className="text-xs text-muted-foreground">Offset</span>
+            <div className="flex items-center gap-2 w-[130px]">
+              <Slider
+                value={[stop.offset]}
                 min={config.offset.min}
                 max={config.offset.max}
                 step={config.offset.step}
-                onChange={(e) =>
-                  handleStopChange(index, "offset", parseFloat(e.target.value) || config.offset.min)
-                }
-                className="text-sm p-0 text-center"
+                onValueChange={(v) => handleStopChange(index, "offset", v[0])}
+                className="flex-1"
               />
-            </InputGroup>
+              <InputGroup className="w-14">
+                <NumberInput
+                  value={stop.offset}
+                  onChange={(val) => handleStopChange(index, "offset", val || 0)}
+                  className="pl-1 bg-transparent text-xs!"
+                  min={config.offset.min}
+                  max={config.offset.max}
+                  step={config.offset.step}
+                />
+              </InputGroup>
+            </div>
           </div>
 
           {/* Alpha */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs w-12">Alpha</span>
-            <Slider
-              value={[stop.alpha]}
-              min={config.alpha.min}
-              max={config.alpha.max}
-              step={config.alpha.step}
-              onValueChange={(v) => handleStopChange(index, "alpha", v[0])}
-              className="flex-1"
-            />
-            <InputGroup className="w-20">
-              <InputGroupInput
-                type="number"
-                value={stop.alpha}
+          <div className="flex items-center justify-between py-1 gap-4">
+            <span className="text-xs text-muted-foreground">Alpha</span>
+            <div className="flex items-center gap-2 w-[130px]">
+              <Slider
+                value={[stop.alpha]}
                 min={config.alpha.min}
                 max={config.alpha.max}
                 step={config.alpha.step}
-                onChange={(e) =>
-                  handleStopChange(index, "alpha", parseFloat(e.target.value) || config.alpha.min)
-                }
-                className="text-sm p-0 text-center"
+                onValueChange={(v) => handleStopChange(index, "alpha", v[0])}
+                className="flex-1"
               />
-            </InputGroup>
+              <InputGroup className="w-14">
+                <NumberInput
+                  value={stop.alpha}
+                  onChange={(val) => handleStopChange(index, "alpha", val || 0)}
+                  className="pl-1 bg-transparent text-xs!"
+                  min={config.alpha.min}
+                  max={config.alpha.max}
+                  step={config.alpha.step}
+                />
+              </InputGroup>
+            </div>
           </div>
         </div>
       ))}
@@ -396,13 +405,15 @@ const StopsProperty = ({ value, config, onChange }: StopsPropertyProps) => {
     </div>
   );
 };
+
 const CoordinatesProperty = ({ value, min, max, step, onChange }: CoordinatesPropertyProps) => {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-1 w-[130px]">
       {(["x", "y"] as const).map((axis) => (
-        <div key={axis} className="flex items-center gap-4">
-          <span className="w-4 text-xs uppercase">{axis}</span>
-
+        <div key={axis} className="flex items-center gap-2 py-0.5">
+          <span className="w-3 text-[10px] font-semibold text-muted-foreground uppercase">
+            {axis}
+          </span>
           <Slider
             value={[value[axis]]}
             min={min[axis]}
@@ -416,21 +427,19 @@ const CoordinatesProperty = ({ value, min, max, step, onChange }: CoordinatesPro
             }
             className="flex-1"
           />
-
-          <InputGroup className="w-20">
-            <InputGroupInput
-              type="number"
+          <InputGroup className="w-12">
+            <NumberInput
               value={value[axis]}
+              onChange={(val) =>
+                onChange({
+                  ...value,
+                  [axis]: val || 0,
+                })
+              }
+              className="pl-1 bg-transparent text-[10px]!"
               min={min[axis]}
               max={max[axis]}
               step={step[axis]}
-              onChange={(e) =>
-                onChange({
-                  ...value,
-                  [axis]: parseFloat(e.target.value) || 0,
-                })
-              }
-              className="text-sm p-0 text-center"
             />
           </InputGroup>
         </div>
@@ -438,15 +447,16 @@ const CoordinatesProperty = ({ value, min, max, step, onChange }: CoordinatesPro
     </div>
   );
 };
+
 const ColorProperty = ({ value, onChange }: ColorPropertyProps) => {
   return (
-    <InputGroup className="flex-1">
+    <InputGroup className="w-[130px] h-7">
       <InputGroupAddon align="inline-start" className="relative p-0">
         <Popover modal>
           <PopoverTrigger asChild>
-            <InputGroupButton variant="ghost" size="icon-xs" className="h-full w-8">
+            <InputGroupButton variant="ghost" size="icon-xs" className="h-full w-8 pl-2">
               <div
-                className="h-4 ml-2 w-4 border border-white/10 shadow-sm"
+                className="h-5 w-5 rounded-sm border border-input shadow-sm"
                 style={{ backgroundColor: value }}
               />
             </InputGroupButton>
@@ -479,10 +489,9 @@ const ColorProperty = ({ value, onChange }: ColorPropertyProps) => {
       <InputGroupInput
         value={value}
         onChange={(e) => {
-          const hex = rgbaArrayToHex(e.target.value.split(",").map(Number));
-          onChange(hex);
+          onChange(e.target.value);
         }}
-        className="text-sm p-0 text-[10px] font-mono"
+        className="text-xs! p-0 font-mono"
       />
     </InputGroup>
   );
@@ -533,7 +542,7 @@ const PropertyRenderer = ({
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2">
       <Slider
         value={[value]}
         min={config.min}
@@ -542,21 +551,20 @@ const PropertyRenderer = ({
         onValueChange={(v) => onChange(v[0])}
         className="flex-1"
       />
-
-      <InputGroup className="w-24">
-        <InputGroupInput
-          type="number"
+      <InputGroup className="w-14">
+        <NumberInput
           value={value}
+          onChange={onChange}
+          className="pl-1 bg-transparent text-xs!"
           min={config.min}
           max={config.max}
           step={config.step}
-          onChange={(e) => onChange(parseFloat(e.target.value) || config.min)}
-          className="text-sm p-0 text-center"
         />
       </InputGroup>
     </div>
   );
 };
+
 export function EffectProperties({ clip }: EffectPropertiesProps) {
   const coreClip = useStore(projectStore, (s) => s.clips[clip.id]) as any;
 
@@ -568,7 +576,6 @@ export function EffectProperties({ clip }: EffectPropertiesProps) {
     VALUES_FILTER_SPECIAL_LIMITS[filterKey as keyof typeof VALUES_FILTER_SPECIAL_LIMITS];
   const defaultValues = VALUES_FILTER_SPECIAL[filterKey as keyof typeof VALUES_FILTER_SPECIAL];
   const extraProperties = EXTRA_PROPERTIES[filterKey as keyof typeof EXTRA_PROPERTIES] ?? {};
-
   const values = coreClip.values || coreClip.effect?.values || {};
 
   const handleUpdate = (property: string, value: any) => {
@@ -579,8 +586,6 @@ export function EffectProperties({ clip }: EffectPropertiesProps) {
       },
     });
   };
-
-  // if (!limits) return null;
 
   const hasProperties =
     (limits && Object.keys(limits).length > 0) ||
@@ -595,78 +600,120 @@ export function EffectProperties({ clip }: EffectPropertiesProps) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-6">
+    <div className="flex flex-col">
+      {/* Section Header */}
+      <div className="flex items-center justify-between py-2">
+        <span className="text-xs font-semibold text-foreground">Configuration</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-5 text-muted-foreground hover:text-foreground"
+        >
+          <span className="text-base leading-none">+</span>
+        </Button>
+      </div>
+
+      <div className="py-1 flex flex-col">
         {Object.entries(limits).map(([property, config]) => {
           const currentValue = values[property] ?? defaultValues[property];
-          return (
-            <div key={property} className="flex flex-col gap-2">
-              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {property}
-              </label>
+          const isComplex = property === "stops" || property === "matrix";
 
-              <PropertyRenderer
-                property={property}
-                value={currentValue}
-                config={config}
-                onChange={(val) => handleUpdate(property, val)}
-              />
+          if (isComplex) {
+            return (
+              <div key={property} className="flex flex-col gap-2 py-2">
+                <span className="text-xs font-semibold text-foreground capitalize">
+                  {property.replace(/([A-Z])/g, " $1").trim()}
+                </span>
+                <PropertyRenderer
+                  property={property}
+                  value={currentValue}
+                  config={config}
+                  onChange={(val) => handleUpdate(property, val)}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div key={property} className="flex items-center justify-between py-1 gap-4">
+              <span className="text-xs text-muted-foreground capitalize">
+                {property.replace(/([A-Z])/g, " $1").trim()}
+              </span>
+              <div className="w-[130px]">
+                <PropertyRenderer
+                  property={property}
+                  value={currentValue}
+                  config={config}
+                  onChange={(val) => handleUpdate(property, val)}
+                />
+              </div>
             </div>
           );
         })}
+
         {Object.entries(extraProperties).map(([property, type]) => {
           const currentValue = values[property] ?? defaultValues?.[property];
           const optionsSelect =
             property === "fillMode" ? TYPES_GLITCH_FILTER : TYPES_COLOR_GRADIENT_FILTER;
+          const isComplex = type === "replacements";
 
-          return (
-            <div
-              key={property}
-              className={`flex  ${type === "checkbox" ? "flex-wrap gap-4 items-center" : "flex-col gap-2"}`}
-            >
-              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {property}
-              </label>
-
-              {type === "color" && (
-                <ColorProperty
-                  value={currentValue ?? "#000000"}
-                  onChange={(value) => handleUpdate(property, value)}
-                />
-              )}
-
-              {type === "checkbox" && (
-                <Checkbox
-                  checked={!!currentValue}
-                  onCheckedChange={(checked) => handleUpdate(property, checked)}
-                  className="h-4 w-4"
-                />
-              )}
-              {type === "select" && (
-                <Select
-                  value={currentValue.toString()}
-                  onValueChange={(value) => handleUpdate(property, Number(value))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {optionsSelect.map((option) => (
-                        <SelectItem key={option.value} value={option.value.toString()}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-              {type === "replacements" && (
+          if (isComplex) {
+            return (
+              <div key={property} className="flex flex-col gap-2 py-2">
+                <span className="text-xs font-semibold text-foreground capitalize">
+                  {property.replace(/([A-Z])/g, " $1").trim()}
+                </span>
                 <ReplacementsProperty
                   value={currentValue || []}
                   onChange={(value) => handleUpdate(property, value)}
                 />
-              )}
+              </div>
+            );
+          }
+
+          return (
+            <div key={property} className="flex items-center justify-between py-1 gap-4">
+              <span className="text-xs text-muted-foreground capitalize">
+                {property.replace(/([A-Z])/g, " $1").trim()}
+              </span>
+              <div className="w-[130px]">
+                {type === "color" && (
+                  <ColorProperty
+                    value={currentValue ?? "#000000"}
+                    onChange={(value) => handleUpdate(property, value)}
+                  />
+                )}
+
+                {type === "checkbox" && (
+                  <div className="flex justify-end">
+                    <Checkbox
+                      checked={!!currentValue}
+                      onCheckedChange={(checked) => handleUpdate(property, checked)}
+                      className="h-4 w-4"
+                    />
+                  </div>
+                )}
+
+                {type === "select" && (
+                  <Select
+                    value={currentValue.toString()}
+                    onValueChange={(value) => handleUpdate(property, Number(value))}
+                  >
+                    <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {optionsSelect.map((option) => (
+                          <SelectItem key={option.value} value={option.value.toString()}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           );
         })}

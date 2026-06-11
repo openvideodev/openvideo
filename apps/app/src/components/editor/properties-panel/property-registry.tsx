@@ -80,16 +80,16 @@ export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
   ],
 
   // Text clip properties - grouped for unified UI
-  Text: ["text", "textGroup", "transform", "rotation", "opacity", "stroke", "shadow", "animations"],
+  Text: ["transform", "textGroup", "rotation", "opacity", "stroke", "shadow", "animations"],
 
   // Caption clip properties - grouped for unified UI
   Caption: [
-    "text",
+    "transform",
     "captionColors",
     "captionPosition",
     "captionWordsPerLine",
     "textGroup",
-    "transform",
+
     "opacity",
     "animations",
   ],
@@ -101,7 +101,7 @@ export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
   Effect: ["effectConfig"],
 
   // Transition clip properties
-  Transition: ["transitionDuration", "transitionSelector"],
+  Transition: ["transitionDuration"],
 
   // Shape clip properties
   Shape: [
@@ -130,6 +130,7 @@ export const PROPERTY_LABELS: Record<PropertyKey, string> = {
   animations: "Animations",
   text: "Content",
   font: "Font",
+  textStyle: "Style",
   textAlignment: "Alignment",
   textSpacing: "Spacing",
   textBlur: "Blur",

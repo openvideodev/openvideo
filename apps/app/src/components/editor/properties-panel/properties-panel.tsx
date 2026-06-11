@@ -64,15 +64,6 @@ export function PropertiesPanelContent({ clip }: PropertiesPanelContentProps) {
   // Render a single property
   const renderProperty = (key: PropertyKey) => {
     switch (key) {
-      case "text":
-        return (
-          <Properties.TextContentProperty
-            key={key}
-            value={coreClip.text || ""}
-            onChange={(val) => handleUpdate({ text: val })}
-          />
-        );
-
       case "transform":
         return (
           <Properties.TransformProperty
@@ -361,6 +352,8 @@ export function PropertiesPanelContent({ clip }: PropertiesPanelContentProps) {
         return (
           <Properties.TextGroupProperty
             key={key}
+            text={coreClip.text || ""}
+            onTextChange={(val) => handleUpdate({ text: val })}
             currentFamily={currentFamily}
             currentFont={currentFont}
             fontStyles={fontStyles}
@@ -592,25 +585,6 @@ export function PropertiesPanelContent({ clip }: PropertiesPanelContentProps) {
                 display: { from: 0, to: val },
               };
               handleUpdate(clipUpdates);
-            }}
-          />
-        );
-      }
-
-      case "transitionSelector": {
-        const currentKey = coreClip.transitionEffect?.key || "fade";
-        return (
-          <Properties.TransitionSelectorProperty
-            key={key}
-            currentKey={currentKey}
-            onSelect={(key: string) => {
-              handleUpdate({
-                transitionEffect: {
-                  ...coreClip.transitionEffect,
-                  key,
-                  name: key,
-                },
-              });
             }}
           />
         );

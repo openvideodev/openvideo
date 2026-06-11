@@ -39,6 +39,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import color from "color";
+import { Input } from "@/components/ui/input";
 import { getGroupedFonts, getFontByPostScriptName } from "@/utils/font-utils";
 
 const GROUPED_FONTS = getGroupedFonts();
@@ -96,6 +97,10 @@ const FontPicker = React.memo(
 );
 
 interface TextGroupPropertyProps {
+  // Content
+  text: string;
+  onTextChange: (val: string) => void;
+
   // Font
   currentFamily: string;
   currentFont: {
@@ -126,6 +131,8 @@ interface TextGroupPropertyProps {
 }
 
 export function TextGroupProperty({
+  text,
+  onTextChange,
   currentFamily,
   currentFont,
   fontStyles,
@@ -152,7 +159,7 @@ export function TextGroupProperty({
     <div className="flex flex-col">
       {/* Section Header */}
       <div className="flex items-center justify-between py-2">
-        <span className="text-xs font-semibold text-foreground">Text</span>
+        <span className="text-xs font-semibold text-foreground">Typography</span>
         <Button
           variant="ghost"
           size="icon"
@@ -163,6 +170,16 @@ export function TextGroupProperty({
       </div>
 
       <div className="py-1 flex flex-col">
+        {/* Content */}
+        <div className="flex items-center justify-between py-1 gap-4">
+          <span className="text-xs text-muted-foreground">Content</span>
+          <Input
+            value={text}
+            onChange={(e) => onTextChange(e.target.value)}
+            className="w-[130px] h-7 text-xs! bg-secondary border rounded-md"
+            placeholder="Text"
+          />
+        </div>
         {/* Font */}
         <div className="flex items-center justify-between py-1 gap-4">
           <span className="text-xs text-muted-foreground">Font</span>

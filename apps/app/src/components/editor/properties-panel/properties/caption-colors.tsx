@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { ColorPicker, ColorPickerSelection, ColorPickerHue } from "@/components/ui/color-picker";
 import {
   InputGroup,
@@ -25,56 +26,64 @@ interface CaptionColorsPropertyProps {
 
 export function CaptionColorsProperty({ captionColors, setColors }: CaptionColorsPropertyProps) {
   return (
-    <div className="flex flex-col gap-2 pb-4">
-      <div className="h-12 flex items-center">
-        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Caption Colors
-        </label>
+    <div className="flex flex-col">
+      {/* Section Header */}
+      <div className="flex items-center justify-between py-2">
+        <span className="text-xs font-semibold text-foreground">Caption Colors</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-5 text-muted-foreground hover:text-foreground"
+        >
+          <span className="text-base leading-none">+</span>
+        </Button>
       </div>
 
-      {(
-        [
-          { key: "appeared", label: "Appeared", fallback: "#ffffff" },
-          { key: "active", label: "Active", fallback: "#ffffff" },
-          { key: "activeFill", label: "Active Fill", fallback: "#FF5700" },
-          { key: "background", label: "Background", fallback: "" },
-          { key: "keyword", label: "Keyword", fallback: "#ffffff" },
-        ] as const
-      ).map(({ key, label, fallback }) => (
-        <div key={key} className="flex flex-col gap-1">
-          <span className="text-[10px] text-muted-foreground">{label}</span>
-          <InputGroup>
-            <InputGroupAddon align="inline-start" className="relative p-0">
-              <Popover modal={true}>
-                <PopoverTrigger asChild>
-                  <InputGroupButton variant="ghost" size="icon-xs" className="h-full w-8">
-                    <div
-                      className="h-4 w-4 border border-white/10 shadow-sm"
-                      style={{
-                        backgroundColor: captionColors[key] || fallback || "transparent",
-                      }}
-                    />
-                  </InputGroupButton>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-48 p-3 h-48"
-                  align="start"
-                  side="bottom"
-                  sideOffset={4}
-                >
-                  <ColorPickerPanel onChange={(hex) => setColors({ [key]: hex })} />
-                </PopoverContent>
-              </Popover>
-            </InputGroupAddon>
-            <InputGroupInput
-              value={captionColors[key]?.toUpperCase() || fallback.toUpperCase()}
-              onChange={(e) => setColors({ [key]: e.target.value })}
-              className="text-sm p-0 text-[10px] font-mono"
-              placeholder={fallback ? undefined : "Transparent"}
-            />
-          </InputGroup>
-        </div>
-      ))}
+      <div className="py-1 flex flex-col">
+        {(
+          [
+            { key: "appeared", label: "Appeared", fallback: "#ffffff" },
+            { key: "active", label: "Active", fallback: "#ffffff" },
+            { key: "activeFill", label: "Active Fill", fallback: "#FF5700" },
+            { key: "background", label: "Background", fallback: "" },
+            { key: "keyword", label: "Keyword", fallback: "#ffffff" },
+          ] as const
+        ).map(({ key, label, fallback }) => (
+          <div key={key} className="flex items-center justify-between py-1 gap-4">
+            <span className="text-xs text-muted-foreground">{label}</span>
+            <InputGroup className="w-[130px] h-7">
+              <InputGroupAddon align="inline-start" className="relative p-0">
+                <Popover modal={true}>
+                  <PopoverTrigger asChild>
+                    <InputGroupButton variant="ghost" size="icon-xs" className="h-full w-8 pl-2">
+                      <div
+                        className="h-5 w-5 rounded-sm border border-input shadow-sm"
+                        style={{
+                          backgroundColor: captionColors[key] || fallback || "transparent",
+                        }}
+                      />
+                    </InputGroupButton>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-48 p-3 h-48"
+                    align="start"
+                    side="bottom"
+                    sideOffset={4}
+                  >
+                    <ColorPickerPanel onChange={(hex) => setColors({ [key]: hex })} />
+                  </PopoverContent>
+                </Popover>
+              </InputGroupAddon>
+              <InputGroupInput
+                value={captionColors[key]?.toUpperCase() || fallback.toUpperCase()}
+                onChange={(e) => setColors({ [key]: e.target.value })}
+                className="text-xs! p-0 font-mono"
+                placeholder={fallback ? undefined : "Transparent"}
+              />
+            </InputGroup>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

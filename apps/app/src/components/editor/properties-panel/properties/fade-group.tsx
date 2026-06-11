@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { NumberInput } from "@/components/ui/number-input";
@@ -20,59 +21,70 @@ export function FadeGroupProperty({
   max = 5000,
 }: FadeGroupPropertyProps) {
   return (
-    <div className="flex flex-col gap-4 pb-4">
-      {/* Header */}
-      <div className="h-12 flex items-center">
-        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Fade
-        </label>
+    <div className="flex flex-col">
+      {/* Section Header */}
+      <div className="flex items-center justify-between py-2">
+        <span className="text-xs font-semibold text-foreground">Fade</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-5 text-muted-foreground hover:text-foreground"
+        >
+          <span className="text-base leading-none">+</span>
+        </Button>
       </div>
 
-      {/* Fade In */}
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] text-muted-foreground">Fade-in duration</label>
-        <div className="flex items-center gap-3">
-          <Slider
-            value={[fadeInDuration]}
-            onValueChange={(v) => onFadeInChange(v[0])}
-            min={0}
-            max={max}
-            step={100}
-            className="flex-1"
-          />
-          <InputGroup className="w-24">
-            <NumberInput
-              value={fadeInDuration}
-              onChange={(val) => onFadeInChange(val || 0)}
-              className="text-center text-xs"
+      <div className="py-1 flex flex-col">
+        {/* Fade In */}
+        <div className="flex items-center justify-between py-1 gap-4">
+          <span className="text-xs text-muted-foreground">Fade-in</span>
+          <div className="flex items-center gap-2 w-[130px]">
+            <Slider
+              value={[fadeInDuration]}
+              onValueChange={(v) => onFadeInChange(v[0])}
+              min={0}
+              max={max}
               step={100}
+              className="flex-1"
             />
-            <InputGroupAddon align="inline-end">ms</InputGroupAddon>
-          </InputGroup>
+            <InputGroup className="w-16">
+              <NumberInput
+                value={fadeInDuration}
+                onChange={(val) => onFadeInChange(val || 0)}
+                className="pl-1 bg-transparent text-xs!"
+                step={100}
+              />
+              <InputGroupAddon align="inline-end">
+                <span className="text-[10px] text-muted-foreground">ms</span>
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
         </div>
-      </div>
 
-      {/* Fade Out */}
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] text-muted-foreground">Fade-out duration</label>
-        <div className="flex items-center gap-3">
-          <Slider
-            value={[fadeOutDuration]}
-            onValueChange={(v) => onFadeOutChange(v[0])}
-            min={0}
-            max={max}
-            step={100}
-            className="flex-1"
-          />
-          <InputGroup className="w-24">
-            <NumberInput
-              value={fadeOutDuration}
-              onChange={(val) => onFadeOutChange(val || 0)}
-              className="text-center text-xs"
+        {/* Fade Out */}
+        <div className="flex items-center justify-between py-1 gap-4">
+          <span className="text-xs text-muted-foreground">Fade-out</span>
+          <div className="flex items-center gap-2 w-[130px]">
+            <Slider
+              value={[fadeOutDuration]}
+              onValueChange={(v) => onFadeOutChange(v[0])}
+              min={0}
+              max={max}
               step={100}
+              className="flex-1"
             />
-            <InputGroupAddon align="inline-end">ms</InputGroupAddon>
-          </InputGroup>
+            <InputGroup className="w-16">
+              <NumberInput
+                value={fadeOutDuration}
+                onChange={(val) => onFadeOutChange(val || 0)}
+                className="pl-1 bg-transparent text-xs!"
+                step={100}
+              />
+              <InputGroupAddon align="inline-end">
+                <span className="text-[10px] text-muted-foreground">ms</span>
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
         </div>
       </div>
     </div>
