@@ -1,963 +1,960 @@
 {
-    "settings": {
+  "settings": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "backgroundColor": "#111111",
+    "format": "mp4",
+    "videoCodec": "avc1.640033",
+    "bitrate": 12000000,
+    "audio": true,
+    "audioCodec": "opus",
+    "audioSampleRate": 48000,
+    "prioritizeSpeed": true
+  },
+  "tracks": [
+    {
+      "id": "track_f3SSMx2R7h",
+      "name": "Captions",
+      "type": "caption",
+      "clipIds": [
+        "kKCRNu3fI3GQNVO0sJmEk",
+        "WJBGwuI6-rDDCF7-jiX9p",
+        "wwKOQuXUAggYzl2bn1HjC",
+        "NIs-GA5jPW4hzFi6wf9Z8",
+        "94Zt1sGihN7BBVQCeyZG7",
+        "ndIa1kuR765apGDpHvaU1",
+        "YXU8ZPmIOL_0fetzLB1am"
+      ]
+    },
+    {
+      "id": "pturMA-tPQFWz6JKBuDMg",
+      "name": "Video Track",
+      "type": "video",
+      "clipIds": ["ngmkuxdgyTblaat5J_aVI", "VlHzjHC9tPGAAIXJt1m1v"]
+    }
+  ],
+  "clips": {
+    "VlHzjHC9tPGAAIXJt1m1v": {
+      "type": "Image",
+      "id": "VlHzjHC9tPGAAIXJt1m1v",
+      "name": "im2.png",
+      "src": "https://cdn.scenify.io/mockuser/b171ff5b-f13d-441f-9714-20267f8b6dc7-im2.png",
+      "timing": {
+        "display": {
+          "from": 6834675,
+          "to": 11834675
+        },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 5000000,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 4.186046511627865,
+        "y": 0,
+        "width": 1071.6279069767443,
+        "height": 1920,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 10,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {},
+      "animations": [
+        {
+          "type": "keyframes",
+          "options": {
+            "duration": 5000000,
+            "delay": 0,
+            "easing": "linear",
+            "iterCount": 1,
+            "id": "keyframe_1extjxp61",
+            "disableGlobalEasing": false
+          },
+          "params": {
+            "0%": {
+              "x": -250,
+              "blur": 7,
+              "angle": 5,
+              "mirror": 1
+            },
+            "45%": {
+              "x": -40,
+              "blur": 1,
+              "angle": 2,
+              "mirror": 1
+            },
+            "55%": {
+              "x": 0,
+              "blur": 0,
+              "angle": 0,
+              "mirror": 1
+            },
+            "60%": {
+              "x": 0,
+              "blur": 0,
+              "angle": 0,
+              "mirror": 1
+            },
+            "85%": {
+              "x": -40,
+              "blur": 0,
+              "angle": -2,
+              "mirror": 1
+            },
+            "100%": {
+              "x": -250,
+              "blur": 0,
+              "angle": -5,
+              "mirror": 1
+            }
+          }
+        }
+      ],
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {},
+      "effects": []
+    },
+    "ngmkuxdgyTblaat5J_aVI": {
+      "type": "Video",
+      "id": "ngmkuxdgyTblaat5J_aVI",
+      "name": "audio1.mp4",
+      "src": "https://cdn.scenify.io/mockuser/3f6b12df-e7af-4f74-8830-7a4d69a16dcf-audio1.mp4",
+      "timing": {
+        "display": {
+          "from": 0,
+          "to": 6833333.333333333
+        },
+        "trim": {
+          "from": 0,
+          "to": 6833333.333333333
+        },
+        "duration": 6833333.333333333,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 0,
+        "y": 0,
         "width": 1080,
         "height": 1920,
-        "fps": 30,
-        "backgroundColor": "#111111",
-        "format": "mp4",
-        "videoCodec": "avc1.640033",
-        "bitrate": 12000000,
-        "audio": true,
-        "audioCodec": "opus",
-        "audioSampleRate": 48000,
-        "prioritizeSpeed": true
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 10,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {},
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "previewUrl": "https://cdn.scenify.io/mockuser/b768d2ec-00cb-4438-b27a-df651c99311d-thumb_audio1.webp"
+      },
+      "audio": true,
+      "volume": 1,
+      "effects": []
     },
-   "tracks": [
-        {
-            "id": "track_f3SSMx2R7h",
-            "name": "Captions",
-            "type": "caption",
-            "clipIds": [
-                "kKCRNu3fI3GQNVO0sJmEk",
-                "WJBGwuI6-rDDCF7-jiX9p",
-                "wwKOQuXUAggYzl2bn1HjC",
-                "NIs-GA5jPW4hzFi6wf9Z8",
-                "94Zt1sGihN7BBVQCeyZG7",
-                "ndIa1kuR765apGDpHvaU1",
-                "YXU8ZPmIOL_0fetzLB1am"
-            ]
+    "kKCRNu3fI3GQNVO0sJmEk": {
+      "type": "Caption",
+      "id": "kKCRNu3fI3GQNVO0sJmEk",
+      "name": "Caption",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 240000,
+          "to": 1360000
         },
-        {
-            "id": "pturMA-tPQFWz6JKBuDMg",
-            "name": "Video Track",
-            "type": "video",
-            "clipIds": [
-                "ngmkuxdgyTblaat5J_aVI",
-                "VlHzjHC9tPGAAIXJt1m1v"
-            ]
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 1120000,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 245,
+        "y": 1470,
+        "width": 590,
+        "height": 105,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 20,
+        "flip": {
+          "x": false,
+          "y": false
         }
-    ],
-    "clips": {
-        "VlHzjHC9tPGAAIXJt1m1v": {
-            "type": "Image",
-            "id": "VlHzjHC9tPGAAIXJt1m1v",
-            "name": "im2.png",
-            "src": "https://cdn.scenify.io/mockuser/b171ff5b-f13d-441f-9714-20267f8b6dc7-im2.png",
-            "timing": {
-                "display": {
-                    "from": 6834675,
-                    "to": 11834675
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 5000000,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 4.186046511627865,
-                "y": 0,
-                "width": 1071.6279069767443,
-                "height": 1920,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 10,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {},
-            "animations": [
-                {
-                    "type": "keyframes",
-                    "options": {
-                        "duration": 5000000,
-                        "delay": 0,
-                        "easing": "linear",
-                        "iterCount": 1,
-                        "id": "keyframe_1extjxp61",
-                        "disableGlobalEasing": false
-                    },
-                    "params": {
-                        "0%": {
-                            "x": -250,
-                            "blur": 7,
-                            "angle": 5,
-                            "mirror": 1
-                        },
-                        "45%": {
-                            "x": -40,
-                            "blur": 1,
-                            "angle": 2,
-                            "mirror": 1
-                        },
-                        "55%": {
-                            "x": 0,
-                            "blur": 0,
-                            "angle": 0,
-                            "mirror": 1
-                        },
-                        "60%": {
-                            "x": 0,
-                            "blur": 0,
-                            "angle": 0,
-                            "mirror": 1
-                        },
-                        "85%": {
-                            "x": -40,
-                            "blur": 0,
-                            "angle": -2,
-                            "mirror": 1
-                        },
-                        "100%": {
-                            "x": -250,
-                            "blur": 0,
-                            "angle": -5,
-                            "mirror": 1
-                        }
-                    }
-                }
-            ],
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {},
-            "effects": []
+      },
+      "style": {
+        "fontSize": 80,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+        "wordWrapWidth": 590,
+        "wordWrap": true,
+        "stroke": {
+          "color": "#000000",
+          "width": 4
         },
-        "ngmkuxdgyTblaat5J_aVI": {
-            "type": "Video",
-            "id": "ngmkuxdgyTblaat5J_aVI",
-            "name": "audio1.mp4",
-            "src": "https://cdn.scenify.io/mockuser/3f6b12df-e7af-4f74-8830-7a4d69a16dcf-audio1.mp4",
-            "timing": {
-                "display": {
-                    "from": 0,
-                    "to": 6833333.333333333
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 6833333.333333333
-                },
-                "duration": 6833333.333333333,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 0,
-                "y": 0,
-                "width": 1080,
-                "height": 1920,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 10,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {},
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "previewUrl": "https://cdn.scenify.io/mockuser/b768d2ec-00cb-4438-b27a-df651c99311d-thumb_audio1.webp"
-            },
-            "audio": true,
-            "volume": 1,
-            "effects": []
+        "shadow": {
+          "color": "#000000",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2
+        }
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
+      },
+      "text": "I see a lot of",
+      "caption": {
+        "words": [
+          {
+            "text": "I",
+            "from": 0,
+            "to": 479.9999700000001,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "see",
+            "from": 479.9999700000001,
+            "to": 800,
+            "isKeyWord": false,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "a",
+            "from": 800,
+            "to": 880.0000000000001,
+            "isKeyWord": false,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "lot",
+            "from": 880.0000000000001,
+            "to": 1040,
+            "isKeyWord": false,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "of",
+            "from": 1040,
+            "to": 1120,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
         },
-        "kKCRNu3fI3GQNVO0sJmEk": {
-            "type": "Caption",
-            "id": "kKCRNu3fI3GQNVO0sJmEk",
-            "name": "Caption",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 240000,
-                    "to": 1360000
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 1120000,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 245,
-                "y": 1470,
-                "width": 590,
-                "height": 105,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 20,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 80,
-                "fontFamily": "Bangers-Regular",
-                "fontWeight": "700",
-                "fontStyle": "normal",
-                "color": "#ffffff",
-                "align": "center",
-                "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                "wordWrapWidth": 590,
-                "wordWrap": true,
-                "stroke": {
-                    "color": "#000000",
-                    "width": 4
-                },
-                "shadow": {
-                    "color": "#000000",
-                    "alpha": 0.5,
-                    "blur": 4,
-                    "offsetX": 2,
-                    "offsetY": 2
-                }
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
-            },
-            "text": "I see a lot of",
-            "caption": {
-                "words": [
-                    {
-                        "text": "I",
-                        "from": 0,
-                        "to": 479.9999700000001,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "see",
-                        "from": 479.9999700000001,
-                        "to": 800,
-                        "isKeyWord": false,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "a",
-                        "from": 800,
-                        "to": 880.0000000000001,
-                        "isKeyWord": false,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "lot",
-                        "from": 880.0000000000001,
-                        "to": 1040,
-                        "isKeyWord": false,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "of",
-                        "from": 1040,
-                        "to": 1120,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    }
-                ],
-                "colors": {
-                    "appeared": "#ffffff",
-                    "active": "#ffffff",
-                    "activeFill": "#FF5700",
-                    "background": "",
-                    "keyword": "#ffffff"
-                },
-                "preserveKeywordColor": true,
-                "positioning": {
-                    "videoWidth": 1080,
-                    "videoHeight": 1920
-                }
-            },
-            "effects": [],
-            "mediaId": "ngmkuxdgyTblaat5J_aVI",
-            "wordsPerLine": "multiple",
-            "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1080,
+          "videoHeight": 1920
+        }
+      },
+      "effects": [],
+      "mediaId": "ngmkuxdgyTblaat5J_aVI",
+      "wordsPerLine": "multiple",
+      "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+    },
+    "WJBGwuI6-rDDCF7-jiX9p": {
+      "type": "Caption",
+      "id": "WJBGwuI6-rDDCF7-jiX9p",
+      "name": "Caption",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 1360000,
+          "to": 2080000
         },
-        "WJBGwuI6-rDDCF7-jiX9p": {
-            "type": "Caption",
-            "id": "WJBGwuI6-rDDCF7-jiX9p",
-            "name": "Caption",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 1360000,
-                    "to": 2080000
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 720000,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 198.5,
-                "y": 1470,
-                "width": 689,
-                "height": 105,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 20,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 80,
-                "fontFamily": "Bangers-Regular",
-                "fontWeight": "700",
-                "fontStyle": "normal",
-                "color": "#ffffff",
-                "align": "center",
-                "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                "wordWrapWidth": 689,
-                "wordWrap": true,
-                "stroke": {
-                    "color": "#000000",
-                    "width": 4
-                },
-                "shadow": {
-                    "color": "#000000",
-                    "alpha": 0.5,
-                    "blur": 4,
-                    "offsetX": 2,
-                    "offsetY": 2
-                }
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
-            },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 720000,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 198.5,
+        "y": 1470,
+        "width": 689,
+        "height": 105,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 20,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {
+        "fontSize": 80,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+        "wordWrapWidth": 689,
+        "wordWrap": true,
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#000000",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2
+        }
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
+      },
+      "text": "misinformation",
+      "caption": {
+        "words": [
+          {
             "text": "misinformation",
-            "caption": {
-                "words": [
-                    {
-                        "text": "misinformation",
-                        "from": 0,
-                        "to": 720,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    }
-                ],
-                "colors": {
-                    "appeared": "#ffffff",
-                    "active": "#ffffff",
-                    "activeFill": "#FF5700",
-                    "background": "",
-                    "keyword": "#ffffff"
-                },
-                "preserveKeywordColor": true,
-                "positioning": {
-                    "videoWidth": 1080,
-                    "videoHeight": 1920
-                }
-            },
-            "effects": [],
-            "mediaId": "ngmkuxdgyTblaat5J_aVI",
-            "wordsPerLine": "multiple",
-            "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+            "from": 0,
+            "to": 720,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
         },
-        "wwKOQuXUAggYzl2bn1HjC": {
-            "type": "Caption",
-            "id": "wwKOQuXUAggYzl2bn1HjC",
-            "name": "Caption",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 2080000,
-                    "to": 2720000
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 640000,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 233.5,
-                "y": 1470,
-                "width": 613,
-                "height": 105,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 20,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 80,
-                "fontFamily": "Bangers-Regular",
-                "fontWeight": "700",
-                "fontStyle": "normal",
-                "color": "#ffffff",
-                "align": "center",
-                "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                "wordWrapWidth": 613,
-                "wordWrap": true,
-                "stroke": {
-                    "color": "#000000",
-                    "width": 4
-                },
-                "shadow": {
-                    "color": "#000000",
-                    "alpha": 0.5,
-                    "blur": 4,
-                    "offsetX": 2,
-                    "offsetY": 2
-                }
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
-            },
-            "text": "going around",
-            "caption": {
-                "words": [
-                    {
-                        "text": "going",
-                        "from": 0,
-                        "to": 399.9999999999999,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "around",
-                        "from": 399.9999999999999,
-                        "to": 640.0000000000001,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    }
-                ],
-                "colors": {
-                    "appeared": "#ffffff",
-                    "active": "#ffffff",
-                    "activeFill": "#FF5700",
-                    "background": "",
-                    "keyword": "#ffffff"
-                },
-                "preserveKeywordColor": true,
-                "positioning": {
-                    "videoWidth": 1080,
-                    "videoHeight": 1920
-                }
-            },
-            "effects": [],
-            "mediaId": "ngmkuxdgyTblaat5J_aVI",
-            "wordsPerLine": "multiple",
-            "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
-        },
-        "NIs-GA5jPW4hzFi6wf9Z8": {
-            "type": "Caption",
-            "id": "NIs-GA5jPW4hzFi6wf9Z8",
-            "name": "Caption",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 2720000,
-                    "to": 3040000
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 320000,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 398,
-                "y": 1470,
-                "width": 290,
-                "height": 105,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 20,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 80,
-                "fontFamily": "Bangers-Regular",
-                "fontWeight": "700",
-                "fontStyle": "normal",
-                "color": "#ffffff",
-                "align": "center",
-                "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                "wordWrapWidth": 290,
-                "wordWrap": true,
-                "stroke": {
-                    "color": "#000000",
-                    "width": 4
-                },
-                "shadow": {
-                    "color": "#000000",
-                    "alpha": 0.5,
-                    "blur": 4,
-                    "offsetX": 2,
-                    "offsetY": 2
-                }
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
-            },
-            "text": "about",
-            "caption": {
-                "words": [
-                    {
-                        "text": "about",
-                        "from": 0,
-                        "to": 319.99999999999983,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    }
-                ],
-                "colors": {
-                    "appeared": "#ffffff",
-                    "active": "#ffffff",
-                    "activeFill": "#FF5700",
-                    "background": "",
-                    "keyword": "#ffffff"
-                },
-                "preserveKeywordColor": true,
-                "positioning": {
-                    "videoWidth": 1080,
-                    "videoHeight": 1920
-                }
-            },
-            "effects": [],
-            "mediaId": "ngmkuxdgyTblaat5J_aVI",
-            "wordsPerLine": "multiple",
-            "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
-        },
-        "94Zt1sGihN7BBVQCeyZG7": {
-            "type": "Caption",
-            "id": "94Zt1sGihN7BBVQCeyZG7",
-            "name": "Caption",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 3040000,
-                    "to": 4320000
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 1280000,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 175.5,
-                "y": 1470,
-                "width": 729,
-                "height": 105,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 20,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 80,
-                "fontFamily": "Bangers-Regular",
-                "fontWeight": "700",
-                "fontStyle": "normal",
-                "color": "#ffffff",
-                "align": "center",
-                "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                "wordWrapWidth": 729,
-                "wordWrap": true,
-                "stroke": {
-                    "color": "#000000",
-                    "width": 4
-                },
-                "shadow": {
-                    "color": "#000000",
-                    "alpha": 0.5,
-                    "blur": 4,
-                    "offsetX": 2,
-                    "offsetY": 2
-                }
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
-            },
-            "text": "methylene blue,",
-            "caption": {
-                "words": [
-                    {
-                        "text": "methylene",
-                        "from": 0,
-                        "to": 560,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "blue,",
-                        "from": 560,
-                        "to": 1280.0000000000002,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    }
-                ],
-                "colors": {
-                    "appeared": "#ffffff",
-                    "active": "#ffffff",
-                    "activeFill": "#FF5700",
-                    "background": "",
-                    "keyword": "#ffffff"
-                },
-                "preserveKeywordColor": true,
-                "positioning": {
-                    "videoWidth": 1080,
-                    "videoHeight": 1920
-                }
-            },
-            "effects": [],
-            "mediaId": "ngmkuxdgyTblaat5J_aVI",
-            "wordsPerLine": "multiple",
-            "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
-        },
-        "ndIa1kuR765apGDpHvaU1": {
-            "type": "Caption",
-            "id": "ndIa1kuR765apGDpHvaU1",
-            "name": "Caption",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 4400000,
-                    "to": 5759999.800000001
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 1359999.8000000005,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 131,
-                "y": 1470,
-                "width": 818,
-                "height": 105,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 20,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 80,
-                "fontFamily": "Bangers-Regular",
-                "fontWeight": "700",
-                "fontStyle": "normal",
-                "color": "#ffffff",
-                "align": "center",
-                "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                "wordWrapWidth": 818,
-                "wordWrap": true,
-                "stroke": {
-                    "color": "#000000",
-                    "width": 4
-                },
-                "shadow": {
-                    "color": "#000000",
-                    "alpha": 0.5,
-                    "blur": 4,
-                    "offsetX": 2,
-                    "offsetY": 2
-                }
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
-            },
-            "text": "so let's clear up a",
-            "caption": {
-                "words": [
-                    {
-                        "text": "so",
-                        "from": 0,
-                        "to": 399.9996999999995,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "let's",
-                        "from": 399.9996999999995,
-                        "to": 799.9999999999998,
-                        "isKeyWord": false,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "clear",
-                        "from": 799.9999999999998,
-                        "to": 1040,
-                        "isKeyWord": false,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "up",
-                        "from": 1040,
-                        "to": 1199.9999999999993,
-                        "isKeyWord": false,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "a",
-                        "from": 1199.9999999999993,
-                        "to": 1359.9997999999998,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    }
-                ],
-                "colors": {
-                    "appeared": "#ffffff",
-                    "active": "#ffffff",
-                    "activeFill": "#FF5700",
-                    "background": "",
-                    "keyword": "#ffffff"
-                },
-                "preserveKeywordColor": true,
-                "positioning": {
-                    "videoWidth": 1080,
-                    "videoHeight": 1920
-                }
-            },
-            "effects": [],
-            "mediaId": "ngmkuxdgyTblaat5J_aVI",
-            "wordsPerLine": "multiple",
-            "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
-        },
-        "YXU8ZPmIOL_0fetzLB1am": {
-            "type": "Caption",
-            "id": "YXU8ZPmIOL_0fetzLB1am",
-            "name": "Caption",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 5759999.800000001,
-                    "to": 6399999.600000001
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 639999.7999999998,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 160,
-                "y": 1470,
-                "width": 760,
-                "height": 105,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 20,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 80,
-                "fontFamily": "Bangers-Regular",
-                "fontWeight": "700",
-                "fontStyle": "normal",
-                "color": "#ffffff",
-                "align": "center",
-                "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
-                "wordWrapWidth": 760,
-                "wordWrap": true,
-                "stroke": {
-                    "color": "#000000",
-                    "width": 4
-                },
-                "shadow": {
-                    "color": "#000000",
-                    "alpha": 0.5,
-                    "blur": 4,
-                    "offsetX": 2,
-                    "offsetY": 2
-                }
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {
-                "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
-            },
-            "text": "couple of things.",
-            "caption": {
-                "words": [
-                    {
-                        "text": "couple",
-                        "from": 0,
-                        "to": 240.0001999999999,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "of",
-                        "from": 240.0001999999999,
-                        "to": 400.0002,
-                        "isKeyWord": false,
-                        "paragraphIndex": ""
-                    },
-                    {
-                        "text": "things.",
-                        "from": 400.0002,
-                        "to": 639.9998,
-                        "isKeyWord": true,
-                        "paragraphIndex": ""
-                    }
-                ],
-                "colors": {
-                    "appeared": "#ffffff",
-                    "active": "#ffffff",
-                    "activeFill": "#FF5700",
-                    "background": "",
-                    "keyword": "#ffffff"
-                },
-                "preserveKeywordColor": true,
-                "positioning": {
-                    "videoWidth": 1080,
-                    "videoHeight": 1920
-                }
-            },
-            "effects": [],
-            "mediaId": "ngmkuxdgyTblaat5J_aVI",
-            "wordsPerLine": "multiple",
-            "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1080,
+          "videoHeight": 1920
         }
+      },
+      "effects": [],
+      "mediaId": "ngmkuxdgyTblaat5J_aVI",
+      "wordsPerLine": "multiple",
+      "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+    },
+    "wwKOQuXUAggYzl2bn1HjC": {
+      "type": "Caption",
+      "id": "wwKOQuXUAggYzl2bn1HjC",
+      "name": "Caption",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 2080000,
+          "to": 2720000
+        },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 640000,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 233.5,
+        "y": 1470,
+        "width": 613,
+        "height": 105,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 20,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {
+        "fontSize": 80,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+        "wordWrapWidth": 613,
+        "wordWrap": true,
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#000000",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2
+        }
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
+      },
+      "text": "going around",
+      "caption": {
+        "words": [
+          {
+            "text": "going",
+            "from": 0,
+            "to": 399.9999999999999,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "around",
+            "from": 399.9999999999999,
+            "to": 640.0000000000001,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1080,
+          "videoHeight": 1920
+        }
+      },
+      "effects": [],
+      "mediaId": "ngmkuxdgyTblaat5J_aVI",
+      "wordsPerLine": "multiple",
+      "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+    },
+    "NIs-GA5jPW4hzFi6wf9Z8": {
+      "type": "Caption",
+      "id": "NIs-GA5jPW4hzFi6wf9Z8",
+      "name": "Caption",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 2720000,
+          "to": 3040000
+        },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 320000,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 398,
+        "y": 1470,
+        "width": 290,
+        "height": 105,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 20,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {
+        "fontSize": 80,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+        "wordWrapWidth": 290,
+        "wordWrap": true,
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#000000",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2
+        }
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
+      },
+      "text": "about",
+      "caption": {
+        "words": [
+          {
+            "text": "about",
+            "from": 0,
+            "to": 319.99999999999983,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1080,
+          "videoHeight": 1920
+        }
+      },
+      "effects": [],
+      "mediaId": "ngmkuxdgyTblaat5J_aVI",
+      "wordsPerLine": "multiple",
+      "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+    },
+    "94Zt1sGihN7BBVQCeyZG7": {
+      "type": "Caption",
+      "id": "94Zt1sGihN7BBVQCeyZG7",
+      "name": "Caption",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 3040000,
+          "to": 4320000
+        },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 1280000,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 175.5,
+        "y": 1470,
+        "width": 729,
+        "height": 105,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 20,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {
+        "fontSize": 80,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+        "wordWrapWidth": 729,
+        "wordWrap": true,
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#000000",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2
+        }
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
+      },
+      "text": "methylene blue,",
+      "caption": {
+        "words": [
+          {
+            "text": "methylene",
+            "from": 0,
+            "to": 560,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "blue,",
+            "from": 560,
+            "to": 1280.0000000000002,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1080,
+          "videoHeight": 1920
+        }
+      },
+      "effects": [],
+      "mediaId": "ngmkuxdgyTblaat5J_aVI",
+      "wordsPerLine": "multiple",
+      "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+    },
+    "ndIa1kuR765apGDpHvaU1": {
+      "type": "Caption",
+      "id": "ndIa1kuR765apGDpHvaU1",
+      "name": "Caption",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 4400000,
+          "to": 5759999.800000001
+        },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 1359999.8000000005,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 131,
+        "y": 1470,
+        "width": 818,
+        "height": 105,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 20,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {
+        "fontSize": 80,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+        "wordWrapWidth": 818,
+        "wordWrap": true,
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#000000",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2
+        }
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
+      },
+      "text": "so let's clear up a",
+      "caption": {
+        "words": [
+          {
+            "text": "so",
+            "from": 0,
+            "to": 399.9996999999995,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "let's",
+            "from": 399.9996999999995,
+            "to": 799.9999999999998,
+            "isKeyWord": false,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "clear",
+            "from": 799.9999999999998,
+            "to": 1040,
+            "isKeyWord": false,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "up",
+            "from": 1040,
+            "to": 1199.9999999999993,
+            "isKeyWord": false,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "a",
+            "from": 1199.9999999999993,
+            "to": 1359.9997999999998,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1080,
+          "videoHeight": 1920
+        }
+      },
+      "effects": [],
+      "mediaId": "ngmkuxdgyTblaat5J_aVI",
+      "wordsPerLine": "multiple",
+      "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
+    },
+    "YXU8ZPmIOL_0fetzLB1am": {
+      "type": "Caption",
+      "id": "YXU8ZPmIOL_0fetzLB1am",
+      "name": "Caption",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 5759999.800000001,
+          "to": 6399999.600000001
+        },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 639999.7999999998,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 160,
+        "y": 1470,
+        "width": 760,
+        "height": 105,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 20,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {
+        "fontSize": 80,
+        "fontFamily": "Bangers-Regular",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "color": "#ffffff",
+        "align": "center",
+        "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf",
+        "wordWrapWidth": 760,
+        "wordWrap": true,
+        "stroke": {
+          "color": "#000000",
+          "width": 4
+        },
+        "shadow": {
+          "color": "#000000",
+          "alpha": 0.5,
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2
+        }
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {
+        "sourceClipId": "ngmkuxdgyTblaat5J_aVI"
+      },
+      "text": "couple of things.",
+      "caption": {
+        "words": [
+          {
+            "text": "couple",
+            "from": 0,
+            "to": 240.0001999999999,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "of",
+            "from": 240.0001999999999,
+            "to": 400.0002,
+            "isKeyWord": false,
+            "paragraphIndex": ""
+          },
+          {
+            "text": "things.",
+            "from": 400.0002,
+            "to": 639.9998,
+            "isKeyWord": true,
+            "paragraphIndex": ""
+          }
+        ],
+        "colors": {
+          "appeared": "#ffffff",
+          "active": "#ffffff",
+          "activeFill": "#FF5700",
+          "background": "",
+          "keyword": "#ffffff"
+        },
+        "preserveKeywordColor": true,
+        "positioning": {
+          "videoWidth": 1080,
+          "videoHeight": 1920
+        }
+      },
+      "effects": [],
+      "mediaId": "ngmkuxdgyTblaat5J_aVI",
+      "wordsPerLine": "multiple",
+      "fontUrl": "https://fonts.gstatic.com/s/poppins/v15/pxiByp8kv8JHgFVrLCz7V1tvFP-KUEg.ttf"
     }
+  }
 }

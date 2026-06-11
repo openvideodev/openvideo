@@ -2,6 +2,14 @@
   "name": "@openvideo/video-renderer",
   "version": "1.0.0",
   "description": "Headless video renderer: runs @openvideo/engine-pixi inside a Playwright browser and returns a Buffer",
+  "keywords": [
+    "playwright",
+    "rendering",
+    "video",
+    "webcodecs"
+  ],
+  "license": "MIT",
+  "author": "OpenVideo",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,13 +33,5 @@
     "@types/node": "^20.11.30",
     "tsx": "^4.7.1",
     "typescript": "^5.7.0"
-  },
-  "keywords": [
-    "video",
-    "rendering",
-    "playwright",
-    "webcodecs"
-  ],
-  "author": "OpenVideo",
-  "license": "MIT"
+  }
 }

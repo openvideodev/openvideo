@@ -1,66 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
-<head>
-  <meta charset="utf-8">
-  <title>Video Renderer</title>
-  <!--
+  <head>
+    <meta charset="utf-8" />
+    <title>Video Renderer</title>
+    <!--
     Import map: @openvideo/engine-pixi is resolved to the local dist files
     served by the Node.js static HTTP server at /engine-pixi/...
   -->
-  <script type="importmap">
-  {
-    "imports": {
-      "@openvideo/engine-pixi": "/engine-pixi/index.es.js"
-    }
-  }
-  </script>
-</head>
-
-<body>
-  <script type="module">
-    import { Compositor } from "@openvideo/engine-pixi";
-
-    async function render() {
-      /** @type {import('@openvideo/engine-pixi').ProjectJSON} */
-      const project = window.__PROJECT_DATA__;
-      const opts    = window.__COMPOSITOR_OPTIONS__;
-
-      if (!project) {
-        window.__RENDER_ERROR__ = "No project data found. window.__PROJECT_DATA__ was not set.";
-        return;
+    <script type="importmap">
+      {
+        "imports": {
+          "@openvideo/engine-pixi": "/engine-pixi/index.es.js"
+        }
       }
+    </script>
+  </head>
 
-      try {
-        const com = new Compositor(opts ?? {});
+  <body>
+    <script type="module">
+      import { Compositor } from "@openvideo/engine-pixi";
 
-        if ((opts?.width ?? 0) > 0 && (opts?.height ?? 0) > 0) {
-          await com.initPixiApp();
+      async function render() {
+        /** @type {import('@openvideo/engine-pixi').ProjectJSON} */
+        const project = window.__PROJECT_DATA__;
+        const opts = window.__COMPOSITOR_OPTIONS__;
+
+        if (!project) {
+          window.__RENDER_ERROR__ = "No project data found. window.__PROJECT_DATA__ was not set.";
+          return;
         }
 
-        com.on("export:progress", (v) => {
-          window.__RENDER_PROGRESS__ = v;
-          // Notify Node.js side if a progress bridge is exposed
-          if (typeof window.__onProgress__ === "function") {
-            window.__onProgress__(v);
+        try {
+          const com = new Compositor(opts ?? {});
+
+          if ((opts?.width ?? 0) > 0 && (opts?.height ?? 0) > 0) {
+            await com.initPixiApp();
           }
-        });
 
-        await com.loadFromJSON(project);
+          com.on("export:progress", (v) => {
+            window.__RENDER_PROGRESS__ = v;
+            // Notify Node.js side if a progress bridge is exposed
+            if (typeof window.__onProgress__ === "function") {
+              window.__onProgress__(v);
+            }
+          });
 
-        const stream = com.output();
-        const blob   = await new Response(stream).blob();
+          await com.loadFromJSON(project);
 
-        window.__VIDEO_BLOB__       = blob;
-        window.__RENDER_COMPLETE__  = true;
-      } catch (err) {
-        console.error("Compositor render failed:", err);
-        window.__RENDER_ERROR__ = err instanceof Error ? err.message : String(err);
+          const stream = com.output();
+          const blob = await new Response(stream).blob();
+
+          window.__VIDEO_BLOB__ = blob;
+          window.__RENDER_COMPLETE__ = true;
+        } catch (err) {
+          console.error("Compositor render failed:", err);
+          window.__RENDER_ERROR__ = err instanceof Error ? err.message : String(err);
+        }
       }
-    }
 
-    window.addEventListener("load", render);
-  </script>
-</body>
-
+      window.addEventListener("load", render);
+    </script>
+  </body>
 </html>

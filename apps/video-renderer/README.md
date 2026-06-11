@@ -11,6 +11,7 @@ npm install @openvideo/video-renderer
 ```
 
 **Prerequisites:**
+
 - Node.js 18+
 - Playwright browsers installed: `npx playwright install chromium`
 
@@ -29,7 +30,7 @@ const project = {
     backgroundColor: "#000000",
   },
   clips: {
-    "text1": {
+    text1: {
       type: "Text",
       id: "text1",
       text: "Hello World",
@@ -89,24 +90,24 @@ const buffer = await renderVideo(project, {
   height: 1920,
   fps: 30,
   backgroundColor: "#111111",
-  
+
   // Video encoding
   format: "mp4",
   videoCodec: "avc1.640033",
   bitrate: 12_000_000,
-  
+
   // Audio settings
   audio: true,
   audioCodec: "aac",
   audioSampleRate: 48_000,
-  
+
   // Performance
-  prioritizeSpeed: true,  // Reduces bitrate by 30% for faster encoding
-  
+  prioritizeSpeed: true, // Reduces bitrate by 30% for faster encoding
+
   // Callbacks and timeout
   onProgress: (progress) => console.log(`${(progress * 100).toFixed(1)}%`),
   timeout: 600_000,
-  
+
   // Output
   outputPath: "./output.mp4",
 });
@@ -144,7 +145,7 @@ const buffer = await renderVideo(project, {
 
 // Or override specific settings
 const buffer = await renderVideo(project, {
-  bitrate: 8_000_000,  // Override project bitrate
+  bitrate: 8_000_000, // Override project bitrate
   outputPath: "./output.mp4",
 });
 ```
@@ -190,7 +191,7 @@ await renderer.init();
 try {
   // First render at 4K
   const hd = await renderer.render(project, { width: 3840, height: 2160, bitrate: 25_000_000 });
-  
+
   // Second render at 1080p (faster, reuses browser page from pool)
   const fullHd = await renderer.render(project, { width: 1920, height: 1080, bitrate: 8_000_000 });
 } finally {
@@ -205,6 +206,7 @@ try {
 Renders a project to a video Buffer.
 
 **Parameters:**
+
 - `project` (`ProjectJSON`): The project definition with clips and settings
 - `options` (`RenderOptions & { outputPath?: string }`): Render configuration
 
@@ -229,28 +231,29 @@ try {
 ```
 
 **Methods:**
+
 - `init()`: Start the static server and launch headless browser
 - `render(project, options)`: Render a project and return video Buffer
 - `destroy()`: Stop the browser and static server
 
 ## Render Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `width` | `number` | Project settings | Override export width (px) |
-| `height` | `number` | Project settings | Override export height (px) |
-| `fps` | `number` | Project settings | Override frame rate |
-| `backgroundColor` | `string` | Project settings | Background color hex |
-| `format` | `string` | `'mp4'` | Container format |
-| `videoCodec` | `string` | `'avc1.640033'` | WebCodecs video codec (H.264) |
-| `bitrate` | `number` | `12_000_000` | Video bitrate in bps (12 Mbps) |
-| `audio` | `boolean` | `true` | Include audio track |
-| `audioCodec` | `string` | `'aac'` | Audio codec |
-| `audioSampleRate` | `number` | `48_000` | Audio sample rate |
-| `onProgress` | `(progress: number) => void` | — | Progress callback (0–1) |
-| `timeout` | `number` | `600_000` | Max render time in ms (10 min) |
-| `outputPath` | `string` | — | Optional path to write the file |
-| `prioritizeSpeed` | `boolean` | `false` | Prioritize speed over quality (reduces bitrate by 30%) |
+| Option            | Type                         | Default          | Description                                            |
+| ----------------- | ---------------------------- | ---------------- | ------------------------------------------------------ |
+| `width`           | `number`                     | Project settings | Override export width (px)                             |
+| `height`          | `number`                     | Project settings | Override export height (px)                            |
+| `fps`             | `number`                     | Project settings | Override frame rate                                    |
+| `backgroundColor` | `string`                     | Project settings | Background color hex                                   |
+| `format`          | `string`                     | `'mp4'`          | Container format                                       |
+| `videoCodec`      | `string`                     | `'avc1.640033'`  | WebCodecs video codec (H.264)                          |
+| `bitrate`         | `number`                     | `12_000_000`     | Video bitrate in bps (12 Mbps)                         |
+| `audio`           | `boolean`                    | `true`           | Include audio track                                    |
+| `audioCodec`      | `string`                     | `'aac'`          | Audio codec                                            |
+| `audioSampleRate` | `number`                     | `48_000`         | Audio sample rate                                      |
+| `onProgress`      | `(progress: number) => void` | —                | Progress callback (0–1)                                |
+| `timeout`         | `number`                     | `600_000`        | Max render time in ms (10 min)                         |
+| `outputPath`      | `string`                     | —                | Optional path to write the file                        |
+| `prioritizeSpeed` | `boolean`                    | `false`          | Prioritize speed over quality (reduces bitrate by 30%) |
 
 ## Project JSON Format
 

@@ -10,7 +10,6 @@ import {
   IconChevronLeft,
   IconPencil,
   IconRobot,
-  IconPlayerPlay,
   IconArrowBackUp,
   IconArrowForwardUp,
   IconDownload,
@@ -157,10 +156,7 @@ export default function Header() {
 
       {/* Center: Mode Switcher */}
       <div className="flex-1 flex justify-center">
-        <Tabs
-          value={editorMode}
-          onValueChange={(v) => setEditorMode(v as "editor" | "agent" | "playground")}
-        >
+        <Tabs value={editorMode} onValueChange={(v) => setEditorMode(v as "editor" | "agent")}>
           <TabsList className="h-8 bg-muted/50 border-0">
             <TabsTrigger
               value="editor"
@@ -175,13 +171,6 @@ export default function Header() {
             >
               <IconRobot className="h-3.5 w-3.5" />
               Agent
-            </TabsTrigger>
-            <TabsTrigger
-              value="playground"
-              className="text-xs gap-1.5 px-3 h-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <IconPlayerPlay className="h-3.5 w-3.5" />
-              Playground
             </TabsTrigger>
           </TabsList>
         </Tabs>

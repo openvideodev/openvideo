@@ -1,75 +1,73 @@
 {
-    "tracks": [
-        {
-            "id": "HcFUMyDMQf4JnDZVv_Eux",
-            "name": "Text Track",
-            "type": "text",
-            "clipIds": [
-                "kafgNKrp1tq07dzA-nQub"
-            ]
-        }
-    ],
-    "clips": {
-        "kafgNKrp1tq07dzA-nQub": {
-            "type": "Text",
-            "id": "kafgNKrp1tq07dzA-nQub",
-            "name": "Text",
-            "src": "",
-            "timing": {
-                "display": {
-                    "from": 0,
-                    "to": 5000000
-                },
-                "trim": {
-                    "from": 0,
-                    "to": 0
-                },
-                "duration": 5000000,
-                "playbackRate": 1
-            },
-            "transform": {
-                "x": 240,
-                "y": 898.0000000000003,
-                "width": 600,
-                "height": 144,
-                "angle": 0,
-                "opacity": 1,
-                "zIndex": 10,
-                "flip": {
-                    "x": false,
-                    "y": false
-                }
-            },
-            "style": {
-                "fontSize": 120,
-                "fontFamily": "Nunito-Bold",
-                "align": "center",
-                "wordWrap": true,
-                "wordWrapWidth": 600
-            },
-            "chromaKey": {
-                "enabled": false,
-                "color": "#00FF00",
-                "similarity": 0.1,
-                "spill": 0
-            },
-            "colorAdjustment": {
-                "enabled": false,
-                "type": "basic",
-                "basic": {},
-                "hsl": {},
-                "curves": {}
-            },
-            "locked": false,
-            "metadata": {},
-            "text": "Add Text",
-            "effects": []
-        }
-    },
-    "settings": {
-        "width": 1080,
-        "height": 1920,
-        "fps": 30,
-        "backgroundColor": "#111111"
+  "tracks": [
+    {
+      "id": "HcFUMyDMQf4JnDZVv_Eux",
+      "name": "Text Track",
+      "type": "text",
+      "clipIds": ["kafgNKrp1tq07dzA-nQub"]
     }
+  ],
+  "clips": {
+    "kafgNKrp1tq07dzA-nQub": {
+      "type": "Text",
+      "id": "kafgNKrp1tq07dzA-nQub",
+      "name": "Text",
+      "src": "",
+      "timing": {
+        "display": {
+          "from": 0,
+          "to": 5000000
+        },
+        "trim": {
+          "from": 0,
+          "to": 0
+        },
+        "duration": 5000000,
+        "playbackRate": 1
+      },
+      "transform": {
+        "x": 240,
+        "y": 898.0000000000003,
+        "width": 600,
+        "height": 144,
+        "angle": 0,
+        "opacity": 1,
+        "zIndex": 10,
+        "flip": {
+          "x": false,
+          "y": false
+        }
+      },
+      "style": {
+        "fontSize": 120,
+        "fontFamily": "Nunito-Bold",
+        "align": "center",
+        "wordWrap": true,
+        "wordWrapWidth": 600
+      },
+      "chromaKey": {
+        "enabled": false,
+        "color": "#00FF00",
+        "similarity": 0.1,
+        "spill": 0
+      },
+      "colorAdjustment": {
+        "enabled": false,
+        "type": "basic",
+        "basic": {},
+        "hsl": {},
+        "curves": {}
+      },
+      "locked": false,
+      "metadata": {},
+      "text": "Add Text",
+      "effects": []
+    }
+  },
+  "settings": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "backgroundColor": "#111111"
+  }
 }
