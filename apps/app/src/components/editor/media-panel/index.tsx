@@ -26,7 +26,10 @@ export function MediaPanel() {
 
   return (
     <div
-      className={cn("h-full bg-card rounded-sm relative shrink-0", showLabels ? "w-16" : "w-11")}
+      className={cn(
+        "h-full bg-background rounded-sm relative shrink-0",
+        showLabels ? "w-16" : "w-11",
+      )}
     >
       <TabBar />
       {isOpen && (

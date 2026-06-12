@@ -19,7 +19,7 @@ export function BrowserWithBackground({
   return (
     <div
       className={cn(
-        "relative flex w-full items-center justify-center overflow-hidden bg-card",
+        "relative flex w-full items-center justify-center overflow-hidden bg-card/30",
         "min-h-[300px] md:min-h-[400px] lg:min-h-[500px]",
         containerClassName,
       )}

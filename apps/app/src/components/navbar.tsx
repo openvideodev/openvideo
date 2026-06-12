@@ -21,18 +21,14 @@ const Navbar = () => {
   const { data: session } = authClient.useSession();
 
   return (
-    <header
-      id="nd-nav"
-      className="w-full sticky top-0 z-50 bg-card/60 backdrop-blur-sm"
-      aria-label="Main"
-    >
+    <header id="nd-nav" className="w-full sticky top-0 z-50 bg-background" aria-label="Main">
       <div className="max-w-7xl border-x border-dashed px-4 mx-auto h-14 flex items-center">
         {/* Desktop Navigation */}
         <div className="hidden md:grid grid-cols-3 w-full items-center">
           {/* Left: Logo */}
           <div className="flex justify-start">
             <Link
-              className="inline-flex items-center gap-2.5 font-semi tracking-tight shrink-0"
+              className="inline-flex items-center font-heading font-semibold gap-2.5 font-semi tracking-tight shrink-0"
               href="/"
             >
               <LogoIcons.scenify className="size-5" />

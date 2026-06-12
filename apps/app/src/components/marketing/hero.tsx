@@ -1,88 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { IconSparkles, IconPlayerPlay } from "@tabler/icons-react";
 
 const Hero = () => {
   return (
-    <div>
-      <section className="relative flex flex-col items-center justify-center gap-8 md:gap-10 px-4 md:px-10 text-center py-8 md:py-16 pt-16 md:pt-24">
-        <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium">
-          <IconSparkles className="w-3 h-3 mr-1.5" />
-          AI-Powered Video Editor
-        </Badge>
-
-        <div className="flex items-center justify-center gap-4 flex-col">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight">
-            Edit Videos at the Speed of Thought
+    <div className="w-full flex justify-start">
+      <section className="relative flex flex-col items-start gap-4 md:gap-5 px-6 md:px-12 py-6 md:py-16 pt-12 md:pt-16 text-left max-w-4xl">
+        <div className="flex flex-col gap-4">
+          <h1 className="font-heading text-4xl md:text-5xl lg:text-5xl font-medium tracking-tight max-w-3xl leading-[1.15] bg-gradient-to-br from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+            Multimodal AI that edits your videos
           </h1>
-          <p className="text-sm md:text-lg text-muted-foreground max-w-2xl px-4 leading-relaxed">
-            Transform your creative vision into stunning videos with intelligent editing tools that
-            understand your workflow.
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
+            OpenVideo analyzes your footage, transcripts, and assets to orchestrate and edit
+            timelines automatically—while keeping everything manually adjustable.
           </p>
         </div>
 
-        <div className="flex items-center justify-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3.5 flex-wrap pt-2">
           <Button
             asChild
-            className="h-11 px-5 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+            className="h-11 px-6 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
             size="lg"
           >
             <Link href="/signin" className="flex items-center gap-2 text-sm">
-              <IconPlayerPlay className="w-4 h-4" />
-              Start Creating
+              Get Started for Free
             </Link>
           </Button>
           <Button
             asChild
             variant="outline"
             size="lg"
-            className="h-11 px-5 font-medium border-border/50 hover:border-border hover:bg-muted/50 transition-all duration-200"
+            className="h-11 px-6 font-medium border-border/50 hover:border-border hover:bg-muted/50 transition-all duration-200"
           >
             <Link
               href="https://docs.openvideo.dev/core/00-getting-started"
               target="_blank"
               className="text-sm"
             >
-              Learn More
+              Read Documentation
             </Link>
           </Button>
         </div>
       </section>
-
-      {/* <div className="relative w-full overflow-hidden">
-        <div className="absolute inset-0 w-full h-full">
-          <DotOrbit
-            width="100%"
-            height="100%"
-            colors={["#333333", "#555555"]}
-            colorBack="#111111"
-            stepsPerColor={4}
-            size={1}
-            sizeRange={0.12}
-            spreading={1}
-            speed={0}
-            scale={0.05}
-          />
-        </div>
-        <div className="relative z-10 w-full px-6 md:px-10 pt-12 md:pt-16">
-          <div
-            className="relative w-full rounded-xl border border-border/40 overflow-hidden shadow-2xl hover:border-border/60 transition-all duration-300 mx-auto max-w-5xl"
-            style={{ paddingBottom: "56.25%" }}
-          >
-            <Image
-              src="/preview.png"
-              alt="Video Editor Preview"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 };

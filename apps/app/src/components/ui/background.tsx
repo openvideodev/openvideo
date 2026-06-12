@@ -386,14 +386,17 @@ export function Background({
     };
 
     const updatePalette = () => {
-      const rootStyle = window.getComputedStyle(document.documentElement);
+      const rootStyle = window.getComputedStyle(container);
       const defaultBackground = rootStyle.getPropertyValue("--background").trim();
       const isDarkFallback =
-        document.documentElement.classList.contains("dark") && !defaultBackground;
+        (document.documentElement.classList.contains("dark") ||
+          document.body.classList.contains("dark")) &&
+        !defaultBackground;
       const backgroundColor = readCssColor(
         defaultBackground,
         isDarkFallback ? FALLBACK_DARK_BACKGROUND : FALLBACK_LIGHT_BACKGROUND,
       );
+      console.log({ backgroundColor, isDarkFallback });
       const foregroundColor = readCssColor(
         rootStyle.getPropertyValue("--foreground").trim(),
         getRelativeLuminance(backgroundColor) < 0.5
@@ -401,13 +404,14 @@ export function Background({
           : FALLBACK_LIGHT_FOREGROUND,
       );
       const accentColor = readCssColor(
-        rootStyle.getPropertyValue(resolvedConfig.accentColorVar).trim() ||
-          rootStyle.getPropertyValue("--openvideo-gray").trim(),
+        // rootStyle.getPropertyValue(resolvedConfig.accentColorVar).trim() ||
+        rootStyle.getPropertyValue("--openvideo-gray").trim(),
         FALLBACK_ACCENT,
       );
+      console.log({});
       const isDarkTheme = getRelativeLuminance(backgroundColor) < 0.5;
       const neutralColor = mixColors(backgroundColor, foregroundColor, isDarkTheme ? 0.2 : 0.08);
-
+      console.log({ isDarkTheme, accentColor, neutralColor, backgroundColor });
       palette = {
         accent: accentColor,
         asciiBase: mixColors(foregroundColor, accentColor, isDarkTheme ? 0.14 : 0.1),

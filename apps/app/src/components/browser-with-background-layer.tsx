@@ -3,5 +3,5 @@
 import { Background } from "@/components/ui/background";
 
 export function BrowserWithBackgroundLayer() {
-  return <Background fieldOpacity={0} asciiOpacity={1} />;
+  return <Background asciiOpacity={1} />;
 }

@@ -374,7 +374,7 @@ const Timeline = () => {
         ref={timelineContainerRef}
         id="timeline-container"
         data-timeline="true"
-        className="flex flex-col relative w-full h-full overflow-hidden bg-card border-t border-transparent"
+        className="flex flex-col relative w-full h-full overflow-hidden bg-background border-t border-transparent"
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseOut={onMouseOut}

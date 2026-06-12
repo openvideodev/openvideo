@@ -77,7 +77,7 @@ const Features = () => {
         <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium">
           Capabilities
         </Badge>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+        <h2 className="text-3xl md:text-4xl font-semibold font-heading tracking-tight">
           First cut to final cut. No grind.
         </h2>
         <p className="text-base text-muted-foreground leading-relaxed">

@@ -56,11 +56,11 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
   }, [canvasSize]);
 
   // Handle background color changes
-  useEffect(() => {
-    if (studioRef.current) {
-      studioRef.current.setBackgroundColor(backgroundColor);
-    }
-  }, [backgroundColor]);
+  // useEffect(() => {
+  //   if (studioRef.current) {
+  //     studioRef.current.setBackgroundColor(backgroundColor);
+  //   }
+  // }, [backgroundColor]);
 
   // Setup Studio and ResizeObserver (only once on mount)
   useEffect(() => {
@@ -70,7 +70,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     studioRef.current = new Studio({
       ...canvasSize,
       ...STUDIO_CONFIG,
-      backgroundColor: backgroundColor,
+      backgroundColor: "#1D1816",
       canvas: canvasRef.current,
       core: core,
       previewScale: 0.75,
