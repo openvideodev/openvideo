@@ -46,10 +46,18 @@ export type PropertyKey =
   | "visualGroup" // visual properties grouped together
   | "audioGroup" // audio properties grouped together
   | "textGroup" // text properties grouped together
-  | "captionGroup"; // caption properties grouped together
+  | "captionGroup" // caption properties grouped together
+  // Scene/Project properties
+  | "projectMenu"
+  | "exportProperties"
+  | "sceneDuration"
+  | "sceneSizeProperties";
 
 // Property configuration for each clip type
 export const PROPERTY_REGISTRY: Record<string, PropertyKey[]> = {
+  // Scene settings (when no clips are selected)
+  Scene: ["projectMenu", "exportProperties", "sceneDuration", "sceneSizeProperties"],
+
   // Image clip properties
   Image: [
     "transform",
@@ -149,6 +157,10 @@ export const PROPERTY_LABELS: Record<PropertyKey, string> = {
   audioGroup: "Audio",
   textGroup: "Text",
   captionGroup: "Caption",
+  projectMenu: "Project Name",
+  exportProperties: "Export Settings",
+  sceneDuration: "Time",
+  sceneSizeProperties: "Canvas Settings",
 };
 
 // Helper to check if a clip type supports a property

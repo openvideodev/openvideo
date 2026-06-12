@@ -1,5 +1,4 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IClip } from "@openvideo/engine-pixi";
 import { cn } from "@/lib/utils";
 import { PropertiesPanelContent } from "./properties-panel";
 import { useStudioStore } from "@/stores/studio-store";
@@ -15,9 +14,7 @@ export function PropertiesPanel() {
     );
   }
 
-  if (selectedClips.length === 0) return null;
-
-  const clip = selectedClips[0];
+  const clip = selectedClips.length === 0 ? ({ type: "Scene" } as any) : selectedClips[0];
 
   return (
     <ScrollArea className="h-full">

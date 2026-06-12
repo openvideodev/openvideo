@@ -16,22 +16,45 @@ import {
 import { IconLoader2, IconVideo, IconMusic, IconClock, IconSettings } from "@tabler/icons-react";
 import { useStudioStore } from "@/stores/studio-store";
 
+export interface ResolutionPreset {
+  value: string;
+  label: string;
+  badge: string;
+  bitrate: number;
+  fps: number;
+  codec: string;
+  format: string;
+}
+
 interface ExportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialPresetLabel?: string;
+  autoStart?: boolean;
+  customSettings?: {
+    includeVideo?: boolean;
+    videoCodec?: string;
+    quality?: string;
+    format?: string;
+    fps?: string;
+    resolution?: string;
+    includeAudio?: boolean;
+    audioCodec?: string;
+    audioSampleRate?: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Option definitions (sourced from mediabunny's supported formats/codecs)
 // ---------------------------------------------------------------------------
 
-const VIDEO_CODECS = [
+export const VIDEO_CODECS = [
   { value: "avc1.640033", label: "H.264 (AVC)", maxHeight: 2160 },
   { value: "hvc1.1.6.L153.B0", label: "H.265 (HEVC)", maxHeight: 2160 },
   { value: "vp09.00.51.08", label: "VP9", maxHeight: 2160 },
 ];
 
-const AUDIO_CODECS = [
+export const AUDIO_CODECS = [
   { value: "aac", label: "AAC" },
   { value: "opus", label: "Opus" },
   { value: "mp3", label: "MP3" },
@@ -39,7 +62,7 @@ const AUDIO_CODECS = [
 ];
 
 // Which container formats work with which video codecs
-const VIDEO_FORMATS = [
+export const VIDEO_FORMATS = [
   {
     value: "mp4",
     label: "MP4",
@@ -54,14 +77,14 @@ const VIDEO_FORMATS = [
   { value: "mov", label: "MOV", codecs: ["avc1.640033", "hvc1.1.6.L153.B0"] },
 ];
 
-const AUDIO_FORMATS = [
+export const AUDIO_FORMATS = [
   { value: "mp3", label: "MP3" },
   { value: "wav", label: "WAV" },
   { value: "flac", label: "FLAC" },
   { value: "ogg", label: "OGG" },
 ];
 
-const FRAME_RATES = [
+export const FRAME_RATES = [
   { value: "23.976", label: "23.976 fps (Film)" },
   { value: "24", label: "24 fps" },
   { value: "25", label: "25 fps (PAL)" },
@@ -73,17 +96,7 @@ const FRAME_RATES = [
   { value: "15", label: "15 fps" },
 ];
 
-interface ResolutionPreset {
-  value: string;
-  label: string;
-  badge: string;
-  bitrate: number;
-  fps: number;
-  codec: string;
-  format: string;
-}
-
-const RESOLUTION_GROUPS: { group: string; items: ResolutionPreset[] }[] = [
+export const RESOLUTION_GROUPS: { group: string; items: ResolutionPreset[] }[] = [
   {
     group: "Standard",
     items: [
@@ -191,9 +204,9 @@ const RESOLUTION_GROUPS: { group: string; items: ResolutionPreset[] }[] = [
   },
 ];
 
-const RESOLUTION_PRESETS = RESOLUTION_GROUPS.flatMap((g) => g.items);
+export const RESOLUTION_PRESETS = RESOLUTION_GROUPS.flatMap((g) => g.items);
 
-const SAMPLE_RATES = [
+export const SAMPLE_RATES = [
   { value: "44100", label: "44.1 kHz" },
   { value: "48000", label: "48 kHz" },
 ];
@@ -253,7 +266,13 @@ function suppressRenderLoop(): () => void {
   };
 }
 
-export function ExportModal({ open, onOpenChange }: ExportModalProps) {
+export function ExportModal({
+  open,
+  onOpenChange,
+  initialPresetLabel,
+  autoStart,
+  customSettings,
+}: ExportModalProps) {
   const { studio } = useStudioStore();
   const studioOpts = studio?.getOptions() || {
     width: 1920,
@@ -352,6 +371,44 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
     if (!open) resetState();
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      if (customSettings) {
+        if (customSettings.includeVideo !== undefined) setIncludeVideo(customSettings.includeVideo);
+        if (customSettings.videoCodec !== undefined) setVideoCodec(customSettings.videoCodec);
+        if (customSettings.quality !== undefined) setQuality(customSettings.quality);
+        if (customSettings.format !== undefined) setFormat(customSettings.format);
+        if (customSettings.fps !== undefined) setFps(customSettings.fps);
+        if (customSettings.resolution !== undefined) setResolution(customSettings.resolution);
+        if (customSettings.includeAudio !== undefined) setIncludeAudio(customSettings.includeAudio);
+        if (customSettings.audioCodec !== undefined) setAudioCodec(customSettings.audioCodec);
+        if (customSettings.audioSampleRate !== undefined)
+          setAudioSampleRate(customSettings.audioSampleRate);
+
+        if (autoStart) {
+          const customPreset = {
+            label: customSettings.resolution || resolution,
+            bitrate: Number(customSettings.quality || quality),
+            fps: Number(customSettings.fps || fps),
+            format: customSettings.format || format,
+            codec: customSettings.videoCodec || videoCodec,
+            value: "",
+            badge: "",
+          };
+          startExport(customPreset);
+        }
+      } else if (initialPresetLabel) {
+        const preset = RESOLUTION_PRESETS.find((r) => r.label === initialPresetLabel);
+        if (preset) {
+          applyPreset(preset);
+          if (autoStart) {
+            startExport(preset);
+          }
+        }
+      }
+    }
+  }, [open, initialPresetLabel, customSettings, autoStart]);
+
   const handleDownload = (url?: string) => {
     const downloadUrl = url || exportBlobUrl;
     if (!downloadUrl) return;
@@ -366,7 +423,7 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
     }, 100);
   };
 
-  const startExport = async () => {
+  const startExport = async (targetPreset?: ResolutionPreset) => {
     if (!studio) return;
 
     // Pause interactive playback/rendering while exporting to avoid
@@ -392,7 +449,11 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
         throw new Error("No clips to export");
 
       const settings = json.settings || {};
-      const resolvedPreset = RESOLUTION_PRESETS.find((r) => r.label === resolution);
+      const resolvedPreset = targetPreset || RESOLUTION_PRESETS.find((r) => r.label === resolution);
+      const activeQuality = targetPreset ? String(targetPreset.bitrate) : quality;
+      const activeFps = targetPreset ? String(targetPreset.fps) : fps;
+      const activeFormat = targetPreset ? targetPreset.format : format;
+      const activeCodec = targetPreset ? targetPreset.codec : videoCodec;
 
       // Determine export dimensions, respecting project aspect ratio
       const projectWidth = settings.width || studioOpts.width || 1920;
@@ -421,11 +482,11 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
       const compositorOptions: any = {
         width: includeVideo ? exportWidth : 0,
         height: includeVideo ? exportHeight : 0,
-        fps: Number(fps),
+        fps: Number(activeFps),
         backgroundColor: settings.backgroundColor || "#000000",
-        format,
-        videoCodec: includeVideo ? videoCodec : undefined,
-        bitrate: Number(quality),
+        format: activeFormat,
+        videoCodec: includeVideo ? activeCodec : undefined,
+        bitrate: Number(activeQuality),
         audio: includeAudio ? true : false,
         audioCodec: includeAudio ? audioCodec : undefined,
         audioSampleRate: includeAudio ? Number(audioSampleRate) : undefined,
@@ -524,7 +585,7 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
                         key={group.group + preset.label}
                         onClick={() => {
                           applyPreset(preset);
-                          startExport();
+                          startExport(preset);
                         }}
                         className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-muted/60 transition-colors text-left group"
                       >
@@ -739,7 +800,7 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
                     Cancel
                   </Button>
                   <Button
-                    onClick={startExport}
+                    onClick={() => startExport()}
                     className="h-8 px-5 text-xs rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                   >
                     Export

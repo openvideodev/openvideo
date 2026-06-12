@@ -28,3 +28,7 @@ export { TransitionSelectorProperty } from "./transition-selector";
 export { TextGroupProperty } from "./text-group";
 export { TextContentProperty } from "./text-content";
 export { FillProperty } from "./fill";
+export { CanvasGroupProperty } from "./canvas-group";
+export { TimeGroupProperty } from "./time-group";
+export { ExportGroupProperty } from "./export-group";
+export { ProjectGroupProperty } from "./project-group";

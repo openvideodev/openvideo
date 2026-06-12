@@ -151,7 +151,7 @@ export default function Header() {
           width={140}
           inputClassName="border-none bg-transparent px-0 py-1 text-sm font-semibold text-foreground focus:outline-none"
         />
-        <Button onClick={() => console.log(core.project.export())}>Debug</Button>
+        {/* <Button onClick={() => console.log(core.project.export())}>Debug</Button> */}
       </div>
 
       {/* Center: Mode Switcher */}

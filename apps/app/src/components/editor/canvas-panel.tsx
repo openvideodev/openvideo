@@ -7,7 +7,8 @@ import {
 } from "@openvideo/engine-pixi";
 import { useStudioStore } from "@/stores/studio-store";
 import { useProjectStore } from "@/stores/project-store";
-import { core } from "@/lib/project";
+import { core, projectStore } from "@/lib/project";
+import { useStore } from "zustand";
 import { editorFont } from "./constants";
 import { CUSTOM_TRANSITIONS } from "./transition-custom";
 import { CUSTOM_EFFECTS } from "./effect-custom";
@@ -34,6 +35,8 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
   const { setStudio } = useStudioStore();
   const { canvasSize } = useProjectStore();
 
+  const backgroundColor = useStore(projectStore, (s) => s.settings.backgroundColor) || "#111111";
+
   // Keep onReady ref up to date
   useEffect(() => {
     onReadyRef.current = onReady;
@@ -52,6 +55,13 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     });
   }, [canvasSize]);
 
+  // Handle background color changes
+  useEffect(() => {
+    if (studioRef.current) {
+      studioRef.current.setBackgroundColor(backgroundColor);
+    }
+  }, [backgroundColor]);
+
   // Setup Studio and ResizeObserver (only once on mount)
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -60,7 +70,7 @@ export function CanvasPanel({ onReady }: CanvasPanelProps) {
     studioRef.current = new Studio({
       ...canvasSize,
       ...STUDIO_CONFIG,
-      backgroundColor: "#111111",
+      backgroundColor: backgroundColor,
       canvas: canvasRef.current,
       core: core,
       previewScale: 0.75,

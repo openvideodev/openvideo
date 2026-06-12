@@ -4,9 +4,10 @@ import { useParams } from "next/navigation";
 import { MediaPanel } from "@/components/editor/media-panel";
 import { CanvasPanel } from "@/components/editor/canvas-panel";
 import Timeline from "@/components/editor/timeline";
+import { cn } from "@/lib/utils";
+import { useMediaPanelStore } from "@/components/editor/media-panel/store";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { usePanelStore } from "@/stores/panel-store";
-import Header from "@/components/editor/header";
 import { Loading } from "@/components/editor/loading";
 import FloatingControl from "@/components/editor/floating-controls/floating-control";
 import { Compositor } from "@openvideo/engine-pixi";
@@ -95,6 +96,8 @@ export default function Editor({
     }
   }, [editorMode]);
 
+  const { showLabels } = useMediaPanelStore();
+
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
       {!isReady && (
@@ -102,83 +105,64 @@ export default function Editor({
           <Loading />
         </div>
       )}
-      <Header />
       <div className="flex-1 min-h-0 min-w-0">
-        <ResizablePanelGroup direction="horizontal" className="h-full w-full gap-0">
-          {/* Left Column: Media Panel */}
+        <ResizablePanelGroup direction="vertical" className="h-full w-full gap-0">
+          {/* Top Panel: Sidebar (Tab Bar) + Canvas Preview + Properties Panel */}
           <ResizablePanel
-            defaultSize={toolsPanel}
+            defaultSize={100 - timeline}
+            minSize={30}
+            className="min-h-0 overflow-visible!"
+          >
+            <div className="h-full w-full flex flex-row gap-0 overflow-visible!">
+              {/* Left Column: Fixed Tab Bar / Media panel overlay */}
+              <MediaPanel />
+
+              <ResizablePanelGroup direction="horizontal" className="h-full w-full gap-0">
+                {/* Middle Column: Preview Canvas */}
+                <ResizablePanel
+                  defaultSize={100 - copilotPanel}
+                  minSize={40}
+                  className="min-w-0 min-h-0"
+                >
+                  <CanvasPanel
+                    onReady={() => {
+                      setIsReady(true);
+                    }}
+                  />
+                </ResizablePanel>
+
+                <ResizableHandle className="bg-border/90" />
+
+                <ResizablePanel
+                  defaultSize={copilotPanel}
+                  minSize={15}
+                  maxSize={40}
+                  onResize={setCopilotPanel}
+                  className="max-w-4xl min-w-[260px] relative overflow-visible! bg-card min-w-0"
+                >
+                  <PropertiesPanel />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle className="bg-border/90" />
+
+          {/* Bottom Panel: Timeline (Full width) */}
+          <ResizablePanel
+            defaultSize={timeline}
             minSize={15}
-            maxSize={40}
-            onResize={setToolsPanel}
-            className="max-w-7xl relative overflow-visible! bg-card min-w-[450px]"
+            maxSize={70}
+            onResize={setTimeline}
+            className="min-h-0"
           >
-            <MediaPanel />
-            <FloatingControl />
+            <Timeline />
           </ResizablePanel>
-
-          <ResizableHandle className="bg-border/90" />
-
-          {/* Middle Column: Preview + Timeline */}
-          <ResizablePanel
-            defaultSize={100 - copilotPanel - toolsPanel}
-            minSize={40}
-            className="min-w-0 min-h-0"
-          >
-            <ResizablePanelGroup direction="vertical" className="h-full w-full gap-0">
-              {/* Canvas Panel */}
-              <ResizablePanel
-                defaultSize={mainContent}
-                minSize={30}
-                maxSize={85}
-                onResize={setMainContent}
-                className="min-h-0"
-              >
-                <CanvasPanel
-                  onReady={() => {
-                    setIsReady(true);
-                  }}
-                />
-              </ResizablePanel>
-
-              <ResizableHandle className="bg-border/90" />
-
-              {/* Timeline Panel */}
-              <ResizablePanel
-                defaultSize={timeline}
-                minSize={15}
-                maxSize={70}
-                onResize={setTimeline}
-                className="min-h-0"
-              >
-                <Timeline />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-          <ResizableHandle className="bg-border/90" />
-          {editorMode === "editor" ? (
-            <ResizablePanel
-              defaultSize={copilotPanel}
-              minSize={15}
-              maxSize={40}
-              onResize={setCopilotPanel}
-              className="max-w-4xl min-w-[280px] relative overflow-visible! bg-card min-w-0"
-            >
-              <PropertiesPanel />
-            </ResizablePanel>
-          ) : (
-            <ResizablePanel
-              defaultSize={copilotPanel}
-              minSize={15}
-              maxSize={40}
-              onResize={setCopilotPanel}
-              className="max-w-4xl min-w-[360px] relative overflow-visible! bg-card min-w-0"
-            >
-              <Assistant />
-            </ResizablePanel>
-          )}
         </ResizablePanelGroup>
       </div>
+
+      {/* Floating Controls like Caption / Animation pickers */}
+      <FloatingControl />
 
       {/* WebCodecs Support Check Modal */}
       <WebCodecsUnsupportedModal open={!isWebCodecsSupported} />

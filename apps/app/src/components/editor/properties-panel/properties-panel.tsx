@@ -18,27 +18,29 @@ interface PropertiesPanelContentProps {
 }
 
 export function PropertiesPanelContent({ clip }: PropertiesPanelContentProps) {
-  const coreClipBase = useStore(projectStore, (s) => s.clips[clip.id]);
-  const coreClip = useEphemeralClip(clip.id, coreClipBase ?? clip) as any;
+  const coreClipBase = useStore(projectStore, (s) => (clip?.id ? s.clips[clip.id] : null));
+  const coreClip = useEphemeralClip(clip?.id || "", coreClipBase ?? clip) as any;
   const { setFloatingControl } = useLayoutStore();
 
-  if (!coreClip) return null;
+  if (clip.type !== "Scene" && !coreClip) return null;
 
-  const style = coreClip.style || {};
-  const transform = coreClip.transform || {};
+  const style = coreClip?.style || {};
+  const transform = coreClip?.transform || {};
 
   // Helper getters
-  const getX = () => coreClip.left ?? transform.x ?? 0;
-  const getY = () => coreClip.top ?? transform.y ?? 0;
-  const getWidth = () => coreClip.width ?? transform.width ?? 0;
-  const getHeight = () => coreClip.height ?? transform.height ?? 0;
-  const getAngle = () => coreClip.angle ?? transform.angle ?? 0;
-  const getOpacity = () => coreClip.opacity ?? transform.opacity ?? 1;
-  const getFlip = () => coreClip.flip ?? transform.flip ?? { x: false, y: false };
-  const getVolume = () => coreClip.volume ?? 1;
+  const getX = () => coreClip?.left ?? transform.x ?? 0;
+  const getY = () => coreClip?.top ?? transform.y ?? 0;
+  const getWidth = () => coreClip?.width ?? transform.width ?? 0;
+  const getHeight = () => coreClip?.height ?? transform.height ?? 0;
+  const getAngle = () => coreClip?.angle ?? transform.angle ?? 0;
+  const getOpacity = () => coreClip?.opacity ?? transform.opacity ?? 1;
+  const getFlip = () => coreClip?.flip ?? transform.flip ?? { x: false, y: false };
+  const getVolume = () => coreClip?.volume ?? 1;
 
   const handleUpdate = (updates: any) => {
-    core.clip.update(clip.id, updates);
+    if (clip.id) {
+      core.clip.update(clip.id, updates);
+    }
   };
 
   const handleTransformUpdate = (updates: any) => {
@@ -46,13 +48,15 @@ export function PropertiesPanelContent({ clip }: PropertiesPanelContentProps) {
   };
 
   const handleStyleUpdate = (updates: any) => {
-    const currentClip = projectStore.getState().clips[clip.id] as any;
-    const currentStyle = currentClip?.style || {};
-    handleUpdate({ style: { ...currentStyle, ...updates } });
+    if (clip.id) {
+      const currentClip = projectStore.getState().clips[clip.id] as any;
+      const currentStyle = currentClip?.style || {};
+      handleUpdate({ style: { ...currentStyle, ...updates } });
+    }
   };
 
   const handleAnimationRemove = (animationId: string) => {
-    const animations = coreClip.animations || [];
+    const animations = coreClip?.animations || [];
     handleUpdate({
       animations: animations.filter((a: any) => a.id !== animationId),
     });
@@ -589,6 +593,18 @@ export function PropertiesPanelContent({ clip }: PropertiesPanelContentProps) {
           />
         );
       }
+
+      case "projectMenu":
+        return <Properties.ProjectGroupProperty key={key} />;
+
+      case "exportProperties":
+        return <Properties.ExportGroupProperty key={key} />;
+
+      case "sceneDuration":
+        return <Properties.TimeGroupProperty key={key} />;
+
+      case "sceneSizeProperties":
+        return <Properties.CanvasGroupProperty key={key} />;
 
       default:
         return null;

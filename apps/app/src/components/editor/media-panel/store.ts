@@ -6,6 +6,7 @@ import {
   type IconProps,
   IconSparkle2,
   IconCircleSquare,
+  IconSquareLetterT,
 } from "@tabler/icons-react";
 import { create } from "zustand";
 
@@ -19,7 +20,7 @@ export const tabs: {
     label: "Assets",
   },
   text: {
-    icon: IconLetterT,
+    icon: IconSquareLetterT,
     label: "Text",
   },
   captions: {
@@ -48,19 +49,28 @@ interface MediaPanelStore {
   clearHighlight: () => void;
   showProperties: boolean;
   setShowProperties: (show: boolean) => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  showLabels: boolean;
+  setShowLabels: (show: boolean) => void;
 }
 
 export const useMediaPanelStore = create<MediaPanelStore>((set) => ({
   activeTab: "assets",
-  setActiveTab: (tab) => set({ activeTab: tab, showProperties: false }),
+  setActiveTab: (tab) => set({ activeTab: tab, showProperties: false, isOpen: true }),
   highlightMediaId: null,
   requestRevealMedia: (mediaId) =>
     set({
       activeTab: "assets",
       highlightMediaId: mediaId,
       showProperties: false,
+      isOpen: true,
     }),
   clearHighlight: () => set({ highlightMediaId: null }),
   showProperties: false,
   setShowProperties: (show) => set({ showProperties: show }),
+  isOpen: false,
+  setIsOpen: (open) => set({ isOpen: open }),
+  showLabels: false,
+  setShowLabels: (show) => set({ showLabels: show }),
 }));
