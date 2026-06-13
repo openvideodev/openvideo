@@ -1,10 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
-import { NumberInput } from "@/components/ui/number-input";
 import { useSliderThrottle } from "../hooks/use-slider-throttle";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 interface OpacityPropertyProps {
   value: number;
@@ -22,43 +20,57 @@ export function OpacityProperty({ value, onChange }: OpacityPropertyProps) {
   );
 
   return (
-    <div className="flex flex-col">
-      {/* Section Header */}
-      <div className="flex items-center justify-between py-2">
-        <span className="text-xs font-semibold text-foreground">Opacity</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-5 text-muted-foreground hover:text-foreground"
-        >
-          <span className="text-base leading-none">+</span>
-        </Button>
+    <div className="bg-card border border-border/50 p-4 rounded-xl flex flex-col gap-3.5 my-2">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-foreground/85">Opacity</span>
       </div>
 
-      <div className="py-1 flex flex-col">
-        <div className="flex items-center justify-between py-1 gap-4">
-          <span className="text-xs text-muted-foreground">Opacity</span>
-          <div className="flex items-center gap-2 w-[130px]">
-            <Slider
-              value={[localValue]}
-              onValueChange={(v) => handleChange(v[0])}
-              onValueCommit={(v) => handleCommit(v[0])}
-              max={100}
-              step={1}
-              className="flex-1"
-            />
-            <InputGroup className="w-14">
-              <NumberInput
-                value={localValue}
-                onChange={(val) => handleDirectSet(val)}
-                className="pl-1 bg-transparent text-xs!"
-              />
-              <InputGroupAddon align="inline-end">
-                <span className="text-[10px] text-muted-foreground">%</span>
-              </InputGroupAddon>
-            </InputGroup>
-          </div>
+      {/* Row containing value, slider, and visibility toggle */}
+      <div className="flex items-center gap-3.5">
+        {/* Value Input Box */}
+        <div className="relative flex items-center bg-muted/60 hover:bg-muted/80 border border-border/40 focus-within:border-ring/50 focus-within:ring-1 focus-within:ring-ring/50 rounded-lg h-8 w-[68px] px-2.5 transition-all">
+          <input
+            type="text"
+            value={`${localValue}%`}
+            onChange={(e) => {
+              const cleanVal = e.target.value.replace(/[^0-9]/g, "");
+              const parsed = parseInt(cleanVal);
+              if (!isNaN(parsed)) {
+                handleDirectSet(Math.min(100, Math.max(0, parsed)));
+              } else if (cleanVal === "") {
+                handleDirectSet(0);
+              }
+            }}
+            className="w-full text-center bg-transparent border-none text-xs font-semibold text-foreground focus:outline-none p-0"
+          />
         </div>
+
+        {/* Slider */}
+        <Slider
+          value={[localValue]}
+          onValueChange={(v) => handleChange(v[0])}
+          onValueCommit={(v) => handleCommit(v[0])}
+          max={100}
+          step={1}
+          className="flex-1 cursor-pointer"
+        />
+
+        {/* Eye/Visibility Toggle */}
+        <button
+          type="button"
+          onClick={() => {
+            // Toggle between 0 opacity and 1 opacity
+            onChange(value === 0 ? 1 : 0);
+          }}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1"
+        >
+          {value === 0 ? (
+            <IconEyeOff className="size-4 stroke-[2]" />
+          ) : (
+            <IconEye className="size-4 stroke-[2]" />
+          )}
+        </button>
       </div>
     </div>
   );

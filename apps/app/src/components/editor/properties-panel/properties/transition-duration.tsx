@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Slider } from "@/components/ui/slider";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Button } from "@/components/ui/button";
 
 interface TransitionDurationPropertyProps {
   value: number; // in microseconds
@@ -43,76 +41,66 @@ export function TransitionDurationProperty({
   };
 
   return (
-    <div className="flex flex-col">
-      {/* Section Header */}
-      <div className="flex items-center justify-between py-2">
-        <span className="text-xs font-semibold text-foreground">Transition</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-5 text-muted-foreground hover:text-foreground"
-        >
-          <span className="text-base leading-none">+</span>
-        </Button>
+    <div className="bg-card border border-border/50 p-4 rounded-xl flex flex-col gap-3.5 my-2">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-foreground/85">Transition</span>
       </div>
 
-      <div className="py-1 flex flex-col">
-        {/* Duration row */}
-        <div className="flex items-center justify-between py-1 gap-4">
-          <span className="text-xs text-muted-foreground">Duration</span>
-          <div className="flex items-center gap-2 w-[130px]">
-            <Slider
-              value={[localValue]}
-              onValueChange={(v) => {
-                setLocalValue(v[0]);
-                setInputStr(v[0].toFixed(1));
-              }}
-              onValueCommit={(v) => handleCommit(v[0])}
-              max={maxSeconds}
-              min={minSeconds}
-              step={0.1}
-              className="flex-1"
-            />
-            <InputGroup className="w-16">
-              <InputGroupInput
-                type="number"
-                value={inputStr}
-                onFocus={() => {
-                  isEditing.current = true;
-                }}
-                onChange={(e) => {
-                  setInputStr(e.target.value);
-                  const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) {
-                    setLocalValue(val);
-                  }
-                }}
-                onBlur={() => {
-                  isEditing.current = false;
-                  const val = parseFloat(inputStr);
-                  if (!isNaN(val)) {
-                    const clamped = Math.min(maxSeconds, Math.max(minSeconds, val));
-                    handleCommit(clamped);
-                    setLocalValue(clamped);
-                    setInputStr(clamped.toFixed(1));
-                  } else {
-                    // Reset to current value
-                    setInputStr(localValue.toFixed(1));
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    (e.target as HTMLInputElement).blur();
-                  }
-                }}
-                className="text-xs! p-0 text-center"
-              />
-              <InputGroupAddon align="inline-end" className="p-0 pr-2">
-                <span className="text-[10px] text-muted-foreground">s</span>
-              </InputGroupAddon>
-            </InputGroup>
-          </div>
+      {/* Row containing label, value input, and slider */}
+      <div className="flex items-center gap-3.5">
+        <span className="text-xs text-muted-foreground w-16 select-none font-medium">Duration</span>
+
+        {/* Value Input Box */}
+        <div className="relative flex items-center bg-muted/60 hover:bg-muted/80 border border-border/40 focus-within:border-ring/50 focus-within:ring-1 focus-within:ring-ring/50 rounded-lg h-8 w-[68px] px-2.5 transition-all">
+          <input
+            type="text"
+            value={`${localValue.toFixed(1)}s`}
+            onFocus={() => {
+              isEditing.current = true;
+            }}
+            onChange={(e) => {
+              const cleanVal = e.target.value.replace(/[^0-9.]/g, "");
+              setInputStr(cleanVal);
+              const val = parseFloat(cleanVal);
+              if (!isNaN(val)) {
+                setLocalValue(val);
+              }
+            }}
+            onBlur={() => {
+              isEditing.current = false;
+              const val = parseFloat(inputStr);
+              if (!isNaN(val)) {
+                const clamped = Math.min(maxSeconds, Math.max(minSeconds, val));
+                handleCommit(clamped);
+                setLocalValue(clamped);
+                setInputStr(clamped.toFixed(1));
+              } else {
+                setInputStr(localValue.toFixed(1));
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            className="w-full text-center bg-transparent border-none text-xs font-semibold text-foreground focus:outline-none p-0"
+          />
         </div>
+
+        {/* Slider */}
+        <Slider
+          value={[localValue]}
+          onValueChange={(v) => {
+            setLocalValue(v[0]);
+            setInputStr(v[0].toFixed(1));
+          }}
+          onValueCommit={(v) => handleCommit(v[0])}
+          max={maxSeconds}
+          min={minSeconds}
+          step={0.1}
+          className="flex-1 cursor-pointer"
+        />
       </div>
     </div>
   );

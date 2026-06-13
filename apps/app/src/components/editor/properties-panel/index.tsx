@@ -20,7 +20,7 @@ export function PropertiesPanel() {
     <ScrollArea className="h-full">
       <div
         className={cn(
-          "flex flex-col gap-4 p-4 transition-opacity",
+          "flex flex-col gap-4 p-4 transition-opacity bg-background h-full",
           clip.locked && "opacity-50 pointer-events-none select-none",
         )}
       >

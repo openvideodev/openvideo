@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { IconVideo, IconSettings } from "@tabler/icons-react";
+import { IconVideo, IconSettings, IconPlus } from "@tabler/icons-react";
 import { useStudioStore } from "@/stores/studio-store";
 import {
   ExportModal,
@@ -159,21 +159,24 @@ export function ExportGroupProperty() {
   }, [activePreset, selectedPresetLabel, quality, durationSec]);
 
   return (
-    <div className="flex flex-col">
+    <div className="bg-card border border-border/50 p-4 rounded-xl flex flex-col gap-3.5 my-2">
       {/* Section Header */}
-      <div className="flex items-center justify-between py-2">
-        <span className="text-xs font-semibold text-foreground">Export</span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-foreground/85">Export</span>
         <Popover open={isPresetPopoverOpen} onOpenChange={setIsPresetPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="size-5 text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
             >
-              <span className="text-base leading-none">+</span>
+              <IconPlus className="size-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-56 p-2 bg-card border border-white/10 shadow-xl" align="end">
+          <PopoverContent
+            className="w-56 p-2 bg-card border border-border shadow-xl rounded-md animate-none"
+            align="end"
+          >
             <ScrollArea className="h-64">
               <div className="flex flex-col gap-3 p-1">
                 {RESOLUTION_GROUPS.map((group) => (
@@ -188,7 +191,7 @@ export function ExportGroupProperty() {
                           selectPreset(item.label);
                           setIsPresetPopoverOpen(false);
                         }}
-                        className="flex items-center justify-between w-full px-2 py-1.5 text-left text-xs rounded hover:bg-white/5 transition-colors cursor-pointer text-foreground"
+                        className="flex items-center justify-between w-full px-2 py-1.5 text-left text-xs rounded hover:bg-muted/80 transition-colors cursor-pointer text-foreground"
                       >
                         <span>{item.label}</span>
                         <span className="text-[10px] text-muted-foreground">{item.badge}</span>
@@ -197,13 +200,13 @@ export function ExportGroupProperty() {
                   </div>
                 ))}
                 {/* Add Custom Option */}
-                <div className="flex flex-col gap-1 border-t border-white/10 pt-2 mt-1">
+                <div className="flex flex-col gap-1 border-t border-border pt-2 mt-1">
                   <button
                     onClick={() => {
                       selectCustom();
                       setIsPresetPopoverOpen(false);
                     }}
-                    className="flex items-center justify-between w-full px-2 py-1.5 text-left text-xs rounded hover:bg-white/5 transition-colors cursor-pointer text-foreground font-semibold"
+                    className="flex items-center justify-between w-full px-2 py-1.5 text-left text-xs rounded hover:bg-muted/80 transition-colors cursor-pointer text-foreground font-semibold"
                   >
                     <span>Custom</span>
                     <span className="text-[10px] text-muted-foreground">Custom Export</span>
@@ -216,12 +219,12 @@ export function ExportGroupProperty() {
       </div>
 
       {activePreset && (
-        <div className="flex flex-col gap-2 mt-1.5">
+        <div className="flex flex-col gap-3.5">
           {/* Selected Preset Badge */}
-          <div className="flex items-center justify-between bg-secondary border rounded-md px-3 py-1.5">
+          <div className="flex items-center justify-between bg-muted/60 border border-border/40 rounded-lg px-3 py-1.5 h-8">
             <div className="flex items-center gap-2">
               <IconVideo className="size-4 text-blue-500 shrink-0" />
-              <span className="text-xs font-medium text-foreground">
+              <span className="text-xs font-semibold text-foreground">
                 {selectedPresetLabel === "Custom"
                   ? "Custom Export"
                   : `${activePreset.label} · ${(activePreset as any).badge}`}
@@ -231,17 +234,17 @@ export function ExportGroupProperty() {
               <Popover open={isCustomConfigOpen} onOpenChange={setIsCustomConfigOpen}>
                 <PopoverTrigger asChild>
                   <button
-                    className="text-muted-foreground hover:text-white transition-colors cursor-pointer"
+                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     title="Edit export settings"
                   >
                     <IconSettings className="size-4" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-72 p-4 bg-card border border-white/10 shadow-xl flex flex-col gap-3 z-[100]"
+                  className="w-72 p-4 bg-card border border-border shadow-xl flex flex-col gap-3 z-[100] animate-none"
                   align="end"
                 >
-                  <span className="text-xs font-semibold text-foreground border-b border-white/10 pb-1.5">
+                  <span className="text-xs font-semibold text-foreground border-b border-border pb-1.5">
                     Export Settings
                   </span>
                   <div className="py-1 flex flex-col gap-2">
@@ -269,7 +272,7 @@ export function ExportGroupProperty() {
                               setSelectedPresetLabel("Custom");
                             }}
                           >
-                            <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+                            <SelectTrigger className="w-[130px] h-7 bg-muted/60 border border-border/40 rounded-md text-xs!">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[110]">
@@ -299,7 +302,7 @@ export function ExportGroupProperty() {
                               setSelectedPresetLabel("Custom");
                             }}
                           >
-                            <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+                            <SelectTrigger className="w-[130px] h-7 bg-muted/60 border border-border/40 rounded-md text-xs!">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[110]">
@@ -324,7 +327,7 @@ export function ExportGroupProperty() {
                               setQuality(String(Number(e.target.value) * 1_000_000));
                               setSelectedPresetLabel("Custom");
                             }}
-                            className="w-[130px] h-7 text-xs! bg-secondary border rounded-md"
+                            className="w-[130px] h-7 text-xs! bg-muted/60 border border-border/40 rounded-md focus-visible:ring-1 focus-visible:ring-ring/50 focus-visible:ring-offset-0 focus-visible:border-ring/50"
                           />
                         </div>
                       </>
@@ -354,7 +357,7 @@ export function ExportGroupProperty() {
                               setSelectedPresetLabel("Custom");
                             }}
                           >
-                            <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+                            <SelectTrigger className="w-[130px] h-7 bg-muted/60 border border-border/40 rounded-md text-xs!">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[110]">
@@ -377,7 +380,7 @@ export function ExportGroupProperty() {
                               setSelectedPresetLabel("Custom");
                             }}
                           >
-                            <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+                            <SelectTrigger className="w-[130px] h-7 bg-muted/60 border border-border/40 rounded-md text-xs!">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="z-[110]">
@@ -402,7 +405,7 @@ export function ExportGroupProperty() {
                           setSelectedPresetLabel("Custom");
                         }}
                       >
-                        <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+                        <SelectTrigger className="w-[130px] h-7 bg-muted/60 border border-border/40 rounded-md text-xs!">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="z-[110]">
@@ -426,7 +429,7 @@ export function ExportGroupProperty() {
                             setSelectedPresetLabel("Custom");
                           }}
                         >
-                          <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+                          <SelectTrigger className="w-[130px] h-7 bg-muted/60 border border-border/40 rounded-md text-xs!">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="z-[110]">
@@ -444,7 +447,7 @@ export function ExportGroupProperty() {
               </Popover>
               <button
                 onClick={() => setSelectedPresetLabel(null)}
-                className="text-muted-foreground hover:text-white transition-colors cursor-pointer"
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Remove configuration"
               >
                 <span className="text-sm">✕</span>
@@ -458,7 +461,7 @@ export function ExportGroupProperty() {
               setAutoStartExport(true);
               setIsExportModalOpen(true);
             }}
-            className="w-full h-8 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-md cursor-pointer transition-colors"
+            className="w-full h-8 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg cursor-pointer transition-colors shadow-none border-none"
           >
             Export
           </Button>

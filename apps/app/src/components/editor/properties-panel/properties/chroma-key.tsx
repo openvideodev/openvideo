@@ -9,12 +9,6 @@ import {
   ColorPickerOutput,
   ColorPickerSelection,
 } from "@/components/ui/color-picker";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
 import { NumberInput } from "@/components/ui/number-input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
@@ -54,10 +48,10 @@ export function ChromaKeyProperty({
   const sp = useSliderThrottle(toPercent(spill ?? 0.05), (pct) => onSpillChange(fromPercent(pct)));
 
   return (
-    <div className="flex flex-col">
-      {/* Section Header */}
-      <div className="flex items-center justify-between py-2">
-        <span className="text-xs font-semibold text-foreground">Chroma Key</span>
+    <div className="bg-card border border-border/50 p-4 rounded-xl flex flex-col gap-4 my-2">
+      {/* Header with toggle switch */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-foreground/85">Chroma Key</span>
         <Switch
           checked={enabled}
           onCheckedChange={(checked) => {
@@ -68,108 +62,138 @@ export function ChromaKeyProperty({
       </div>
 
       {enabled && (
-        <div className="py-1 flex flex-col">
+        <div className="flex flex-col gap-3.5">
           {/* Key Color */}
-          <div className="flex items-center justify-between py-1 gap-4">
-            <span className="text-xs text-muted-foreground">Key Color</span>
-            <InputGroup className="w-[130px] h-7">
-              <InputGroupAddon align="inline-start" className="relative p-0">
-                <Popover modal={true}>
-                  <PopoverTrigger asChild>
-                    <InputGroupButton variant="ghost" size="icon-xs" className="h-full w-8 pl-2">
-                      <div
-                        className="h-5 w-5 rounded-sm border border-input shadow-sm"
-                        style={{ backgroundColor: chromaColor || "#FFFFFF" }}
-                      />
-                    </InputGroupButton>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-3" align="start">
-                    <ColorPicker
-                      value={color(chromaColor || "#FFFFFF")
-                        .hsv()
-                        .array()}
-                      onChange={(val) => {
-                        const [h, s, v] = val as number[];
-                        const rgb = color({ h, s, v }).rgb().array();
-                        onColorChange(
-                          `rgb(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])})`,
-                        );
-                      }}
-                      className="w-full"
-                    >
-                      <div className="flex flex-col gap-3">
-                        <ColorPickerSelection className="min-h-32 w-full rounded-md shadow-sm" />
-                        <div className="flex flex-col gap-2">
-                          <ColorPickerHue />
-                          <ColorPickerEyeDropper />
-                        </div>
-                        <div className="flex gap-1">
-                          <ColorPickerFormat />
-                          <ColorPickerFormat />
-                          <ColorPickerFormat />
-                        </div>
-                        <ColorPickerOutput className="text-center" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground w-16 select-none font-medium">
+              Key Color
+            </span>
+
+            <div className="flex items-center gap-2">
+              {/* Color picker popover trigger */}
+              <Popover modal={true}>
+                <PopoverTrigger asChild>
+                  <div
+                    className="size-4.5 rounded-full border border-foreground/25 shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+                    style={{ backgroundColor: chromaColor || "#FFFFFF" }}
+                  >
+                    <div className="size-2 rounded-full bg-card border border-foreground/25" />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-64 p-3 border border-border bg-popover text-popover-foreground shadow-md rounded-md animate-none"
+                  align="end"
+                >
+                  <ColorPicker
+                    value={color(chromaColor || "#FFFFFF")
+                      .hsv()
+                      .array()}
+                    onChange={(val) => {
+                      const [h, s, v] = val as number[];
+                      const rgb = color({ h, s, v }).rgb().array();
+                      onColorChange(
+                        `rgb(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])})`,
+                      );
+                    }}
+                    className="w-full"
+                  >
+                    <div className="flex flex-col gap-3">
+                      <ColorPickerSelection className="min-h-32 w-full rounded-md shadow-sm" />
+                      <div className="flex flex-col gap-2">
+                        <ColorPickerHue />
+                        <ColorPickerEyeDropper />
                       </div>
-                    </ColorPicker>
-                  </PopoverContent>
-                </Popover>
-              </InputGroupAddon>
-              <InputGroupInput
-                value={chromaColor}
-                onChange={(e) => onColorChange(e.target.value)}
-                className="text-xs! p-0 font-mono"
-              />
-            </InputGroup>
+                      <div className="flex gap-1">
+                        <ColorPickerFormat />
+                        <ColorPickerFormat />
+                        <ColorPickerFormat />
+                      </div>
+                      <ColorPickerOutput className="text-center" />
+                    </div>
+                  </ColorPicker>
+                </PopoverContent>
+              </Popover>
+
+              {/* Color text input block */}
+              <div className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg bg-muted/60 border border-border/40 focus-within:border-ring/50 focus-within:ring-1 focus-within:ring-ring/50 transition-all w-24">
+                <input
+                  type="text"
+                  value={chromaColor}
+                  onChange={(e) => onColorChange(e.target.value)}
+                  className="w-full bg-transparent border-none p-0 text-xs text-foreground focus:outline-none focus:ring-0 text-left font-semibold font-mono"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Similarity */}
-          <div className="flex items-center justify-between py-1 gap-4">
-            <span className="text-xs text-muted-foreground">Similarity</span>
-            <div className="flex items-center gap-2 w-[130px]">
-              <Slider
-                value={[sim.localValue]}
-                onValueChange={(v) => sim.handleChange(v[0])}
-                onValueCommit={(v) => sim.handleCommit(v[0])}
-                max={100}
-                step={1}
-                className="flex-1"
+          <div className="flex items-center gap-3.5">
+            <span className="text-xs text-muted-foreground w-16 select-none font-medium">
+              Similarity
+            </span>
+
+            {/* Value Input Box */}
+            <div className="relative flex items-center bg-muted/60 hover:bg-muted/80 border border-border/40 focus-within:border-ring/50 focus-within:ring-1 focus-within:ring-ring/50 rounded-lg h-8 w-[80px] px-2.5 transition-all">
+              <input
+                type="text"
+                value={`${sim.localValue}%`}
+                onChange={(e) => {
+                  const cleanVal = e.target.value.replace(/[^0-9]/g, "");
+                  const parsed = parseInt(cleanVal);
+                  if (!isNaN(parsed)) {
+                    sim.handleDirectSet(Math.min(100, Math.max(0, parsed)));
+                  } else if (cleanVal === "") {
+                    sim.handleDirectSet(0);
+                  }
+                }}
+                className="w-full text-center bg-transparent border-none text-xs font-semibold text-foreground focus:outline-none p-0"
               />
-              <InputGroup className="w-14">
-                <NumberInput
-                  value={sim.localValue}
-                  onChange={(val) => sim.handleDirectSet(val || 0)}
-                  className="pl-1 bg-transparent text-xs!"
-                />
-                <InputGroupAddon align="inline-end">
-                  <span className="text-[10px] text-muted-foreground">%</span>
-                </InputGroupAddon>
-              </InputGroup>
             </div>
+
+            {/* Slider */}
+            <Slider
+              value={[sim.localValue]}
+              onValueChange={(v) => sim.handleChange(v[0])}
+              onValueCommit={(v) => sim.handleCommit(v[0])}
+              max={100}
+              step={1}
+              className="flex-1 cursor-pointer"
+            />
           </div>
 
           {/* Spill */}
-          <div className="flex items-center justify-between py-1 gap-4">
-            <span className="text-xs text-muted-foreground">Spill</span>
-            <div className="flex items-center gap-2 w-[130px]">
-              <Slider
-                value={[sp.localValue]}
-                onValueChange={(v) => sp.handleChange(v[0])}
-                onValueCommit={(v) => sp.handleCommit(v[0])}
-                max={100}
-                step={1}
-                className="flex-1"
+          <div className="flex items-center gap-3.5">
+            <span className="text-xs text-muted-foreground w-16 select-none font-medium">
+              Spill
+            </span>
+
+            {/* Value Input Box */}
+            <div className="relative flex items-center bg-muted/60 hover:bg-muted/80 border border-border/40 focus-within:border-ring/50 focus-within:ring-1 focus-within:ring-ring/50 rounded-lg h-8 w-[80px] px-2.5 transition-all">
+              <input
+                type="text"
+                value={`${sp.localValue}%`}
+                onChange={(e) => {
+                  const cleanVal = e.target.value.replace(/[^0-9]/g, "");
+                  const parsed = parseInt(cleanVal);
+                  if (!isNaN(parsed)) {
+                    sp.handleDirectSet(Math.min(100, Math.max(0, parsed)));
+                  } else if (cleanVal === "") {
+                    sp.handleDirectSet(0);
+                  }
+                }}
+                className="w-full text-center bg-transparent border-none text-xs font-semibold text-foreground focus:outline-none p-0"
               />
-              <InputGroup className="w-14">
-                <NumberInput
-                  value={sp.localValue}
-                  onChange={(val) => sp.handleDirectSet(val || 0)}
-                  className="pl-1 bg-transparent text-xs!"
-                />
-                <InputGroupAddon align="inline-end">
-                  <span className="text-[10px] text-muted-foreground">%</span>
-                </InputGroupAddon>
-              </InputGroup>
             </div>
+
+            {/* Slider */}
+            <Slider
+              value={[sp.localValue]}
+              onValueChange={(v) => sp.handleChange(v[0])}
+              onValueCommit={(v) => sp.handleCommit(v[0])}
+              max={100}
+              step={1}
+              className="flex-1 cursor-pointer"
+            />
           </div>
         </div>
       )}

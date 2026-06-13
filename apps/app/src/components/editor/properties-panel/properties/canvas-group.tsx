@@ -11,20 +11,12 @@ import {
   ColorPickerOutput,
 } from "@/components/ui/color-picker";
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupButton,
-} from "@/components/ui/input-group";
-import { NumberInput } from "@/components/ui/number-input";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import color from "color";
 import { useStore } from "zustand";
 import { core, projectStore } from "@/lib/project";
@@ -33,17 +25,6 @@ import { useProjectStore } from "@/stores/project-store";
 export function CanvasGroupProperty() {
   const [colorOpen, setColorOpen] = useState(false);
   const { canvasSize, aspectRatio, setCanvasSize } = useProjectStore();
-
-  const width = canvasSize.width;
-  const height = canvasSize.height;
-
-  const onWidthChange = (val: number) => {
-    setCanvasSize({ width: val, height: canvasSize.height }, "custom");
-  };
-
-  const onHeightChange = (val: number) => {
-    setCanvasSize({ width: canvasSize.width, height: val }, "custom");
-  };
 
   const onAspectRatioChange = (value: string) => {
     if (value === "16:9") {
@@ -66,55 +47,20 @@ export function CanvasGroupProperty() {
   };
 
   return (
-    <div className="flex flex-col">
-      {/* Section Header */}
-      <div className="flex items-center justify-between py-2">
-        <span className="text-xs font-semibold text-foreground">Canvas Settings</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-5 text-muted-foreground hover:text-foreground"
-        >
-          <span className="text-base leading-none">+</span>
-        </Button>
+    <div className="bg-card border border-border/50 p-4 rounded-xl flex flex-col gap-3.5 my-2">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-foreground/85">Canvas Settings</span>
       </div>
 
-      <div className="py-1 flex flex-col">
-        {/* Width */}
-        <div className="flex items-center justify-between py-1 gap-4">
-          <span className="text-xs text-muted-foreground">Width</span>
-          <InputGroup className="w-[130px]">
-            <NumberInput
-              value={width}
-              onChange={onWidthChange}
-              className="pl-2 bg-transparent text-xs!"
-            />
-            <InputGroupAddon align="inline-end">
-              <span className="text-[10px] text-muted-foreground">px</span>
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-
-        {/* Height */}
-        <div className="flex items-center justify-between py-1 gap-4">
-          <span className="text-xs text-muted-foreground">Height</span>
-          <InputGroup className="w-[130px]">
-            <NumberInput
-              value={height}
-              onChange={onHeightChange}
-              className="pl-2 bg-transparent text-xs!"
-            />
-            <InputGroupAddon align="inline-end">
-              <span className="text-[10px] text-muted-foreground">px</span>
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-
+      <div className="flex flex-col gap-3.5">
         {/* Aspect Ratio */}
-        <div className="flex items-center justify-between py-1 gap-4">
-          <span className="text-xs text-muted-foreground">Aspect Ratio</span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground w-24 select-none font-medium">
+            Aspect Ratio
+          </span>
           <Select value={aspectRatio} onValueChange={onAspectRatioChange}>
-            <SelectTrigger className="w-[130px] h-7 bg-secondary border rounded-md text-xs!">
+            <SelectTrigger className="w-[130px] h-8 bg-muted/60 hover:bg-muted/80 border border-border/40 rounded-lg text-xs font-semibold text-foreground focus:ring-1 focus:ring-ring/50 focus:ring-offset-0">
               <SelectValue placeholder="Aspect ratio" />
             </SelectTrigger>
             <SelectContent>
@@ -140,51 +86,60 @@ export function CanvasGroupProperty() {
         </div>
 
         {/* Background Color */}
-        <div className="flex items-center justify-between py-1 gap-4">
-          <span className="text-xs text-muted-foreground">Background</span>
-          <InputGroup className="w-[130px] h-7">
-            <InputGroupAddon align="inline-start" className="relative p-0">
-              <Popover modal={true} open={colorOpen} onOpenChange={setColorOpen}>
-                <PopoverTrigger asChild>
-                  <InputGroupButton variant="ghost" size="icon-xs" className="h-full w-8 pl-2">
-                    <div
-                      className="h-5 w-5 rounded-sm border border-input shadow-sm animate-none"
-                      style={{ backgroundColor: backgroundColor || "#111111" }}
-                    />
-                  </InputGroupButton>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-3 animate-none" align="start">
-                  <ColorPicker
-                    value={backgroundColor}
-                    onChange={(colorValue: any) => {
-                      const hexColor = color.rgb(colorValue as number[]).hex();
-                      onBackgroundColorChange(hexColor);
-                    }}
-                    className="w-72 h-72 rounded-md border bg-background p-4 shadow-sm"
-                  >
-                    <ColorPickerSelection />
-                    <div className="flex items-center gap-4">
-                      <ColorPickerEyeDropper />
-                      <div className="grid w-full gap-1">
-                        <ColorPickerHue />
-                      </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground w-24 select-none font-medium">
+            Background
+          </span>
+          <div className="flex items-center gap-2">
+            {/* Color picker popover trigger */}
+            <Popover modal={true} open={colorOpen} onOpenChange={setColorOpen}>
+              <PopoverTrigger asChild>
+                <div
+                  className="size-4.5 rounded-full border border-foreground/25 shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+                  style={{ backgroundColor: backgroundColor || "#111111" }}
+                >
+                  <div className="size-2 rounded-full bg-card border border-foreground/25" />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-64 p-3 border border-border bg-popover text-popover-foreground shadow-md rounded-md animate-none"
+                align="end"
+              >
+                <ColorPicker
+                  value={backgroundColor}
+                  onChange={(colorValue: any) => {
+                    const hexColor = color.rgb(colorValue as number[]).hex();
+                    onBackgroundColorChange(hexColor);
+                  }}
+                  className="w-72 h-72 rounded-md border bg-background p-4 shadow-sm"
+                >
+                  <ColorPickerSelection />
+                  <div className="flex items-center gap-4">
+                    <ColorPickerEyeDropper />
+                    <div className="grid w-full gap-1">
+                      <ColorPickerHue />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <ColorPickerOutput />
-                      <ColorPickerFormat />
-                    </div>
-                  </ColorPicker>
-                </PopoverContent>
-              </Popover>
-            </InputGroupAddon>
-            <InputGroupInput
-              value={(backgroundColor || "#111111").toUpperCase()}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                onBackgroundColorChange(e.target.value)
-              }
-              className="text-xs! p-0 font-mono"
-            />
-          </InputGroup>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ColorPickerOutput />
+                    <ColorPickerFormat />
+                  </div>
+                </ColorPicker>
+              </PopoverContent>
+            </Popover>
+
+            {/* Color text input block */}
+            <div className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg bg-muted/60 border border-border/40 focus-within:border-ring/50 focus-within:ring-1 focus-within:ring-ring/50 transition-all w-24">
+              <input
+                type="text"
+                value={(backgroundColor || "#111111").toUpperCase()}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onBackgroundColorChange(e.target.value)
+                }
+                className="w-full bg-transparent border-none p-0 text-xs text-foreground focus:outline-none focus:ring-0 text-left font-semibold font-mono"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

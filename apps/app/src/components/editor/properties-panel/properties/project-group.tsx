@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { UserMenu } from "@/components/user-menu";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/stores/project-store";
 import { toast } from "sonner";
 
@@ -32,25 +33,21 @@ export function ProjectGroupProperty() {
       {/* Top Header: Avatar + Share Button */}
       <div className="flex items-center justify-between">
         <UserMenu />
-        <div className="flex items-center gap-2">
-          {/* Split Share Button */}
-          <div className="flex items-center bg-white text-black hover:bg-white/90 rounded-lg h-8 border border-white/20 select-none overflow-hidden shrink-0">
-            <button
-              onClick={handleCopyLink}
-              className="px-3 h-full text-xs font-semibold hover:bg-black/5 cursor-pointer transition-colors flex items-center justify-center"
-            >
-              Share
-            </button>
-          </div>
-        </div>
+        <Button
+          onClick={handleCopyLink}
+          variant="secondary"
+          className="h-8 px-4 text-xs font-semibold rounded-lg shadow-none cursor-pointer"
+        >
+          Share
+        </Button>
       </div>
 
-      {/* Project Name & History Row */}
+      {/* Project Name Row */}
       <div className="flex items-center gap-2">
         <Input
           value={title}
           onChange={handleTitleChange}
-          className="flex-1 h-8 text-xs bg-secondary border rounded-md"
+          className="flex-1 h-8 text-xs bg-muted/60 hover:bg-muted/80 border border-border/40 focus-visible:ring-1 focus-visible:ring-ring/50 focus-visible:ring-offset-0 focus-visible:border-ring/50 px-3 rounded-lg text-foreground font-semibold shadow-none"
           placeholder="Untitled video"
         />
       </div>

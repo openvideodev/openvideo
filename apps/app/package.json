@@ -25,6 +25,7 @@
     "@openvideo/engine-pixi": "workspace:*",
     "@openvideo/timeline": "workspace:*",
     "@paper-design/shaders-react": "^0.0.76",
+    "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-collapsible": "^1.1.12",
